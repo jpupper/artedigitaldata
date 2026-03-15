@@ -1,26 +1,26 @@
 function getToken() {
-  return localStorage.getItem('artedigital_token');
+  return localStorage.getItem('artedigitaldata_token');
 }
 
 function setToken(token) {
-  localStorage.setItem('artedigital_token', token);
+  localStorage.setItem('artedigitaldata_token', token);
 }
 
 function removeToken() {
-  localStorage.removeItem('artedigital_token');
+  localStorage.removeItem('artedigitaldata_token');
 }
 
 function getUser() {
-  const raw = localStorage.getItem('artedigital_user');
+  const raw = localStorage.getItem('artedigitaldata_user');
   return raw ? JSON.parse(raw) : null;
 }
 
 function setUser(user) {
-  localStorage.setItem('artedigital_user', JSON.stringify(user));
+  localStorage.setItem('artedigitaldata_user', JSON.stringify(user));
 }
 
 function removeUser() {
-  localStorage.removeItem('artedigital_user');
+  localStorage.removeItem('artedigitaldata_user');
 }
 
 function isLoggedIn() {

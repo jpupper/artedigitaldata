@@ -51,10 +51,15 @@ async function uploadToFtp() {
             secure: false
         });
 
-        const remoteDir = '/artnetwork';
+        const remoteDir = '/artedigitaldata';
         const localPublicFolder = path.join(__dirname, '../public');
+        const localImgFolder = path.join(__dirname, '../img');
 
+        console.log('Sincronizando /public...');
         await syncLocalToRemote(client, localPublicFolder, remoteDir);
+
+        console.log('Sincronizando /img...');
+        await syncLocalToRemote(client, localImgFolder, remoteDir + '/img');
 
         console.log('==========================================');
         console.log('Sincronizacion FTP completada con exito!');

@@ -12,9 +12,9 @@ sed -i 's/\r$//' deploy_scripts/server_update.sh 2>/dev/null
 # Configuracion
 # Si no estan en .env, usara estos por defecto (aunque lo ideal es que esten en .env)
 TOKEN=${GITHUB_TOKEN:-""}
-REPO=${GITHUB_REPO:-"jpupper/artedigital"}
+REPO=${GITHUB_REPO:-"jpupper/artedigitaldata"}
 REPO_URL="https://$TOKEN@github.com/$REPO"
-APP_NAME="artedigital"
+APP_NAME="artedigitaldata"
 
 echo "------------------------------------------------"
 echo "INICIANDO DEPLOY INTEGRAL: $APP_NAME"
