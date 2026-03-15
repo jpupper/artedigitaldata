@@ -17,29 +17,35 @@ function renderHeader() {
         </a>
 
         <!-- Desktop Nav -->
-        <nav class="hidden md:flex items-center gap-1">
-          <a href="${CONFIG.BASE}/" class="nav-link px-4 py-2 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
-            <i class="fas fa-home mr-1"></i> INICIO
+        <nav class="hidden lg:flex items-center gap-0.5">
+          <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-home text-[10px]"></i> INICIO
+          </a>
+          <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-palette text-[10px]"></i> OBRAS
+          </a>
+          <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-box-open text-[10px]"></i> RECURSOS
           </a>
           ${loggedIn ? `
-          <a href="${CONFIG.BASE}/create.html" class="nav-link px-4 py-2 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all border border-white/10 ml-2">
-            <i class="fas fa-plus-circle mr-1"></i> CREAR
+          <a href="${CONFIG.BASE}/create.html" class="nav-link flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-200 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all border border-white/10 mx-1">
+            <i class="fas fa-plus-circle text-xs"></i> CREAR
           </a>
           ` : ''}
-          <a href="${CONFIG.BASE}/search.html" class="nav-link px-4 py-2 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
-            <i class="fas fa-search mr-1"></i> BUSCAR
+          <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-search text-[10px]"></i> BUSCAR
           </a>
-          <a href="${CONFIG.BASE}/calendario.html" class="nav-link px-4 py-2 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
-            <i class="fas fa-calendar-alt mr-1"></i> CALENDARIO
+          <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-calendar-alt text-[10px]"></i> CALENDARIO
           </a>
           ${loggedIn ? `
-          <a href="${CONFIG.BASE}/chat.html" class="nav-link px-4 py-2 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
-            <i class="fas fa-comments mr-1"></i> CHAT
+          <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
+            <i class="fas fa-comments text-[10px]"></i> CHAT
           </a>
           ` : ''}
           ${admin ? `
-          <a href="${CONFIG.BASE}/admin.html" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30">
-            <i class="fas fa-shield-alt mr-1"></i> Admin
+          <a href="${CONFIG.BASE}/admin.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30 ml-1">
+            <i class="fas fa-shield-alt text-[9px]"></i> Admin
           </a>
           ` : ''}
         </nav>
@@ -83,6 +89,12 @@ function renderHeader() {
         <div class="flex flex-col gap-1">
           <a href="${CONFIG.BASE}/" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-home mr-2"></i> INICIO
+          </a>
+          <a href="${CONFIG.BASE}/obras.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
+            <i class="fas fa-palette mr-2"></i> OBRAS
+          </a>
+          <a href="${CONFIG.BASE}/recursos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
+            <i class="fas fa-box-open mr-2"></i> RECURSOS
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/create.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 border border-white/10">

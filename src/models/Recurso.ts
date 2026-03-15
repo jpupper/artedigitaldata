@@ -12,6 +12,7 @@ export interface IRecurso extends Document {
   type: 'software' | 'github' | 'drive' | 'tutorial' | 'other';
   url: string;
   author: Types.ObjectId;
+  imageUrl?: string;
   tags: string[];
   comments: IComment[];
   createdAt: Date;
@@ -32,6 +33,7 @@ const RecursoSchema: Schema = new Schema(
     description: { type: String, default: '' },
     type: { type: String, enum: ['software', 'github', 'drive', 'tutorial', 'other'], default: 'other' },
     url: { type: String, required: true },
+    imageUrl: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     tags: [{ type: String, trim: true }],
     comments: [CommentSchema],

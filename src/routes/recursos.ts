@@ -30,7 +30,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, type, url, tags } = req.body;
+    const { title, description, type, url, tags, imageUrl } = req.body;
     if (!title || !url) return res.status(400).json({ error: 'Título y URL son obligatorios' });
 
     const recurso = await Recurso.create({
@@ -38,6 +38,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       description,
       type: type || 'other',
       url,
+      imageUrl: imageUrl || '',
       author: req.user!.id,
       tags: tags || [],
     });
