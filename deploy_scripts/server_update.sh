@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. LIMPIEZA DE CARACTERES ESPECIALES (CRLF) - Crucial para que no se rompa la URL de Git
+# 1. LIMPIEZA DE CARACTERES ESPECIALES (CRLF)
 sed -i 's/\r$//' .env 2>/dev/null
 sed -i 's/\r$//' deploy_scripts/server_update.sh 2>/dev/null
 
@@ -10,50 +10,45 @@ if [ -f .env ]; then
 fi
 
 # Configuracion
-TOKEN=${GITHUB_TOKEN:-""}
-REPO=${GITHUB_REPO:-"jpupper/artedigitaldata"}
-# Limpiar posibles saltos de linea en las variables
-TOKEN=$(echo $TOKEN | tr -d '\r')
-REPO=$(echo $REPO | tr -d '\r')
-
-REPO_URL="https://$TOKEN@github.com/$REPO"
+TOKEN=$(echo ${GITHUB_TOKEN:-""} | tr -d '\r')
+REPO=$(echo ${GITHUB_REPO:-"jpupper/artedigitaldata"} | tr -d '\r')
 APP_NAME="artedigitaldata"
+REPO_URL="https://$TOKEN@github.com/$REPO"
 
 echo "------------------------------------------------"
-echo "INICIANDO DEPLOY INTEGRAL: $APP_NAME"
+echo "DEPLOOY: $APP_NAME (Repo: $REPO)"
 echo "------------------------------------------------"
 
-# 3. ACTUALIZACION DE GIT
+# 3. ACTUALIZACION DE GIT (Reset hard para asegurar que coincide con GitHub)
 if [ ! -d ".git" ]; then
-    echo "No se detecto Git. Inicializando..."
+    echo "Clonando repositorio por primera vez..."
     git init
     git remote add origin "$REPO_URL"
     git fetch origin main
     git checkout -f main
-    git branch --set-upstream-to=origin/main main
 else
-    echo "Repositorio detectado. Actualizando..."
+    echo "Actualizando repositorio..."
     git remote set-url origin "$REPO_URL"
     git fetch origin main
     git reset --hard origin/main
 fi
 
-# 4. INSTALACION DE DEPENDENCIAS (Incluyendo devDeps para compilar)
-echo "npm install..."
+# 4. INSTALACION DE DEPENDENCIAS
+echo "Instalando dependencias..."
 npm install
 
-# 5. COMPILAR PROYECTO
+# 5. COMPILAR
 echo "Compilando TypeScript..."
 npm run build
 
-# 6. REINICIO O INICIO DE PM2
-echo "Gestionando PM2..."
-# Intentamos reiniciar, si falla, iniciamos de cero
-pm2 restart "$APP_NAME" || pm2 start server.js --name "$APP_NAME"
+# 6. REINICIO TOTAL DE PM2 (Borrar y Crear)
+echo "Reestableciendo instancia de PM2..."
+pm2 delete "$APP_NAME" 2>/dev/null
+pm2 start server.js --name "$APP_NAME"
 pm2 save
 
 echo "------------------------------------------------"
-echo "DEPLOY FINALIZADO CON EXITO EN EL VPS"
+echo "DEPLOY FINALIZADO CON EXITO"
 echo "------------------------------------------------"
 pm2 list
 echo "------------------------------------------------"
