@@ -19,7 +19,7 @@ echo.
 echo [1/2] DESPLEGANDO EN EL VPS (!VPS_HOST!) POR SSH...
 echo Primero actualizamos desde Github y luego corremos el script en el VPS.
 echo.
-ssh -p !VPS_PORT! !VPS_USER!@!VPS_HOST! "cd artedigitaldata && echo 'Bajando cambios al VPS...' && git fetch origin main && git reset --hard origin/main && echo 'Corriendo el deploy de backend...' && bash deploy_scripts/server_update.sh"
+ssh -p !VPS_PORT! !VPS_USER!@!VPS_HOST! "cd artedigitaldata && (git remote get-url origin | tr -d '\r' | xargs git remote set-url origin) && echo 'Bajandocambios al VPS...' && git fetch origin main && git reset --hard origin/main && echo 'Corriendo el deploy de backend...' && bash deploy_scripts/server_update.sh"
 
 echo.
 echo [2/2] SUBIENDO ARCHIVOS DE FRONTEND AL FTP (!FTP_HOST!)...
