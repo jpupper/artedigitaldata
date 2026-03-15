@@ -27,11 +27,6 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-box-open text-[10px]"></i> RECURSOS
           </a>
-          ${loggedIn ? `
-          <a href="${CONFIG.BASE}/create.html" class="nav-link flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-200 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all border border-white/10 mx-1">
-            <i class="fas fa-plus-circle text-xs"></i> CREAR
-          </a>
-          ` : ''}
           <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-search text-[10px]"></i> BUSCAR
           </a>
@@ -53,6 +48,9 @@ function renderHeader() {
         <!-- Auth Buttons / User Menu -->
         <div class="hidden md:flex items-center gap-3">
           ${loggedIn ? `
+            <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1">
+              <i class="fas fa-plus-circle text-xs"></i> CREAR
+            </a>
             <a href="${CONFIG.BASE}/profile.html?user=${user?.username}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
               ${user?.avatar ? `
                 <img src="${user.avatar}" alt="${user.username}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400">
