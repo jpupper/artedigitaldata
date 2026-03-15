@@ -36,13 +36,13 @@ const ROOT_DIR = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dir
 
 const io = new SocketServer(server, {
   path: `${BASE_PATH}/socket.io`,
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { origin: '*', methods: ['GET', 'POST', 'PATCH'] },
 });
 
 // Middleware
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: ["https://fullscreencode.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true
 }));
 
@@ -55,7 +55,7 @@ app.use((_req, res, next) => {
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
     "img-src 'self' data: https://res.cloudinary.com; " +
-    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://*.cloudinary.com;"
+    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
   );
   next();
 });

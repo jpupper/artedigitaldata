@@ -84,19 +84,36 @@ const CONFIG = {
 
 ---
 
-## 6. Configuración Mandatoria del Servidor (CORS & CSP)
+## 6. Configuración Crítica del Servidor: El "Blindaje" (CORS & CSP)
 
-Para evitar errores de "Content Security Policy" y problemas de "CORS" al usar CDNs externos (Tailwind, Fonts), el `server.ts` **DEBE** incluir:
+Para que esta arquitectura (Front en un servidor, Back en otro) funcione sin bloqueos del navegador, el `server.ts` **DEBE** seguir estas reglas estrictas para evitar errores de red.
+
+### A. CORS (Cross-Origin Resource Sharing)
+Cuando el frontend en `fullscreencode.com` intenta hablar con el backend en `dattaweb.com`, el navegador bloquea la petición por seguridad a menos que el servidor responda con las cabeceras correctas.
+
+*   **Regla de Oro:** Si usás `credentials: true` (para enviar cookies o tokens), **no podés usar `origin: "*"`**. Debes listar los dominios permitidos explícitamente.
+*   **Métodos:** Incluir siempre `PATCH` (muy común en actualizaciones de perfil) y `OPTIONS` (para la comprobación previa o "preflight").
 
 ```typescript
-// 1. CORS extendido (Permite credenciales y métodos completos)
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: [
+    "https://fullscreencode.com", 
+    "https://vps-4455523-x.dattaweb.com",
+    "http://localhost:3000",
+    "http://localhost:2495"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true
 }));
+```
 
-// 2. CSP Bypass (Permite cargar recursos de Google, Cloudflare y Cloudinary)
+### B. CSP (Content Security Policy)
+El CSP es un segundo muro de seguridad. Si no está configurado, el navegador prohibirá al frontend descargar estilos (Tailwind), fuentes (Google Fonts) o conectar con la API del VPS.
+
+*   **connect-src:** Aquí es donde se habilitan las llamadas a la API y WebSockets. **DEBE** incluir el dominio del VPS y de Cloudinary.
+*   **img-src:** Debe permitir `res.cloudinary.com` para que las imágenes se vean.
+
+```typescript
 app.use((_req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
@@ -105,8 +122,28 @@ app.use((_req, res, next) => {
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
     "img-src 'self' data: https://res.cloudinary.com; " +
-    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://*.cloudinary.com;"
+    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
   );
   next();
 });
 ```
+
+---
+
+## 7. Flujo de Comunicación Defininitivo (Arquitectura en Espejo)
+
+Esta es la lógica que debés seguir para programar nuevas funcionalidades:
+
+1.  **Frontend (Vanilla + Config.js):**
+    - Todo `fetch` o `axios` debe usar `CONFIG.API_URL + '/endpoint'`.
+    - Nunca escribas la URL del VPS a fuego en los archivos `.html` o `.js`.
+    - Las imágenes subidas siempre vendrán de la URL que devuelve Cloudinary.
+
+2.  **Backend (Express + TS):**
+    - Los controladores en `src/routes/` deben devolver siempre JSON.
+    - El servidor en el VPS no solo sirve la API, sino que también sirve los archivos estáticos de `/public` (esto es un respaldo por si Ferozo falla).
+
+3.  **Despliegue Ganador:**
+    - El backend se actualiza vía **Git** + **PM2** en el VPS.
+    - El frontend se actualiza vía **FTP** a Ferozo.
+    - Siempre que cambies algo en `server.ts` que afecte a CORS o rutas, recordá que **tenés que reiniciar el proceso en PM2** en el servidor para que el cambio sea real.
