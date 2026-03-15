@@ -135,6 +135,17 @@
               <div id="rec-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
             </div>
             <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen del Recurso (Opcional)</label>
+              <div class="relative group">
+                <input type="file" id="rec-file" accept="image/*"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <div id="rec-file-preview" class="w-full aspect-video bg-white/5 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center group-hover:border-orange-500/50 transition-colors overflow-hidden">
+                  <i class="fas fa-image text-3xl text-gray-600 mb-2"></i>
+                  <p class="text-sm text-gray-500">Subir previsualización</p>
+                </div>
+              </div>
+            </div>
+            <div>
               <label class="block text-sm font-medium text-gray-400 mb-2">Etiquetas (separadas por coma)</label>
               <input type="text" id="rec-tags" placeholder="herramientas, free, assets..."
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
@@ -270,6 +281,18 @@
       }
     });
 
+    document.getElementById('rec-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('rec-file-preview');
+          preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
     // Form handlers
     document.getElementById('post-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -319,12 +342,28 @@
       const url = document.getElementById('rec-url').value.trim();
       const description = document.getElementById('rec-desc').value.trim();
       const tags = document.getElementById('rec-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const file = document.getElementById('rec-file').files[0];
 
       showStatus('Guardando Recurso', 'Vinculando enlace y herramientas...');
 
+      let imageUrl = '';
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+          body: formData
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imageUrl = data.url;
+        }
+      }
+
       const res = await apiRequest('/recursos', {
         method: 'POST',
-        body: JSON.stringify({ title, type, url, description, tags })
+        body: JSON.stringify({ title, type, url, description, tags, imageUrl })
       });
 
       if (res?.ok) {

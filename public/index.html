@@ -70,41 +70,74 @@
     async function loadFeed() {
       const container = document.getElementById('feed-container');
       try {
-        const res = await fetch(CONFIG.API_URL + '/posts');
-        const posts = await res.json();
-        if (!posts.length) {
+        const [postsRes, recursosRes] = await Promise.all([
+          fetch(CONFIG.API_URL + '/posts'),
+          fetch(CONFIG.API_URL + '/recursos')
+        ]);
+        
+        const posts = await postsRes.json();
+        const recursos = await recursosRes.json();
+        
+        // Merge and sort by date
+        const allItems = [
+          ...posts.map(p => ({ ...p, feedType: 'post' })),
+          ...recursos.map(r => ({ ...r, feedType: 'recurso' }))
+        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        if (!allItems.length) {
           container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20"><p class="text-xl">Aún no hay publicaciones</p></div>`;
           return;
         }
-        container.innerHTML = posts.map(post => `
-          <div class="rounded-2xl overflow-hidden border border-cyan-500/10 card-cyber transition-all duration-300">
-            ${post.imageUrl ? `
-              <a href="${CONFIG.BASE}/post.html?id=${post._id}" target="_blank" class="block aspect-video overflow-hidden">
-                <img src="${post.imageUrl}" alt="${post.title}" class="w-full h-full object-cover">
-              </a>
-            ` : ''}
-            <div class="p-5">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-cyan-500 text-black">
-                  ${(post.author?.username || '?')[0].toUpperCase()}
+
+        container.innerHTML = allItems.map(item => {
+          const isPost = item.feedType === 'post';
+          const link = isPost ? `${CONFIG.BASE}/post.html?id=${item._id}` : `${CONFIG.BASE}/recurso.html?id=${item._id}`;
+          const badgeColor = isPost ? 'cyan' : 'orange';
+          const badgeText = isPost ? 'OBRA' : 'RECURSO';
+          const imageUrl = item.imageUrl;
+
+          return `
+            <div class="rounded-2xl overflow-hidden border border-${badgeColor}-500/10 card-cyber transition-all duration-300 flex flex-col h-full">
+              ${imageUrl ? `
+                <a href="${link}" target="_blank" class="block aspect-video overflow-hidden">
+                  <img src="${imageUrl}" alt="${item.title}" class="w-full h-full object-cover">
+                </a>
+              ` : isPost ? '' : `
+                <div class="aspect-video bg-white/5 flex items-center justify-center">
+                   <i class="fas fa-box-open text-4xl text-gray-700"></i>
                 </div>
-                <div>
-                  <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-sm font-medium text-cyan-400">
-                    ${post.author?.username || 'Anónimo'}
-                  </a>
-                  <p class="text-[10px] text-gray-500">${new Date(post.createdAt).toLocaleDateString()}</p>
+              `}
+              <div class="p-5 flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-${badgeColor}-500 text-black">
+                      ${(item.author?.username || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <a href="${CONFIG.BASE}/profile.html?user=${item.author?.username}" class="text-sm font-medium text-${badgeColor}-400">
+                        ${item.author?.username || 'Anónimo'}
+                      </a>
+                      <p class="text-[10px] text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-bold border border-${badgeColor}-500/30 text-${badgeColor}-400 uppercase tracking-wider">
+                    ${badgeText}
+                  </span>
                 </div>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2">${post.title}</h3>
-              <p class="text-gray-400 text-sm mb-3 line-clamp-3">${formatMentions(post.description)}</p>
-              <div class="flex items-center gap-4 text-xs text-gray-500">
-                <span><i class="fas fa-heart mr-1"></i>${post.likes?.length || 0}</span>
-                <span><i class="fas fa-comment mr-1"></i>${post.comments?.length || 0}</span>
+                <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${item.title}</h3>
+                <p class="text-gray-400 text-sm mb-3 line-clamp-2">${formatMentions(item.description)}</p>
+                <div class="mt-auto flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-white/5">
+                  ${isPost ? `
+                    <span><i class="fas fa-heart mr-1"></i>${item.likes?.length || 0}</span>
+                  ` : ''}
+                  <span><i class="fas fa-comment mr-1"></i>${item.comments?.length || 0}</span>
+                </div>
               </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } catch (err) {
+        console.error(err);
         container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Error cargando el feed</div>`;
       }
     }

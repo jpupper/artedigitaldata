@@ -209,9 +209,14 @@ function enableTagging(elementId) {
 function formatMentions(text) {
   if (!text) return '';
   
+  // Replace URLs with clickable links
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  let formattedText = text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
+  });
+
   // Regex to find @mentions (words starting with @ followed by alphanumeric)
-  // We'll wrap them in a span with blue color and link to profile
-  return text.replace(/@(\w+)/g, (match, username) => {
+  return formattedText.replace(/@(\w+)/g, (match, username) => {
     return `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`;
   });
 }

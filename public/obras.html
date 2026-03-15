@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obras - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+    <section class="mb-10">
+      <h1 class="text-3xl md:text-4xl font-black text-white mb-2">
+        <i class="fas fa-palette text-[var(--color-cyan)] mr-2"></i>Galería de Obras
+      </h1>
+      <p class="text-gray-400">Explorá el talento de la comunidad de artistas digitales.</p>
+    </section>
+
+    <!-- Obras Grid -->
+    <div id="obras-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="col-span-full text-center text-gray-500 py-20">
+        <i class="fas fa-spinner fa-spin text-3xl text-cyan-400 mb-4"></i>
+        <p>Cargando arte...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadObras();
+    });
+
+    async function loadObras() {
+      const container = document.getElementById('obras-container');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/posts');
+        const posts = await res.json();
+        renderObras(posts);
+      } catch {
+        container.innerHTML = `<div class="col-span-full text-center text-red-400 py-10"><i class="fas fa-exclamation-triangle mr-2"></i>Error cargando obras</div>`;
+      }
+    }
+
+    function renderObras(posts) {
+      const container = document.getElementById('obras-container');
+      if (!posts.length) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-20">
+            <i class="fas fa-image text-5xl text-cyan-400/30 mb-4"></i>
+            <p class="text-xl">Aún no hay obras publicadas</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = posts.map(p => `
+        <div class="rounded-2xl overflow-hidden border border-cyan-500/10 card-cyber transition-all duration-300 flex flex-col h-full">
+          ${p.imageUrl ? `
+            <a href="post.html?id=${p._id}" target="_blank" class="block aspect-video overflow-hidden">
+              <img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            </a>
+          ` : ''}
+          <div class="p-5 flex-1 flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-cyan-500 text-black">
+                ${(p.author?.username || '?')[0].toUpperCase()}
+              </div>
+              <div>
+                <a href="${CONFIG.BASE}/profile.html?user=${p.author?.username}" class="text-sm font-medium text-cyan-400">
+                  ${p.author?.username || 'Anónimo'}
+                </a>
+                <p class="text-[10px] text-gray-500">${new Date(p.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${p.title}</h3>
+            <p class="text-gray-400 text-sm mb-3 line-clamp-2">${formatMentions(p.description)}</p>
+            <div class="mt-auto flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-white/5">
+              <span><i class="fas fa-heart mr-1"></i>${p.likes?.length || 0}</span>
+              <span><i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

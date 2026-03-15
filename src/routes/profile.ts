@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import User from '../models/User';
 import Post from '../models/Post';
+import Recurso from '../models/Recurso';
+import Evento from '../models/Evento';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -14,7 +16,18 @@ router.get('/:username', async (req: Request, res: Response) => {
       .populate('author', 'username avatar')
       .sort({ createdAt: -1 });
 
-    return res.json({ user, posts });
+    const recursos = await Recurso.find({ author: user._id })
+      .populate('author', 'username avatar')
+      .sort({ createdAt: -1 });
+
+    const eventos = await Evento.find({ 
+      $or: [
+        { creator: user._id },
+        { participants: user._id }
+      ]
+    }).sort({ date: 1 });
+
+    return res.json({ user, posts, recursos, eventos });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
