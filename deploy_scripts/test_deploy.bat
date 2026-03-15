@@ -1,13 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Cargar variables desde .env
-if exist "%~dp0..\.env" (
-    for /f "usebackq tokens=1,* delims==" %%i in ("%~dp0..\.env") do (
-        set "var=%%i"
-        if not "!var:~0,1!"=="#" (
-            set "%%i=%%j"
-        )
+:: Limpiar variables previas para evitar conflictos
+set GITHUB_TOKEN=
+set GITHUB_REPO=
+
+:: Cargar variables desde .env usando PowerShell para evitar problemas de CRLF/espacios
+set "ENV_FILE=%~dp0..\.env"
+if exist "%ENV_FILE%" (
+    for /f "tokens=*" %%a in ('powershell -Command "Get-Content '%ENV_FILE%' | Where-Object { $_ -match '=' -and -not $_.StartsWith('#') } | ForEach-Object { $_.Trim() }"') do (
+        set "%%a"
     )
 )
 
@@ -21,6 +23,7 @@ echo Primero actualizamos desde Github y luego corremos el script en el VPS.
 echo.
 :: Construir la URL completa para forzarla en el VPS
 set "REPO_URL=https://!GITHUB_TOKEN!@github.com/!GITHUB_REPO!"
+echo USARE REPO_URL: !REPO_URL!
 
 ssh -p !VPS_PORT! !VPS_USER!@!VPS_HOST! "mkdir -p artedigitaldata && cd artedigitaldata && git remote set-url origin !REPO_URL! 2>/dev/null || (git init && git remote add origin !REPO_URL!) && echo 'Bajando cambios al VPS...' && git fetch origin main && git reset --hard origin/main && echo 'Corriendo el deploy de backend...' && bash deploy_scripts/server_update.sh"
 

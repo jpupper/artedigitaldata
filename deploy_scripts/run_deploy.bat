@@ -1,13 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Cargar variables desde .env
-if exist "%~dp0..\.env" (
-    for /f "usebackq tokens=1,* delims==" %%i in ("%~dp0..\.env") do (
-        set "var=%%i"
-        if not "!var:~0,1!"=="#" (
-            set "%%i=%%j"
-        )
+:: Limpiar variables previas para evitar conflictos
+set GITHUB_TOKEN=
+set GITHUB_REPO=
+
+:: Cargar variables desde .env usando PowerShell para evitar problemas de CRLF/espacios
+set "ENV_FILE=%~dp0..\.env"
+if exist "%ENV_FILE%" (
+    for /f "tokens=*" %%a in ('powershell -Command "Get-Content '%ENV_FILE%' | Where-Object { $_ -match '=' -and -not $_.StartsWith('#') } | ForEach-Object { $_.Trim() }"') do (
+        set "%%a"
     )
 )
 
