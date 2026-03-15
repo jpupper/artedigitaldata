@@ -1,10 +1,65 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { sendResetPasswordEmail } from '../utils/mailer';
 
 const router = Router();
+
+// Forgot Password
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'El email es obligatorio' });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security, don't confirm if user exists or not
+      return res.json({ message: 'Si el correo está registrado, recibirás un link de recuperación.' });
+    }
+
+    const token = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    await user.save();
+
+    await sendResetPasswordEmail(user.email, token);
+
+    return res.json({ message: 'Si el correo está registrado, recibirás un link de recuperación.' });
+  } catch (err: any) {
+    console.error('Error in forgot-password:', err);
+    return res.status(500).json({ error: 'Error al enviar el correo de recuperación' });
+  }
+});
+
+// Reset Password
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token y contraseña son necesarios' });
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'El token es inválido o ha expirado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 router.post('/register', async (req: Request, res: Response) => {
   try {

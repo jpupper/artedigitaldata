@@ -15,6 +15,8 @@ export interface IUser extends Document {
     facebook?: string;
     tiktok?: string;
   };
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +37,8 @@ const UserSchema: Schema = new Schema(
       facebook: { type: String, default: '' },
       tiktok: { type: String, default: '' },
     },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
