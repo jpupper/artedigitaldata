@@ -23,6 +23,8 @@
           <h1 id="profile-username" class="text-2xl md:text-3xl font-black text-white">Cargando...</h1>
           <p id="profile-bio" class="text-gray-400 mt-2"></p>
           <p id="profile-meta" class="text-sm text-gray-500 mt-2"></p>
+          <div id="profile-socials" class="flex flex-wrap gap-2 mt-4"></div>
+        </div>
         </div>
         <div id="edit-profile-btn" class="hidden">
           <button onclick="toggleEditMode()" class="px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-medium transition-all">
@@ -49,9 +51,40 @@
             <label class="block text-sm font-medium text-gray-400 mb-2">Avatar (URL o subir imagen)</label>
             <div class="flex gap-3">
               <input type="text" id="edit-avatar-url" placeholder="URL de imagen"
-                class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-orange-500 focus:outline-none transition-colors">
+                class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-[var(--color-cyan)] focus:outline-none transition-colors">
               <input type="file" id="edit-avatar-file" accept="image/*"
-                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 file:text-sm file:cursor-pointer">
+                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-cyan-500/20 file:text-cyan-400 file:text-sm file:cursor-pointer">
+            </div>
+          </div>
+          
+          <div class="pt-6 border-t border-white/10 mt-6">
+            <h3 class="text-xs font-black text-gray-500 uppercase mb-4 tracking-widest">Conectar Redes Sociales</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="relative group">
+                <i class="fab fa-instagram absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 group-focus-within:scale-110 transition-transform"></i>
+                <input type="text" id="edit-social-instagram" placeholder="@usuario_instagram" 
+                  class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-pink-500/50 focus:outline-none transition-all">
+              </div>
+              <div class="relative group">
+                <i class="fab fa-discord absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-focus-within:scale-110 transition-transform"></i>
+                <input type="text" id="edit-social-discord" placeholder="Link de invitación o ID" 
+                  class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-indigo-400/50 focus:outline-none transition-all">
+              </div>
+              <div class="relative group">
+                <i class="fab fa-whatsapp absolute left-4 top-1/2 -translate-y-1/2 text-green-500 group-focus-within:scale-110 transition-transform"></i>
+                <input type="text" id="edit-social-whatsapp" placeholder="Número (ej: 5411...)" 
+                  class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-green-500/50 focus:outline-none transition-all">
+              </div>
+              <div class="relative group">
+                <i class="fab fa-facebook absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 group-focus-within:scale-110 transition-transform"></i>
+                <input type="text" id="edit-social-facebook" placeholder="URL de tu perfil" 
+                  class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-blue-600/50 focus:outline-none transition-all">
+              </div>
+              <div class="relative group">
+                <i class="fab fa-tiktok absolute left-4 top-1/2 -translate-y-1/2 text-white group-focus-within:scale-110 transition-transform"></i>
+                <input type="text" id="edit-social-tiktok" placeholder="@usuario_tiktok" 
+                  class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-white/50 focus:outline-none transition-all">
+              </div>
             </div>
           </div>
           <button type="submit" class="btn-primary px-6 py-3 rounded-xl transition-all hover:scale-105">
@@ -101,9 +134,10 @@
     </div>
   </main>
 
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/header.js"></script>
+  <script src="/artedigitaldata/js/config.js"></script>
+  <script src="/artedigitaldata/js/auth.js"></script>
+  <script src="/artedigitaldata/js/header.js"></script>
+  <script src="/artedigitaldata/js/tagging.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const targetUsername = params.get('user');
@@ -146,9 +180,17 @@
           }
         }
 
+        const socials = {
+          instagram: document.getElementById('edit-social-instagram').value.trim(),
+          discord: document.getElementById('edit-social-discord').value.trim(),
+          whatsapp: document.getElementById('edit-social-whatsapp').value.trim(),
+          facebook: document.getElementById('edit-social-facebook').value.trim(),
+          tiktok: document.getElementById('edit-social-tiktok').value.trim()
+        };
+
         const res = await apiRequest('/profile/me', {
           method: 'PATCH',
-          body: JSON.stringify({ bio, avatar: avatar || undefined, displayName })
+          body: JSON.stringify({ bio, avatar: avatar || undefined, displayName, socials })
         });
 
         if (res?.ok) {
@@ -168,7 +210,10 @@
         const { user: profile, posts, recursos, eventos } = await res.json();
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
-        document.getElementById('profile-bio').innerHTML = formatMentions(profile.bio || 'Sin bio');
+        const bioText = profile.bio || 'Sin bio';
+        document.getElementById('profile-bio').innerHTML = typeof formatMentions === 'function' 
+          ? formatMentions(bioText) 
+          : bioText;
         document.getElementById('profile-meta').innerHTML = `
           <i class="fas fa-calendar-alt mr-1"></i> Se unió el ${new Date(profile.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
           <span class="mx-2">•</span>
@@ -187,6 +232,26 @@
           document.getElementById('edit-display-name').value = profile.displayName || '';
           document.getElementById('edit-bio').value = profile.bio || '';
           document.getElementById('edit-avatar-url').value = profile.avatar || '';
+          
+          if (profile.socials) {
+            document.getElementById('edit-social-instagram').value = profile.socials.instagram || '';
+            document.getElementById('edit-social-discord').value = profile.socials.discord || '';
+            document.getElementById('edit-social-whatsapp').value = profile.socials.whatsapp || '';
+            document.getElementById('edit-social-facebook').value = profile.socials.facebook || '';
+            document.getElementById('edit-social-tiktok').value = profile.socials.tiktok || '';
+          }
+        }
+
+        // Socials Display
+        const socialsContainer = document.getElementById('profile-socials');
+        socialsContainer.innerHTML = '';
+        if (profile.socials) {
+          const s = profile.socials;
+          if (s.instagram) socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-pink-500/10 text-pink-500 hover:bg-pink-500 hover:text-white transition-all"><i class="fab fa-instagram"></i></a>`;
+          if (s.discord) socialsContainer.innerHTML += `<a href="${s.discord.startsWith('http') ? s.discord : '#'}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all"><i class="fab fa-discord"></i></a>`;
+          if (s.whatsapp) socialsContainer.innerHTML += `<a href="https://wa.me/${s.whatsapp.replace(/\+/g,'')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a>`;
+          if (s.facebook) socialsContainer.innerHTML += `<a href="${s.facebook.startsWith('http') ? s.facebook : `https://facebook.com/${s.facebook}`}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-facebook"></i></a>`;
+          if (s.tiktok) socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-500/10 text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a>`;
         }
         
         console.log("Profile data:", { posts: posts.length, recursos: recursos?.length, eventos: eventos?.length });
