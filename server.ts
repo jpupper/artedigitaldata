@@ -26,7 +26,7 @@ import searchRoutes from './src/routes/search';
 
 const PORT = process.env.PORT || 2495;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/artedigital';
-const BASE_PATH = '/artedigital';
+const BASE_PATH = '/artedigitaldata';
 
 const app = express();
 const server = http.createServer(app);

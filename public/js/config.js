@@ -1,5 +1,5 @@
 const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
-const BASE_PATH = '/artedigital';
+const BASE_PATH = '/artedigitaldata';
 
 const CONFIG = {
   isLocal: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168'),

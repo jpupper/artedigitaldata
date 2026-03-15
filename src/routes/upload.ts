@@ -12,7 +12,7 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
 
     const result = await new Promise<any>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder: 'artedigital', resource_type: 'auto' },
+        { folder: 'artedigitaldata', resource_type: 'auto' },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
