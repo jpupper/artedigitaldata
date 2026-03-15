@@ -1,0 +1,36 @@
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+export interface AuthRequest extends Request {
+  user?: { id: string; role: string; username: string };
+}
+
+export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    res.status(401).json({ error: 'Token no proporcionado' });
+    return;
+  }
+
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET not defined');
+    const decoded = jwt.verify(token, secret) as {
+      id: string;
+      role: string;
+      username: string;
+    };
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token inválido o expirado' });
+  }
+}
+
+export function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'ADMINISTRADOR') {
+    res.status(403).json({ error: 'Acceso denegado. Se requiere rol ADMINISTRADOR.' });
+    return;
+  }
+  next();
+}

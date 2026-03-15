@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arte Digital Data - Feed</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="min-h-screen scrollbar-hide">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+    <!-- Hero Section -->
+    <section class="mb-12 text-center py-16">
+      <h1 class="text-4xl md:text-6xl font-black gradient-text mb-4">Arte Digital Data</h1>
+      <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+        La red social para artistas digitales.
+      </p>
+      <div id="hero-cta" class="mt-8"></div>
+    </section>
+
+    <!-- Upcoming Events Preview -->
+    <section class="mb-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-white"><i
+            class="fas fa-calendar-alt text-[var(--color-magenta)] mr-2"></i>Próximos Eventos</h2>
+        <a href="calendario.html" class="text-sm font-bold text-[var(--color-cyan)] hover:underline">Ver Calendario
+          Completo <i class="fas fa-arrow-right ml-1"></i></a>
+      </div>
+      <div id="events-preview" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="col-span-full text-center py-10 bg-white/5 rounded-2xl border border-white/5">
+          <p class="text-gray-500">Buscando eventos...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feed -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-6"><i class="fas fa-fire text-[var(--color-magenta)] mr-2"></i>Feed
+        Global</h2>
+      <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-20">
+          <i class="fas fa-spinner fa-spin text-3xl text-orange-400 mb-4"></i>
+          <p>Cargando arte...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const heroCta = document.getElementById('hero-cta');
+      if (!isLoggedIn()) {
+        heroCta.innerHTML = `
+          <a href="${CONFIG.BASE}/register.html" class="btn-primary inline-block text-black font-bold px-8 py-3 rounded-xl text-lg transition-all hover:scale-105">
+            <i class="fas fa-rocket mr-2"></i>Únete Ahora
+          </a>`;
+      }
+      await Promise.all([loadFeed(), loadEventsPreview()]);
+    });
+
+    async function loadFeed() {
+      const container = document.getElementById('feed-container');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/posts');
+        const posts = await res.json();
+        if (!posts.length) {
+          container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20"><p class="text-xl">Aún no hay publicaciones</p></div>`;
+          return;
+        }
+        container.innerHTML = posts.map(post => `
+          <div class="rounded-2xl overflow-hidden border border-cyan-500/10 card-cyber transition-all duration-300">
+            ${post.imageUrl ? `
+              <a href="${CONFIG.BASE}/post.html?id=${post._id}" target="_blank" class="block aspect-video overflow-hidden">
+                <img src="${post.imageUrl}" alt="${post.title}" class="w-full h-full object-cover">
+              </a>
+            ` : ''}
+            <div class="p-5">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-cyan-500 text-black">
+                  ${(post.author?.username || '?')[0].toUpperCase()}
+                </div>
+                <div>
+                  <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-sm font-medium text-cyan-400">
+                    ${post.author?.username || 'Anónimo'}
+                  </a>
+                  <p class="text-[10px] text-gray-500">${new Date(post.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">${post.title}</h3>
+              <p class="text-gray-400 text-sm mb-3 line-clamp-3">${formatMentions(post.description)}</p>
+              <div class="flex items-center gap-4 text-xs text-gray-500">
+                <span><i class="fas fa-heart mr-1"></i>${post.likes?.length || 0}</span>
+                <span><i class="fas fa-comment mr-1"></i>${post.comments?.length || 0}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Error cargando el feed</div>`;
+      }
+    }
+
+    async function loadEventsPreview() {
+      const container = document.getElementById('events-preview');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/eventos');
+        const allEvents = await res.json();
+        const upcoming = allEvents.filter(e => new Date(e.date) >= new Date()).slice(0, 3);
+        if (!upcoming.length) {
+          container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 italic">No hay eventos próximos.</div>`;
+          return;
+        }
+        container.innerHTML = upcoming.map(ev => `
+          <a href="evento.html?id=${ev._id}" target="_blank" class="block group">
+            <div class="rounded-2xl border border-white/5 bg-white/5 p-4 hover:border-magenta-500/30 transition-all">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="px-2 py-1 bg-magenta-500/20 text-magenta-400 rounded-lg text-[10px] font-bold">
+                  ${new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
+                </span>
+                <h3 class="font-bold text-white truncate">${ev.title}</h3>
+              </div>
+              <p class="text-xs text-gray-400 line-clamp-2">${formatMentions(ev.description)}</p>
+            </div>
+          </a>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '';
+      }
+    }
+  </script>
+</body>
+
+</html>

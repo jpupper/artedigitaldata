@@ -1,0 +1,81 @@
+:root {
+  --bg-base: #0D0D12;
+  --bg-surface: #1A1A2E;
+  --color-cyan: #00F5FF;
+  --color-magenta: #FF00E0;
+  --color-text: #E5E5E5;
+  --color-text-dim: #94A3B8;
+  --gradient-neon: linear-gradient(135deg, var(--color-cyan), var(--color-magenta));
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.bg-surface {
+  background-color: var(--bg-surface);
+}
+
+.text-cyan {
+  color: var(--color-cyan);
+}
+
+.text-magenta {
+  color: var(--color-magenta);
+}
+
+.gradient-text {
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-primary {
+  background: var(--gradient-neon);
+  color: var(--bg-base) !important;
+  font-weight: bold;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.4);
+}
+
+.card-cyber {
+  background: var(--bg-surface);
+  border: 1px solid rgba(0, 245, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-cyber:hover {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.15);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tagging System Styles */
+.tagging-menu {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tagging-row {
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.tagging-row.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-left-color: var(--color-cyan);
+}

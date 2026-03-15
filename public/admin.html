@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+    <div id="admin-access-denied" class="hidden text-center py-20">
+      <i class="fas fa-lock text-5xl text-red-400/50 mb-4"></i>
+      <h2 class="text-2xl font-bold text-red-400">Acceso Denegado</h2>
+      <p class="text-gray-500 mt-2">Solo los administradores pueden acceder a este panel.</p>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+      <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-black text-white">
+            <i class="fas fa-shield-alt text-[var(--color-cyan)] mr-2"></i>Panel de Control
+          </h1>
+          <p class="text-gray-400 mt-1">Gestión global de la plataforma</p>
+        </div>
+        <div class="flex gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
+          <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all bg-cyan-500 text-black">Usuarios</button>
+          <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Posteos</button>
+          <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Recursos</button>
+          <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Eventos</button>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="mb-6 relative">
+        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+        <input type="text" id="admin-search" placeholder="Buscar por título, nombre o email..." 
+               oninput="handleSearch()"
+               class="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
+      </div>
+
+      <!-- Content Sections -->
+      <div id="section-users" class="admin-section">
+        <div class="rounded-2xl border border-cyan-500/20 card-cyber overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 bg-black/20">
+                  <th class="text-left px-6 py-4 text-cyan-400 font-bold uppercase text-xs">Usuario</th>
+                  <th class="text-left px-6 py-4 text-cyan-400 font-bold uppercase text-xs">Email</th>
+                  <th class="text-left px-6 py-4 text-cyan-400 font-bold uppercase text-xs">Rol</th>
+                  <th class="text-left px-6 py-4 text-cyan-400 font-bold uppercase text-xs">Registro</th>
+                  <th class="text-left px-6 py-4 text-cyan-400 font-bold uppercase text-xs">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-posts" class="admin-section hidden">
+        <div class="rounded-2xl border border-cyan-500/20 card-cyber overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 bg-black/20">
+                  <th class="text-left px-6 py-4 text-magenta font-bold uppercase text-xs">Obra</th>
+                  <th class="text-left px-6 py-4 text-magenta font-bold uppercase text-xs">Autor</th>
+                  <th class="text-left px-6 py-4 text-magenta font-bold uppercase text-xs">Fecha</th>
+                  <th class="text-left px-6 py-4 text-magenta font-bold uppercase text-xs">Likes/Com</th>
+                  <th class="text-left px-6 py-4 text-magenta font-bold uppercase text-xs">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="posts-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-recursos" class="admin-section hidden">
+        <div class="rounded-2xl border border-cyan-500/20 card-cyber overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 bg-black/20">
+                  <th class="text-left px-6 py-4 text-orange-400 font-bold uppercase text-xs">Recurso</th>
+                  <th class="text-left px-6 py-4 text-orange-400 font-bold uppercase text-xs">Tipo</th>
+                  <th class="text-left px-6 py-4 text-orange-400 font-bold uppercase text-xs">Autor</th>
+                  <th class="text-left px-6 py-4 text-orange-400 font-bold uppercase text-xs">Enlace</th>
+                  <th class="text-left px-6 py-4 text-orange-400 font-bold uppercase text-xs">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="recursos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-eventos" class="admin-section hidden">
+        <div class="rounded-2xl border border-magenta-500/20 card-cyber overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 bg-black/20">
+                  <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Evento</th>
+                  <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Creador</th>
+                  <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Fecha del Evento</th>
+                  <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Ubicación</th>
+                  <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="eventos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit Event Modal -->
+  <div id="edit-event-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-[var(--bg-surface)] border border-white/10 rounded-3xl max-w-lg w-full overflow-hidden p-8">
+      <h2 class="text-2xl font-bold text-white mb-6">Editar Evento</h2>
+      <form id="edit-event-form" class="space-y-4">
+        <input type="hidden" id="edit-event-id">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Título</label>
+          <input type="text" id="edit-event-title" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ubicación</label>
+          <input type="text" id="edit-event-location" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
+          <input type="datetime-local" id="edit-event-date" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
+          <textarea id="edit-event-desc" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none resize-none"></textarea>
+        </div>
+        <div class="flex gap-4 pt-4">
+          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl bg-white/5 text-white font-bold">Cancelar</button>
+          <button type="submit" class="flex-1 px-6 py-3 rounded-xl bg-magenta-500 text-white font-bold">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let currentTab = 'users';
+    let data = { users: [], posts: [], recursos: [], eventos: [] };
+    let filteredData = { users: [], posts: [], recursos: [], eventos: [] };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!isLoggedIn() || !isAdmin()) {
+        document.getElementById('admin-access-denied').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('admin-panel').classList.remove('hidden');
+      await refreshAll();
+    });
+
+    async function refreshAll() {
+      try {
+        const [usersRes, postsRes, recursosRes, eventosRes] = await Promise.all([
+          apiRequest('/admin/users'),
+          fetch(CONFIG.API_URL + '/posts'),
+          fetch(CONFIG.API_URL + '/recursos'),
+          fetch(CONFIG.API_URL + '/eventos')
+        ]);
+
+        data.users = await usersRes.json();
+        data.posts = await postsRes.json();
+        data.recursos = await recursosRes.json();
+        data.eventos = await eventosRes.json();
+        
+        handleSearch();
+      } catch (err) {
+        console.error('Error refreshing admin data:', err);
+      }
+    }
+
+    function handleSearch() {
+      const q = document.getElementById('admin-search').value.toLowerCase();
+      
+      filteredData.users = data.users.filter(u => 
+        u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      );
+
+      filteredData.posts = data.posts.filter(p => 
+        p.title.toLowerCase().includes(q) || p.author?.username?.toLowerCase().includes(q)
+      );
+
+      filteredData.recursos = data.recursos.filter(r => 
+        r.title.toLowerCase().includes(q) || r.author?.username?.toLowerCase().includes(q)
+      );
+
+      filteredData.eventos = data.eventos.filter(e => 
+        e.title.toLowerCase().includes(q) || e.creator?.username?.toLowerCase().includes(q)
+      );
+
+      renderTable();
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`section-${tab}`).classList.remove('hidden');
+      
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('bg-cyan-500', 'text-black');
+        b.classList.add('text-gray-400');
+      });
+      document.getElementById(`tab-${tab}`).classList.add('bg-cyan-500', 'text-black');
+      document.getElementById(`tab-${tab}`).classList.remove('text-gray-400');
+      
+      renderTable();
+    }
+
+    function renderTable() {
+      if (currentTab === 'users') {
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = filteredData.users.map(u => `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${u.username}</td>
+            <td class="px-6 py-4 text-gray-400">${u.email}</td>
+            <td class="px-6 py-4">
+              <select onchange="changeRole('${u._id}', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs">
+                <option value="USUARIO" ${u.role === 'USUARIO' ? 'selected' : ''}>USUARIO</option>
+                <option value="ADMINISTRADOR" ${u.role === 'ADMINISTRADOR' ? 'selected' : ''}>ADMIN</option>
+              </select>
+            </td>
+            <td class="px-6 py-4 text-xs text-gray-500">${new Date(u.createdAt).toLocaleDateString()}</td>
+            <td class="px-6 py-4">
+              <a href="${CONFIG.BASE}/profile.html?user=${u.username}" class="text-cyan-400 hover:underline">Ver Perfil</a>
+            </td>
+          </tr>
+        `).join('');
+      } else if (currentTab === 'posts') {
+        const tbody = document.getElementById('posts-tbody');
+        tbody.innerHTML = filteredData.posts.map(p => `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${p.title}</td>
+            <td class="px-6 py-4 text-gray-400">${p.author?.username || 'Anónimo'}</td>
+            <td class="px-6 py-4 text-xs text-gray-500">${new Date(p.createdAt).toLocaleDateString()}</td>
+            <td class="px-6 py-4 text-gray-500">${p.likes?.length || 0} / ${p.comments?.length || 0}</td>
+            <td class="px-6 py-4 flex gap-3">
+              <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+              <button onclick="deleteItem('posts', '${p._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } else if (currentTab === 'recursos') {
+        const tbody = document.getElementById('recursos-tbody');
+        tbody.innerHTML = filteredData.recursos.map(r => `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${r.title}</td>
+            <td class="px-6 py-4 uppercase text-xs text-orange-400">${r.type}</td>
+            <td class="px-6 py-4 text-gray-400">${r.author?.username || 'Anónimo'}</td>
+            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${r.url}" target="_blank" class="text-gray-500 hover:text-cyan-400">${r.url}</a></td>
+            <td class="px-6 py-4">
+              <button onclick="deleteItem('recursos', '${r._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } else if (currentTab === 'eventos') {
+        const tbody = document.getElementById('eventos-tbody');
+        tbody.innerHTML = filteredData.eventos.map(e => `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${e.title}</td>
+            <td class="px-6 py-4 text-gray-400">${e.creator?.username || 'Anónimo'}</td>
+            <td class="px-6 py-4 text-xs text-magenta-400">${new Date(e.date).toLocaleString()}</td>
+            <td class="px-6 py-4 text-gray-500">${e.location || 'Virtual'}</td>
+            <td class="px-6 py-4 flex gap-3">
+              <a href="${CONFIG.BASE}/evento.html?id=${e._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+              <button onclick="openEditEvent('${e._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteItem('eventos', '${e._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    async function changeRole(userId, newRole) {
+      const res = await apiRequest(`/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res?.ok) refreshAll();
+    }
+
+    async function deleteItem(type, id) {
+      if (!confirm(`¿Estás seguro de que querés eliminar este ${type === 'posts' ? 'posteo' : type === 'eventos' ? 'evento' : 'recurso'}?`)) return;
+      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : `/recursos/${id}`;
+      const res = await apiRequest(endpoint, { method: 'DELETE' });
+      if (res?.ok) refreshAll();
+    }
+
+    // Edit Event Logic
+    function openEditEvent(id) {
+      const ev = data.eventos.find(e => e._id === id);
+      if (!ev) return;
+      
+      document.getElementById('edit-event-id').value = ev._id;
+      document.getElementById('edit-event-title').value = ev.title;
+      document.getElementById('edit-event-location').value = ev.location || '';
+      document.getElementById('edit-event-desc').value = ev.description || '';
+      
+      // Format date for datetime-local input
+      if (ev.date) {
+        const d = new Date(ev.date);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        document.getElementById('edit-event-date').value = d.toISOString().slice(0, 16);
+      }
+
+      const modal = document.getElementById('edit-event-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('edit-event-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-event-id').value;
+      const title = document.getElementById('edit-event-title').value;
+      const location = document.getElementById('edit-event-location').value;
+      const date = document.getElementById('edit-event-date').value;
+      const description = document.getElementById('edit-event-desc').value;
+
+      const res = await apiRequest(`/eventos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title, location, date, description })
+      });
+
+      if (res?.ok) {
+        closeEditModal();
+        refreshAll();
+      }
+    });
+  </script>
+</body>
+</html>

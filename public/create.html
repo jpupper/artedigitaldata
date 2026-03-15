@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .type-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .type-card.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--color-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px -10px rgba(0, 245, 255, 0.3);
+    }
+    .type-card.active i {
+      color: var(--color-cyan);
+      filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.5));
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-black text-white mb-2">¿Qué querés <span class="gradient-text">Crear</span>?</h1>
+      <p class="text-gray-400">Compartí tu talento, recursos o invita a la comunidad a tus fechas.</p>
+    </div>
+
+    <!-- Type Selection -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <button onclick="switchType('post')" id="btn-post" class="type-card active p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+        <div class="w-16 h-16 mx-auto bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
+          <i class="fas fa-palette text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1">Obra Artística</h3>
+        <p class="text-xs text-gray-500">Publicá tus creaciones y diseños</p>
+      </button>
+
+      <button onclick="switchType('recurso')" id="btn-recurso" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+        <div class="w-16 h-16 mx-auto bg-orange-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
+          <i class="fas fa-box-open text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1">Recurso</h3>
+        <p class="text-xs text-gray-500">Links, software o tutoriales</p>
+      </button>
+
+      <button onclick="switchType('evento')" id="btn-evento" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+        <div class="w-16 h-16 mx-auto bg-fuchsia-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
+          <i class="fas fa-calendar-alt text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1">Evento</h3>
+        <p class="text-xs text-gray-500">Fechas, ferias o streamings</p>
+      </button>
+    </div>
+
+    <!-- Forms Container -->
+    <div class="rounded-3xl border border-white/5 bg-black/40 p-8 card-cyber">
+      
+      <!-- Post Form -->
+      <form id="post-form" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Título de la Obra</label>
+              <input type="text" id="post-title" placeholder="Ej: Paisaje Cyberpunk 2077" required
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Etiquetas (separadas por coma)</label>
+              <input type="text" id="post-tags" placeholder="3d, blender, neon..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción</label>
+              <textarea id="post-desc" rows="4" placeholder="Contanos sobre tu proceso creativo..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
+              <div id="post-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen de la Obra</label>
+              <div class="relative group">
+                <input type="file" id="post-file" accept="image/*" required
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <div id="post-file-preview" class="w-full aspect-square bg-white/5 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center group-hover:border-cyan-500/50 transition-colors overflow-hidden">
+                  <i class="fas fa-cloud-upload-alt text-4xl text-gray-600 mb-2"></i>
+                  <p class="text-sm text-gray-500">Hacé click para subir</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-cyan-500/10 hover:scale-[1.01] transition-transform">
+          <i class="fas fa-paper-plane mr-2"></i>PUBLICAR OBRA
+        </button>
+      </form>
+
+      <!-- Recurso Form -->
+      <form id="recurso-form" class="space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Título del Recurso</label>
+              <input type="text" id="rec-title" placeholder="Ej: Pack de Brushes Sci-Fi" required
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Tipo de Recurso</label>
+              <select id="rec-type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:border-orange-500 focus:outline-none">
+                <option value="software">Software</option>
+                <option value="github">GitHub / Código</option>
+                <option value="drive">Drive / Descarga</option>
+                <option value="tutorial">Tutorial / Guía</option>
+                <option value="other">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Enlace Directo (URL)</label>
+              <input type="url" id="rec-url" placeholder="https://..." required
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción Breve</label>
+              <textarea id="rec-desc" rows="3" placeholder="¿Para qué sirve este recurso?"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
+              <div id="rec-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Etiquetas (separadas por coma)</label>
+              <input type="text" id="rec-tags" placeholder="herramientas, free, assets..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/10 hover:scale-[1.01] transition-transform" style="background: linear-gradient(135deg, #ff8c00, #ff4500); color: white !important;">
+          <i class="fas fa-upload mr-2"></i>SUBIR RECURSO
+        </button>
+      </form>
+
+      <!-- Evento Form -->
+      <form id="evento-form" class="space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Nombre del Evento</label>
+              <input type="text" id="event-title" placeholder="Ej: Meetup Arte Digital BsAs" required
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Fecha y Hora</label>
+                <input type="datetime-local" id="event-date" required
+                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Lugar / Enlace</label>
+                <input type="text" id="event-location" placeholder="Club X o Link de Meet"
+                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción (mencioná gente con @usuario)</label>
+              <textarea id="event-desc" rows="4" placeholder="¡No se lo pierdan! Estarán @tolch y @jp..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
+              <div id="event-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen / Flyer (File o URL)</label>
+              <div class="flex flex-col gap-3">
+                <input type="file" id="event-file" accept="image/*"
+                  class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-magenta-500/20 file:text-magenta-400 file:cursor-pointer">
+                <input type="text" id="event-url" placeholder="O pegá el enlace de la imagen..."
+                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+              </div>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-magenta-500/10 hover:scale-[1.01] transition-transform">
+          <i class="fas fa-calendar-plus mr-2"></i>PUBLICAR EVENTO
+        </button>
+      </form>
+
+    </div>
+  </main>
+
+  <!-- Status Overlay -->
+  <div id="status-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center z-[10000] p-4">
+    <div class="text-center max-w-sm w-full">
+      <div id="status-icon" class="mb-6 flex justify-center">
+        <div class="relative w-24 h-24">
+          <div class="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+          <div id="status-spinner" class="absolute inset-0 border-4 border-t-cyan-500 rounded-full animate-spin"></div>
+        </div>
+      </div>
+      <h2 id="status-title" class="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Subiendo...</h2>
+      <p id="status-msg" class="text-gray-400">Procesando archivos y etiquetas...</p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    if (!isLoggedIn()) window.location.href = 'login.html';
+
+    // Initialize Tagging
+    enableTagging('post-desc');
+    enableTagging('rec-desc');
+    enableTagging('event-desc');
+
+    // Real-time previews
+    ['post-desc', 'rec-desc', 'event-desc'].forEach(id => {
+      const el = document.getElementById(id);
+      const preview = document.getElementById(id + '-preview');
+      el.addEventListener('input', () => {
+        preview.innerHTML = formatMentions(el.value) || 'Vista previa de menciones...';
+      });
+    });
+
+    function switchType(type) {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+      document.getElementById(`btn-${type}`).classList.add('active');
+
+      document.getElementById('post-form').classList.add('hidden');
+      document.getElementById('recurso-form').classList.add('hidden');
+      document.getElementById('evento-form').classList.add('hidden');
+      document.getElementById(`${type}-form`).classList.remove('hidden');
+    }
+
+    function showStatus(title, msg, isSuccess = false) {
+      const overlay = document.getElementById('status-overlay');
+      const titleEl = document.getElementById('status-title');
+      const msgEl = document.getElementById('status-msg');
+      const spinner = document.getElementById('status-spinner');
+      const iconContainer = document.getElementById('status-icon');
+
+      titleEl.innerText = title;
+      msgEl.innerText = msg;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      if (isSuccess) {
+        spinner.classList.add('hidden');
+        iconContainer.innerHTML = `<div class="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-5xl animate-bounce"><i class="fas fa-check"></i></div>`;
+      }
+    }
+
+    // File preview logic
+    document.getElementById('post-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('post-file-preview');
+          preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Form handlers
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('post-title').value.trim();
+      const description = document.getElementById('post-desc').value.trim();
+      const tags = document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const file = document.getElementById('post-file').files[0];
+
+      showStatus('Subiendo Obra', 'Optimizando imagen y procesando datos...');
+
+      let imageUrl = '';
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+          body: formData
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imageUrl = data.url;
+        }
+      }
+
+      const res = await apiRequest('/posts', {
+        method: 'POST',
+        body: JSON.stringify({ title, description, imageUrl, tags })
+      });
+
+      if (res?.ok) {
+        const post = await res.json();
+        showStatus('¡LISTO!', 'Gracias por contribuir a la comunidad', true);
+        setTimeout(() => {
+          window.location.href = `post.html?id=${post._id}`;
+        }, 2000);
+      } else {
+        document.getElementById('status-overlay').classList.add('hidden');
+        alert('Error al publicar. Reintenta por favor.');
+      }
+    });
+
+    document.getElementById('recurso-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('rec-title').value.trim();
+      const type = document.getElementById('rec-type').value;
+      const url = document.getElementById('rec-url').value.trim();
+      const description = document.getElementById('rec-desc').value.trim();
+      const tags = document.getElementById('rec-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+      showStatus('Guardando Recurso', 'Vinculando enlace y herramientas...');
+
+      const res = await apiRequest('/recursos', {
+        method: 'POST',
+        body: JSON.stringify({ title, type, url, description, tags })
+      });
+
+      if (res?.ok) {
+        showStatus('¡RECURSO SUBIDO!', 'Gracias por compartir tus herramientas', true);
+        setTimeout(() => {
+          window.location.href = 'recursos.html';
+        }, 2000);
+      } else {
+        document.getElementById('status-overlay').classList.add('hidden');
+        alert('Error al subir recurso.');
+      }
+    });
+
+    document.getElementById('evento-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('event-title').value.trim();
+      const description = document.getElementById('event-desc').value.trim();
+      const date = document.getElementById('event-date').value;
+      const location = document.getElementById('event-location').value.trim();
+      const file = document.getElementById('event-file').files[0];
+      let imageUrl = document.getElementById('event-url').value.trim();
+
+      showStatus('Publicando Evento', 'Notificando a los artistas etiquedados...');
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+          body: formData
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          imageUrl = data.url;
+        }
+      }
+
+      const res = await apiRequest('/eventos', {
+        method: 'POST',
+        body: JSON.stringify({ title, description, date, location, imageUrl })
+      });
+
+      if (res?.ok) {
+        showStatus('¡FECHA PUBLICADA!', '¡Nos vemos en el evento!', true);
+        setTimeout(() => {
+          window.location.href = 'calendario.html';
+        }, 2000);
+      } else {
+        document.getElementById('status-overlay').classList.add('hidden');
+        alert('Error al publicar fecha.');
+      }
+    });
+  </script>
+</body>
+</html>

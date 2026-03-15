@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cargando Obra... - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen scrollbar-hide">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
+    <div id="post-detail-container">
+      <div class="text-center py-20">
+        <i class="fas fa-spinner fa-spin text-4xl text-[var(--color-cyan)] mb-4"></i>
+        <p class="text-gray-400">Cargando detalles de la obra...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get('id');
+      if (!postId) {
+        window.location.href = CONFIG.BASE + '/index.html';
+        return;
+      }
+      await loadPost(postId);
+    });
+
+    async function loadPost(postId) {
+      const container = document.getElementById('post-detail-container');
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
+        if (!res.ok) throw new Error('Post no encontrado');
+        const post = await res.json();
+        document.title = `${post.title} - Arte Digital Data`;
+
+        container.innerHTML = `
+          <div class="rounded-3xl overflow-hidden border border-cyan-500/20 card-cyber">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold bg-cyan-500 text-black">
+                  ${(post.author?.username || '?')[0].toUpperCase()}
+                </div>
+                <div>
+                  <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
+                    ${post.author?.username || 'Anónimo'}
+                  </a>
+                  <p class="text-sm text-gray-500">${new Date(post.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-0">
+              ${post.imageUrl ? `
+                <div class="w-full bg-black flex justify-center border-b border-white/5">
+                  <img src="${post.imageUrl}" alt="${post.title}" class="max-w-full max-h-[70vh] object-contain">
+                </div>
+              ` : ''}
+              <div class="p-8">
+                <h1 class="text-3xl font-black text-white mb-4">${post.title}</h1>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
+                ${post.tags?.length ? `
+                  <div class="flex flex-wrap gap-2 mb-8">
+                    ${post.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs">#${t}</span>`).join('')}
+                  </div>
+                ` : ''}
+
+                <!-- Comments Section -->
+                <div class="border-t border-white/10 pt-8 mt-8">
+                  <h3 class="text-xl font-bold text-white mb-6">
+                    <i class="fas fa-comments text-magenta-500 mr-2"></i>Comentarios (${post.comments?.length || 0})
+                  </h3>
+                  
+                  ${isLoggedIn() ? `
+                    <form id="comment-form" class="mb-8 group">
+                      <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-magenta-500/20 flex items-center justify-center text-magenta-400 shrink-0">
+                          <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div class="flex-1">
+                          <textarea id="comment-text" required placeholder="Escribe un comentario..." 
+                            class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-500 focus:border-magenta-500 focus:outline-none transition-all resize-none h-24"></textarea>
+                          <div class="flex justify-end mt-2">
+                            <button type="submit" class="btn-primary px-6 py-2 rounded-xl text-sm transition-all hover:scale-105">
+                              Publicar Comentario
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  ` : `
+                    <div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center mb-8">
+                      <p class="text-gray-500 text-sm">Debes <a href="login.html" class="text-cyan-400 hover:underline">iniciar sesión</a> para comentar.</p>
+                    </div>
+                  `}
+
+                  <div id="comments-list" class="space-y-6">
+                    ${post.comments?.length ? post.comments.map(c => `
+                      <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
+                          ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+                            <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                              <i class="fas fa-user text-xs"></i>
+                            </div>
+                          `}
+                        </div>
+                        <div class="flex-1">
+                          <div class="bg-white/5 rounded-2xl px-4 py-3">
+                            <div class="flex justify-between items-center mb-1">
+                              <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                              <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    `).reverse().join('') : `
+                      <div class="text-center py-10 text-gray-600 italic">
+                        No hay comentarios aún. ¡Sé el primero!
+                      </div>
+                    `}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        if (isLoggedIn()) {
+          document.getElementById('comment-form').addEventListener('submit', (e) => addComment(e, postId));
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="text-center py-20">Obra no encontrada</div>`;
+      }
+    }
+
+    async function addComment(e, postId) {
+      e.preventDefault();
+      const textInput = document.getElementById('comment-text');
+      const text = textInput.value.trim();
+      if (!text) return;
+
+      try {
+        const res = await apiRequest(`/posts/${postId}/comment`, {
+          method: 'POST',
+          body: JSON.stringify({ text })
+        });
+
+        if (res.ok) {
+          textInput.value = '';
+          await loadPost(postId); // Refresh to show new comment
+        }
+      } catch (err) {
+        alert('Error al publicar comentario');
+      }
+    }
+  </script>
+</body>
+</html>
