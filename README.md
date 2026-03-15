@@ -78,10 +78,6 @@ El proyecto cuenta con scripts avanzados para automatizar el despliegue al servi
 *   `/deploy_scripts`: Herramientas de automatización para subida a producción.
 *   `server.ts`: Punto de entrada de la aplicación.
 
----
-
-## 🛡️ Seguridad
-Este repositorio ha sido auditado y su historial ha sido reiniciado para garantizar que no existan credenciales filtradas. Asegúrate de nunca subir tu archivo `.env` a sistemas de control de versiones.
 
 ---
 *Desarrollado para la comunidad de arte digital.* 🚀
