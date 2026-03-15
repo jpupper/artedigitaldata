@@ -79,6 +79,28 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
+router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, description, tags, imageUrl } = req.body;
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post no encontrado' });
+
+    if (post.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    if (title) post.title = title;
+    if (description !== undefined) post.description = description;
+    if (tags) post.tags = tags;
+    if (imageUrl) post.imageUrl = imageUrl;
+
+    await post.save();
+    return res.json(post);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const post = await Post.findById(req.params.id);

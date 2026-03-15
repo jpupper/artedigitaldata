@@ -76,6 +76,17 @@ router.get('/users/search', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
+router.get('/users/all', authMiddleware, async (_req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find({})
+      .select('username avatar displayName bio')
+      .sort({ username: 1 });
+    return res.json(users);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/rooms', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { name, description } = req.body;

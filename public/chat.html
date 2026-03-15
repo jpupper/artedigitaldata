@@ -23,9 +23,14 @@
       <h1 class="text-2xl font-black text-white">
         <i class="fas fa-comments text-[var(--color-magenta)] mr-2"></i>Chat en Vivo
       </h1>
-      <button id="new-room-btn" onclick="showCreateRoom()" class="btn-primary px-4 py-2 rounded-xl text-sm transition-all hover:scale-105">
-        <i class="fas fa-plus mr-1"></i>Nueva Sala
-      </button>
+      <div class="flex gap-2">
+        <button onclick="showUsersModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all">
+          <i class="fas fa-users mr-1"></i>USERS
+        </button>
+        <button id="new-room-btn" onclick="showCreateRoom()" class="btn-primary px-4 py-2 rounded-xl text-xs sm:text-sm transition-all hover:scale-105">
+          <i class="fas fa-plus mr-1"></i>Nueva Sala
+        </button>
+      </div>
     </div>
 
     <div class="flex-1 flex gap-4 min-h-0">
@@ -99,6 +104,27 @@
             <button type="button" onclick="hideCreateRoom()" class="px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all">Cancelar</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Users Directory Modal -->
+    <div id="users-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
+      <div class="w-full max-w-2xl rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-black text-white uppercase tracking-tighter">Directorio de <span class="text-cyan-400">Artistas</span></h3>
+            <p class="text-xs text-gray-500">Conectá con otros miembros de la comunidad</p>
+          </div>
+          <button onclick="hideUsersModal()" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:bg-white/5 transition-all">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div id="users-modal-list" class="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Users will be injected here -->
+          <div class="col-span-full text-center py-10">
+            <i class="fas fa-circle-notch fa-spin text-2xl text-cyan-400"></i>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -344,6 +370,52 @@
 
     function showCreateRoom() { document.getElementById('create-room-modal').classList.remove('hidden'); }
     function hideCreateRoom() { document.getElementById('create-room-modal').classList.add('hidden'); }
+
+    async function showUsersModal() {
+      const modal = document.getElementById('users-modal');
+      const list = document.getElementById('users-modal-list');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      try {
+        const res = await apiRequest('/chat/users/all');
+        const users = await res.json();
+        
+        list.innerHTML = users.map(u => `
+          <div class="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-cyan-500/30 transition-all group">
+            <img src="${u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" 
+                 class="w-12 h-12 rounded-xl object-cover border border-white/10 group-hover:border-cyan-500/50 transition-all">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-white truncate">${u.displayName || u.username}</h4>
+              <p class="text-[10px] text-gray-500 truncate">@${u.username}</p>
+            </div>
+            <div class="flex gap-2">
+              <a href="profile.html?user=${u.username}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-cyan-400 transition-all" title="Ver Perfil">
+                <i class="fas fa-user text-xs"></i>
+              </a>
+              <button onclick="startDFromDirectory('${u._id}', '${u.username}')" 
+                      class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all" title="Enviar Mensaje">
+                <i class="fas fa-comment-dots text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = '<div class="col-span-full text-center text-red-500">Error al cargar artistas</div>';
+      }
+    }
+
+    function hideUsersModal() {
+      const modal = document.getElementById('users-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function startDFromDirectory(userId, username) {
+      hideUsersModal();
+      setTab('private');
+      await startPrivateChat(userId, username);
+    }
   </script>
 </body>
 </html>

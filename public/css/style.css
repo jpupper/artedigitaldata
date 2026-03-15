@@ -31,6 +31,10 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  padding: 0.1em 0; /* Fix clipping of descenders like 'g' */
+  display: inline-block;
+  line-height: 1.1;
+  filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.3));
 }
 
 .btn-primary {

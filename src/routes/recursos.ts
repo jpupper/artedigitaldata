@@ -63,6 +63,30 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
+router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, description, type, url, tags, imageUrl } = req.body;
+    const recurso = await Recurso.findById(req.params.id);
+    if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
+
+    if (recurso.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    if (title) recurso.title = title;
+    if (description !== undefined) recurso.description = description;
+    if (type) recurso.type = type;
+    if (url) recurso.url = url;
+    if (tags) recurso.tags = tags;
+    if (imageUrl) recurso.imageUrl = imageUrl;
+
+    await recurso.save();
+    return res.json(recurso);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const recurso = await Recurso.findById(req.params.id);
