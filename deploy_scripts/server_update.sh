@@ -7,6 +7,10 @@ sed -i 's/\r$//' deploy_scripts/server_update.sh 2>/dev/null
 # 2. CARGAR VARIABLES DESDE .ENV
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
+else
+    echo "ERROR CRITICO: No se encontro el archivo .env en el VPS."
+    echo "Asegurate de crear uno en $(pwd)/.env con las credenciales necesarias."
+    exit 1
 fi
 
 # Configuracion
@@ -44,7 +48,13 @@ npm run build
 # 6. REINICIO TOTAL DE PM2 (Borrar y Crear)
 echo "Reestableciendo instancia de PM2..."
 pm2 delete "$APP_NAME" 2>/dev/null
-pm2 start server.js --name "$APP_NAME"
+# IMPORTANTE: El comando 'tsc' pone los archivos en /dist/ segun el tsconfig.json
+if [ -f "dist/server.js" ]; then
+    pm2 start dist/server.js --name "$APP_NAME"
+else
+    echo "ERROR: No se encontro dist/server.js. Probando server.js en raiz..."
+    pm2 start server.js --name "$APP_NAME" || echo "Fallo critico: No se encontro el archivo para PM2"
+fi
 pm2 save
 
 echo "------------------------------------------------"

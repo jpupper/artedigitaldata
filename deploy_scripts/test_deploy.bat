@@ -29,7 +29,6 @@ echo [2/2] SUBIENDO ARCHIVOS DE FRONTEND AL FTP (!FTP_HOST!)...
 node "%~dp0upload_ftp.js"
 if %ERRORLEVEL% neq 0 (
     echo Error al subir archivos por FTP. Revisa la consola.
-    pause
     exit /b
 )
 
@@ -38,4 +37,3 @@ echo ===================================================
 echo El proceso de deploy de Arte Digital Data ha finalizado!
 echo VPS y FTP estan completamente actualizados.
 echo ===================================================
-pause
