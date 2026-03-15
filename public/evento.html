@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evento - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
+    <div id="event-content" class="hidden">
+      <div class="rounded-3xl overflow-hidden border border-white/10 card-cyber bg-black/40">
+        <div id="event-image-container" class="aspect-video w-full overflow-hidden bg-magenta-500/5 flex items-center justify-center">
+          <!-- Image will be injected here -->
+        </div>
+        
+        <div class="p-8 md:p-12">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div id="event-date-badge" class="px-4 py-2 bg-magenta-500/20 text-magenta-400 rounded-xl font-black text-sm uppercase tracking-widest">
+              <!-- Date will be injected here -->
+            </div>
+            <div class="flex items-center gap-3 text-gray-500 text-sm">
+              <i class="fas fa-user-circle text-cyan-500"></i>
+              <span>Organizado por <a id="event-creator" href="#" class="text-white font-bold hover:text-cyan-400 transition-colors"></a></span>
+            </div>
+          </div>
+
+          <h1 id="event-title" class="text-4xl md:text-5xl font-black text-white mb-6"></h1>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="space-y-4">
+              <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                <i class="fas fa-clock text-magenta-500 mt-1"></i>
+                <div>
+                  <h4 class="text-xs font-bold text-gray-500 uppercase">Hora</h4>
+                  <p id="event-time" class="text-white font-medium"></p>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                <i class="fas fa-map-marker-alt text-cyan-500 mt-1"></i>
+                <div>
+                  <h4 class="text-xs font-bold text-gray-500 uppercase">Ubicación</h4>
+                  <p id="event-location" class="text-white font-medium"></p>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col justify-center">
+              <button onclick="shareEvent()" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-cyan-500 hover:text-black transition-all">
+                <i class="fas fa-share-alt group-hover:scale-110 transition-transform"></i>
+                COMPARTIR EVENTO
+              </button>
+            </div>
+          </div>
+
+          <div class="prose prose-invert max-w-none mb-12">
+            <h3 class="text-xl font-bold text-white mb-4 border-l-4 border-magenta-500 pl-4">Descripción</h3>
+            <p id="event-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+          </div>
+
+          <div id="participants-section" class="pt-8 border-t border-white/5 mb-10">
+            <h4 class="text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">Participantes Etiquetados</h4>
+            <div id="participants-list" class="flex flex-wrap gap-3">
+              <!-- Participants will be injected here -->
+            </div>
+          </div>
+
+          <!-- Comments Section -->
+          <div class="border-t border-white/10 pt-8">
+            <h3 class="text-xl font-bold text-white mb-6">
+              <i class="fas fa-comments text-cyan-400 mr-2"></i>Comentarios (<span id="comment-count">0</span>)
+            </h3>
+            
+            <div id="comment-form-container" class="mb-8">
+              <!-- Form will be injected here -->
+            </div>
+
+            <div id="comments-list" class="space-y-6">
+              <!-- Comments will be injected here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="py-20 text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-magenta-500 mb-4"></i>
+      <p class="text-gray-500">Sincronizando datos del evento...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="hidden py-20 text-center">
+      <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
+      <h2 class="text-2xl font-bold text-white mb-2">Evento no encontrado</h2>
+      <p class="text-gray-500 mb-8">El evento que buscas no existe o fue eliminado.</p>
+      <a href="calendario.html" class="btn-primary px-8 py-3 rounded-xl">Volver al Calendario</a>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    let currentEventId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentEventId = urlParams.get('id');
+
+      if (!currentEventId) {
+        showError();
+        return;
+      }
+
+      await loadEvent();
+    });
+
+    async function loadEvent() {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/eventos/${currentEventId}`);
+        if (!res.ok) throw new Error();
+        const ev = await res.json();
+        renderEvent(ev);
+      } catch (err) {
+        showError();
+      }
+    }
+
+    function renderEvent(ev) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('event-content').classList.remove('hidden');
+
+      document.title = `${ev.title} - Arte Digital Data`;
+      document.getElementById('event-title').innerText = ev.title;
+      document.getElementById('event-description').innerHTML = formatMentions(ev.description) || 'Sin descripción disponible.';
+      document.getElementById('event-location').innerText = ev.location || 'Virtual / Por definir';
+      
+      const date = new Date(ev.date);
+      document.getElementById('event-date-badge').innerText = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+      document.getElementById('event-time').innerText = `${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
+
+      const creator = document.getElementById('event-creator');
+      creator.innerText = ev.creator?.username || 'Anónimo';
+      creator.href = `profile.html?user=${ev.creator?.username}`;
+
+      const imgContainer = document.getElementById('event-image-container');
+      if (ev.imageUrl) {
+        imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+      } else {
+        imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
+      }
+
+      // Participants
+      const participantsSection = document.getElementById('participants-section');
+      const participantsList = document.getElementById('participants-list');
+      if (ev.participants?.length) {
+        participantsSection.classList.remove('hidden');
+        participantsList.innerHTML = ev.participants.map(p => `
+          <a href="profile.html?user=${p.username}" class="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500 transition-all group">
+            <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-black group-hover:bg-cyan-500 group-hover:text-black transition-all">
+              ${(p.username || '?')[0].toUpperCase()}
+            </div>
+            <span class="text-sm font-bold text-gray-300 group-hover:text-white">${p.username}</span>
+          </a>
+        `).join('');
+      } else {
+        participantsSection.classList.add('hidden');
+      }
+
+      // Comments
+      document.getElementById('comment-count').innerText = ev.comments?.length || 0;
+      const formContainer = document.getElementById('comment-form-container');
+      if (isLoggedIn()) {
+        formContainer.innerHTML = `
+          <form id="comment-form" class="group">
+            <div class="flex gap-4">
+              <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                <i class="fas fa-comment-dots"></i>
+              </div>
+              <div class="flex-1">
+                <textarea id="comment-text" required placeholder="Haz una pregunta o deja un mensaje sobre el evento..." 
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none transition-all resize-none h-24"></textarea>
+                <div class="flex justify-end mt-2">
+                  <button type="submit" class="btn-primary px-6 py-2 rounded-xl text-sm transition-all hover:scale-105">
+                    Enviar Mensaje
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>`;
+        document.getElementById('comment-form').addEventListener('submit', addComment);
+      } else {
+        formContainer.innerHTML = `
+          <div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center">
+            <p class="text-gray-500 text-sm">Debes <a href="login.html" class="text-cyan-400 hover:underline">iniciar sesión</a> para dejar mensajes.</p>
+          </div>`;
+      }
+
+      const commentsList = document.getElementById('comments-list');
+      if (ev.comments?.length) {
+        commentsList.innerHTML = ev.comments.map(c => `
+          <div class="flex gap-4 scroll-mt-24">
+            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
+              ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+                <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <i class="fas fa-user-astronaut text-xs"></i>
+                </div>
+              `}
+            </div>
+            <div class="flex-1">
+              <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">
+                <div class="flex justify-between items-center mb-1">
+                  <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                  <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                </div>
+                <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
+              </div>
+            </div>
+          </div>
+        `).reverse().join('');
+      } else {
+        commentsList.innerHTML = `<div class="text-center py-10 text-gray-600 italic">No hay mensajes aún.</div>`;
+      }
+    }
+
+    async function addComment(e) {
+      e.preventDefault();
+      const textInput = document.getElementById('comment-text');
+      const text = textInput.value.trim();
+      if (!text) return;
+
+      try {
+        const res = await apiRequest(`/eventos/${currentEventId}/comment`, {
+          method: 'POST',
+          body: JSON.stringify({ text })
+        });
+
+        if (res.ok) {
+          textInput.value = '';
+          await loadEvent();
+        }
+      } catch (err) {
+        alert('Error al enviar mensaje');
+      }
+    }
+
+    function showError() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+    }
+
+    function shareEvent() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> URL COPIADA!';
+        btn.classList.add('bg-green-500/20', 'text-green-400');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove('bg-green-500/20', 'text-green-400');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

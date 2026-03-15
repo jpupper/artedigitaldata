@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recurso - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
+    <div id="resource-content" class="hidden">
+      <div class="rounded-3xl overflow-hidden border border-white/10 card-cyber bg-black/40 p-8 md:p-12">
+        <div class="flex items-center gap-6 mb-8">
+          <div id="resource-type-icon" class="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0">
+            <!-- Icon will be injected here -->
+          </div>
+          <div class="flex-1 min-w-0">
+            <h1 id="resource-title" class="text-3xl md:text-5xl font-black text-white mb-2 truncate"></h1>
+            <p class="text-gray-500 font-medium">Subido por <a id="resource-author" href="#" class="text-cyan-400 hover:underline"></a></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+          <div class="md:col-span-2 prose prose-invert max-w-none">
+            <h3 class="text-xl font-bold text-white mb-4 border-l-4 border-cyan-500 pl-4">Descripción</h3>
+            <p id="resource-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+            
+            <div id="resource-tags" class="flex flex-wrap gap-2 mt-6">
+              <!-- Tags here -->
+            </div>
+          </div>
+          <div class="flex flex-col gap-4">
+            <a id="resource-link" href="#" target="_blank" rel="noopener" class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-cyan-500 text-black font-black hover:scale-105 transition-all">
+              <i class="fas fa-external-link-alt"></i>
+              ABRIR RECURSO
+            </a>
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+              <h4 class="text-xs font-bold text-gray-500 uppercase mb-1">Tipo</h4>
+              <p id="resource-type-text" class="text-white font-bold uppercase tracking-widest text-sm"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="border-t border-white/10 pt-8 mt-10">
+          <h3 class="text-xl font-bold text-white mb-6">
+            <i class="fas fa-comments text-cyan-400 mr-2"></i>Comentarios (<span id="comment-count">0</span>)
+          </h3>
+          
+          <div id="comment-form-container" class="mb-8">
+            <!-- Form will be injected here -->
+          </div>
+
+          <div id="comments-list" class="space-y-6">
+            <!-- Comments will be injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="py-20 text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-cyan-500 mb-4"></i>
+      <p class="text-gray-500">Cargando recurso...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="hidden py-20 text-center">
+      <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
+      <h2 class="text-2xl font-bold text-white mb-2">Recurso no encontrado</h2>
+      <a href="recursos.html" class="btn-primary px-8 py-3 rounded-xl mt-4 inline-block">Volver a Recursos</a>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    let currentResourceId = null;
+    const typeIcons = { software: 'fas fa-desktop', github: 'fab fa-github', drive: 'fab fa-google-drive', tutorial: 'fas fa-graduation-cap', other: 'fas fa-link' };
+    const typeColors = { software: 'bg-fuchsia-500/20 text-fuchsia-400', github: 'bg-gray-500/20 text-gray-400', drive: 'bg-yellow-500/20 text-yellow-500', tutorial: 'bg-green-500/20 text-green-400', other: 'bg-orange-500/20 text-orange-400' };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentResourceId = urlParams.get('id');
+
+      if (!currentResourceId) {
+        showError();
+        return;
+      }
+
+      await loadResource();
+    });
+
+    async function loadResource() {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/recursos/${currentResourceId}`);
+        if (!res.ok) throw new Error();
+        const r = await res.json();
+        renderResource(r);
+      } catch (err) {
+        showError();
+      }
+    }
+
+    function renderResource(r) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('resource-content').classList.remove('hidden');
+
+      document.title = `${r.title} - Arte Digital Data`;
+      document.getElementById('resource-title').innerText = r.title;
+      document.getElementById('resource-description').innerHTML = formatMentions(r.description) || 'Sin descripción disponible.';
+      document.getElementById('resource-type-text').innerText = r.type;
+      
+      const authorLink = document.getElementById('resource-author');
+      authorLink.innerText = `@${r.author?.username || 'anónimo'}`;
+      authorLink.href = `profile.html?user=${r.author?.username}`;
+
+      const link = document.getElementById('resource-link');
+      link.href = r.url;
+
+      const iconContainer = document.getElementById('resource-type-icon');
+      iconContainer.className = `w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0 ${typeColors[r.type] || typeColors.other}`;
+      iconContainer.innerHTML = `<i class="${typeIcons[r.type] || typeIcons.other}"></i>`;
+
+      const tagsContainer = document.getElementById('resource-tags');
+      if (r.tags?.length) {
+        tagsContainer.innerHTML = r.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${t}</span>`).join('');
+      }
+
+      // Comments
+      document.getElementById('comment-count').innerText = r.comments?.length || 0;
+      const formContainer = document.getElementById('comment-form-container');
+      if (isLoggedIn()) {
+        formContainer.innerHTML = `
+          <form id="comment-form" class="group">
+            <div class="flex gap-4">
+              <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                <i class="fas fa-comment-dots"></i>
+              </div>
+              <div class="flex-1">
+                <textarea id="comment-text" required placeholder="Duda, agradecimiento o comentario sobre este recurso..." 
+                  class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none transition-all resize-none h-24"></textarea>
+                <div class="flex justify-end mt-2">
+                  <button type="submit" class="btn-primary px-6 py-2 rounded-xl text-sm transition-all hover:scale-105">
+                    Comentar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>`;
+        document.getElementById('comment-form').addEventListener('submit', addComment);
+      } else {
+        formContainer.innerHTML = `<div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center text-gray-500 text-sm">Inicia sesión para comentar.</div>`;
+      }
+
+      const commentsList = document.getElementById('comments-list');
+      if (r.comments?.length) {
+        commentsList.innerHTML = r.comments.map(c => `
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
+              ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+                <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <i class="fas fa-user text-xs"></i>
+                </div>
+              `}
+            </div>
+            <div class="flex-1">
+              <div class="bg-white/5 rounded-2xl px-4 py-3">
+                <div class="flex justify-between items-center mb-1">
+                  <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                  <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                </div>
+                <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
+              </div>
+            </div>
+          </div>
+        `).reverse().join('');
+      } else {
+        commentsList.innerHTML = `<div class="text-center py-10 text-gray-600 italic">No hay comentarios aún.</div>`;
+      }
+    }
+
+    async function addComment(e) {
+      e.preventDefault();
+      const textInput = document.getElementById('comment-text');
+      const text = textInput.value.trim();
+      if (!text) return;
+
+      try {
+        const res = await apiRequest(`/recursos/${currentResourceId}/comment`, {
+          method: 'POST',
+          body: JSON.stringify({ text })
+        });
+
+        if (res.ok) {
+          textInput.value = '';
+          await loadResource();
+        }
+      } catch (err) {
+        alert('Error al publicar comentario');
+      }
+    }
+
+    function showError() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

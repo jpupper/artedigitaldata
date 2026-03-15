@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-10 max-w-5xl mx-auto px-4">
+    <div class="mb-10 text-center">
+      <h1 class="text-4xl font-black gradient-text mb-4">Buscador Global</h1>
+      <div class="relative max-w-2xl mx-auto">
+        <input type="text" id="search-input" placeholder="Busca usuarios, obras, tags, eventos..." 
+          class="w-full bg-white/5 border border-cyan-500/30 rounded-2xl px-6 py-4 text-xl text-white placeholder-gray-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all shadow-lg shadow-cyan-500/10">
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-400">
+          <i class="fas fa-search text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div id="results-sections" class="space-y-12">
+      <!-- Results will be injected here -->
+      <div id="initial-state" class="text-center py-20 text-gray-500">
+        <i class="fas fa-rocket text-5xl mb-4 opacity-20"></i>
+        <p class="text-xl">Escribe algo para empezar a explorar...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    const searchInput = document.getElementById('search-input');
+    const resultsContainer = document.getElementById('results-sections');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const query = e.target.value.trim();
+      
+      if (query.length < 2) {
+        resultsContainer.innerHTML = `
+          <div id="initial-state" class="text-center py-20 text-gray-500">
+            <i class="fas fa-rocket text-5xl mb-4 opacity-20"></i>
+            <p class="text-xl">Escribe algo para empezar a explorar...</p>
+          </div>`;
+        return;
+      }
+
+      debounceTimer = setTimeout(() => performSearch(query), 300);
+    });
+
+    async function performSearch(query) {
+      resultsContainer.innerHTML = `
+        <div class="text-center py-20">
+          <i class="fas fa-spinner fa-spin text-4xl text-cyan-400 mb-4"></i>
+          <p class="text-gray-400">Buscando en el metaverso...</p>
+        </div>`;
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(query)}`);
+        const results = await res.json();
+        renderResults(results);
+      } catch (err) {
+        resultsContainer.innerHTML = `<p class="text-red-500 text-center">Error al buscar</p>`;
+      }
+    }
+
+    function renderResults(results) {
+      if (results.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="text-center py-20 text-gray-500">
+            <i class="fas fa-ghost text-5xl mb-4 opacity-20"></i>
+            <p class="text-xl">No encontramos nada con ese nombre...</p>
+          </div>`;
+        return;
+      }
+
+      const users = results.filter(r => r.type === 'user');
+      const posts = results.filter(r => r.type === 'post');
+      const events = results.filter(r => r.type === 'event');
+      const resources = results.filter(r => r.type === 'resource');
+
+      let html = '';
+
+      if (users.length) {
+        html += `
+          <section>
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <i class="fas fa-users text-cyan-400"></i> Usuarios
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              ${users.map(u => `
+                <a href="profile.html?user=${u.id}" class="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-all text-center">
+                  <div class="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden border-2 border-transparent group-hover:border-cyan-400 transition-all">
+                    ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : `
+                      <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                        <i class="fas fa-user text-xl"></i>
+                      </div>
+                    `}
+                  </div>
+                  <div class="text-white font-bold text-sm truncate">${u.label}</div>
+                  <div class="text-gray-500 text-xs truncate">@${u.id}</div>
+                </a>
+              `).join('')}
+            </div>
+          </section>`;
+      }
+
+      if (posts.length) {
+        html += `
+          <section>
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <i class="fas fa-palette text-magenta-500"></i> Obras
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              ${posts.map(p => `
+                <a href="post.html?id=${p.id}" class="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-magenta-500/30 transition-all">
+                  <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                    <img src="${p.image || 'img/artedigital.png'}" class="w-full h-full object-cover">
+                  </div>
+                  <div class="flex-1 min-w-0 py-1">
+                    <h3 class="text-white font-bold truncate">${p.label}</h3>
+                    <p class="text-magenta-400 text-xs mt-1">por @${p.author}</p>
+                    <p class="text-gray-500 text-[10px] mt-2">${new Date(p.date).toLocaleDateString()}</p>
+                  </div>
+                </a>
+              `).join('')}
+            </div>
+          </section>`;
+      }
+
+      if (events.length) {
+        html += `
+          <section>
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <i class="fas fa-calendar-star text-yellow-500"></i> Eventos
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${events.map(e => `
+                <a href="evento.html?id=${e.id}" class="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-yellow-500/30 transition-all">
+                  <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex flex-col items-center justify-center text-yellow-500 shrink-0">
+                    <span class="text-xs font-bold leading-none">${new Date(e.date).toLocaleDateString('es', {month: 'short'})}</span>
+                    <span class="text-lg font-black leading-none">${new Date(e.date).getDate()}</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-white font-bold group-hover:text-yellow-400 transition-colors truncate">${e.label}</h3>
+                    <p class="text-gray-500 text-xs truncate">${e.desc || ''}</p>
+                  </div>
+                </a>
+              `).join('')}
+            </div>
+          </section>`;
+      }
+
+      if (resources.length) {
+        html += `
+          <section>
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <i class="fas fa-box-open text-cyan-400"></i> Recursos
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              ${resources.map(r => `
+                <a href="recursos.html" class="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-all">
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                      <i class="fas fa-${r.resourceType === 'github' ? 'code-branch' : r.resourceType === 'drive' ? 'hdd' : 'link'}"></i>
+                    </div>
+                    <h3 class="text-white font-bold text-sm truncate">${r.label}</h3>
+                  </div>
+                  <p class="text-gray-500 text-xs">@${r.author}</p>
+                </a>
+              `).join('')}
+            </div>
+          </section>`;
+      }
+
+      resultsContainer.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
