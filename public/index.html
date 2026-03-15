@@ -92,45 +92,78 @@
         container.innerHTML = allItems.map(item => {
           const isPost = item.feedType === 'post';
           const link = isPost ? `${CONFIG.BASE}/post.html?id=${item._id}` : `${CONFIG.BASE}/recurso.html?id=${item._id}`;
-          const badgeColor = isPost ? 'cyan' : 'orange';
+          const accentColor = isPost ? 'cyan' : 'orange';
           const badgeText = isPost ? 'OBRA' : 'RECURSO';
           const imageUrl = item.imageUrl;
+          const author = item.author || { username: 'Anónimo' };
+          const date = new Date(item.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
           return `
-            <div class="rounded-2xl overflow-hidden border border-${badgeColor}-500/10 card-cyber transition-all duration-300 flex flex-col h-full">
-              ${imageUrl ? `
-                <a href="${link}" target="_blank" class="block aspect-video overflow-hidden">
-                  <img src="${imageUrl}" alt="${item.title}" class="w-full h-full object-cover">
-                </a>
-              ` : isPost ? '' : `
-                <div class="aspect-video bg-white/5 flex items-center justify-center">
-                   <i class="fas fa-box-open text-4xl text-gray-700"></i>
+            <div class="group rounded-[2rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/30 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
+              <!-- Image Container -->
+              <a href="${link}" class="block aspect-video overflow-hidden relative">
+                ${imageUrl ? `
+                  <img src="${imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                ` : `
+                  <div class="w-full h-full bg-white/5 flex items-center justify-center">
+                    <i class="fas fa-${isPost ? 'palette' : 'box-open'} text-3xl text-gray-700"></i>
+                  </div>
+                `}
+                <div class="absolute top-4 right-4">
+                   <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
+                    ${badgeText}
+                   </span>
                 </div>
-              `}
-              <div class="p-5 flex-1 flex flex-col">
-                <div class="flex items-center justify-between mb-3">
+              </a>
+
+              <!-- Content -->
+              <div class="p-6 flex-1 flex flex-col">
+                <!-- Author Header -->
+                <div class="flex items-center justify-between mb-5">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-${badgeColor}-500 text-black">
-                      ${(item.author?.username || '?')[0].toUpperCase()}
+                    <div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-inner bg-white/5">
+                      ${author.avatar ? `
+                        <img src="${author.avatar}" alt="${author.username}" class="w-full h-full object-cover">
+                      ` : `
+                        <div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">
+                          ${(author.username || '?')[0].toUpperCase()}
+                        </div>
+                      `}
                     </div>
                     <div>
-                      <a href="${CONFIG.BASE}/profile.html?user=${item.author?.username}" class="text-sm font-medium text-${badgeColor}-400">
-                        ${item.author?.username || 'Anónimo'}
+                      <a href="${CONFIG.BASE}/profile.html?user=${author.username}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
+                        ${author.username}
                       </a>
-                      <p class="text-[10px] text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</p>
+                      <span class="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">${date}</span>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded text-[9px] font-bold border border-${badgeColor}-500/30 text-${badgeColor}-400 uppercase tracking-wider">
-                    ${badgeText}
-                  </span>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${item.title}</h3>
-                <p class="text-gray-400 text-sm mb-3 line-clamp-2">${formatMentions(item.description)}</p>
-                <div class="mt-auto flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-white/5">
-                  ${isPost ? `
-                    <span><i class="fas fa-heart mr-1"></i>${item.likes?.length || 0}</span>
-                  ` : ''}
-                  <span><i class="fas fa-comment mr-1"></i>${item.comments?.length || 0}</span>
+
+                <!-- Info -->
+                <div class="flex-1">
+                  <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-${accentColor}-400 transition-colors line-clamp-1">
+                    ${item.title}
+                  </h3>
+                  <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+                    ${formatMentions(item.description)}
+                  </p>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                  <div class="flex items-center gap-4">
+                    ${isPost ? `
+                      <span class="flex items-center gap-1.5 text-xs text-gray-500 font-bold hover:text-cyan-400 transition-colors cursor-default">
+                        <i class="fas fa-heart"></i> ${item.likes?.length || 0}
+                      </span>
+                    ` : ''}
+                    <span class="flex items-center gap-1.5 text-xs text-gray-500 font-bold hover:text-magenta-400 transition-colors cursor-default">
+                      <i class="fas fa-comment"></i> ${item.comments?.length || 0}
+                    </span>
+                  </div>
+                  <a href="${link}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white hover:bg-${accentColor}-500 hover:text-black transition-all">
+                    <i class="fas fa-arrow-right text-xs"></i>
+                  </a>
                 </div>
               </div>
             </div>
