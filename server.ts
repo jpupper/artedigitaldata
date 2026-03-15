@@ -31,6 +31,9 @@ const BASE_PATH = '/artedigitaldata';
 const app = express();
 const server = http.createServer(app);
 
+// Detectar si estamos en /dist o en la raiz (para servir public correctamente)
+const ROOT_DIR = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dirname;
+
 const io = new SocketServer(server, {
   path: `${BASE_PATH}/socket.io`,
   cors: { origin: '*', methods: ['GET', 'POST'] },
@@ -67,9 +70,9 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Static files
-app.use(BASE_PATH, express.static(path.join(__dirname, 'public')));
-app.use(`${BASE_PATH}/img`, express.static(path.join(__dirname, 'img')));
+// Static files - Detecta automaticamente si estamos en /dist o raiz
+app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public')));
+app.use(`${BASE_PATH}/img`, express.static(path.join(ROOT_DIR, 'img')));
 
 // API Routes
 app.use(`${BASE_PATH}/api/tagging`, searchRoutes);
@@ -82,9 +85,9 @@ app.use(`${BASE_PATH}/api/eventos`, eventosRoutes);
 app.use(`${BASE_PATH}/api/upload`, uploadRoutes);
 app.use(`${BASE_PATH}/api/profile`, profileRoutes);
 
-// SPA fallback — serve index.html for unmatched routes under BASE_PATH
-app.get(`${BASE_PATH}/*`, (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// SPA fallback — serve index.html for the base path and all sub-routes
+app.get([BASE_PATH, `${BASE_PATH}/*`], (_req, res) => {
+  res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 });
 
 // ========== SOCKET.IO ==========
