@@ -35,11 +35,12 @@ router.get('/:username', async (req: Request, res: Response) => {
 
 router.patch('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { bio, avatar, displayName } = req.body;
+    const { bio, avatar, displayName, socials } = req.body;
     const update: any = {};
     if (bio !== undefined) update.bio = bio;
     if (avatar !== undefined) update.avatar = avatar;
     if (displayName !== undefined) update.displayName = displayName;
+    if (socials !== undefined) update.socials = socials;
 
     const user = await User.findByIdAndUpdate(req.user!.id, update, { new: true }).select('-password');
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });

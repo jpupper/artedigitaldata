@@ -3,6 +3,28 @@
  * Supports @mentions for Users, Posts, and Events
  */
 
+/**
+ * Global helper to format text with @mentions
+ * Converts @username to clickable blue links
+ */
+function formatMentions(text) {
+  if (!text) return '';
+  
+  // Replace URLs with clickable links
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  let formattedText = text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
+  });
+
+  // Regex to find @mentions (words starting with @ followed by alphanumeric)
+  return formattedText.replace(/@(\w+)/g, (match, username) => {
+    return `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`;
+  });
+}
+
+// Ensure it's available globally immediately
+window.formatMentions = formatMentions;
+
 class TaggingSystem {
   constructor(element, options = {}) {
     this.element = element;
@@ -202,21 +224,4 @@ function enableTagging(elementId) {
   }
 }
 
-/**
- * Global helper to format text with @mentions
- * Converts @username to clickable blue links
- */
-function formatMentions(text) {
-  if (!text) return '';
-  
-  // Replace URLs with clickable links
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  let formattedText = text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
-  });
-
-  // Regex to find @mentions (words starting with @ followed by alphanumeric)
-  return formattedText.replace(/@(\w+)/g, (match, username) => {
-    return `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`;
-  });
-}
+console.log("Tagging system and formatMentions loaded correctly.");

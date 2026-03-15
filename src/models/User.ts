@@ -8,6 +8,13 @@ export interface IUser extends Document {
   avatar: string;
   bio: string;
   displayName: string;
+  socials: {
+    instagram?: string;
+    discord?: string;
+    whatsapp?: string;
+    facebook?: string;
+    tiktok?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +28,13 @@ const UserSchema: Schema = new Schema(
     avatar: { type: String, default: '' },
     bio: { type: String, default: '' },
     displayName: { type: String, default: '' },
+    socials: {
+      instagram: { type: String, default: '' },
+      discord: { type: String, default: '' },
+      whatsapp: { type: String, default: '' },
+      facebook: { type: String, default: '' },
+      tiktok: { type: String, default: '' },
+    },
   },
   { timestamps: true }
 );
