@@ -26,6 +26,7 @@
       <button onclick="filterRecursos('github')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all">GitHub</button>
       <button onclick="filterRecursos('drive')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all">Drive</button>
       <button onclick="filterRecursos('tutorial')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all">Tutoriales</button>
+      <button onclick="filterRecursos('texto')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all">Textos</button>
     </div>
 
     <!-- Recursos Grid -->
@@ -43,8 +44,8 @@
   <script src="js/tagging.js"></script>
   <script>
     let allRecursos = [];
-    const typeIcons = { software: 'fas fa-desktop', github: 'fab fa-github', drive: 'fab fa-google-drive', tutorial: 'fas fa-graduation-cap', other: 'fas fa-link' };
-    const typeColors = { software: 'fuchsia', github: 'gray', drive: 'yellow', tutorial: 'green', other: 'orange' };
+    const typeIcons = { software: 'fas fa-desktop', github: 'fab fa-github', drive: 'fab fa-google-drive', tutorial: 'fas fa-graduation-cap', texto: 'fas fa-file-alt', other: 'fas fa-link' };
+    const typeColors = { software: 'fuchsia', github: 'gray', drive: 'yellow', tutorial: 'green', texto: 'cyan', other: 'orange' };
 
     document.addEventListener('DOMContentLoaded', async () => {
       await loadRecursos();
