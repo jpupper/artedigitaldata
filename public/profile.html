@@ -26,8 +26,8 @@
           <div id="profile-socials" class="flex flex-wrap gap-2 mt-4"></div>
         </div>
         </div>
-        <div id="edit-profile-btn" class="hidden">
-          <button onclick="toggleEditMode()" class="px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-medium transition-all">
+        <div id="edit-profile-btn" class="hidden mt-4 md:mt-0">
+          <button onclick="toggleEditMode()" class="px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-bold transition-all shadow-[0_0_20px_rgba(0,255,255,0.05)]">
             <i class="fas fa-edit mr-2"></i>Editar Perfil
           </button>
         </div>
@@ -105,6 +105,9 @@
       <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
       </button>
+      <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+        <i class="fas fa-heart mr-2 text-red-500"></i>TUS FAV
+      </button>
     </div>
 
     <!-- Content Sections -->
@@ -129,6 +132,14 @@
       <div id="user-eventos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center text-gray-500 py-10">
           <p>Cargando eventos...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-favs" class="content-section hidden">
+      <div id="user-favs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-10">
+          <p>Cargando favoritos...</p>
         </div>
       </div>
     </div>
@@ -207,7 +218,7 @@
       try {
         const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`);
         if (!res.ok) throw new Error('Not found');
-        const { user: profile, posts, recursos, eventos } = await res.json();
+        const { user: profile, posts, recursos, eventos, favorites } = await res.json();
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
         const bioText = profile.bio || 'Sin bio';
@@ -259,6 +270,7 @@
         renderUserPosts(posts);
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || []);
+        renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
       } catch (err) {
         console.error("Error loading profile:", err);
         document.getElementById('profile-username').textContent = 'Usuario no encontrado';
@@ -407,6 +419,57 @@
             <p class="text-xs text-gray-400 line-clamp-2">${ev.description || ''}</p>
           </div>
       `).join('');
+    }
+
+    function renderUserFavorites(favs) {
+      const container = document.getElementById('user-favs');
+      const allFavs = [
+          ...favs.posts.map(p => ({ ...p, type: 'post' })),
+          ...favs.recursos.map(r => ({ ...r, type: 'recurso' })),
+          ...favs.eventos.map(e => ({ ...e, type: 'evento' }))
+      ].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+      if (!allFavs.length) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
+            <i class="fas fa-heart-broken text-4xl text-gray-600 mb-3"></i>
+            <p>Aún no hay favoritos guardados</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = allFavs.map(item => {
+        const isPost = item.type === 'post';
+        const isRecurso = item.type === 'recurso';
+        const link = isPost ? `post.html?id=${item._id}` : (isRecurso ? `recurso.html?id=${item._id}` : `evento.html?id=${item._id}`);
+        const color = isPost ? 'cyan' : (isRecurso ? 'orange' : 'magenta');
+        const icon = isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt');
+        
+        return `
+          <div class="rounded-2xl overflow-hidden border border-${color}-500/10 card-cyber group">
+            <a href="${link}" target="_blank" class="block aspect-video bg-white/5 relative overflow-hidden">
+               ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-110">` : `
+                 <div class="w-full h-full flex items-center justify-center text-gray-700">
+                    <i class="fas fa-${icon} text-3xl"></i>
+                 </div>
+               `}
+               <div class="absolute top-3 left-3">
+                 <span class="px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-${color}-400 uppercase tracking-widest">
+                   ${item.type}
+                 </span>
+               </div>
+            </a>
+            <div class="p-4">
+               <a href="${link}" target="_blank" class="block">
+                  <h3 class="font-bold text-white group-hover:text-${color}-400 transition-colors truncate mb-1">${item.title}</h3>
+               </a>
+               <p class="text-[10px] text-gray-500 flex items-center gap-2">
+                 <i class="fas fa-user-circle"></i> @${(item.author || item.creator)?.username || 'anónimo'}
+               </p>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function deletePost(postId) {

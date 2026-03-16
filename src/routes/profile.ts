@@ -12,6 +12,19 @@ router.get('/:username', async (req: Request, res: Response) => {
     const user = await User.findOne({ username: req.params.username }).select('-password');
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
+    // Favorites (items liked by this user)
+    const likedPosts = await Post.find({ likes: user._id })
+      .populate('author', 'username avatar')
+      .sort({ createdAt: -1 });
+    
+    const likedRecursos = await Recurso.find({ likes: user._id })
+      .populate('author', 'username avatar')
+      .sort({ createdAt: -1 });
+
+    const likedEventos = await Evento.find({ likes: user._id })
+      .populate('creator', 'username avatar')
+      .sort({ date: 1 });
+
     const posts = await Post.find({ author: user._id })
       .populate('author', 'username avatar')
       .sort({ createdAt: -1 });
@@ -27,7 +40,17 @@ router.get('/:username', async (req: Request, res: Response) => {
       ]
     }).sort({ date: 1 });
 
-    return res.json({ user, posts, recursos, eventos });
+    return res.json({ 
+      user, 
+      posts, 
+      recursos, 
+      eventos, 
+      favorites: {
+        posts: likedPosts,
+        recursos: likedRecursos,
+        eventos: likedEventos
+      }
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
