@@ -14,6 +14,7 @@ export interface IEvento extends Document {
   imageUrl: string;
   creator: Types.ObjectId;
   participants: Types.ObjectId[];
+  likes: Types.ObjectId[];
   comments: IComment[];
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +37,7 @@ const EventoSchema: Schema = new Schema(
     imageUrl: { type: String, default: '' },
     creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
   },
   { timestamps: true }

@@ -97,6 +97,26 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
   }
 });
 
+router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    const userId = req.user!.id;
+    const idx = (evento.likes || []).findIndex((id) => id.toString() === userId);
+    if (idx === -1) {
+      if (!evento.likes) evento.likes = [];
+      evento.likes.push(userId as any);
+    } else {
+      evento.likes.splice(idx, 1);
+    }
+    await evento.save();
+    return res.json(evento);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { text } = req.body;

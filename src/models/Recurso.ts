@@ -14,6 +14,7 @@ export interface IRecurso extends Document {
   author: Types.ObjectId;
   imageUrl?: string;
   tags: string[];
+  likes: Types.ObjectId[];
   comments: IComment[];
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +37,7 @@ const RecursoSchema: Schema = new Schema(
     imageUrl: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     tags: [{ type: String, trim: true }],
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
   },
   { timestamps: true }

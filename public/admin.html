@@ -121,31 +121,76 @@
     </div>
   </main>
 
-  <!-- Edit Event Modal -->
-  <div id="edit-event-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-[var(--bg-surface)] border border-white/10 rounded-3xl max-w-lg w-full overflow-hidden p-8">
-      <h2 class="text-2xl font-bold text-white mb-6">Editar Evento</h2>
-      <form id="edit-event-form" class="space-y-4">
-        <input type="hidden" id="edit-event-id">
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Título</label>
-          <input type="text" id="edit-event-title" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-[var(--bg-surface)] border border-white/10 rounded-3xl max-w-2xl w-full overflow-hidden p-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <h2 id="modal-title" class="text-2xl font-bold text-white mb-6">Editar Contenido</h2>
+      <form id="edit-form" class="space-y-6">
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-type">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Título</label>
+              <input type="text" id="edit-title" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+            </div>
+
+            <div id="div-date" class="hidden">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
+              <input type="datetime-local" id="edit-date" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+            </div>
+
+            <div id="div-location" class="hidden">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ubicación</label>
+              <input type="text" id="edit-location" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+            </div>
+
+            <div id="div-url" class="hidden">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Enlace / URL</label>
+              <input type="url" id="edit-url" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+            </div>
+
+            <div id="div-rec-type" class="hidden">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Tipo de Recurso</label>
+              <select id="edit-rec-type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+                <option value="software">Software</option>
+                <option value="github">GitHub / Código</option>
+                <option value="drive">Drive / Descarga</option>
+                <option value="tutorial">Tutorial / Guía</option>
+                <option value="other">Otro</option>
+              </select>
+            </div>
+
+            <div id="div-tags" class="hidden">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Etiquetas (coma)</label>
+              <input type="text" id="edit-tags" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
+              <textarea id="edit-description" rows="5" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none resize-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Imagen URL</label>
+              <input type="text" id="edit-imageUrl" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none mb-2">
+              <div class="flex items-center gap-3">
+                <label class="cursor-pointer bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                  <i class="fas fa-upload mr-1"></i> Subir Archivo
+                  <input type="file" id="edit-file" class="hidden" accept="image/*" onchange="uploadImage(this)">
+                </label>
+                <span id="upload-status" class="text-[10px] text-gray-500 italic"></span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ubicación</label>
-          <input type="text" id="edit-event-location" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
-          <input type="datetime-local" id="edit-event-date" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
-          <textarea id="edit-event-desc" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-magenta-500 outline-none resize-none"></textarea>
-        </div>
+
         <div class="flex gap-4 pt-4">
-          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl bg-white/5 text-white font-bold">Cancelar</button>
-          <button type="submit" class="flex-1 px-6 py-3 rounded-xl bg-magenta-500 text-white font-bold">Guardar</button>
+          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl bg-white/5 text-white font-bold transition-all hover:bg-white/10">Cancelar</button>
+          <button type="submit" class="flex-1 px-6 py-3 rounded-xl bg-cyan-500 text-black font-black transition-all hover:scale-[1.02]">GUARDAR CAMBIOS</button>
         </div>
       </form>
     </div>
@@ -255,6 +300,7 @@
             <td class="px-6 py-4 text-gray-500">${p.likes?.length || 0} / ${p.comments?.length || 0}</td>
             <td class="px-6 py-4 flex gap-3">
               <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+              <button onclick="openEdit('posts', '${p._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
               <button onclick="deleteItem('posts', '${p._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
@@ -267,7 +313,9 @@
             <td class="px-6 py-4 uppercase text-xs text-orange-400">${r.type}</td>
             <td class="px-6 py-4 text-gray-400">${r.author?.username || 'Anónimo'}</td>
             <td class="px-6 py-4 truncate max-w-[150px]"><a href="${r.url}" target="_blank" class="text-gray-500 hover:text-cyan-400">${r.url}</a></td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 flex gap-3">
+              <a href="${CONFIG.BASE}/recurso.html?id=${r._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+              <button onclick="openEdit('recursos', '${r._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
               <button onclick="deleteItem('recursos', '${r._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
@@ -282,7 +330,7 @@
             <td class="px-6 py-4 text-gray-500">${e.location || 'Virtual'}</td>
             <td class="px-6 py-4 flex gap-3">
               <a href="${CONFIG.BASE}/evento.html?id=${e._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
-              <button onclick="openEditEvent('${e._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
+              <button onclick="openEdit('eventos', '${e._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
               <button onclick="deleteItem('eventos', '${e._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
@@ -305,45 +353,104 @@
       if (res?.ok) refreshAll();
     }
 
-    // Edit Event Logic
-    function openEditEvent(id) {
-      const ev = data.eventos.find(e => e._id === id);
-      if (!ev) return;
+    // Edit Logic
+    function openEdit(type, id) {
+      const item = data[type].find(x => x._id === id);
+      if (!item) return;
       
-      document.getElementById('edit-event-id').value = ev._id;
-      document.getElementById('edit-event-title').value = ev.title;
-      document.getElementById('edit-event-location').value = ev.location || '';
-      document.getElementById('edit-event-desc').value = ev.description || '';
+      document.getElementById('edit-id').value = item._id;
+      document.getElementById('edit-type').value = type;
+      document.getElementById('edit-title').value = item.title;
+      document.getElementById('edit-description').value = item.description || '';
+      document.getElementById('edit-imageUrl').value = item.imageUrl || '';
+      document.getElementById('modal-title').innerText = `Editar ${type === 'posts' ? 'Obra' : type === 'recursos' ? 'Recurso' : 'Evento'}`;
       
-      // Format date for datetime-local input
-      if (ev.date) {
-        const d = new Date(ev.date);
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-        document.getElementById('edit-event-date').value = d.toISOString().slice(0, 16);
+      // Reset visibility
+      ['div-date', 'div-location', 'div-url', 'div-rec-type', 'div-tags'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+      if (type === 'posts') {
+        document.getElementById('div-tags').classList.remove('hidden');
+        document.getElementById('edit-tags').value = (item.tags || []).join(', ');
+      } else if (type === 'recursos') {
+        document.getElementById('div-url').classList.remove('hidden');
+        document.getElementById('div-rec-type').classList.remove('hidden');
+        document.getElementById('div-tags').classList.remove('hidden');
+        document.getElementById('edit-url').value = item.url || '';
+        document.getElementById('edit-rec-type').value = item.type || 'other';
+        document.getElementById('edit-tags').value = (item.tags || []).join(', ');
+      } else if (type === 'eventos') {
+        document.getElementById('div-date').classList.remove('hidden');
+        document.getElementById('div-location').classList.remove('hidden');
+        document.getElementById('edit-location').value = item.location || '';
+        if (item.date) {
+          const d = new Date(item.date);
+          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+          document.getElementById('edit-date').value = d.toISOString().slice(0, 16);
+        }
       }
 
-      const modal = document.getElementById('edit-event-modal');
+      const modal = document.getElementById('edit-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
 
     function closeEditModal() {
-      const modal = document.getElementById('edit-event-modal');
+      const modal = document.getElementById('edit-modal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     }
 
-    document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit-event-id').value;
-      const title = document.getElementById('edit-event-title').value;
-      const location = document.getElementById('edit-event-location').value;
-      const date = document.getElementById('edit-event-date').value;
-      const description = document.getElementById('edit-event-desc').value;
+    async function uploadImage(input) {
+      if (!input.files?.[0]) return;
+      const status = document.getElementById('upload-status');
+      status.innerText = 'Subiendo...';
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+        const res = await fetch(CONFIG.API_URL + '/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+          body: formData
+        });
+        if (res.ok) {
+          const d = await res.json();
+          document.getElementById('edit-imageUrl').value = d.url;
+          status.innerText = '¡Listo!';
+        } else {
+          status.innerText = 'Error';
+        }
+      } catch (err) {
+        status.innerText = 'Error';
+      }
+    }
 
-      const res = await apiRequest(`/eventos/${id}`, {
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const type = document.getElementById('edit-type').value;
+      
+      const body = {
+        title: document.getElementById('edit-title').value,
+        description: document.getElementById('edit-description').value,
+        imageUrl: document.getElementById('edit-imageUrl').value
+      };
+
+      if (type === 'posts') {
+        body.tags = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      } else if (type === 'recursos') {
+        body.tags = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        body.url = document.getElementById('edit-url').value;
+        body.type = document.getElementById('edit-rec-type').value;
+      } else if (type === 'eventos') {
+        body.date = document.getElementById('edit-date').value;
+        body.location = document.getElementById('edit-location').value;
+      }
+
+      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : `/recursos/${id}`;
+      const res = await apiRequest(endpoint, {
         method: 'PATCH',
-        body: JSON.stringify({ title, location, date, description })
+        body: JSON.stringify(body)
       });
 
       if (res?.ok) {
