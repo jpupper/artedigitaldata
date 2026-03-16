@@ -87,6 +87,26 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
   }
 });
 
+router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const recurso = await Recurso.findById(req.params.id);
+    if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
+
+    const userId = req.user!.id;
+    const idx = (recurso.likes || []).findIndex((id) => id.toString() === userId);
+    if (idx === -1) {
+      if (!recurso.likes) recurso.likes = [];
+      recurso.likes.push(userId as any);
+    } else {
+      recurso.likes.splice(idx, 1);
+    }
+    await recurso.save();
+    return res.json(recurso);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const recurso = await Recurso.findById(req.params.id);

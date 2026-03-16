@@ -57,6 +57,12 @@
                   <p class="text-sm text-gray-500">${new Date(post.createdAt).toLocaleString()}</p>
                 </div>
               </div>
+              <div class="flex items-center gap-2">
+                <button onclick="toggleLike('${post._id}')" id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${post.likes?.includes(getUserId()) ? 'text-red-500' : 'text-gray-400'}">
+                  <i class="${post.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart text-xl"></i>
+                  <span id="like-count" class="font-bold">${post.likes?.length || 0}</span>
+                </button>
+              </div>
             </div>
             <div class="p-0">
               ${post.imageUrl ? `
@@ -160,6 +166,29 @@
         }
       } catch (err) {
         alert('Error al publicar comentario');
+      }
+    }
+
+    async function toggleLike(postId) {
+      if (!isLoggedIn()) {
+        alert('Debes iniciar sesión para dar like');
+        return;
+      }
+      
+      try {
+        const res = await apiRequest(`/posts/${postId}/like`, { method: 'POST' });
+        if (res.ok) {
+          const post = await res.json();
+          const btn = document.getElementById('like-btn');
+          const count = document.getElementById('like-count');
+          const isLiked = post.likes.includes(getUserId());
+          
+          btn.className = `flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${isLiked ? 'text-red-500' : 'text-gray-400'}`;
+          btn.querySelector('i').className = `${isLiked ? 'fas' : 'far'} fa-heart text-xl`;
+          count.innerText = post.likes.length;
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
   </script>

@@ -20,7 +20,13 @@
           </div>
           <div class="flex-1 min-w-0">
             <h1 id="resource-title" class="text-3xl md:text-5xl font-black text-white mb-2 truncate"></h1>
-            <p class="text-gray-500 font-medium">Subido por <a id="resource-author" href="#" class="text-cyan-400 hover:underline"></a></p>
+            <div class="flex items-center gap-4">
+              <p class="text-gray-500 font-medium">Subido por <a id="resource-author" href="#" class="text-cyan-400 hover:underline"></a></p>
+              <button id="like-btn" class="flex items-center gap-2 px-3 py-1 rounded-lg border border-white/10 hover:bg-white/5 transition-all text-sm">
+                <i class="far fa-heart"></i>
+                <span id="like-count" class="font-bold">0</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -147,6 +153,15 @@
         tagsContainer.innerHTML = r.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${t}</span>`).join('');
       }
 
+      // Likes
+      const btn = document.getElementById('like-btn');
+      const count = document.getElementById('like-count');
+      const isLiked = r.likes?.includes(getUserId());
+      btn.className = `flex items-center gap-2 px-3 py-1 rounded-lg border border-white/10 hover:bg-white/5 transition-all text-sm ${isLiked ? 'text-red-500' : 'text-gray-400'}`;
+      btn.querySelector('i').className = `${isLiked ? 'fas' : 'far'} fa-heart`;
+      count.innerText = r.likes?.length || 0;
+      btn.onclick = () => toggleLike();
+
       // Comments
       document.getElementById('comment-count').innerText = r.comments?.length || 0;
       const formContainer = document.getElementById('comment-form-container');
@@ -218,6 +233,29 @@
         }
       } catch (err) {
         alert('Error al publicar comentario');
+      }
+    }
+
+    async function toggleLike() {
+      if (!isLoggedIn()) {
+        alert('Debes iniciar sesión para dar like');
+        return;
+      }
+      
+      try {
+        const res = await apiRequest(`/recursos/${currentResourceId}/like`, { method: 'POST' });
+        if (res.ok) {
+          const r = await res.json();
+          const btn = document.getElementById('like-btn');
+          const count = document.getElementById('like-count');
+          const isLiked = r.likes.includes(getUserId());
+          
+          btn.className = `flex items-center gap-2 px-3 py-1 rounded-lg border border-white/10 hover:bg-white/5 transition-all text-sm ${isLiked ? 'text-red-500' : 'text-gray-400'}`;
+          btn.querySelector('i').className = `${isLiked ? 'fas' : 'far'} fa-heart`;
+          count.innerText = r.likes.length;
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
 
