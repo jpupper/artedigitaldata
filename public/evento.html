@@ -24,7 +24,9 @@
               <!-- Date will be injected here -->
             </div>
             <div class="flex items-center gap-3 text-gray-500 text-sm">
-              <i class="fas fa-user-circle text-cyan-500"></i>
+              <div id="creator-avatar" class="w-8 h-8 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0">
+                <!-- Avatar injected here -->
+              </div>
               <span>Organizado por <a id="event-creator" href="#" class="text-white font-bold hover:text-cyan-400 transition-colors"></a></span>
             </div>
             <button id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all text-gray-400">
@@ -151,6 +153,13 @@
       const creator = document.getElementById('event-creator');
       creator.innerText = ev.creator?.username || 'Anónimo';
       creator.href = `profile.html?user=${ev.creator?.username}`;
+
+      const avatarCont = document.getElementById('creator-avatar');
+      if (ev.creator?.avatar) {
+        avatarCont.innerHTML = `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">`;
+      } else {
+        avatarCont.innerText = (ev.creator?.username || '?')[0].toUpperCase();
+      }
 
       const imgContainer = document.getElementById('event-image-container');
       if (ev.imageUrl) {
