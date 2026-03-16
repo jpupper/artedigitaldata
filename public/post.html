@@ -47,8 +47,10 @@
           <div class="rounded-3xl overflow-hidden border border-cyan-500/20 card-cyber">
             <div class="p-6 border-b border-white/5 flex items-center justify-between">
               <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold bg-cyan-500 text-black">
-                  ${(post.author?.username || '?')[0].toUpperCase()}
+                <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-lg font-bold bg-cyan-500 text-black shrink-0">
+                  ${post.author?.avatar ? `
+                    <img src="${post.author.avatar}" alt="${post.author.username}" class="w-full h-full object-cover">
+                  ` : (post.author?.username || '?')[0].toUpperCase()}
                 </div>
                 <div>
                   <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
