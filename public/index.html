@@ -23,18 +23,18 @@
       <div id="hero-cta" class="mt-8"></div>
     </section>
 
-    <!-- Upcoming Events Preview -->
-    <section class="mb-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-white"><i
-            class="fas fa-calendar-alt text-[var(--color-magenta)] mr-2"></i>Próximos Eventos</h2>
-        <a href="calendario.html" class="text-sm font-bold text-[var(--color-cyan)] hover:underline">Ver Calendario
-          Completo <i class="fas fa-arrow-right ml-1"></i></a>
-      </div>
-      <div id="events-preview" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="col-span-full text-center py-10 bg-white/5 rounded-2xl border border-white/5">
-          <p class="text-gray-500">Buscando eventos...</p>
-        </div>
+    <!-- Feed Filters -->
+    <section class="mb-8">
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
+          <i class="fas fa-palette mr-2"></i>Obras
+        </button>
+        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-orange-500/50">
+          <i class="fas fa-box-open mr-2"></i>Recursos
+        </button>
+        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
+          <i class="fas fa-calendar-alt mr-2"></i>Eventos
+        </button>
       </div>
     </section>
 
@@ -64,8 +64,37 @@
             <i class="fas fa-rocket mr-2"></i>Únete Ahora
           </a>`;
       }
-      await Promise.all([loadFeed(), loadEventsPreview()]);
+      await loadFeed();
     });
+
+    let allFeedItems = [];
+    let activeFilters = { post: true, recurso: true, evento: true };
+
+    function updateFilterStyles() {
+      const colors = { post: 'cyan', recurso: 'orange', evento: 'fuchsia' };
+      Object.keys(activeFilters).forEach(type => {
+        const btn = document.getElementById(`filter-${type}`);
+        if (activeFilters[type]) {
+          btn.classList.remove('text-gray-500', 'bg-white/5', 'border-white/10');
+          btn.classList.add(`text-${colors[type]}-400`, `bg-${colors[type]}-500/10`, `border-${colors[type]}-500/40`, 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
+        } else {
+          btn.classList.add('text-gray-500', 'bg-white/5', 'border-white/10');
+          btn.classList.remove(`text-cyan-400`, `bg-cyan-500/10`, `border-cyan-500/40`, `text-orange-400`, `bg-orange-500/10`, `border-orange-500/40`, `text-fuchsia-400`, `bg-fuchsia-500/10`, `border-fuchsia-500/40`, 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
+        }
+      });
+    }
+
+    function toggleFilter(type) {
+      activeFilters[type] = !activeFilters[type];
+      
+      // If none active, show all (optional, or keep blank)
+      if (!activeFilters.post && !activeFilters.recurso && !activeFilters.evento) {
+        activeFilters = { post: true, recurso: true, evento: true };
+      }
+      
+      updateFilterStyles();
+      renderFeed();
+    }
 
     async function loadFeed() {
       const container = document.getElementById('feed-container');
@@ -80,135 +109,118 @@
         const recursos = await recursosRes.json();
         const eventos = await eventosRes.json();
         
-        // Merge and sort by date
-        const allItems = [
+        allFeedItems = [
           ...posts.map(p => ({ ...p, feedType: 'post' })),
           ...recursos.map(r => ({ ...r, feedType: 'recurso' })),
           ...eventos.map(e => ({ ...e, feedType: 'evento' }))
         ].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-        if (!allItems.length) {
-          container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20"><p class="text-xl">Aún no hay publicaciones</p></div>`;
-          return;
-        }
-
-        container.innerHTML = allItems.map(item => {
-          const type = item.feedType;
-          const isPost = type === 'post';
-          const isRecurso = type === 'recurso';
-          const isEvento = type === 'evento';
-
-          const link = isPost ? `${CONFIG.BASE}/post.html?id=${item._id}` : 
-                       (isRecurso ? `${CONFIG.BASE}/recurso.html?id=${item._id}` : `${CONFIG.BASE}/evento.html?id=${item._id}`);
-          
-          const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : 'magenta');
-          const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : 'EVENTO');
-          const author = item.author || item.creator || { username: 'Anónimo' };
-          const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-          return `
-            <div class="group rounded-[2rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/30 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
-              <!-- Image Container -->
-              <a href="${link}" class="block aspect-video overflow-hidden relative">
-                ${item.imageUrl ? `
-                  <img src="${item.imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                ` : `
-                  <div class="w-full h-full bg-white/5 flex items-center justify-center">
-                    <i class="fas fa-${isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt')} text-3xl text-gray-700"></i>
-                  </div>
-                `}
-                <div class="absolute top-4 right-4">
-                   <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
-                    ${badgeText}
-                   </span>
-                </div>
-              </a>
-
-              <!-- Content -->
-              <div class="p-6 flex-1 flex flex-col">
-                <!-- Author Header -->
-                <div class="flex items-center justify-between mb-5">
-                  <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-inner bg-white/5">
-                      ${author.avatar ? `
-                        <img src="${author.avatar}" alt="${author.username}" class="w-full h-full object-cover">
-                      ` : `
-                        <div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">
-                          ${(author.username || '?')[0].toUpperCase()}
-                        </div>
-                      `}
-                    </div>
-                    <div>
-                      <a href="${CONFIG.BASE}/profile.html?user=${author.username}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
-                        ${author.username}
-                      </a>
-                      <span class="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">${date}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Info -->
-                <div class="flex-1">
-                  <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-${accentColor}-400 transition-colors line-clamp-1">
-                    ${item.title}
-                  </h3>
-                  <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-                    ${formatMentions(item.description)}
-                  </p>
-                </div>
-
-                <!-- Footer -->
-                <div class="flex items-center justify-between pt-4 border-t border-white/5">
-                  <div class="flex items-center gap-4">
-                    <button onclick="toggleFeedLike(event, '${item._id}', '${item.feedType}')" class="flex items-center gap-1.5 text-xs font-bold transition-colors ${(item.likes || []).includes(getUserId()) ? 'text-red-500' : 'text-gray-500 hover:text-cyan-400'}">
-                      <i class="${(item.likes || []).includes(getUserId()) ? 'fas' : 'far'} fa-heart"></i> 
-                      <span class="like-count">${item.likes?.length || 0}</span>
-                    </button>
-                    <a href="${link}" class="flex items-center gap-1.5 text-xs text-gray-500 font-bold hover:text-magenta-400 transition-colors">
-                      <i class="fas fa-comment"></i> ${item.comments?.length || 0}
-                    </a>
-                  </div>
-                  <a href="${link}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white hover:bg-${accentColor}-500 hover:text-black transition-all">
-                    <i class="fas fa-arrow-right text-xs"></i>
-                  </a>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
+        updateFilterStyles();
+        renderFeed();
       } catch (err) {
         console.error(err);
         container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Error cargando el feed</div>`;
       }
     }
 
-    async function loadEventsPreview() {
-      const container = document.getElementById('events-preview');
-      try {
-        const res = await fetch(CONFIG.API_URL + '/eventos');
-        const allEvents = await res.json();
-        const upcoming = allEvents.filter(e => new Date(e.date) >= new Date()).slice(0, 3);
-        if (!upcoming.length) {
-          container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 italic">No hay eventos próximos.</div>`;
-          return;
-        }
-        container.innerHTML = upcoming.map(ev => `
-          <a href="evento.html?id=${ev._id}" target="_blank" class="block group">
-            <div class="rounded-2xl border border-white/5 bg-white/5 p-4 hover:border-magenta-500/30 transition-all">
-              <div class="flex items-center gap-3 mb-3">
-                <span class="px-2 py-1 bg-magenta-500/20 text-magenta-400 rounded-lg text-[10px] font-bold">
-                  ${new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
-                </span>
-                <h3 class="font-bold text-white truncate">${ev.title}</h3>
-              </div>
-              <p class="text-xs text-gray-400 line-clamp-2">${formatMentions(ev.description)}</p>
-            </div>
-          </a>
-        `).join('');
-      } catch (err) {
-        container.innerHTML = '';
+    function renderFeed() {
+      const container = document.getElementById('feed-container');
+      const filtered = allFeedItems.filter(item => activeFilters[item.feedType]);
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20 px-8 bg-white/5 rounded-3xl border border-dashed border-white/10">
+          <i class="fas fa-search text-4xl mb-4 opacity-20"></i>
+          <p class="text-xl">No hay publicaciones para los filtros seleccionados</p>
+        </div>`;
+        return;
       }
+
+      container.innerHTML = filtered.map(item => {
+        const type = item.feedType;
+        const isPost = type === 'post';
+        const isRecurso = type === 'recurso';
+        const isEvento = type === 'evento';
+
+        const link = isPost ? `${CONFIG.BASE}/post.html?id=${item._id}` : 
+                     (isRecurso ? `${CONFIG.BASE}/recurso.html?id=${item._id}` : `${CONFIG.BASE}/evento.html?id=${item._id}`);
+        
+        const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : 'fuchsia');
+        const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : 'EVENTO');
+        const author = item.author || item.creator || { username: 'Anónimo' };
+        const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        return `
+          <div class="group rounded-[2rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/30 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
+            <!-- Image Container -->
+            <a href="${link}" class="block aspect-video overflow-hidden relative">
+              ${item.imageUrl ? `
+                <img src="${item.imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+              ` : `
+                <div class="w-full h-full bg-white/5 flex items-center justify-center">
+                  <i class="fas fa-${isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt')} text-3xl text-gray-700"></i>
+                </div>
+              `}
+              <div class="absolute top-4 right-4">
+                 <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
+                  ${badgeText}
+                 </span>
+              </div>
+            </a>
+
+            <!-- Content -->
+            <div class="p-6 flex-1 flex flex-col">
+              <!-- Author Header -->
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-inner bg-white/5">
+                    ${author.avatar ? `
+                      <img src="${author.avatar}" alt="${author.username}" class="w-full h-full object-cover">
+                    ` : `
+                      <div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">
+                        ${(author.username || '?')[0].toUpperCase()}
+                      </div>
+                    `}
+                  </div>
+                  <div>
+                    <a href="${CONFIG.BASE}/profile.html?user=${author.username}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
+                      ${author.username}
+                    </a>
+                    <span class="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">${date}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Info -->
+              <div class="flex-1">
+                <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-${accentColor}-400 transition-colors line-clamp-1">
+                  ${item.title}
+                </h3>
+                <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+                  ${formatMentions(item.description)}
+                </p>
+              </div>
+
+              <!-- Footer -->
+              <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                <div class="flex items-center gap-4">
+                  <button onclick="toggleFeedLike(event, '${item._id}', '${item.feedType}')" class="flex items-center gap-1.5 text-xs font-bold transition-colors ${(item.likes || []).includes(getUserId()) ? 'text-red-500' : 'text-gray-500 hover:text-cyan-400'}">
+                    <i class="${(item.likes || []).includes(getUserId()) ? 'fas' : 'far'} fa-heart"></i> 
+                    <span class="like-count">${item.likes?.length || 0}</span>
+                  </button>
+                  <a href="${link}" class="flex items-center gap-1.5 text-xs text-gray-500 font-bold hover:text-magenta-400 transition-colors">
+                    <i class="fas fa-comment"></i> ${item.comments?.length || 0}
+                  </a>
+                </div>
+                <a href="${link}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white hover:bg-${accentColor}-500 hover:text-black transition-all">
+                  <i class="fas fa-arrow-right text-xs"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
+
 
     async function toggleFeedLike(event, id, type) {
       event.preventDefault();
