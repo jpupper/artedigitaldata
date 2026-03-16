@@ -9,7 +9,7 @@ export interface IComment {
 export interface IRecurso extends Document {
   title: string;
   description: string;
-  type: 'software' | 'github' | 'drive' | 'tutorial' | 'other';
+  type: 'software' | 'github' | 'drive' | 'tutorial' | 'texto' | 'other';
   url: string;
   author: Types.ObjectId;
   imageUrl?: string;
@@ -32,7 +32,7 @@ const RecursoSchema: Schema = new Schema(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
-    type: { type: String, enum: ['software', 'github', 'drive', 'tutorial', 'other'], default: 'other' },
+    type: { type: String, enum: ['software', 'github', 'drive', 'tutorial', 'texto', 'other'], default: 'other' },
     url: { type: String, required: true },
     imageUrl: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },

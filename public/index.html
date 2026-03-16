@@ -15,12 +15,12 @@
 
   <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
     <!-- Hero Section -->
-    <section class="mb-12 text-center py-16">
-      <h1 class="text-4xl md:text-6xl font-black gradient-text mb-4 py-2">Arte Digital Data</h1>
+    <section class="mb-6 text-center pt-8 pb-4">
+      <h1 class="text-4xl md:text-5xl font-black gradient-text mb-2">Arte Digital Data</h1>
       <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
         La red social para artistas digitales.
       </p>
-      <div id="hero-cta" class="mt-8"></div>
+      <div id="hero-cta"></div>
     </section>
 
     <!-- Feed Filters -->
@@ -60,9 +60,11 @@
       const heroCta = document.getElementById('hero-cta');
       if (!isLoggedIn()) {
         heroCta.innerHTML = `
-          <a href="${CONFIG.BASE}/register.html" class="btn-primary inline-block text-black font-bold px-8 py-3 rounded-xl text-lg transition-all hover:scale-105">
-            <i class="fas fa-rocket mr-2"></i>Únete Ahora
-          </a>`;
+          <div class="mt-6">
+            <a href="${CONFIG.BASE}/register.html" class="btn-primary inline-block text-black font-bold px-8 py-3 rounded-xl text-lg transition-all hover:scale-105">
+              <i class="fas fa-rocket mr-2"></i>Únete Ahora
+            </a>
+          </div>`;
       }
       await loadFeed();
     });
@@ -157,7 +159,7 @@
                 <img src="${item.imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
               ` : `
                 <div class="w-full h-full bg-white/5 flex items-center justify-center">
-                  <i class="fas fa-${isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt')} text-3xl text-gray-700"></i>
+                  <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open'))))} text-3xl text-gray-700"></i>
                 </div>
               `}
               <div class="absolute top-4 right-4">
