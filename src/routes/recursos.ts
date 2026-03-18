@@ -1,16 +1,15 @@
 import { Router, Request, Response } from 'express';
 import Recurso from '../models/Recurso';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const recursos = await Recurso.find()
-      .populate('author', 'username avatar')
-      .populate('comments.user', 'username avatar')
-      .sort({ createdAt: -1 });
-    return res.json(recursos);
+    const recursos = await Recurso.find().sort({ createdAt: -1 });
+    const final = await hydrate(recursos);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -18,11 +17,12 @@ router.get('/', async (_req: Request, res: Response) => {
 
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const recurso = await Recurso.findById(req.params.id)
-      .populate('author', 'username avatar')
-      .populate('comments.user', 'username avatar');
+    const recurso = await Recurso.findById(req.params.id);
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
-    return res.json(recurso);
+    
+    const hydrated = await hydrate([recurso]);
+    const final = await hydrateComments(hydrated[0]);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -42,7 +42,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       author: req.user!.id,
       tags: tags || [],
     });
-    return res.status(201).json(recurso);
+    const [final] = await hydrate([recurso]);
+    return res.status(201).json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -56,8 +57,8 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     recurso.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await recurso.save();
-    const populated = await recurso.populate('comments.user', 'username avatar');
-    return res.json(populated);
+    const final = await hydrateComments(recurso);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -93,7 +94,7 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
 
     const userId = req.user!.id;
-    const idx = (recurso.likes || []).findIndex((id) => id.toString() === userId);
+    const idx = (recurso.likes || []).findIndex((id: any) => id.toString() === userId);
     if (idx === -1) {
       if (!recurso.likes) recurso.likes = [];
       recurso.likes.push(userId as any);

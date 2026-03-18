@@ -1,16 +1,15 @@
 import { Router, Request, Response } from 'express';
 import Post from '../models/Post';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const posts = await Post.find()
-      .populate('author', 'username avatar')
-      .populate('comments.user', 'username avatar')
-      .sort({ createdAt: -1 });
-    return res.json(posts);
+    const posts = await Post.find().sort({ createdAt: -1 });
+    const hydratedPosts = await hydrate(posts);
+    return res.json(hydratedPosts);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -18,11 +17,12 @@ router.get('/', async (_req: Request, res: Response) => {
 
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate('author', 'username avatar')
-      .populate('comments.user', 'username avatar');
+    const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
-    return res.json(post);
+    
+    let hydrated = await hydrate([post]);
+    let final = await hydrateComments(hydrated[0]);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -38,7 +38,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       imageUrl,
       tags: tags || [],
     });
-    const populated = await post.populate('author', 'username avatar');
+    const [populated] = await hydrate([post]);
     return res.status(201).json(populated);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -51,7 +51,7 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
 
     const userId = req.user!.id;
-    const idx = post.likes.findIndex((id) => id.toString() === userId);
+    const idx = post.likes.findIndex((id: any) => id.toString() === userId);
     if (idx === -1) {
       post.likes.push(userId as any);
     } else {
@@ -72,8 +72,9 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     post.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await post.save();
-    const populated = await post.populate('comments.user', 'username avatar');
-    return res.json(populated);
+    
+    const final = await hydrateComments(post);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

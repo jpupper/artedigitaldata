@@ -4,6 +4,7 @@ import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { hydrate } from '../utils/userHydration';
 
 const router = Router();
 
@@ -13,26 +14,12 @@ router.get('/:username', async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     // Favorites (items liked by this user)
-    const likedPosts = await Post.find({ likes: user._id })
-      .populate('author', 'username avatar')
-      .sort({ createdAt: -1 });
-    
-    const likedRecursos = await Recurso.find({ likes: user._id })
-      .populate('author', 'username avatar')
-      .sort({ createdAt: -1 });
+    const likedPosts = await Post.find({ likes: user._id }).sort({ createdAt: -1 });
+    const likedRecursos = await Recurso.find({ likes: user._id }).sort({ createdAt: -1 });
+    const likedEventos = await Evento.find({ likes: user._id }).sort({ date: 1 });
 
-    const likedEventos = await Evento.find({ likes: user._id })
-      .populate('creator', 'username avatar')
-      .sort({ date: 1 });
-
-    const posts = await Post.find({ author: user._id })
-      .populate('author', 'username avatar')
-      .sort({ createdAt: -1 });
-
-    const recursos = await Recurso.find({ author: user._id })
-      .populate('author', 'username avatar')
-      .sort({ createdAt: -1 });
-
+    const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 });
+    const recursos = await Recurso.find({ author: user._id }).sort({ createdAt: -1 });
     const eventos = await Evento.find({ 
       $or: [
         { creator: user._id },
@@ -42,13 +29,13 @@ router.get('/:username', async (req: Request, res: Response) => {
 
     return res.json({ 
       user, 
-      posts, 
-      recursos, 
-      eventos, 
+      posts: await hydrate(posts), 
+      recursos: await hydrate(recursos), 
+      eventos: await hydrate(eventos, 'creator'), 
       favorites: {
-        posts: likedPosts,
-        recursos: likedRecursos,
-        eventos: likedEventos
+        posts: await hydrate(likedPosts),
+        recursos: await hydrate(likedRecursos),
+        eventos: await hydrate(likedEventos, 'creator')
       }
     });
   } catch (err: any) {
