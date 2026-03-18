@@ -124,27 +124,10 @@ io.on('connection', (socket) => {
 
 // ========== ADMIN SEEDING ==========
 async function seedAdmin(): Promise<void> {
+  // Con el sistema global, fscauth ya se encarga del seeding.
+  // Aquí podemos simplemente reportar cuántos usuarios hay en el sistema central.
   const userCount = await User.countDocuments();
-  if (userCount === 0) {
-    const adminUser = process.env.STARTING_ADMIN_USER || 'admin';
-    const adminPass = process.env.STARTING_ADMIN_PASS;
-    if (!adminPass) {
-      console.error('[Seed] No se pudo crear admin: STARTING_ADMIN_PASS no definida en .env');
-      return;
-    }
-    const hashedPass = await bcrypt.hash(adminPass, 10);
-
-    await User.create({
-      username: adminUser,
-      email: `${adminUser}@artedigital.com`,
-      password: hashedPass,
-      role: 'ADMINISTRADOR',
-    });
-
-    console.log(`[Seed] Usuario ADMINISTRADOR creado: ${adminUser}`);
-  } else {
-    console.log(`[Seed] Ya existen ${userCount} usuarios. No se creó admin.`);
-  }
+  console.log(`[AUTH] Sistema central detectado: ${userCount} usuarios registrados.`);
 }
 
 // ========== START ==========

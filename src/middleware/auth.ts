@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import User from '../models/User';
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends Request<any, any, any, any> {
   user?: { id: string; role: string; username: string };
 }
 
-export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     res.status(401).json({ error: 'Token no proporcionado' });
@@ -27,10 +28,21 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 }
 
-export function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
-  if (req.user?.role !== 'ADMINISTRADOR') {
-    res.status(403).json({ error: 'Acceso denegado. Se requiere rol ADMINISTRADOR.' });
+export async function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({ error: 'No autenticado' });
     return;
   }
-  next();
+
+  try {
+    // Buscar los permisos específicos en la DB central
+    const user = await User.findById(req.user.id);
+    if (!user || user.permissions?.artedigital?.role !== 'ADMINISTRADOR') {
+      res.status(403).json({ error: 'Acceso denegado. Se requiere rol ADMINISTRADOR en Arte Digital.' });
+      return;
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Error verificando permisos de administrador' });
+  }
 }
