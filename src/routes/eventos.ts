@@ -1,19 +1,16 @@
 import { Router, Request, Response } from 'express';
 import Evento from '../models/Evento';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-
 import User from '../models/User';
+import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const eventos = await Evento.find()
-      .populate('creator', 'username avatar')
-      .populate('participants', 'username avatar')
-      .populate('comments.user', 'username avatar')
-      .sort({ date: 1 });
-    return res.json(eventos);
+    const eventos = await Evento.find().sort({ date: 1 });
+    const final = await hydrate(eventos, 'creator');
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -21,12 +18,12 @@ router.get('/', async (_req: Request, res: Response) => {
 
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const evento = await Evento.findById(req.params.id)
-      .populate('creator', 'username avatar')
-      .populate('participants', 'username avatar')
-      .populate('comments.user', 'username avatar');
+    const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
-    return res.json(evento);
+    
+    const hydrated = await hydrate([evento], 'creator');
+    const final = await hydrateComments(hydrated[0]);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -57,7 +54,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       creator: req.user!.id,
       participants
     });
-    return res.status(201).json(evento);
+    const [final] = await hydrate([evento], 'creator');
+    return res.status(201).json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -103,7 +101,7 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
     const userId = req.user!.id;
-    const idx = (evento.likes || []).findIndex((id) => id.toString() === userId);
+    const idx = (evento.likes || []).findIndex((id: any) => id.toString() === userId);
     if (idx === -1) {
       if (!evento.likes) evento.likes = [];
       evento.likes.push(userId as any);
@@ -125,8 +123,8 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     evento.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await evento.save();
-    const populated = await evento.populate('comments.user', 'username avatar');
-    return res.json(populated);
+    const final = await hydrateComments(evento);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
