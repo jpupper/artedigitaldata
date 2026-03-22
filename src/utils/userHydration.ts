@@ -26,7 +26,19 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
     return items.map(i => {
         const obj = i.toObject ? i.toObject() : i;
         const uid = i[userField] ? i[userField].toString() : null;
-        obj[userField] = (uid && userMap[uid]) ? userMap[uid] : { username: 'Usuario central', avatar: '' };
+        
+        if (uid && userMap[uid]) {
+            obj[userField] = userMap[uid];
+        } else {
+            // Si el usuario no existe en la DB global, dejamos un fallback pero con el ID para debug
+            if (uid) console.warn(`[Hydration] Usuario no encontrado en DB Global: ${uid} (en campo ${userField})`);
+            obj[userField] = { 
+                _id: uid,
+                username: uid ? `Desconocido (${uid.substring(uid.length - 4)})` : 'Usuario central', 
+                avatar: '',
+                isFallback: true 
+            };
+        }
         return obj;
     });
 }
