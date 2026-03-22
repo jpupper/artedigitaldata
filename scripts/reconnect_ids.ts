@@ -49,22 +49,23 @@ async function reconnect() {
       console.log(`[LINK] ${oldU.email}: ${oldId} -> ${newId}`);
 
       // Actualizar Posts
-      const pRes = await PostModel.updateMany({ author: oldId }, { $set: { author: newId } });
-      // Actualizar Likes en Posts
-      const pLikeRes = await PostModel.updateMany({ likes: oldId }, { $set: { 'likes.$': newId } });
-      // Actualizar Comentarios
-      const pCommRes = await PostModel.updateMany({ 'comments.user': oldId }, { $set: { 'comments.$.user': newId } });
+      await PostModel.updateMany({ author: oldId }, { $set: { author: newId } });
+      await PostModel.updateMany({ likes: oldId }, { $set: { 'likes.$': newId } });
+      await PostModel.updateMany({ 'comments.user': oldId }, { $set: { 'comments.$.user': newId } });
 
       // Actualizar Recursos
       await RecursoModel.updateMany({ author: oldId }, { $set: { author: newId } });
       await RecursoModel.updateMany({ likes: oldId }, { $set: { 'likes.$': newId } });
+      await RecursoModel.updateMany({ 'comments.user': oldId }, { $set: { 'comments.$.user': newId } });
 
       // Actualizar Eventos
       await EventoModel.updateMany({ creator: oldId }, { $set: { creator: newId } });
       await EventoModel.updateMany({ participants: oldId }, { $set: { 'participants.$': newId } });
+      await EventoModel.updateMany({ 'comments.user': oldId }, { $set: { 'comments.$.user': newId } });
 
       // Actualizar Mensajes
       await MessageModel.updateMany({ sender: oldId }, { $set: { sender: newId } });
+      await MessageModel.updateMany({ receiver: oldId }, { $set: { receiver: newId } });
 
       count++;
     }

@@ -110,19 +110,37 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 // que el sistema central debería manejarlos, o los dejamos usando el nuevo User model.
 // El usuario pidió básicamente todo relacionado a usuarios, así que los mantendré usando el modelo compartido.
 
+// Forgot Password Proxy
 router.post('/forgot-password', async (req: Request, res: Response) => {
-    // Implementación usando el modelo compartido si se desea mantener el mailer local
-    // pero idealmente esto también debería estar centralizado.
-    // Lo dejamos apuntando al nuevo User model compartido.
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.json({ message: 'Si el correo está registrado, recibirás un link de recuperación.' });
-        
-        // ... rest of logic stays similar but uses the shared User model
-        res.status(501).json({ error: 'Funcionalidad en migración al sistema central fscauth' });
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno' });
+        const response = await fetch(`${FSC_AUTH_API}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, origin: 'artedigitaldata' })
+        });
+
+        const data: any = await response.json();
+        return res.status(response.status).json(data);
+    } catch (err: any) {
+        return handleProxyError(res, err);
+    }
+});
+
+// Reset Password Proxy
+router.post('/reset-password', async (req: Request, res: Response) => {
+    try {
+        const { token, password } = req.body;
+        const response = await fetch(`${FSC_AUTH_API}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newPassword: password })
+        });
+
+        const data: any = await response.json();
+        return res.status(response.status).json(data);
+    } catch (err: any) {
+        return handleProxyError(res, err);
     }
 });
 
