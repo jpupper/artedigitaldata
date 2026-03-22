@@ -8,6 +8,29 @@ import { hydrate } from '../utils/userHydration';
 
 const router = Router();
 
+router.patch('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { bio, avatar, displayName, socials } = req.body;
+    console.log(`[Profile Update] Updating user ${req.user!.id}`, { bio, avatar, displayName, socials });
+    
+    const update: any = {};
+    if (bio !== undefined) update.bio = bio;
+    if (avatar !== undefined) update.avatar = avatar;
+    if (displayName !== undefined) update.displayName = displayName;
+    if (socials !== undefined) update.socials = socials;
+
+    const user = await User.findByIdAndUpdate(req.user!.id, update, { new: true }).select('-password');
+    if (!user) {
+        console.warn(`[Profile Update] User not found in DB: ${req.user!.id}`);
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    return res.json(user);
+  } catch (err: any) {
+    console.error(`[Profile Update Error]`, err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:username', async (req: Request, res: Response) => {
   try {
     const user = await User.findOne({ username: req.params.username }).select('-password');
@@ -38,23 +61,6 @@ router.get('/:username', async (req: Request, res: Response) => {
         eventos: await hydrate(likedEventos, 'creator')
       }
     });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-router.patch('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const { bio, avatar, displayName, socials } = req.body;
-    const update: any = {};
-    if (bio !== undefined) update.bio = bio;
-    if (avatar !== undefined) update.avatar = avatar;
-    if (displayName !== undefined) update.displayName = displayName;
-    if (socials !== undefined) update.socials = socials;
-
-    const user = await User.findByIdAndUpdate(req.user!.id, update, { new: true }).select('-password');
-    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    return res.json(user);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

@@ -54,9 +54,15 @@ const authUri = process.env.MONGODB_AUTH_URI;
 let userModel: mongoose.Model<IUser>;
 
 if (authUri) {
+  console.log(`[User Model] Conectando modelo User a DB Global: ${authUri.split('@').pop()}`); // Logeamos sin credenciales
   const authConn = mongoose.createConnection(authUri);
+  
+  authConn.on('connected', () => console.log('[User Model] [OK] Conectado a DB Global de Usuarios'));
+  authConn.on('error', (err) => console.error('[User Model] [ERROR] Error conectando a DB Global:', err));
+
   userModel = authConn.model<IUser>('User', UserSchema);
 } else {
+  console.warn('[User Model] [WARN] MONGODB_AUTH_URI no definida. Usando conexión por defecto.');
   userModel = mongoose.model<IUser>('User', UserSchema);
 }
 
