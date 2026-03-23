@@ -11,6 +11,7 @@ export interface IPost extends Document {
   title: string;
   description: string;
   imageUrl: string;
+  youtube_video: string;
   likes: Types.ObjectId[];
   comments: IComment[];
   tags: string[];
@@ -32,6 +33,7 @@ const PostSchema: Schema = new Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     imageUrl: { type: String, default: '' },
+    youtube_video: { type: String, default: '' },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
     tags: [{ type: String, trim: true }],

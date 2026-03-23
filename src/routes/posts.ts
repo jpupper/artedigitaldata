@@ -30,12 +30,13 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, imageUrl, tags } = req.body;
+    const { title, description, imageUrl, youtube_video, tags } = req.body;
     const post = await Post.create({
       author: req.user!.id,
       title,
       description,
       imageUrl,
+      youtube_video: youtube_video || '',
       tags: tags || [],
     });
     const [populated] = await hydrate([post]);
@@ -82,7 +83,7 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, tags, imageUrl } = req.body;
+    const { title, description, tags, imageUrl, youtube_video } = req.body;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
 
@@ -94,6 +95,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (description !== undefined) post.description = description;
     if (tags) post.tags = tags;
     if (imageUrl) post.imageUrl = imageUrl;
+    if (youtube_video !== undefined) post.youtube_video = youtube_video;
 
     await post.save();
     return res.json(post);

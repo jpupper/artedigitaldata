@@ -31,7 +31,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video } = req.body;
     if (!title || !date) return res.status(400).json({ error: 'Título y fecha son obligatorios' });
 
     // Parse @usernames from description
@@ -51,6 +51,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       date,
       location,
       imageUrl,
+      youtube_video: youtube_video || '',
       creator: req.user!.id,
       participants
     });
@@ -63,7 +64,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video } = req.body;
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
@@ -87,6 +88,8 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (title) evento.title = title;
     if (date) evento.date = date;
     if (location !== undefined) evento.location = location;
+    if (imageUrl) evento.imageUrl = imageUrl;
+    if (youtube_video !== undefined) evento.youtube_video = youtube_video;
 
     await evento.save();
     return res.json(evento);

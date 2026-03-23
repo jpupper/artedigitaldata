@@ -82,6 +82,12 @@
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
               <div id="post-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
+              <input type="url" id="post-youtube" placeholder="https://www.youtube.com/watch?v=..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
+              <p class="text-[10px] text-gray-500 mt-1">Se mostrará al pasar el cursor sobre la imagen en el feed.</p>
+            </div>
           </div>
           <div class="space-y-4">
             <div>
@@ -125,6 +131,11 @@
             <div>
               <label class="block text-sm font-medium text-gray-400 mb-2">Enlace Directo (URL)</label>
               <input type="url" id="rec-url" placeholder="https://..." required
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
+              <input type="url" id="rec-youtube" placeholder="https://www.youtube.com/watch?v=..."
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
             </div>
           </div>
@@ -184,6 +195,11 @@
               <textarea id="event-desc" rows="4" placeholder="¡No se lo pierdan! Estarán @tolch y @jp..."
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
               <div id="event-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
+              <input type="url" id="event-youtube" placeholder="https://www.youtube.com/watch?v=..."
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
             </div>
           </div>
           <div class="space-y-4">
@@ -299,6 +315,7 @@
       e.preventDefault();
       const title = document.getElementById('post-title').value.trim();
       const description = document.getElementById('post-desc').value.trim();
+      const youtube_video = document.getElementById('post-youtube').value.trim();
       const tags = document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const file = document.getElementById('post-file').files[0];
 
@@ -321,7 +338,7 @@
 
       const res = await apiRequest('/posts', {
         method: 'POST',
-        body: JSON.stringify({ title, description, imageUrl, tags })
+        body: JSON.stringify({ title, description, imageUrl, youtube_video, tags })
       });
 
       if (res?.ok) {
@@ -341,6 +358,7 @@
       const title = document.getElementById('rec-title').value.trim();
       const type = document.getElementById('rec-type').value;
       const url = document.getElementById('rec-url').value.trim();
+      const youtube_video = document.getElementById('rec-youtube').value.trim();
       const description = document.getElementById('rec-desc').value.trim();
       const tags = document.getElementById('rec-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const file = document.getElementById('rec-file').files[0];
@@ -364,7 +382,7 @@
 
       const res = await apiRequest('/recursos', {
         method: 'POST',
-        body: JSON.stringify({ title, type, url, description, tags, imageUrl })
+        body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl })
       });
 
       if (res?.ok) {
@@ -382,6 +400,7 @@
       e.preventDefault();
       const title = document.getElementById('event-title').value.trim();
       const description = document.getElementById('event-desc').value.trim();
+      const youtube_video = document.getElementById('event-youtube').value.trim();
       const date = document.getElementById('event-date').value;
       const location = document.getElementById('event-location').value.trim();
       const file = document.getElementById('event-file').files[0];
@@ -405,7 +424,7 @@
 
       const res = await apiRequest('/eventos', {
         method: 'POST',
-        body: JSON.stringify({ title, description, date, location, imageUrl })
+        body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video })
       });
 
       if (res?.ok) {

@@ -30,7 +30,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, type, url, tags, imageUrl } = req.body;
+    const { title, description, type, url, tags, imageUrl, youtube_video } = req.body;
     if (!title || !url) return res.status(400).json({ error: 'Título y URL son obligatorios' });
 
     const recurso = await Recurso.create({
@@ -39,6 +39,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       type: type || 'other',
       url,
       imageUrl: imageUrl || '',
+      youtube_video: youtube_video || '',
       author: req.user!.id,
       tags: tags || [],
     });
@@ -66,7 +67,7 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, type, url, tags, imageUrl } = req.body;
+    const { title, description, type, url, tags, imageUrl, youtube_video } = req.body;
     const recurso = await Recurso.findById(req.params.id);
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
 
@@ -80,6 +81,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (url) recurso.url = url;
     if (tags) recurso.tags = tags;
     if (imageUrl) recurso.imageUrl = imageUrl;
+    if (youtube_video !== undefined) recurso.youtube_video = youtube_video;
 
     await recurso.save();
     return res.json(recurso);
