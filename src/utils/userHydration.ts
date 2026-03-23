@@ -6,7 +6,7 @@ import User from '../models/User';
  * @param userField - El campo que contiene el ID del usuario (ej: 'author', 'creator')
  * @param fields - Campos a traer del usuario (default: 'username avatar')
  */
-export async function hydrate(items: any[], userField = 'author', fields = 'username avatar') {
+export async function hydrate(items: any[], userField = 'author', fields = 'username avatar displayName') {
     if (!items || items.length === 0) return [];
     
     // Obtener IDs únicos de usuario
@@ -20,7 +20,15 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
     // Buscar usuarios en la DB global
     const users = await User.find({ _id: { $in: userIds } }).select(fields);
     const userMap: any = {};
-    users.forEach(u => { userMap[u._id.toString()] = u; });
+    users.forEach(u => { 
+        const userData = u.toObject();
+        userMap[u._id.toString()] = {
+            _id: u._id,
+            username: userData.username,
+            avatar: userData.avatar || '',
+            displayName: userData.displayName || userData.username
+        };
+    });
     
     // Mapear de vuelta
     return items.map(i => {
@@ -30,12 +38,15 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
         if (uid && userMap[uid]) {
             obj[userField] = userMap[uid];
         } else {
-            // Si el usuario no existe en la DB global, dejamos un fallback pero con el ID para debug
+            // Si el usuario no existe en la DB global por ID, intentamos un último recurso: 
+            // Si el objeto ya tenía un nombre de usuario (por una población previa fallida), podríamos buscarlo.
+            // Pero lo ideal es que el ID sea correcto.
             if (uid) console.warn(`[Hydration] Usuario no encontrado en DB Global: ${uid} (en campo ${userField})`);
             obj[userField] = { 
                 _id: uid,
-                username: uid ? `Desconocido (${uid.substring(uid.length - 4)})` : 'Usuario central', 
+                username: 'Usuario', 
                 avatar: '',
+                displayName: 'Usuario Central',
                 isFallback: true 
             };
         }
