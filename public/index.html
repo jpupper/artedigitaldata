@@ -125,6 +125,13 @@
       }
     }
 
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const match = url.match(regex);
+      return match ? match[1] : null;
+    }
+
     function renderFeed() {
       const container = document.getElementById('feed-container');
       const filtered = allFeedItems.filter(item => activeFilters[item.feedType]);
@@ -150,24 +157,39 @@
         const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : 'EVENTO');
         const author = item.author || item.creator || { username: 'Anónimo' };
         const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        const youtubeId = extractYouTubeId(item.youtube_video);
 
         return `
           <div class="group rounded-[2rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/30 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
             <!-- Image Container -->
-            <a href="${link}" class="block aspect-video overflow-hidden relative">
-              ${item.imageUrl ? `
-                <img src="${item.imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-              ` : `
-                <div class="w-full h-full bg-white/5 flex items-center justify-center">
-                  <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open'))))} text-3xl text-gray-700"></i>
-                </div>
-              `}
-              <div class="absolute top-4 right-4">
+            <div class="relative aspect-video overflow-hidden">
+              <a href="${link}" class="block w-full h-full relative" 
+                 ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
+                ${item.imageUrl ? `
+                  <img src="${item.imageUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                ` : `
+                  <div class="w-full h-full bg-white/5 flex items-center justify-center">
+                    <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open'))))} text-3xl text-gray-700"></i>
+                  </div>
+                `}
+                
+                ${youtubeId ? `
+                  <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none">
+                    <iframe class="w-full h-full" 
+                            src="" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                  </div>
+                ` : ''}
+              </a>
+              <div class="absolute top-4 right-4 z-10">
                  <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
                   ${badgeText}
                  </span>
               </div>
-            </a>
+            </div>
 
             <!-- Content -->
             <div class="p-6 flex-1 flex flex-col">
@@ -221,6 +243,22 @@
           </div>
         `;
       }).join('');
+    }
+
+    function playVideo(el, youtubeId) {
+      const overlay = el.querySelector('.video-overlay');
+      const iframe = overlay.querySelector('iframe');
+      if (!iframe.src) {
+        iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0`;
+      }
+      overlay.style.opacity = '1';
+    }
+
+    function stopVideo(el) {
+      const overlay = el.querySelector('.video-overlay');
+      const iframe = overlay.querySelector('iframe');
+      overlay.style.opacity = '0';
+      iframe.src = ''; // Stop video
     }
 
 

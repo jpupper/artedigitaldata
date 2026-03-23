@@ -12,6 +12,7 @@ export interface IEvento extends Document {
   date: Date;
   location: string;
   imageUrl: string;
+  youtube_video: string;
   creator: Types.ObjectId;
   participants: Types.ObjectId[];
   likes: Types.ObjectId[];
@@ -35,6 +36,7 @@ const EventoSchema: Schema = new Schema(
     date: { type: Date, required: true },
     location: { type: String, default: '' },
     imageUrl: { type: String, default: '' },
+    youtube_video: { type: String, default: '' },
     creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],

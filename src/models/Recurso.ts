@@ -13,6 +13,7 @@ export interface IRecurso extends Document {
   url: string;
   author: Types.ObjectId;
   imageUrl?: string;
+  youtube_video?: string;
   tags: string[];
   likes: Types.ObjectId[];
   comments: IComment[];
@@ -35,6 +36,7 @@ const RecursoSchema: Schema = new Schema(
     type: { type: String, enum: ['software', 'github', 'drive', 'tutorial', 'texto', 'other'], default: 'other' },
     url: { type: String, required: true },
     imageUrl: { type: String, default: '' },
+    youtube_video: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     tags: [{ type: String, trim: true }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
