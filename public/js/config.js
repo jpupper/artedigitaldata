@@ -5,19 +5,22 @@ window.CONFIG = {
 
   get BASE() {
     const path = window.location.pathname;
-    // If the path starts with /artedigitaldata, we're in a subfolder deployment
-    if (path.startsWith('/artedigitaldata')) return '/artedigitaldata';
-    // Else, we assume root deployment
+    // Normalized detection of the subfolder
+    if (path.includes('/artedigitaldata')) return '/artedigitaldata';
     return '';
   },
 
   get API_URL() {
-    // El usuario pidió: "en el local cargues los datos que se levantan desde el VPS"
-    if (this.isLocal) return VPS_ORIGIN + '/artedigitaldata/api';
+    // If local, we prioritize the VPS API for data as requested
+    if (this.isLocal) {
+        return VPS_ORIGIN + '/artedigitaldata/api';
+    }
     
-    // En otros entornos, usar el origin actual con el BASE detectado
-    // Se recomienda siempre una ruta absoluta para evitar ambigüedades
-    return window.location.origin + this.BASE + '/api';
+    // In production (VPS or final domain), we use the current origin + base
+    const origin = window.location.origin;
+    const base = this.BASE; // Can be '' or '/artedigitaldata'
+    
+    return origin + base + '/api';
   },
 
   get SOCKET_URL() {
@@ -37,4 +40,10 @@ window.CONFIG = {
 // Also expose as constant for scripts that look for it globally without window prefix
 const CONFIG = window.CONFIG;
 
-console.log("%c[CONFIG] Loaded:", "color: #00F5FF; font-weight: bold;", window.CONFIG);
+console.log("%c[CONFIG] Initialized", "color: #00F5FF; font-weight: bold;", {
+    isLocal: CONFIG.isLocal,
+    BASE: CONFIG.BASE,
+    API_URL: CONFIG.API_URL,
+    origin: window.location.origin,
+    pathname: window.location.pathname
+});

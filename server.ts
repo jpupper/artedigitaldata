@@ -26,7 +26,7 @@ import searchRoutes from './src/routes/search';
 
 const PORT = process.env.PORT || 2495;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/artedigital';
-const BASE_PATH = '/artedigitaldata';
+const BASE_PATH: string = '/artedigitaldata';
 
 const app = express();
 const server = http.createServer(app);
@@ -39,12 +39,21 @@ const io = new SocketServer(server, {
   cors: { origin: '*', methods: ['GET', 'POST', 'PATCH'] },
 });
 
+// Favicon local (silenciar error 404)
+app.get('/favicon.ico', (_req, res) => res.status(204).end());
+
 // Middleware
 app.use(cors({
   origin: ["https://fullscreencode.com", "https://artedigitaldata.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000", "https://vps-4455523-x.dattaweb.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true
 }));
+
+// Logger para depuración de rutas
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 // Middleware para neutralizar el CSP restrictivo del VPS y permitir CDNs
 app.use((_req, res, next) => {
@@ -70,12 +79,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Static files - Servir tanto en raíz como en /artedigitaldata para máxima compatibilidad
-app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public')));
-app.use(`${BASE_PATH}/img`, express.static(path.join(ROOT_DIR, 'img')));
-app.use('/', express.static(path.join(ROOT_DIR, 'public')));
-app.use('/img', express.static(path.join(ROOT_DIR, 'img')));
-
 // API Routes
 const apiRouter = express.Router();
 apiRouter.use('/tagging', searchRoutes);
@@ -88,29 +91,61 @@ apiRouter.use('/eventos', eventosRoutes);
 apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/profile', profileRoutes);
 
-// Registrar API en ambos paths (con y sin prefijo)
-app.use(`${BASE_PATH}/api`, apiRouter);
+// Registrar API en ambos paths (con y sin prefijo) para máxima compatibilidad
+// IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
 app.use('/api', apiRouter);
+app.use(`${BASE_PATH}/api`, apiRouter);
+
+// Static files - Servir tanto en raíz como en /artedigitaldata para máxima compatibilidad
+app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public')));
+app.use(`${BASE_PATH}/img`, express.static(path.join(ROOT_DIR, 'img')));
+app.use('/', express.static(path.join(ROOT_DIR, 'public')));
+app.use('/img', express.static(path.join(ROOT_DIR, 'img')));
+
+// Route handling:
+// Prioritizamos API y archivos estáticos
+// El router de la API ya está registrado arriba.
 
 // SPA fallback — serve index.html for all matching paths
 const serveIndex = (_req: express.Request, res: express.Response) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 };
 
-// Route handling:
-// 1. Explicitly handle subpath root
+// 1. Manejo específico de la raíz del subpath
 app.get([BASE_PATH, `${BASE_PATH}/`], serveIndex);
 
-// 2. Specialized catch-all for SPA routes
-app.get('/*', (req, res, next) => {
-  // If it's an API call or the established subpath, let it pass to specific routers
-  if (req.path.startsWith('/api') || req.path.startsWith(`${BASE_PATH}/api`)) return next();
+// 2. Interceptor global para SPA y API 404s
+app.use((req, res, next) => {
+  // Ignorar peticiones que ya tienen respuesta
+  if (res.headersSent) return;
+
+  const fullPath = req.originalUrl || req.url;
   
-  // If it looks like a file (has an extension), don't serve index.html, let static middleware handle or 404
-  if (req.path.includes('.') && !req.path.includes('html')) return next();
-  
-  // For everything else (routes like /obras, /profile, etc), serve index.html
-  // But only if it's not already a static file that exists (though static is above)
+  // Normalizamos para detectar /api regardless de la base
+  const isApi = fullPath.includes('/api/');
+  const isStaticFile = (fullPath.includes('.') && 
+                       !fullPath.includes('.html') && 
+                       !fullPath.includes('.php')) || 
+                       fullPath.includes('/img/');
+
+  if (isApi) {
+    console.warn(`[SPA Interceptor] 404 for API route: ${req.method} ${fullPath}. Returning JSON 404.`);
+    return res.status(404).json({ 
+      error: `API route not found: ${fullPath}`,
+      method: req.method,
+      requestPath: req.path,
+      suggestion: 'The API router did not match this path. Check server.ts for correct mount points.'
+    });
+  }
+
+  if (isStaticFile) {
+    // Si es un archivo que no existía (static no lo pescó), 404 real
+    console.warn(`[SPA Interceptor] 404 for static file/image: ${fullPath}. Returning plain 404.`);
+    return res.status(404).send('Not Found');
+  }
+
+  // Si no es API ni archivo, es una ruta de SPA (como /obras, /profile, etc)
+  console.log(`[SPA Interceptor] Serving index.html for route: ${fullPath}`);
   serveIndex(req, res);
 });
 
