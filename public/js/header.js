@@ -179,13 +179,27 @@ function extractYouTubeId(item) {
 }
 
 function playVideo(el, youtubeId) {
+  console.log('[YouTube] Playing:', youtubeId);
   const overlay = el.querySelector('.video-overlay');
   if (!overlay) return;
   const iframe = overlay.querySelector('iframe');
+  
   if (!iframe.src || iframe.src === 'about:blank') {
-    iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0`;
+    const url = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0`;
+    console.log('[YouTube] Loading:', url);
+    iframe.src = url;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.position = 'absolute';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    // Use thumbnail as background to avoid black screen while loading
+    overlay.style.background = `url(https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg) no-repeat center center`;
+    overlay.style.backgroundSize = 'cover';
   }
   overlay.style.opacity = '1';
+  overlay.style.transition = 'none'; // Snappy
+  overlay.style.pointerEvents = 'none';
 }
 
 function stopVideo(el) {
