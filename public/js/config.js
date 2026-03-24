@@ -1,49 +1,39 @@
 const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
 
 window.CONFIG = {
-  isLocal: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168'),
+    isLocal: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168'),
 
-  get BASE() {
-    const path = window.location.pathname;
-    // Normalized detection of the subfolder
-    if (path.includes('/artedigitaldata')) return '/artedigitaldata';
-    return '';
-  },
+    get BASE() {
+        // Normalización para detectar el subfolder /artedigitaldata en cualquier dominio
+        if (window.location.pathname.startsWith('/artedigitaldata')) return '/artedigitaldata';
+        return '';
+    },
 
-  get API_URL() {
-    // If local, we prioritize the VPS API for data as requested
-    if (this.isLocal) {
+    get API_URL() {
+        // Forzamos el uso del VPS para la API siempre, incluso si estamos en Ferozo o local
+        // Esto garantiza que siempre indexemos la base de datos principal
         return VPS_ORIGIN + '/artedigitaldata/api';
+    },
+
+    get SOCKET_URL() {
+        return VPS_ORIGIN;
+    },
+
+    get SOCKET_PATH() {
+        return '/artedigitaldata/socket.io';
+    },
+
+    get STATIC_ORIGIN() {
+        return window.location.origin + this.BASE;
     }
-    
-    // In production (VPS or final domain), we use the current origin + base
-    const origin = window.location.origin;
-    const base = this.BASE; // Can be '' or '/artedigitaldata'
-    
-    return origin + base + '/api';
-  },
-
-  get SOCKET_URL() {
-    if (this.isLocal) return VPS_ORIGIN;
-    return window.location.origin;
-  },
-
-  get SOCKET_PATH() {
-    return this.BASE + '/socket.io';
-  },
-
-  get STATIC_ORIGIN() {
-    return window.location.origin + this.BASE;
-  }
 };
 
-// Also expose as constant for scripts that look for it globally without window prefix
+// Exponemos también como variable global directa para scripts que no usen window.
 const CONFIG = window.CONFIG;
 
-console.log("%c[CONFIG] Initialized", "color: #00F5FF; font-weight: bold;", {
+console.log("%c[CONFIG] Initialized v4", "color: #00F5FF; font-weight: bold;", {
     isLocal: CONFIG.isLocal,
     BASE: CONFIG.BASE,
     API_URL: CONFIG.API_URL,
-    origin: window.location.origin,
-    pathname: window.location.pathname
+    currentOrigin: window.location.origin
 });
