@@ -101,15 +101,40 @@
     async function loadFeed() {
       const container = document.getElementById('feed-container');
       try {
+        console.log("[Feed] Loading feed from:", CONFIG.API_URL);
         const [postsRes, recursosRes, eventosRes] = await Promise.all([
           fetch(CONFIG.API_URL + '/posts'),
           fetch(CONFIG.API_URL + '/recursos'),
           fetch(CONFIG.API_URL + '/eventos')
         ]);
         
-        const posts = await postsRes.json();
-        const recursos = await recursosRes.json();
-        const eventos = await eventosRes.json();
+        // Debugging logs to identify which one is returning HTML
+        const responses = [
+          { name: 'posts', res: postsRes },
+          { name: 'recursos', res: recursosRes },
+          { name: 'eventos', res: eventosRes }
+        ];
+
+        for (const item of responses) {
+          const contentType = item.res.headers.get("content-type");
+          console.log(`[Feed] Response for ${item.name}:`, {
+            status: item.res.status,
+            ok: item.res.ok,
+            contentType: contentType
+          });
+
+          if (!item.res.ok || !contentType || !contentType.includes("application/json")) {
+            const bodyText = await item.res.text();
+            console.error(`[Feed] Error in ${item.name}: Server returned ${item.res.status} with content-type ${contentType}. First 100 chars:`, bodyText.substring(0, 100));
+            throw new Error(`Error en ${item.name}: El servidor no devolvió JSON.`);
+          }
+        }
+        
+        const [posts, recursos, eventos] = await Promise.all([
+          postsRes.json(),
+          recursosRes.json(),
+          eventosRes.json()
+        ]);
         
         allFeedItems = [
           ...posts.map(p => ({ ...p, feedType: 'post' })),
@@ -120,8 +145,11 @@
         updateFilterStyles();
         renderFeed();
       } catch (err) {
-        console.error(err);
-        container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Error cargando el feed</div>`;
+        console.error("[Feed] loadFeed error:", err);
+        container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">
+          <i class="fas fa-exclamation-triangle mb-2"></i><br>
+          Error cargando el feed: ${err.message}
+        </div>`;
       }
     }
 
