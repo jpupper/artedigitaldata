@@ -50,12 +50,12 @@ app.use(cors({
 app.use((_req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self' *; " +
-    "style-src 'self' 'unsafe-inline' *; " +
-    "font-src 'self' data: *; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *; " +
-    "img-src 'self' data: *; " +
-    "connect-src 'self' *;"
+    "default-src 'self'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
+    "img-src 'self' data: https://res.cloudinary.com; " +
+    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
   );
   next();
 });
@@ -97,11 +97,20 @@ const serveIndex = (_req: express.Request, res: express.Response) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 };
 
-app.get([BASE_PATH, `${BASE_PATH}/*`], serveIndex);
-// Solo servimos fallback en raíz si no hay conflicto (cuidado aquí si hay otras apps)
-// Pero el usuario pidió que funcione en artedigitaldata.com que seguro es raíz
+// Route handling:
+// 1. Explicitly handle subpath root
+app.get([BASE_PATH, `${BASE_PATH}/`], serveIndex);
+
+// 2. Specialized catch-all for SPA routes
 app.get('/*', (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith(BASE_PATH)) return next();
+  // If it's an API call or the established subpath, let it pass to specific routers
+  if (req.path.startsWith('/api') || req.path.startsWith(`${BASE_PATH}/api`)) return next();
+  
+  // If it looks like a file (has an extension), don't serve index.html, let static middleware handle or 404
+  if (req.path.includes('.') && !req.path.includes('html')) return next();
+  
+  // For everything else (routes like /obras, /profile, etc), serve index.html
+  // But only if it's not already a static file that exists (though static is above)
   serveIndex(req, res);
 });
 
