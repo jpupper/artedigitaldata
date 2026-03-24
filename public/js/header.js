@@ -227,5 +227,55 @@ function stopVideo(el) {
   iframe.src = 'about:blank';
 }
 
-document.addEventListener('DOMContentLoaded', renderHeader);
+
+function renderFooter() {
+  if (document.getElementById('app-footer')) return;
+  
+  const footerContainer = document.createElement('div');
+  footerContainer.id = 'app-footer';
+  footerContainer.className = 'mt-auto border-t border-white/5 bg-[#0d0d12]/80 backdrop-blur-xl py-12 px-4';
+  
+  const footerHTML = `
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+      <div class="flex flex-col items-center md:items-start gap-4">
+        <a href="${CONFIG.BASE}/" class="flex items-center gap-3">
+          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital" class="w-12 h-12 rounded-xl object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
+          <span class="text-xl font-black gradient-text opacity-70">Arte Digital Data</span>
+        </a>
+        <p class="text-gray-500 text-xs text-center md:text-left max-w-xs">
+          La red social definitiva para artistas digitales, músicos y diseñadores. 
+          Unite a la revolución creativa.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all font-bold text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(37,211,102,0.1)]">
+          <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+        </a>
+        <a href="https://discord.gg/sapq5a58" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#5865F2]/10 text-[#5865F2] border border-[#5865F2]/20 hover:bg-[#5865F2]/20 transition-all font-bold text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(88,101,242,0.1)]">
+          <i class="fab fa-discord text-lg"></i> Discord
+        </a>
+        <a href="https://github.com/jpupper/artedigitaldata" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white transition-all font-bold text-sm uppercase tracking-widest">
+          <i class="fab fa-github text-lg"></i> Github
+        </a>
+      </div>
+
+      <div class="flex flex-col items-center md:items-end gap-2 text-gray-600">
+        <span class="text-[10px] font-black uppercase tracking-[0.2em]">FS SYSTEMS &copy; 2026</span>
+        <div class="flex gap-4 text-sm">
+          <a href="#" class="hover:text-cyan-500 transition-colors">Terminos</a>
+          <a href="#" class="hover:text-magenta-500 transition-colors">Privacidad</a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  footerContainer.innerHTML = footerHTML;
+  document.body.appendChild(footerContainer);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHeader();
+  renderFooter();
+});
 
