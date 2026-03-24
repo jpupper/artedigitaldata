@@ -261,7 +261,7 @@ function renderFooter() {
       </div>
 
       <div class="flex flex-col items-center md:items-end gap-2 text-gray-600">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em]">FS SYSTEMS &copy; 2026</span>
+        <a href="https://fullscreencode.com" target="_blank" class="text-[10px] font-black uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Desarrollado por FullScreenCode</a>
         <div class="flex gap-4 text-sm">
           <a href="#" class="hover:text-cyan-500 transition-colors">Terminos</a>
           <a href="#" class="hover:text-magenta-500 transition-colors">Privacidad</a>

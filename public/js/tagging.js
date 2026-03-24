@@ -17,7 +17,9 @@ function formatMentions(text) {
     const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const ytMatch = url.match(ytRegex);
     if (ytMatch) {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600/30 transition-all font-bold text-[10px] uppercase my-1 tracking-wider">
+        <i class="fab fa-youtube text-sm"></i> Ver en YouTube
+      </a>`;
     }
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
   });
