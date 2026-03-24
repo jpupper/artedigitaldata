@@ -184,8 +184,23 @@ function playVideo(el, youtubeId) {
   if (!overlay) return;
   const iframe = overlay.querySelector('iframe');
   
+  // Agregar loader visual
+  let loader = overlay.querySelector('.video-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.className = 'video-loader absolute inset-0 flex items-center justify-center bg-black/60 z-20 pointer-events-none';
+    loader.innerHTML = '<i class="fas fa-circle-notch fa-spin text-4xl text-cyan-500"></i>';
+    overlay.appendChild(loader);
+  }
+  loader.style.display = 'flex';
+
+  // Ocultar loader cuando el iframe cargue
+  iframe.onload = () => {
+    loader.style.display = 'none';
+  };
+
   if (!iframe.src || iframe.src === 'about:blank') {
-    const url = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0`;
+    const url = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0&enablejsapi=1`;
     console.log('[YouTube] Loading:', url);
     iframe.src = url;
     iframe.style.width = '100%';
@@ -193,12 +208,12 @@ function playVideo(el, youtubeId) {
     iframe.style.position = 'absolute';
     iframe.style.top = '0';
     iframe.style.left = '0';
-    // Use thumbnail as background to avoid black screen while loading
+    // Use thumbnail as background
     overlay.style.background = `url(https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg) no-repeat center center`;
     overlay.style.backgroundSize = 'cover';
   }
   overlay.style.opacity = '1';
-  overlay.style.transition = 'none'; // Snappy
+  overlay.style.transition = 'none';
   overlay.style.pointerEvents = 'none';
 }
 
@@ -206,6 +221,8 @@ function stopVideo(el) {
   const overlay = el.querySelector('.video-overlay');
   if (!overlay) return;
   const iframe = overlay.querySelector('iframe');
+  const loader = overlay.querySelector('.video-loader');
+  if (loader) loader.style.display = 'none';
   overlay.style.opacity = '0';
   iframe.src = 'about:blank';
 }
