@@ -44,7 +44,7 @@ app.get('/favicon.ico', (_req, res) => res.status(204).end());
 
 // Middleware
 app.use(cors({
-  origin: ["https://fullscreencode.com", "https://artedigitaldata.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000", "https://vps-4455523-x.dattaweb.com"],
+  origin: ["https://fullscreencode.com", "https://artedigitaldata.com", "https://www.artedigitaldata.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000", "https://vps-4455523-x.dattaweb.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true
 }));
