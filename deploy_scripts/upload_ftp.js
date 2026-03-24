@@ -55,11 +55,15 @@ async function uploadToFtp() {
         const localPublicFolder = path.join(__dirname, '../public');
         const localImgFolder = path.join(__dirname, '../img');
 
-        console.log('Sincronizando /public...');
-        await syncLocalToRemote(client, localPublicFolder, remoteDir);
+        // Sincronizar subCarpeta (para fullscreencode.com/artedigitaldata)
+        console.log('Sincronizando /artedigitaldata...');
+        await syncLocalToRemote(client, localPublicFolder, '/artedigitaldata');
+        await syncLocalToRemote(client, localImgFolder, '/artedigitaldata/img');
 
-        console.log('Sincronizando /img...');
-        await syncLocalToRemote(client, localImgFolder, remoteDir + '/img');
+        // Sincronizar RAIZ (para artedigitaldata.com directo)
+        console.log('Sincronizando RAIZ (/) para artedigitaldata.com...');
+        await syncLocalToRemote(client, localPublicFolder, '/');
+        await syncLocalToRemote(client, localImgFolder, '/img');
 
         console.log('==========================================');
         console.log('Sincronizacion FTP completada con exito!');
