@@ -84,7 +84,13 @@
                 </div>
               ` : ''}
               <div class="p-8">
-                <h1 class="${isYouTubeURL(post.title) ? 'text-sm text-gray-500 font-medium italic break-all' : 'text-3xl font-black text-white'} mb-4">${post.title}</h1>
+                <h1 class="text-3xl font-black text-white mb-4">
+                  ${isYouTubeURL(post.title) ? `
+                    <a href="${post.title}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-black uppercase tracking-widest hover:bg-red-600/20 transition-all cursor-alias">
+                      <i class="fab fa-youtube text-lg"></i> Video de YouTube
+                    </a>
+                  ` : post.title}
+                </h1>
                 <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
                 ${post.tags?.length ? `
                   <div class="flex flex-wrap gap-2 mb-8">
