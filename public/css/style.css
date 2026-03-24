@@ -12,6 +12,9 @@ body {
   background-color: var(--bg-base);
   color: var(--color-text);
   font-family: 'Inter', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .bg-surface {

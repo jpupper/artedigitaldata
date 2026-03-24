@@ -36,6 +36,11 @@
     });
 
     async function loadPost(postId) {
+      const isYouTubeURL = (url) => {
+        if (!url) return false;
+        return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url);
+      };
+
       const container = document.getElementById('post-detail-container');
       try {
         const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
@@ -79,7 +84,7 @@
                 </div>
               ` : ''}
               <div class="p-8">
-                <h1 class="text-3xl font-black text-white mb-4">${post.title}</h1>
+                <h1 class="${isYouTubeURL(post.title) ? 'text-sm text-gray-500 font-medium italic break-all' : 'text-3xl font-black text-white'} mb-4">${post.title}</h1>
                 <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
                 ${post.tags?.length ? `
                   <div class="flex flex-wrap gap-2 mb-8">
