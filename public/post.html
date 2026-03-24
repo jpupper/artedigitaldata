@@ -68,8 +68,14 @@
             </div>
             <div class="p-0">
               ${post.imageUrl ? `
-                <div class="w-full bg-black flex justify-center border-b border-white/5">
-                  <img src="${post.imageUrl}" alt="${post.title}" class="max-w-full max-h-[70vh] object-contain">
+                <div class="w-full bg-black flex justify-center border-b border-white/5 relative aspect-video overflow-hidden" 
+                     ${extractYouTubeId(post) ? `onmouseenter="playVideo(this, '${extractYouTubeId(post)}')" onmouseleave="stopVideo(this)"` : ''}>
+                  <img src="${post.imageUrl}" alt="${post.title}" class="max-w-full max-h-[70vh] object-contain transition-transform duration-700">
+                  ${extractYouTubeId(post) ? `
+                    <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+                      <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                  ` : ''}
                 </div>
               ` : ''}
               <div class="p-8">

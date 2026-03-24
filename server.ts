@@ -63,7 +63,8 @@ app.use((_req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
-    "img-src 'self' data: https://res.cloudinary.com; " +
+    "img-src 'self' data: https://res.cloudinary.com https://*.ytimg.com https://i.ytimg.com; " +
+    "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; " +
     "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
   );
   next();

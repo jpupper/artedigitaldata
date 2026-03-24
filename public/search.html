@@ -120,18 +120,27 @@
               <i class="fas fa-palette text-magenta-500"></i> Obras
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              ${posts.map(p => `
-                <a href="post.html?id=${p.id}" class="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-magenta-500/30 transition-all">
-                  <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+              ${posts.map(p => {
+                const youtubeId = extractYouTubeId(p);
+                return `
+                <div class="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-magenta-500/30 transition-all cursor-pointer"
+                     onclick="window.location.href='post.html?id=${p.id}'">
+                  <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 relative"
+                       ${youtubeId ? `onmouseenter="event.stopPropagation(); playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
                     <img src="${p.image || 'img/artedigital.png'}" class="w-full h-full object-cover">
+                    ${youtubeId ? `
+                      <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+                        <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      </div>
+                    ` : ''}
                   </div>
                   <div class="flex-1 min-w-0 py-1">
                     <h3 class="text-white font-bold truncate">${p.label}</h3>
                     <p class="text-magenta-400 text-xs mt-1">por @${p.author}</p>
                     <p class="text-gray-500 text-[10px] mt-2">${new Date(p.date).toLocaleDateString()}</p>
                   </div>
-                </a>
-              `).join('')}
+                </div>
+              `; }).join('')}
             </div>
           </section>`;
       }
@@ -143,18 +152,29 @@
               <i class="fas fa-calendar-star text-yellow-500"></i> Eventos
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${events.map(e => `
-                <a href="evento.html?id=${e.id}" class="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-yellow-500/30 transition-all">
-                  <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex flex-col items-center justify-center text-yellow-500 shrink-0">
-                    <span class="text-xs font-bold leading-none">${new Date(e.date).toLocaleDateString('es', {month: 'short'})}</span>
-                    <span class="text-lg font-black leading-none">${new Date(e.date).getDate()}</span>
+              ${events.map(e => {
+                const youtubeId = extractYouTubeId(e);
+                return `
+                <div class="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-yellow-500/30 transition-all cursor-pointer"
+                     onclick="window.location.href='evento.html?id=${e.id}'">
+                  <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex flex-col items-center justify-center text-yellow-500 shrink-0 relative overflow-hidden"
+                       ${youtubeId ? `onmouseenter="event.stopPropagation(); playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
+                    <div class="date-display text-center">
+                      <span class="block text-xs font-bold leading-none">${new Date(e.date).toLocaleDateString('es', {month: 'short'})}</span>
+                      <span class="block text-lg font-black leading-none">${new Date(e.date).getDate()}</span>
+                    </div>
+                    ${youtubeId ? `
+                      <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+                        <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      </div>
+                    ` : ''}
                   </div>
                   <div class="flex-1 min-w-0">
                     <h3 class="text-white font-bold group-hover:text-yellow-400 transition-colors truncate">${e.label}</h3>
                     <p class="text-gray-500 text-xs truncate">${e.desc || ''}</p>
                   </div>
-                </a>
-              `).join('')}
+                </div>
+              `; }).join('')}
             </div>
           </section>`;
       }

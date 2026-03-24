@@ -135,9 +135,27 @@
       // Image
       const imgContainer = document.getElementById('resource-image-container');
       const img = document.getElementById('resource-image');
+      const youtubeId = extractYouTubeId(r);
+
       if (r.imageUrl) {
         img.src = r.imageUrl;
         imgContainer.classList.remove('hidden');
+        imgContainer.className = "mb-8 rounded-2xl overflow-hidden border border-white/5 aspect-video relative";
+        
+        if (youtubeId) {
+          imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
+          imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
+          imgContainer.innerHTML = `
+            <img id="resource-image" src="${r.imageUrl}" class="w-full h-full object-cover">
+            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          `;
+        } else {
+          imgContainer.removeAttribute('onmouseenter');
+          imgContainer.removeAttribute('onmouseleave');
+          imgContainer.innerHTML = `<img id="resource-image" src="${r.imageUrl}" class="w-full h-full object-cover">`;
+        }
       } else {
         imgContainer.classList.add('hidden');
       }

@@ -162,10 +162,40 @@
       }
 
       const imgContainer = document.getElementById('event-image-container');
+      const youtubeId = extractYouTubeId(ev);
+      
+      imgContainer.className = "aspect-video w-full overflow-hidden bg-magenta-500/5 flex items-center justify-center relative";
+      
       if (ev.imageUrl) {
-        imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+        if (youtubeId) {
+          imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
+          imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
+          imgContainer.innerHTML = `
+            <img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">
+            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          `;
+        } else {
+          imgContainer.removeAttribute('onmouseenter');
+          imgContainer.removeAttribute('onmouseleave');
+          imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+        }
       } else {
-        imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
+        if (youtubeId) {
+          imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
+          imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
+          imgContainer.innerHTML = `
+            <i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>
+            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          `;
+        } else {
+          imgContainer.removeAttribute('onmouseenter');
+          imgContainer.removeAttribute('onmouseleave');
+          imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
+        }
       }
 
       // Likes
