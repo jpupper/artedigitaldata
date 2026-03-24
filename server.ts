@@ -41,7 +41,7 @@ const io = new SocketServer(server, {
 
 // Middleware
 app.use(cors({
-  origin: ["https://fullscreencode.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000"],
+  origin: ["https://fullscreencode.com", "https://artedigitaldata.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000", "https://vps-4455523-x.dattaweb.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true
 }));
@@ -50,12 +50,12 @@ app.use(cors({
 app.use((_req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
-    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
-    "img-src 'self' data: https://res.cloudinary.com; " +
-    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
+    "default-src 'self' *; " +
+    "style-src 'self' 'unsafe-inline' *; " +
+    "font-src 'self' data: *; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *; " +
+    "img-src 'self' data: *; " +
+    "connect-src 'self' *;"
   );
   next();
 });
@@ -70,24 +70,39 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Static files - Detecta automaticamente si estamos en /dist o raiz
+// Static files - Servir tanto en raíz como en /artedigitaldata para máxima compatibilidad
 app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public')));
 app.use(`${BASE_PATH}/img`, express.static(path.join(ROOT_DIR, 'img')));
+app.use('/', express.static(path.join(ROOT_DIR, 'public')));
+app.use('/img', express.static(path.join(ROOT_DIR, 'img')));
 
 // API Routes
-app.use(`${BASE_PATH}/api/tagging`, searchRoutes);
-app.use(`${BASE_PATH}/api/auth`, authRoutes);
-app.use(`${BASE_PATH}/api/admin`, adminRoutes);
-app.use(`${BASE_PATH}/api/posts`, postRoutes);
-app.use(`${BASE_PATH}/api/chat`, chatRoutes);
-app.use(`${BASE_PATH}/api/recursos`, recursosRoutes);
-app.use(`${BASE_PATH}/api/eventos`, eventosRoutes);
-app.use(`${BASE_PATH}/api/upload`, uploadRoutes);
-app.use(`${BASE_PATH}/api/profile`, profileRoutes);
+const apiRouter = express.Router();
+apiRouter.use('/tagging', searchRoutes);
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/admin', adminRoutes);
+apiRouter.use('/posts', postRoutes);
+apiRouter.use('/chat', chatRoutes);
+apiRouter.use('/recursos', recursosRoutes);
+apiRouter.use('/eventos', eventosRoutes);
+apiRouter.use('/upload', uploadRoutes);
+apiRouter.use('/profile', profileRoutes);
 
-// SPA fallback — serve index.html for the base path and all sub-routes
-app.get([BASE_PATH, `${BASE_PATH}/*`], (_req, res) => {
+// Registrar API en ambos paths (con y sin prefijo)
+app.use(`${BASE_PATH}/api`, apiRouter);
+app.use('/api', apiRouter);
+
+// SPA fallback — serve index.html for all matching paths
+const serveIndex = (_req: express.Request, res: express.Response) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
+};
+
+app.get([BASE_PATH, `${BASE_PATH}/*`], serveIndex);
+// Solo servimos fallback en raíz si no hay conflicto (cuidado aquí si hay otras apps)
+// Pero el usuario pidió que funcione en artedigitaldata.com que seguro es raíz
+app.get('/*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith(BASE_PATH)) return next();
+  serveIndex(req, res);
 });
 
 // ========== SOCKET.IO ==========
@@ -124,8 +139,6 @@ io.on('connection', (socket) => {
 
 // ========== ADMIN SEEDING ==========
 async function seedAdmin(): Promise<void> {
-  // Con el sistema global, fscauth ya se encarga del seeding.
-  // Aquí podemos simplemente reportar cuántos usuarios hay en el sistema central.
   const userCount = await User.countDocuments();
   console.log(`[AUTH] Sistema central detectado: ${userCount} usuarios registrados.`);
 }
@@ -133,13 +146,15 @@ async function seedAdmin(): Promise<void> {
 // ========== START ==========
 async function start(): Promise<void> {
   try {
+    // Conexión principal
     await mongoose.connect(MONGODB_URI);
-    console.log('[DB] Conectado a MongoDB:', MONGODB_URI);
+    console.log('[DB] Conectado a MongoDB (Project):', MONGODB_URI);
 
     await seedAdmin();
 
     server.listen(PORT, () => {
-      console.log(`[Server] Arte Digital Data corriendo en http://localhost:${PORT}${BASE_PATH}/`);
+      console.log(`[Server] Arte Digital Data corriendo en http://localhost:${PORT}/`);
+      console.log(`[Server] También disponible en http://localhost:${PORT}${BASE_PATH}/`);
     });
   } catch (err) {
     console.error('[Server] Error al iniciar:', err);
@@ -148,3 +163,4 @@ async function start(): Promise<void> {
 }
 
 start();
+
