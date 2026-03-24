@@ -74,28 +74,6 @@
       renderRecursos(filtered);
     }
 
-    function extractYouTubeId(url) {
-      if (!url) return null;
-      const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-      const match = url.match(regex);
-      return match ? match[1] : null;
-    }
-
-    function playVideo(el, youtubeId) {
-      const overlay = el.querySelector('.video-overlay');
-      const iframe = overlay.querySelector('iframe');
-      if (!iframe.src) {
-        iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0`;
-      }
-      overlay.style.opacity = '1';
-    }
-
-    function stopVideo(el) {
-      const overlay = el.querySelector('.video-overlay');
-      const iframe = overlay.querySelector('iframe');
-      overlay.style.opacity = '0';
-      iframe.src = ''; // Stop video
-    }
 
     function renderRecursos(recursos) {
       const container = document.getElementById('recursos-container');
@@ -109,12 +87,13 @@
       }
 
       container.innerHTML = recursos.map(r => {
-        const youtubeId = extractYouTubeId(r.youtube_video);
+        const youtubeId = extractYouTubeId(r);
         return `
           <div class="rounded-2xl border border-cyan-500/10 card-cyber transition-all duration-300 flex flex-col h-full group overflow-hidden">
             <div class="relative aspect-video overflow-hidden border-b border-white/5">
-              <a href="recurso.html?id=${r._id}" class="block w-full h-full relative"
-                 ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
+              <div class="block w-full h-full relative cursor-pointer"
+                 ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
+                 onclick="window.location.href='recurso.html?id=${r._id}'">
                 ${r.imageUrl ? `
                   <img src="${r.imageUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${r.title}">
                 ` : `
@@ -124,7 +103,7 @@
                 `}
                 
                 ${youtubeId ? `
-                  <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none">
+                  <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
                     <iframe class="w-full h-full" 
                             src="" 
                             frameborder="0" 
@@ -132,7 +111,7 @@
                             allowfullscreen></iframe>
                   </div>
                 ` : ''}
-              </a>
+              </div>
             </div>
             <a href="recurso.html?id=${r._id}" class="p-6 flex-1 flex flex-col">
               <div class="flex items-center gap-2 mb-4">
