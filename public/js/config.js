@@ -10,8 +10,15 @@ window.CONFIG = {
     ],
 
     // Detección automática de base path
+    // NOTA: Forzamos /artedigitaldata si no se encuentra en el path pero estamos en un dominio conocido, 
+    // ya que NGINX solo mapea ese prefijo al servidor Node.
     get BASE() {
-        if (window.location.pathname.startsWith('/artedigitaldata')) return '/artedigitaldata';
+        const path = window.location.pathname;
+        if (path.startsWith('/artedigitaldata')) return '/artedigitaldata';
+        
+        // Si estamos en producción (no localhost) y no hay prefijo, lo añadimos para la API
+        if (!this.isLocal) return '/artedigitaldata';
+        
         return '';
     },
 
@@ -27,16 +34,10 @@ window.CONFIG = {
         return window.location.origin;
     },
 
-    // La API siempre debe apuntar al mismo servidor que sirve la página,
-    // a menos que estemos en un dominio que solo sirve el frontend (como Ferozo si fuera estático)
     get API_URL() {
-        // En localhost, usamos localhost
-        if (this.isLocal) return window.location.origin + this.BASE + '/api';
-        
-        // En producción, usamos el origen actual (que debería ser el servidor Node)
-        // Si el origen actual no está en la lista de confianza, podrías forzar el VPS_ORIGIN
-        // Pero para flexibilidad total, usamos el origen actual.
-        return window.location.origin + this.BASE + '/api';
+        // En producción siempre necesitamos el prefijo por el mapeo de NGINX
+        const prefix = this.isLocal ? this.BASE : '/artedigitaldata';
+        return window.location.origin + prefix + '/api';
     },
 
     get SOCKET_URL() {
@@ -44,7 +45,8 @@ window.CONFIG = {
     },
 
     get SOCKET_PATH() {
-        return this.BASE + '/socket.io';
+        // El servidor Socket.io en el VPS está configurado específicamente en este path
+        return '/artedigitaldata/socket.io';
     },
 
     get STATIC_ORIGIN() {
