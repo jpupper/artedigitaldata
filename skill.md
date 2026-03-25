@@ -98,18 +98,18 @@ window.CONFIG = {
 Para que esta arquitectura (Front en un servidor, Back en otro) funcione sin bloqueos del navegador, el `server.ts` **DEBE** seguir estas reglas estrictas para evitar errores de red.
 
 ### A. CORS (Cross-Origin Resource Sharing)
-Cuando el frontend en `fullscreencode.com` intenta hablar con el backend en `dattaweb.com`, el navegador bloquea la petición por seguridad a menos que el servidor responda con las cabeceras correctas.
-
-*   **Regla de Oro:** Si usás `credentials: true` (para enviar cookies o tokens), **no podés usar `origin: "*"`**. Debes listar los dominios permitidos explícitamente.
-*   **Métodos:** Incluir siempre `PATCH` (muy común en actualizaciones de perfil) y `OPTIONS` (para la comprobación previa o "preflight").
+Cuando el frontend en `fullscreencode.com` o `artedigitaldata.com` intenta hablar con el backend en el VPS, el navegador bloquea la petición a menos que el servidor autorice el origen.
 
 ```typescript
 app.use(cors({
   origin: [
     "https://fullscreencode.com", 
+    "https://artedigitaldata.com",
+    "https://www.artedigitaldata.com",
     "https://vps-4455523-x.dattaweb.com",
-    "http://localhost:3000",
-    "http://localhost:2495"
+    "http://localhost:2495",
+    "http://localhost:5173",
+    "http://localhost:3000"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true

@@ -1,51 +1,45 @@
 const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
 
 window.CONFIG = {
-    // Orígenes válidos para saber si estamos en un entorno conocido
-    VALID_ORIGINS: [
-        'https://fullscreencode.com',
-        'https://artedigitaldata.com',
-        'https://www.artedigitaldata.com',
-        'https://vps-4455523-x.dattaweb.com'
+    // Orígenes que sí ejecutan el backend de Node
+    NODE_HOSTS: [
+        'localhost',
+        '127.0.0.1',
+        'vps-4455523-x.dattaweb.com'
     ],
 
-    // Detección automática de base path
-    // NOTA: Forzamos /artedigitaldata si no se encuentra en el path pero estamos en un dominio conocido, 
-    // ya que NGINX solo mapea ese prefijo al servidor Node.
-    get BASE() {
-        const path = window.location.pathname;
-        if (path.startsWith('/artedigitaldata')) return '/artedigitaldata';
-        
-        // Si estamos en producción (no localhost) y no hay prefijo, lo añadimos para la API
-        if (!this.isLocal) return '/artedigitaldata';
-        
-        return '';
-    },
-
-    // Detección de entorno local
     get isLocal() {
         return window.location.hostname === 'localhost' || 
                window.location.hostname === '127.0.0.1' || 
                window.location.hostname.includes('192.168');
     },
 
-    // URL base de la aplicación (para links internos)
-    get ORIGIN() {
-        return window.location.origin;
+    // Detectamos si el dominio actual sirve el backend o es solo un espejo estático
+    get IS_NODE_SERVER() {
+        return this.NODE_HOSTS.some(host => window.location.hostname === host) || this.isLocal;
+    },
+
+    get BASE() {
+        if (window.location.pathname.startsWith('/artedigitaldata')) return '/artedigitaldata';
+        return '';
     },
 
     get API_URL() {
-        // En producción siempre necesitamos el prefijo por el mapeo de NGINX
-        const prefix = this.isLocal ? this.BASE : '/artedigitaldata';
-        return window.location.origin + prefix + '/api';
+        // Si estamos en el servidor Node o local, usamos ruta relativa/misma origen
+        if (this.IS_NODE_SERVER) {
+            const prefix = this.isLocal && !window.location.pathname.startsWith('/artedigitaldata') ? '' : '/artedigitaldata';
+            return window.location.origin + prefix + '/api';
+        }
+        // Si estamos en un espejo estático (artedigitaldata.com, fullscreencode.com), 
+        // debemos apuntar explícitamente al VPS porque el hosting actual no tiene el backend.
+        return VPS_ORIGIN + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
-        return window.location.origin;
+        return this.IS_NODE_SERVER ? window.location.origin : VPS_ORIGIN;
     },
 
     get SOCKET_PATH() {
-        // El servidor Socket.io en el VPS está configurado específicamente en este path
         return '/artedigitaldata/socket.io';
     },
 
