@@ -25,18 +25,13 @@ window.CONFIG = {
     },
 
     get API_URL() {
-        // Si estamos en el servidor Node o local, usamos ruta relativa/misma origen
-        if (this.IS_NODE_SERVER) {
-            const prefix = this.isLocal && !window.location.pathname.startsWith('/artedigitaldata') ? '' : '/artedigitaldata';
-            return window.location.origin + prefix + '/api';
-        }
-        // Si estamos en un espejo estático (artedigitaldata.com, fullscreencode.com), 
-        // debemos apuntar explícitamente al VPS porque el hosting actual no tiene el backend.
-        return VPS_ORIGIN + '/artedigitaldata/api';
+        // El usuario quiere que en LOCAL se usen siempre los datos del VPS
+        const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
+        return origin + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
-        return this.IS_NODE_SERVER ? window.location.origin : VPS_ORIGIN;
+        return (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
     },
 
     get SOCKET_PATH() {

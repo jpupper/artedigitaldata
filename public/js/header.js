@@ -16,6 +16,11 @@ function renderHeader() {
           </span>
         </a>
 
+        <!-- Colaborar Button -->
+        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase ml-2">
+          <i class="fas fa-heart text-yellow-500"></i> COLABORAR
+        </button>
+
         <!-- Desktop Nav -->
         <nav class="hidden lg:flex items-center gap-0.5">
           <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
@@ -134,14 +139,83 @@ function renderHeader() {
             <a href="${CONFIG.BASE}/login.html" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5">
               Iniciar Sesión
             </a>
-            <a href="${CONFIG.BASE}/register.html" class="btn-primary px-4 py-3 rounded-lg text-center mt-2">
-              Registrarse
-            </a>
+          <a href="${CONFIG.BASE}/register.html" class="btn-primary px-4 py-3 rounded-lg text-center mt-2">
+            Registrarse
+          </a>
           `}
+          <button onclick="showDonationModal()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 hover:bg-yellow-500/5 mt-2 border border-yellow-500/10">
+            <i class="fas fa-heart text-yellow-500"></i> COLABORAR
+          </button>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Global Donation Modal -->
+  <div id="donation-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 px-4 backdrop-blur-md">
+    <div class="w-full max-w-md rounded-[2.5rem] border border-yellow-500/30 card-cyber bg-[#0d0d12] overflow-hidden shadow-[0_0_50px_rgba(234,179,8,0.1)]">
+      <div class="p-8 text-center relative">
+        <button onclick="hideDonationModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-all">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+        <div class="w-20 h-20 bg-yellow-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-yellow-500/20">
+          <i class="fas fa-heart text-3xl text-yellow-500"></i>
+        </div>
+        <h3 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">Apoyá al <span class="text-yellow-500">Proyecto</span></h3>
+        <p class="text-sm text-gray-400 mb-8">Tu colaboración nos ayuda a seguir creciendo y manteniendo esta plataforma libre.</p>
+        
+        <div class="grid grid-cols-1 gap-3">
+          <!-- Mercado Pago (Disabled) -->
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
+            <div class="w-10 h-10 rounded-xl bg-[#009ee3] flex items-center justify-center shrink-0">
+              <i class="fas fa-wallet text-white"></i>
+            </div>
+            <div class="text-left flex-1">
+              <div class="text-sm font-bold text-white">Mercado Pago</div>
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
+            </div>
+          </div>
+
+          <!-- Cafecito (Active) -->
+          <a href="https://cafecito.app/artedigitaldata" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 hover:border-yellow-400 hover:bg-yellow-500/20 transition-all group no-underline relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="w-10 h-10 rounded-xl bg-[#ffdd00] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,221,0,0.3)] group-hover:scale-110 transition-transform relative z-10">
+              <i class="fas fa-coffee text-[#333]"></i>
+            </div>
+            <div class="text-left flex-1 relative z-10">
+              <div class="text-sm font-black text-white uppercase tracking-tight">Cafecito</div>
+              <div class="text-[10px] text-yellow-500 font-bold uppercase tracking-wider">¡Apoyanos con un café!</div>
+            </div>
+            <div class="relative z-10 flex flex-col items-center">
+               <i class="fas fa-external-link-alt text-yellow-500 transition-transform group-hover:translate-x-1"></i>
+            </div>
+          </a>
+
+          <!-- PayPal (Disabled) -->
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
+            <div class="w-10 h-10 rounded-xl bg-[#003087] flex items-center justify-center shrink-0">
+              <i class="fab fa-paypal text-white"></i>
+            </div>
+            <div class="text-left flex-1">
+              <div class="text-sm font-bold text-white">PayPal</div>
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
+            </div>
+          </div>
+
+          <!-- Patreon (Disabled) -->
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
+            <div class="w-10 h-10 rounded-xl bg-[#ff424d] flex items-center justify-center shrink-0">
+              <i class="fab fa-patreon text-white"></i>
+            </div>
+            <div class="text-left flex-1">
+              <div class="text-sm font-bold text-white">Patreon</div>
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   `;
 
   document.getElementById('app-header').innerHTML = headerHTML;
@@ -159,6 +233,22 @@ function renderHeader() {
   }
 }
 
+
+function showDonationModal() {
+  const modal = document.getElementById('donation-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function hideDonationModal() {
+  const modal = document.getElementById('donation-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
 
 function extractYouTubeId(item) {
   if (!item) return null;
