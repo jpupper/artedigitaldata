@@ -10,11 +10,17 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
     if (!items || items.length === 0) return [];
     
     // Obtener IDs únicos de usuario
-    const userIds = [...new Set(items.map(i => {
+    const allUserIds = new Set<string>();
+    items.forEach(i => {
         const val = i[userField];
-        return val ? val.toString() : null;
-    }).filter(Boolean))];
+        if (Array.isArray(val)) {
+            val.forEach(id => { if (id) allUserIds.add(id.toString()); });
+        } else if (val) {
+            allUserIds.add(val.toString());
+        }
+    });
     
+    const userIds = Array.from(allUserIds);
     if (userIds.length === 0) return items;
 
     // Buscar usuarios en la DB global
@@ -32,23 +38,14 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
     
     // Mapear de vuelta
     return items.map(i => {
-        const obj = i.toObject ? i.toObject() : i;
-        const uid = i[userField] ? i[userField].toString() : null;
+        const obj = i.toObject ? i.toObject() : { ...i };
+        const val = i[userField];
         
-        if (uid && userMap[uid]) {
-            obj[userField] = userMap[uid];
-        } else {
-            // Si el usuario no existe en la DB global por ID, intentamos un último recurso: 
-            // Si el objeto ya tenía un nombre de usuario (por una población previa fallida), podríamos buscarlo.
-            // Pero lo ideal es que el ID sea correcto.
-            if (uid) console.warn(`[Hydration] Usuario no encontrado en DB Global: ${uid} (en campo ${userField})`);
-            obj[userField] = { 
-                _id: uid,
-                username: 'Usuario', 
-                avatar: '',
-                displayName: 'Usuario Central',
-                isFallback: true 
-            };
+        if (Array.isArray(val)) {
+            obj[userField] = val.map(id => userMap[id.toString()] || { _id: id, username: 'Usuario', displayName: 'Usuario central', isFallback: true });
+        } else if (val) {
+            const uid = val.toString();
+            obj[userField] = userMap[uid] || { _id: uid, username: 'Usuario', displayName: 'Usuario central', isFallback: true };
         }
         return obj;
     });
