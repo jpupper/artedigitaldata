@@ -23,6 +23,7 @@ import eventosRoutes from './src/routes/eventos';
 import uploadRoutes from './src/routes/upload';
 import profileRoutes from './src/routes/profile';
 import searchRoutes from './src/routes/search';
+import { hydrate } from './src/utils/userHydration';
 
 const PORT = process.env.PORT || 2495;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/artedigital';
@@ -170,8 +171,8 @@ io.on('connection', (socket) => {
         sender: data.senderId,
         content: data.content,
       });
-      const populated = await message.populate('sender', 'username avatar');
-      io.to(data.roomId).emit('newMessage', populated);
+      const [hydrated] = await hydrate([message], 'sender');
+      io.to(data.roomId).emit('newMessage', hydrated);
     } catch (err) {
       console.error('[Socket] Error guardando mensaje:', err);
     }

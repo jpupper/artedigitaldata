@@ -3,15 +3,16 @@ import ChatRoom from '../models/ChatRoom';
 import Message from '../models/Message';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { hydrate } from '../utils/userHydration';
 
 const router = Router();
 
 router.get('/rooms', async (_req: Request, res: Response) => {
   try {
     const rooms = await ChatRoom.find({ isPrivate: { $ne: true } })
-      .populate('creator', 'username avatar')
       .sort({ createdAt: -1 });
-    return res.json(rooms);
+    const hydrated = await hydrate(rooms, 'creator');
+    return res.json(hydrated);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -23,9 +24,9 @@ router.get('/private', authMiddleware, async (req: AuthRequest, res: Response) =
       isPrivate: true,
       participants: req.user!.id
     })
-    .populate('participants', 'username avatar')
     .sort({ updatedAt: -1 });
-    return res.json(rooms);
+    const hydrated = await hydrate(rooms, 'participants');
+    return res.json(hydrated);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -40,7 +41,7 @@ router.post('/private', authMiddleware, async (req: AuthRequest, res: Response) 
     let room = await ChatRoom.findOne({
       isPrivate: true,
       participants: { $all: [req.user!.id, recipientId] }
-    }).populate('participants', 'username avatar');
+    });
 
     if (!room) {
       room = await ChatRoom.create({
@@ -49,10 +50,10 @@ router.post('/private', authMiddleware, async (req: AuthRequest, res: Response) 
         creator: req.user!.id,
         participants: [req.user!.id, recipientId]
       });
-      await room.populate('participants', 'username avatar');
     }
 
-    return res.json(room);
+    const hydrated = await hydrate([room], 'participants');
+    return res.json(hydrated[0]);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -114,10 +115,10 @@ router.get('/rooms/:roomId/messages', authMiddleware, async (req: AuthRequest, r
     }
 
     const messages = await Message.find({ room: req.params.roomId })
-      .populate('sender', 'username avatar')
       .sort({ createdAt: 1 })
       .limit(100);
-    return res.json(messages);
+    const hydrated = await hydrate(messages, 'sender');
+    return res.json(hydrated);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
