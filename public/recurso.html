@@ -95,6 +95,8 @@
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/edit-logic.js"></script>
   <script>
     let currentResourceId = null;
     const typeIcons = { software: 'fas fa-desktop', github: 'fab fa-github', drive: 'fab fa-google-drive', tutorial: 'fas fa-graduation-cap', other: 'fas fa-link' };
@@ -127,61 +129,70 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('resource-content').classList.remove('hidden');
 
+      const isAuthor = isLoggedIn() && getUserId() === r.author?._id;
+
       document.title = `${r.title} - Arte Digital Data`;
       document.getElementById('resource-title').innerText = r.title;
       document.getElementById('resource-description').innerHTML = formatMentions(r.description) || 'Sin descripción disponible.';
       document.getElementById('resource-type-text').innerText = r.type;
 
-      // Image
-      const imgContainer = document.getElementById('resource-image-container');
-      const img = document.getElementById('resource-image');
-      const youtubeId = extractYouTubeId(r);
-
-      if (r.imageUrl) {
-        img.src = r.imageUrl;
-        imgContainer.classList.remove('hidden');
-        imgContainer.className = "mb-8 rounded-2xl overflow-hidden border border-white/5 aspect-video relative";
-        
-        if (youtubeId) {
-          imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
-          imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
-          imgContainer.innerHTML = `
-            <img id="resource-image" src="${r.imageUrl}" class="w-full h-full object-cover">
-            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          `;
-        } else {
-          imgContainer.removeAttribute('onmouseenter');
-          imgContainer.removeAttribute('onmouseleave');
-          imgContainer.innerHTML = `<img id="resource-image" src="${r.imageUrl}" class="w-full h-full object-cover">`;
-        }
-      } else {
-        imgContainer.classList.add('hidden');
-      }
-      
+      // Icon and Author
       const authorLink = document.getElementById('resource-author');
       authorLink.innerText = `@${r.author?.username || 'anónimo'}`;
       authorLink.href = `profile.html?user=${r.author?.username}`;
 
       const avatarCont = document.getElementById('author-avatar');
-      if (r.author?.avatar) {
-        avatarCont.innerHTML = `<img src="${r.author.avatar}" class="w-full h-full object-cover">`;
-      } else {
-        avatarCont.innerText = (r.author?.username || '?')[0].toUpperCase();
+      avatarCont.innerHTML = r.author?.avatar ? `<img src="${r.author.avatar}" class="w-full h-full object-cover">` : (r.author?.username || '?')[0].toUpperCase();
+
+      // Edit Button
+      const editBtnContainer = document.createElement('div');
+      if (isAuthor) {
+          editBtnContainer.innerHTML = `
+            <button onclick="loadItemToEdit('recursos', '${r._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all font-bold text-sm">
+              <i class="fas fa-edit"></i>
+              <span>Editar</span>
+            </button>
+          `;
+          document.querySelector('.flex.items-center.gap-4').appendChild(editBtnContainer);
       }
 
+      // YouTube and Link
+      const youtubeId = extractYouTubeId(r);
+      const imgContainer = document.getElementById('resource-image-container');
       const link = document.getElementById('resource-link');
       link.href = r.url;
+
+      if (r.imageUrl) {
+        imgContainer.classList.remove('hidden');
+        imgContainer.className = "mb-8 rounded-2xl overflow-hidden border border-white/5 aspect-video relative";
+        imgContainer.innerHTML = `<img src="${r.imageUrl}" class="w-full h-full object-cover">`;
+        if (youtubeId) {
+          imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
+          imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
+          imgContainer.innerHTML += `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+        }
+      } else {
+        imgContainer.classList.add('hidden');
+      }
+
+      // YouTube Badge
+      if (r.youtube_video) {
+        const badge = document.createElement('div');
+        badge.className = "mb-6";
+        badge.innerHTML = `
+          <a href="${r.youtube_video}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+            <i class="fab fa-youtube text-lg"></i> Ver Tutorial / Video
+          </a>
+        `;
+        document.getElementById('resource-description').after(badge);
+      }
 
       const iconContainer = document.getElementById('resource-type-icon');
       iconContainer.className = `w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0 ${typeColors[r.type] || typeColors.other}`;
       iconContainer.innerHTML = `<i class="${typeIcons[r.type] || typeIcons.other}"></i>`;
 
       const tagsContainer = document.getElementById('resource-tags');
-      if (r.tags?.length) {
-        tagsContainer.innerHTML = r.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${t}</span>`).join('');
-      }
+      tagsContainer.innerHTML = (r.tags || []).map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${t}</span>`).join('');
 
       // Likes
       const btn = document.getElementById('like-btn');
@@ -219,30 +230,26 @@
       }
 
       const commentsList = document.getElementById('comments-list');
-      if (r.comments?.length) {
-        commentsList.innerHTML = r.comments.map(c => `
-          <div class="flex gap-4">
-            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-              ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
-                <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                  <i class="fas fa-user text-xs"></i>
-                </div>
-              `}
-            </div>
-            <div class="flex-1">
-              <div class="bg-white/5 rounded-2xl px-4 py-3">
-                <div class="flex justify-between items-center mb-1">
-                  <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
-                  <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
-                </div>
-                <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
+      commentsList.innerHTML = (r.comments || []).map(c => `
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
+            ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+              <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                <i class="fas fa-user text-xs"></i>
               </div>
+            `}
+          </div>
+          <div class="flex-1">
+            <div class="bg-white/5 rounded-2xl px-4 py-3">
+              <div class="flex justify-between items-center mb-1">
+                <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+              </div>
+              <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
             </div>
           </div>
-        `).reverse().join('');
-      } else {
-        commentsList.innerHTML = `<div class="text-center py-10 text-gray-600 italic">No hay comentarios aún.</div>`;
-      }
+        </div>
+      `).reverse().join('') || `<div class="text-center py-10 text-gray-600 italic">No hay comentarios aún.</div>`;
     }
 
     async function addComment(e) {
@@ -294,5 +301,14 @@
       document.getElementById('error').classList.remove('hidden');
     }
   </script>
+  <!-- Global Edit Modal -->
+  <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+    <div class="w-full max-w-lg rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative">
+      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fas fa-times"></i>
+      </button>
+      <div id="edit-modal-content"></div>
+    </div>
+  </div>
 </body>
 </html>

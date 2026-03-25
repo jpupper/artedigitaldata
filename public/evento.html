@@ -111,6 +111,8 @@
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/edit-logic.js"></script>
   <script>
     let currentEventId = null;
 
@@ -141,6 +143,8 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('event-content').classList.remove('hidden');
 
+      const isCreator = isLoggedIn() && getUserId() === ev.creator?._id;
+
       document.title = `${ev.title} - Arte Digital Data`;
       document.getElementById('event-title').innerText = ev.title;
       document.getElementById('event-description').innerHTML = formatMentions(ev.description) || 'Sin descripción disponible.';
@@ -155,47 +159,50 @@
       creator.href = `profile.html?user=${ev.creator?.username}`;
 
       const avatarCont = document.getElementById('creator-avatar');
-      if (ev.creator?.avatar) {
-        avatarCont.innerHTML = `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">`;
-      } else {
-        avatarCont.innerText = (ev.creator?.username || '?')[0].toUpperCase();
+      avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase();
+
+      // Edit Button
+      const editBtnContainer = document.createElement('div');
+      if (isCreator) {
+          editBtnContainer.innerHTML = `
+            <button onclick="loadItemToEdit('eventos', '${ev._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-magenta-500/30 text-magenta-400 hover:bg-magenta-500/10 transition-all font-bold text-sm">
+              <i class="fas fa-edit"></i>
+              <span>Editar</span>
+            </button>
+          `;
+          document.querySelector('.flex.flex-wrap.items-center').appendChild(editBtnContainer);
       }
 
       const imgContainer = document.getElementById('event-image-container');
       const youtubeId = extractYouTubeId(ev);
-      
       imgContainer.className = "aspect-video w-full overflow-hidden bg-magenta-500/5 flex items-center justify-center relative";
       
       if (ev.imageUrl) {
+        imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
         if (youtubeId) {
           imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
           imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
-          imgContainer.innerHTML = `
-            <img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">
-            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          `;
-        } else {
-          imgContainer.removeAttribute('onmouseenter');
-          imgContainer.removeAttribute('onmouseleave');
-          imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+          imgContainer.innerHTML += `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
         }
       } else {
+        imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
         if (youtubeId) {
           imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
           imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
-          imgContainer.innerHTML = `
-            <i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>
-            <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-              <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          `;
-        } else {
-          imgContainer.removeAttribute('onmouseenter');
-          imgContainer.removeAttribute('onmouseleave');
-          imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
+          imgContainer.innerHTML += `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
         }
+      }
+
+      // YouTube Badge
+      if (ev.youtube_video) {
+        const badge = document.createElement('div');
+        badge.className = "mb-6";
+        badge.innerHTML = `
+          <a href="${ev.youtube_video}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+            <i class="fab fa-youtube text-lg"></i> Ver Streaming / Video
+          </a>
+        `;
+        document.getElementById('event-description').after(badge);
       }
 
       // Likes
@@ -254,30 +261,26 @@
       }
 
       const commentsList = document.getElementById('comments-list');
-      if (ev.comments?.length) {
-        commentsList.innerHTML = ev.comments.map(c => `
-          <div class="flex gap-4 scroll-mt-24">
-            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-              ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
-                <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                  <i class="fas fa-user-astronaut text-xs"></i>
-                </div>
-              `}
-            </div>
-            <div class="flex-1">
-              <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">
-                <div class="flex justify-between items-center mb-1">
-                  <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
-                  <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
-                </div>
-                <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
+      commentsList.innerHTML = (ev.comments || []).map(c => `
+        <div class="flex gap-4 scroll-mt-24">
+          <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
+            ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+              <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                <i class="fas fa-user-astronaut text-xs"></i>
               </div>
+            `}
+          </div>
+          <div class="flex-1">
+            <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">
+              <div class="flex justify-between items-center mb-1">
+                <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+              </div>
+              <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
             </div>
           </div>
-        `).reverse().join('');
-      } else {
-        commentsList.innerHTML = `<div class="text-center py-10 text-gray-600 italic">No hay mensajes aún.</div>`;
-      }
+        </div>
+      `).reverse().join('') || `<div class="text-center py-10 text-gray-600 italic">No hay mensajes aún.</div>`;
     }
 
     async function addComment(e) {
@@ -342,6 +345,22 @@
         }, 2000);
       });
     }
+
+    function closeGlobalEdit() {
+      const modal = document.getElementById('global-edit-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
   </script>
+
+  <!-- Global Edit Modal -->
+  <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+    <div class="w-full max-w-lg rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative">
+      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fas fa-times"></i>
+      </button>
+      <div id="edit-modal-content"></div>
+    </div>
+  </div>
 </body>
 </html>

@@ -61,6 +61,16 @@ if (authUri) {
   authConn.on('error', (err) => console.error('[User Model] [ERROR] Error conectando a DB Global:', err));
 
   userModel = authConn.model<IUser>('User', UserSchema);
+  
+  // REGISTRO ADICIONAL: También lo registramos en la conexión por defecto si no existe.
+  // Esto es VITAL para que los .populate('user') de otros modelos funcionen.
+  try {
+    if (!mongoose.models['User']) {
+      mongoose.model<IUser>('User', UserSchema);
+    }
+  } catch (e) {
+    // Si ya existe ignoramos
+  }
 } else {
   console.warn('[User Model] [WARN] MONGODB_AUTH_URI no definida. Usando conexión por defecto.');
   userModel = mongoose.model<IUser>('User', UserSchema);

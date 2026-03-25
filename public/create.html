@@ -64,45 +64,7 @@
       
       <!-- Post Form -->
       <form id="post-form" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Título de la Obra</label>
-              <input type="text" id="post-title" placeholder="Ej: Paisaje Cyberpunk 2077" required
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Etiquetas (separadas por coma)</label>
-              <input type="text" id="post-tags" placeholder="3d, blender, neon..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción</label>
-              <textarea id="post-desc" rows="4" placeholder="Contanos sobre tu proceso creativo..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
-              <div id="post-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
-              <input type="url" id="post-youtube" placeholder="https://www.youtube.com/watch?v=..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
-              <p class="text-[10px] text-gray-500 mt-1">Se mostrará al pasar el cursor sobre la imagen en el feed.</p>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen de la Obra</label>
-              <div class="relative group">
-                <input type="file" id="post-file" accept="image/*" required
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <div id="post-file-preview" class="w-full aspect-square bg-white/5 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center group-hover:border-cyan-500/50 transition-colors overflow-hidden">
-                  <i class="fas fa-cloud-upload-alt text-4xl text-gray-600 mb-2"></i>
-                  <p class="text-sm text-gray-500">Hacé click para subir</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div id="post-fields-root"></div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-cyan-500/10 hover:scale-[1.01] transition-transform">
           <i class="fas fa-paper-plane mr-2"></i>PUBLICAR OBRA
         </button>
@@ -110,60 +72,7 @@
 
       <!-- Recurso Form -->
       <form id="recurso-form" class="space-y-6 hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Título del Recurso</label>
-              <input type="text" id="rec-title" placeholder="Ej: Pack de Brushes Sci-Fi" required
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Tipo de Recurso</label>
-              <select id="rec-type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:border-orange-500 focus:outline-none">
-                <option value="software">Software</option>
-                <option value="github">GitHub / Código</option>
-                <option value="drive">Drive / Descarga</option>
-                <option value="tutorial">Tutorial / Guía</option>
-                <option value="texto">Texto / Artículo</option>
-                <option value="other">Otro</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Enlace Directo (URL)</label>
-              <input type="url" id="rec-url" placeholder="https://..." required
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
-              <input type="url" id="rec-youtube" placeholder="https://www.youtube.com/watch?v=..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción Breve</label>
-              <textarea id="rec-desc" rows="3" placeholder="¿Para qué sirve este recurso?"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
-              <div id="rec-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen del Recurso (Opcional)</label>
-              <div class="relative group">
-                <input type="file" id="rec-file" accept="image/*"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <div id="rec-file-preview" class="w-full aspect-video bg-white/5 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center group-hover:border-orange-500/50 transition-colors overflow-hidden">
-                  <i class="fas fa-image text-3xl text-gray-600 mb-2"></i>
-                  <p class="text-sm text-gray-500">Subir previsualización</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Etiquetas (separadas por coma)</label>
-              <input type="text" id="rec-tags" placeholder="herramientas, free, assets..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors">
-            </div>
-          </div>
-        </div>
+        <div id="recurso-fields-root"></div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/10 hover:scale-[1.01] transition-transform" style="background: linear-gradient(135deg, #ff8c00, #ff4500); color: white !important;">
           <i class="fas fa-upload mr-2"></i>SUBIR RECURSO
         </button>
@@ -171,49 +80,7 @@
 
       <!-- Evento Form -->
       <form id="evento-form" class="space-y-6 hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Nombre del Evento</label>
-              <input type="text" id="event-title" placeholder="Ej: Meetup Arte Digital BsAs" required
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">Fecha y Hora</label>
-                <input type="datetime-local" id="event-date" required
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">Lugar / Enlace</label>
-                <input type="text" id="event-location" placeholder="Club X o Link de Meet"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Descripción (mencioná gente con @usuario)</label>
-              <textarea id="event-desc" rows="4" placeholder="¡No se lo pierdan! Estarán @tolch y @jp..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors resize-none mb-1"></textarea>
-              <div id="event-desc-preview" class="px-2 text-xs text-gray-500 min-h-[1.5em] italic"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Video de YouTube (URL opcional)</label>
-              <input type="url" id="event-youtube" placeholder="https://www.youtube.com/watch?v=..."
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">Imagen / Flyer (File o URL)</label>
-              <div class="flex flex-col gap-3">
-                <input type="file" id="event-file" accept="image/*"
-                  class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-magenta-500/20 file:text-magenta-400 file:cursor-pointer">
-                <input type="text" id="event-url" placeholder="O pegá el enlace de la imagen..."
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-              </div>
-            </div>
-          </div>
-        </div>
+        <div id="evento-fields-root"></div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-magenta-500/10 hover:scale-[1.01] transition-transform">
           <i class="fas fa-calendar-plus mr-2"></i>PUBLICAR EVENTO
         </button>
@@ -240,21 +107,26 @@
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
   <script>
     if (!isLoggedIn()) window.location.href = 'login.html';
 
-    // Initialize Tagging
-    enableTagging('post-desc');
-    enableTagging('rec-desc');
-    enableTagging('event-desc');
+    // Initialize Forms
+    document.getElementById('post-fields-root').innerHTML = renderFields('post', 'post');
+    document.getElementById('recurso-fields-root').innerHTML = renderFields('recurso', 'rec');
+    document.getElementById('evento-fields-root').innerHTML = renderFields('evento', 'event');
 
-    // Real-time previews
-    ['post-desc', 'rec-desc', 'event-desc'].forEach(id => {
-      const el = document.getElementById(id);
-      const preview = document.getElementById(id + '-preview');
-      el.addEventListener('input', () => {
-        preview.innerHTML = formatMentions(el.value) || 'Vista previa de menciones...';
-      });
+    // Initialize Tagging and Previews
+    ['post', 'rec', 'event'].forEach(prefix => {
+      const desc = document.getElementById(`${prefix}-desc`);
+      const preview = document.getElementById(`${prefix}-desc-preview`);
+      
+      if (desc && preview) {
+        enableTagging(desc.id);
+        desc.addEventListener('input', () => {
+          preview.innerHTML = formatMentions(desc.value) || 'Vista previa de menciones...';
+        });
+      }
     });
 
     function switchType(type) {
