@@ -40,6 +40,13 @@ window.CONFIG = {
 
     get STATIC_ORIGIN() {
         return window.location.origin + this.BASE;
+    },
+
+    // Enlaces de colaboración/donación
+    DONATIONS: {
+        CAFECITO: 'https://cafecito.app/artedigitaldata',
+        MERCADOPAGO: 'https://link.mercadopago.com.ar/artedigitaldata',
+        PAYPAL: 'https://paypal.me/artedigitaldata'
     }
 };
 

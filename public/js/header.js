@@ -165,19 +165,23 @@ function renderHeader() {
         <p class="text-sm text-gray-400 mb-8">Tu colaboración nos ayuda a seguir creciendo y manteniendo esta plataforma libre.</p>
         
         <div class="grid grid-cols-1 gap-3">
-          <!-- Mercado Pago (Disabled) -->
-          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
-            <div class="w-10 h-10 rounded-xl bg-[#009ee3] flex items-center justify-center shrink-0">
+          <!-- Mercado Pago (Active) -->
+          <a href="${CONFIG.DONATIONS.MERCADOPAGO}" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-[#009ee3]/10 border border-[#009ee3]/50 hover:border-[#009ee3] hover:bg-[#009ee3]/20 transition-all group no-underline relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-[#009ee3]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="w-10 h-10 rounded-xl bg-[#009ee3] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,158,227,0.3)] group-hover:scale-110 transition-transform relative z-10">
               <i class="fas fa-wallet text-white"></i>
             </div>
-            <div class="text-left flex-1">
-              <div class="text-sm font-bold text-white">Mercado Pago</div>
-              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
+            <div class="text-left flex-1 relative z-10">
+              <div class="text-sm font-black text-white uppercase tracking-tight">Mercado Pago</div>
+              <div class="text-[10px] text-[#009ee3] font-bold uppercase tracking-wider">¡Donaciones en Pesos!</div>
             </div>
-          </div>
+            <div class="relative z-10 flex flex-col items-center">
+               <i class="fas fa-external-link-alt text-[#009ee3] transition-transform group-hover:translate-x-1"></i>
+            </div>
+          </a>
 
           <!-- Cafecito (Active) -->
-          <a href="https://cafecito.app/artedigitaldata" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 hover:border-yellow-400 hover:bg-yellow-500/20 transition-all group no-underline relative overflow-hidden">
+          <a href="${CONFIG.DONATIONS.CAFECITO}" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 hover:border-yellow-400 hover:bg-yellow-500/20 transition-all group no-underline relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="w-10 h-10 rounded-xl bg-[#ffdd00] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,221,0,0.3)] group-hover:scale-110 transition-transform relative z-10">
               <i class="fas fa-coffee text-[#333]"></i>
