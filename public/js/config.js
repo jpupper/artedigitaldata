@@ -45,7 +45,7 @@ window.CONFIG = {
     // Enlaces de colaboración/donación
     DONATIONS: {
         CAFECITO: 'https://cafecito.app/artedigitaldata',
-        MERCADOPAGO: 'https://link.mercadopago.com.ar/artedigitaldata',
+        MERCADOPAGO: 'https://www.mercadopago.com.ar/payment-link/v1/redirect?preference-id=71459997-344a34fe-540b-4e3e-bdfe-c09efea35f18',
         PAYPAL: 'https://paypal.me/artedigitaldata'
     }
 };
