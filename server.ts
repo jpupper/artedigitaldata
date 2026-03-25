@@ -59,13 +59,13 @@ app.use((req, _res, next) => {
 app.use((_req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; " +
+    "default-src 'self' *; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com; " +
     "img-src * data: blob: ; " +
     "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; " +
-    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
+    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://www.artedigitaldata.com https://*.cloudinary.com https://cdn.socket.io;"
   );
   next();
 });

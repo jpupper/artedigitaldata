@@ -56,28 +56,37 @@ description: Arquitectura completa para la Red Social de Arte Digital: TS, Mongo
 
 ---
 
-## 5. Configuración de Rutas (config.ts)
+## 5. Configuración de Rutas (config.js)
 
-Este archivo es el que permite que la app sepa dónde está parada:
+Este archivo permite que la aplicación se adapte automáticamente al dominio desde el que se sirve, permitiendo que funcione en `localhost`, `vps`, `fullscreencode.com` y `artedigitaldata.com` sin cambios manuales.
 
-```typescript
-const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
-
-const CONFIG = {
-    isLocal: window.location.hostname === 'localhost' || window.location.hostname.includes('192.168'),
-    
-    get API_URL(): string {
-        if (this.isLocal) return window.location.origin + '/artedigitaldata/api';
-        return VPS_ORIGIN + '/artedigitaldata/api';
+```javascript
+window.CONFIG = {
+    // Detección automática de base path (/artedigitaldata o raíz)
+    get BASE() {
+        if (window.location.pathname.startsWith('/artedigitaldata')) return '/artedigitaldata';
+        return '';
     },
 
-    get SOCKET_URL(): string {
-        if (this.isLocal) return window.location.origin;
-        return VPS_ORIGIN;
+    // Detección de entorno local
+    get isLocal() {
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' || 
+               window.location.hostname.includes('192.168');
     },
 
-    get STATIC_ORIGIN(): string {
-        return window.location.origin; 
+    // API_URL dinámico: Se comunica con el mismo host que sirve la página
+    get API_URL() {
+        return window.location.origin + this.BASE + '/api';
+    },
+
+    // SOCKET_URL: El mismo origen para WebSockets
+    get SOCKET_URL() {
+        return window.location.origin;
+    },
+
+    get SOCKET_PATH() {
+        return this.BASE + '/socket.io';
     }
 };
 ```
@@ -108,21 +117,21 @@ app.use(cors({
 ```
 
 ### B. CSP (Content Security Policy)
-El CSP es un segundo muro de seguridad. Si no está configurado, el navegador prohibirá al frontend descargar estilos (Tailwind), fuentes (Google Fonts) o conectar con la API del VPS.
+El CSP debe permitir explícitamente los CDNs usados (Tailwind, Socket.io, Google Fonts) y el tráfico de WebSockets.
 
-*   **connect-src:** Aquí es donde se habilitan las llamadas a la API y WebSockets. **DEBE** incluir el dominio del VPS y de Cloudinary.
-*   **img-src:** Debe permitir `res.cloudinary.com` para que las imágenes se vean.
+*   **connect-src:** **DEBE** incluir `ws:` y `wss:` para Socket.io, además de los dominios permitidos.
+*   **script-src:** Debe incluir `https://cdn.socket.io` y `https://cdn.tailwindcss.com`.
 
 ```typescript
 app.use((_req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; " +
+    "default-src 'self' *; " + // Permitir carga base
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
-    "img-src 'self' data: https://res.cloudinary.com; " +
-    "connect-src 'self' https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://*.cloudinary.com;"
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com; " +
+    "img-src * data: blob: ; " +
+    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://*.cloudinary.com https://cdn.socket.io;"
   );
   next();
 });
@@ -146,4 +155,22 @@ Esta es la lógica que debés seguir para programar nuevas funcionalidades:
 3.  **Despliegue Ganador:**
     - El backend se actualiza vía **Git** + **PM2** en el VPS.
     - El frontend se actualiza vía **FTP** a Ferozo.
-    - Siempre que cambies algo en `server.ts` que afecte a CORS o rutas, recordá que **tenés que reiniciar el proceso en PM2** en el servidor para que el cambio sea real.
+    - Siempre que cambies algo en `server.ts` que afecte a CORS o rutas, recordá que **tenés que reiniciar el proceso en PM2** en el servidor para que el cambio sea real.
+
+---
+
+## 8. Registro de Modelos y Poblado (Multiconexión)
+
+Cuando el sistema usa una base de datos global para Usuarios (`MONGODB_AUTH_URI`), los modelos deben registrarse en la conexión por defecto para que el método `.populate()` funcione desde otros modelos (como `ChatRoom` o `Post`).
+
+**Regla de Oro:** Siempre registrar el modelo en la conexión por defecto, incluso si se usa una conexión dedicada para operaciones de escritura/lectura específicas.
+
+```typescript
+// En src/models/User.ts
+if (mongoose.models['User']) {
+    userModel = mongoose.model('User');
+} else {
+    userModel = mongoose.model('User', UserSchema);
+}
+// Esto asegura que ChatRoom.find().populate('creator') NO tire un Error 500.
+```
