@@ -160,7 +160,7 @@
         if (isLoggedIn()) {
           window.location.href = CONFIG.BASE + `/profile.html?user=${currentUser.username}`;
         } else {
-          window.location.href = CONFIG.BASE + '/login.html';
+          showLogin();
         }
         return;
       }
