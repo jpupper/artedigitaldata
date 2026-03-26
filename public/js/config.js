@@ -1,22 +1,37 @@
 const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
 
 window.CONFIG = {
-    isLocal: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168'),
+    // Orígenes que sí ejecutan el backend de Node
+    NODE_HOSTS: [
+        'localhost',
+        '127.0.0.1',
+        'vps-4455523-x.dattaweb.com'
+    ],
+
+    get isLocal() {
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' || 
+               window.location.hostname.includes('192.168');
+    },
+
+    // Detectamos si el dominio actual sirve el backend o es solo un espejo estático
+    get IS_NODE_SERVER() {
+        return this.NODE_HOSTS.some(host => window.location.hostname === host) || this.isLocal;
+    },
 
     get BASE() {
-        // Normalización para detectar el subfolder /artedigitaldata en cualquier dominio
         if (window.location.pathname.startsWith('/artedigitaldata')) return '/artedigitaldata';
         return '';
     },
 
     get API_URL() {
-        // Forzamos el uso del VPS para la API siempre, incluso si estamos en Ferozo o local
-        // Esto garantiza que siempre indexemos la base de datos principal
-        return VPS_ORIGIN + '/artedigitaldata/api';
+        // El usuario quiere que en LOCAL se usen siempre los datos del VPS
+        const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
+        return origin + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
-        return VPS_ORIGIN;
+        return (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
     },
 
     get SOCKET_PATH() {
@@ -32,6 +47,13 @@ window.CONFIG = {
             return window.location.origin + '/fscauth';
         }
         return VPS_ORIGIN + '/fscauth';
+    },
+
+    // Enlaces de colaboración/donación
+    DONATIONS: {
+        CAFECITO: 'https://cafecito.app/artedigitaldata',
+        MERCADOPAGO: 'https://www.mercadopago.com.ar/payment-link/v1/redirect?preference-id=71459997-344a34fe-540b-4e3e-bdfe-c09efea35f18',
+        PAYPAL: 'https://paypal.me/artedigitaldata'
     }
 };
 
