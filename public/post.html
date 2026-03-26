@@ -24,6 +24,8 @@
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/edit-logic.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -36,11 +38,18 @@
     });
 
     async function loadPost(postId) {
+      const isYouTubeURL = (url) => {
+        if (!url) return false;
+        return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url);
+      };
+
       const container = document.getElementById('post-detail-container');
       try {
         const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
         if (!res.ok) throw new Error('Post no encontrado');
         const post = await res.json();
+        const isAuthor = isLoggedIn() && getUserId() === post.author?._id;
+
         document.title = `${post.title} - Arte Digital Data`;
 
         container.innerHTML = `
@@ -60,6 +69,12 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
+                ${isAuthor ? `
+                  <button onclick="loadItemToEdit('posts', '${post._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all font-bold text-sm">
+                    <i class="fas fa-edit"></i>
+                    <span>Editar</span>
+                  </button>
+                ` : ''}
                 <button onclick="toggleLike('${post._id}')" id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${post.likes?.includes(getUserId()) ? 'text-red-500' : 'text-gray-400'}">
                   <i class="${post.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart text-xl"></i>
                   <span id="like-count" class="font-bold">${post.likes?.length || 0}</span>
@@ -79,7 +94,16 @@
                 </div>
               ` : ''}
               <div class="p-8">
-                <h1 class="text-3xl font-black text-white mb-4">${post.title}</h1>
+                <div class="flex items-center justify-between gap-4 mb-4">
+                  <h1 class="text-3xl font-black text-white">
+                    ${post.title}
+                  </h1>
+                  ${post.youtube_video ? `
+                    <a href="${post.youtube_video}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+                      <i class="fab fa-youtube text-lg"></i> Ver Video
+                    </a>
+                  ` : ''}
+                </div>
                 <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
                 ${post.tags?.length ? `
                   <div class="flex flex-wrap gap-2 mb-8">
@@ -149,8 +173,10 @@
         `;
 
         if (isLoggedIn()) {
-          document.getElementById('comment-form').addEventListener('submit', (e) => addComment(e, postId));
+          const form = document.getElementById('comment-form');
+          if (form) form.addEventListener('submit', (e) => addComment(e, postId));
         }
+
       } catch (err) {
         container.innerHTML = `<div class="text-center py-20">Obra no encontrada</div>`;
       }
@@ -200,5 +226,14 @@
       }
     }
   </script>
+  <!-- Global Edit Modal -->
+  <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+    <div class="w-full max-w-lg rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative">
+      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fas fa-times"></i>
+      </button>
+      <div id="edit-modal-content"></div>
+    </div>
+  </div>
 </body>
 </html>

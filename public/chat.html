@@ -23,18 +23,18 @@
       <h1 class="text-2xl font-black text-white">
         <i class="fas fa-comments text-[var(--color-magenta)] mr-2"></i>Chat en Vivo
       </h1>
-      <div class="flex gap-2">
-        <button onclick="showUsersModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="showUsersModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all font-bold">
           <i class="fas fa-users mr-1"></i>USERS
         </button>
-        <button id="new-room-btn" onclick="showCreateRoom()" class="btn-primary px-4 py-2 rounded-xl text-xs sm:text-sm transition-all hover:scale-105">
+        <button id="new-room-btn" onclick="showCreateRoom()" class="btn-primary px-4 py-2 rounded-xl text-xs sm:text-sm transition-all hover:scale-105 font-bold">
           <i class="fas fa-plus mr-1"></i>Nueva Sala
         </button>
       </div>
     </div>
 
-    <div class="flex-1 flex gap-4 min-h-0">
-      <div id="rooms-panel" class="w-full md:w-80 shrink-0 rounded-2xl border border-cyan-500/20 overflow-hidden flex flex-col card-cyber">
+    <div class="flex-1 flex gap-4 min-h-0 w-full overflow-hidden">
+      <div id="rooms-panel" class="w-full md:w-80 shrink-0 rounded-2xl border border-cyan-500/20 overflow-hidden flex flex-col card-cyber bg-[#0d0d12]">
         <div class="flex border-b border-white/10">
           <button onclick="setTab('rooms')" id="tab-rooms" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-cyan-500 text-cyan-500">
             Salas
@@ -62,7 +62,7 @@
       </div>
 
       <!-- Chat Area -->
-      <div id="chat-area" class="hidden md:flex flex-1 flex-col rounded-2xl border border-cyan-500/20 overflow-hidden card-cyber">
+      <div id="chat-area" class="hidden md:flex flex-1 flex-col rounded-2xl border border-cyan-500/20 overflow-hidden card-cyber bg-[#0d0d12] min-w-0">
         <div id="chat-header" class="p-4 border-b border-white/10 flex items-center gap-3">
           <button onclick="backToRooms()" class="md:hidden text-gray-400 hover:text-white">
             <i class="fas fa-arrow-left"></i>
@@ -126,6 +126,8 @@
           </div>
         </div>
       </div>
+    </div>
+
     </div>
   </main>
 
@@ -300,8 +302,10 @@
         list.innerHTML = rooms.map(r => `
           <button onclick="joinRoom('${r._id}', '${r.name}', '${r.description || ''}')"
             class="room-btn w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 transition-all ${currentRoomId === r._id ? 'border border-cyan-500/30 bg-cyan-500/10' : ''}">
-            <div class="font-medium text-white text-sm truncate">${r.name}</div>
-            <div class="text-xs text-gray-500 truncate mt-0.5">${r.creator?.username || ''}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-white text-sm truncate">${r.name}</div>
+              <div class="text-[10px] text-gray-500 truncate mt-0.5 uppercase tracking-wider">${r.creator?.username || 'Anónimo'}</div>
+            </div>
           </button>
         `).join('');
       } catch {
@@ -346,15 +350,24 @@
       const container = document.getElementById('messages-container');
       const isMe = msg.sender?._id === user.id || msg.sender === user.id;
       const senderName = msg.sender?.username || 'Anónimo';
+      const senderAvatar = msg.sender?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${senderName}`;
       const time = new Date(msg.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
       const div = document.createElement('div');
-      div.className = `msg-bubble flex ${isMe ? 'justify-end' : 'justify-start'}`;
+      div.className = `msg-bubble flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-6`;
+      
       div.innerHTML = `
-        <div class="max-w-[80%] rounded-2xl px-4 py-3 ${isMe ? 'bg-cyan-500/20 border border-cyan-500/20' : 'bg-magenta-500/20 border border-magenta-500/20'}">
-          ${!isMe ? `<p class="text-xs font-medium text-[var(--color-magenta)] mb-1">${senderName}</p>` : ''}
-          <p class="text-sm text-white">${msg.content}</p>
-          <p class="text-xs text-gray-500 mt-1 text-right">${time}</p>
+        <div class="flex-1 w-full max-w-[98%] rounded-[2rem] px-6 py-4 shadow-2xl transition-all hover:scale-[1.01] ${isMe ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-[#1a1a2e] border border-white/5'}">
+          <div class="flex items-center gap-3 mb-3 border-b border-white/5 pb-2 ${isMe ? 'flex-row-reverse' : ''}">
+            <img src="${senderAvatar}" class="w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover">
+            <span class="text-sm font-black uppercase tracking-tighter ${isMe ? 'text-cyan-400' : 'text-magenta-400'}">
+              ${isMe ? 'Tú' : senderName}
+            </span>
+          </div>
+          <div class="text-sm sm:text-base text-white break-words whitespace-pre-wrap leading-relaxed opacity-90">${msg.content}</div>
+          <div class="mt-3 flex items-center ${isMe ? 'justify-start' : 'justify-end'}">
+            <span class="text-[10px] text-gray-500 font-mono opacity-40 uppercase tracking-widest">${time}</span>
+          </div>
         </div>
       `;
       container.appendChild(div);
@@ -416,6 +429,7 @@
       setTab('private');
       await startPrivateChat(userId, username);
     }
+
   </script>
 </body>
 </html>

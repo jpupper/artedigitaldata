@@ -143,12 +143,12 @@
         </div>
       </div>
     </div>
-  </main>
-
-  <script src="js/config.js"></script>
+  </main>  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/edit-logic.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const targetUsername = params.get('user');
@@ -206,8 +206,8 @@
 
         if (res?.ok) {
           const updatedUser = await res.json();
-          setUser({ ...currentUser, ...updatedUser }); // Update localStorage
-          renderHeader(); // Refresh header
+          setUser({ ...currentUser, ...updatedUser });
+          renderHeader();
           await loadProfile();
           toggleEditMode();
         }
@@ -222,9 +222,7 @@
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
         const bioText = profile.bio || 'Sin bio';
-        document.getElementById('profile-bio').innerHTML = typeof formatMentions === 'function' 
-          ? formatMentions(bioText) 
-          : bioText;
+        document.getElementById('profile-bio').innerHTML = typeof formatMentions === 'function' ? formatMentions(bioText) : bioText;
         document.getElementById('profile-meta').innerHTML = `
           <i class="fas fa-calendar-alt mr-1"></i> Se unió el ${new Date(profile.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
           <span class="mx-2">•</span>
@@ -243,7 +241,6 @@
           document.getElementById('edit-display-name').value = profile.displayName || '';
           document.getElementById('edit-bio').value = profile.bio || '';
           document.getElementById('edit-avatar-url').value = profile.avatar || '';
-          
           if (profile.socials) {
             document.getElementById('edit-social-instagram').value = profile.socials.instagram || '';
             document.getElementById('edit-social-discord').value = profile.socials.discord || '';
@@ -253,7 +250,6 @@
           }
         }
 
-        // Socials Display
         const socialsContainer = document.getElementById('profile-socials');
         socialsContainer.innerHTML = '';
         if (profile.socials) {
@@ -265,8 +261,6 @@
           if (s.tiktok) socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-500/10 text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a>`;
         }
         
-        console.log("Profile data:", { posts: posts.length, recursos: recursos?.length, eventos: eventos?.length });
-
         renderUserPosts(posts);
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || []);
@@ -284,23 +278,16 @@
       });
       document.getElementById('tab-' + tab).classList.add('active', 'text-[var(--color-cyan)]', 'border-primary-500');
       document.getElementById('tab-' + tab).classList.remove('text-gray-500');
-
       document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
       document.getElementById('section-' + tab).classList.remove('hidden');
     }
 
-
     function renderUserPosts(posts) {
       const container = document.getElementById('user-posts');
       if (!posts.length) {
-        container.innerHTML = `
-          <div class="col-span-full text-center text-gray-500 py-10">
-            <i class="fas fa-image text-4xl text-fuchsia-400/30 mb-3"></i>
-            <p>Este artista aún no tiene obras publicadas</p>
-          </div>`;
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-image text-4xl text-fuchsia-400/30 mb-3"></i><p>Este artista aún no tiene obras publicadas</p></div>`;
         return;
       }
-
       container.innerHTML = posts.map(p => {
         const youtubeId = extractYouTubeId(p);
         return `
@@ -309,23 +296,8 @@
               <div class="block w-full h-full relative cursor-pointer"
                  ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
                  onclick="window.location.href='${CONFIG.BASE}/post.html?id=${p._id}'">
-                ${p.imageUrl ? `
-                  <img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                ` : `
-                  <div class="w-full h-full bg-white/5 flex items-center justify-center">
-                    <i class="fas fa-palette text-3xl text-gray-700"></i>
-                  </div>
-                `}
-                
-                ${youtubeId ? `
-                  <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-                    <iframe class="w-full h-full" 
-                            src="" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen></iframe>
-                  </div>
-                ` : ''}
+                ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-white/5 flex items-center justify-center"><i class="fas fa-palette text-3xl text-gray-700"></i></div>`}
+                ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
               </div>
             </div>
             <div class="p-4">
@@ -335,40 +307,28 @@
                 </a>
                 ${(isLoggedIn() && (isOwner || isAdmin())) ? `
                   <div class="flex gap-1">
-                    <button onclick="openEditPost('${p._id}')" class="text-gray-500 hover:text-cyan-400 transition-colors p-1" title="Editar">
-                      <i class="fas fa-edit text-xs"></i>
-                    </button>
-                    <button onclick="deletePost('${p._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar">
-                      <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
+                    <button onclick="openEditPost('${p._id}')" class="text-gray-500 hover:text-cyan-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></button>
+                    <button onclick="deletePost('${p._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                   </div>
                 ` : ''}
               </div>
               <p class="text-gray-400 text-sm line-clamp-2">${p.description || ''}</p>
               <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
                 <span><i class="fas fa-heart text-fuchsia-400 mr-1"></i>${p.likes?.length || 0}</span>
-                <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="hover:text-cyan-400">
-                  <i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}
-                </a>
+                <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="hover:text-cyan-400"><i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}</a>
                 <span>${new Date(p.createdAt).toLocaleDateString('es-AR')}</span>
               </div>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
     function renderUserRecursos(recursos) {
       const container = document.getElementById('user-recursos');
       if (!recursos.length) {
-        container.innerHTML = `
-          <div class="col-span-full text-center text-gray-500 py-10">
-            <i class="fas fa-box-open text-4xl text-orange-400/30 mb-3"></i>
-            <p>Este usuario aún no tiene recursos compartidos</p>
-          </div>`;
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-box-open text-4xl text-orange-400/30 mb-3"></i><p>Este usuario aún no tiene recursos compartidos</p></div>`;
         return;
       }
-
       container.innerHTML = recursos.map(r => {
         const youtubeId = extractYouTubeId(r);
         return `
@@ -377,23 +337,8 @@
                <div class="block w-full h-full relative cursor-pointer"
                   ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
                   onclick="window.location.href='${CONFIG.BASE}/recurso.html?id=${r._id}'">
-                 ${r.imageUrl ? `
-                   <img src="${r.imageUrl}" alt="${r.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                 ` : `
-                   <div class="w-full h-full bg-white/5 flex items-center justify-center">
-                     <i class="fas fa-box-open text-3xl text-gray-700 opacity-30"></i>
-                   </div>
-                 `}
-                 
-                 ${youtubeId ? `
-                   <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-                     <iframe class="w-full h-full" 
-                             src="" 
-                             frameborder="0" 
-                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                             allowfullscreen></iframe>
-                   </div>
-                 ` : ''}
+                 ${r.imageUrl ? `<img src="${r.imageUrl}" alt="${r.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-white/5 flex items-center justify-center"><i class="fas fa-box-open text-3xl text-gray-700 opacity-30"></i></div>`}
+                 ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
                </div>
              </div>
             <div class="flex items-start justify-between gap-2 mb-2">
@@ -402,39 +347,24 @@
               </a>
               ${(isLoggedIn() && (isOwner || isAdmin())) ? `
                 <div class="flex gap-1">
-                  <button onclick="openEditRecurso('${r._id}')" class="text-gray-500 hover:text-orange-400 transition-colors p-1" title="Editar">
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                  <button onclick="deleteRecurso('${r._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar">
-                    <i class="fas fa-trash-alt text-xs"></i>
-                  </button>
+                  <button onclick="openEditRecurso('${r._id}')" class="text-gray-500 hover:text-orange-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></button>
+                  <button onclick="deleteRecurso('${r._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                 </div>
               ` : ''}
             </div>
             <p class="text-xs text-gray-400 line-clamp-2 mb-3">${r.description || ''}</p>
-            <div class="flex items-center gap-2 mb-3">
-               <span class="px-2 py-0.5 rounded text-[10px] bg-orange-500/10 text-orange-400 uppercase font-bold">${r.type}</span>
-            </div>
-            <div class="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-white/5">
-               <span><i class="fas fa-comment mr-1"></i>${r.comments?.length || 0}</span>
-               <span>${new Date(r.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-        `;
+            <div class="flex items-center gap-2 mb-3"><span class="px-2 py-0.5 rounded text-[10px] bg-orange-500/10 text-orange-400 uppercase font-bold">${r.type}</span></div>
+            <div class="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-white/5"><span><i class="fas fa-comment mr-1"></i>${r.comments?.length || 0}</span><span>${new Date(r.createdAt).toLocaleDateString()}</span></div>
+          </div>`;
       }).join('');
     }
 
     function renderUserEventos(eventos) {
       const container = document.getElementById('user-eventos');
       if (!eventos.length) {
-        container.innerHTML = `
-          <div class="col-span-full text-center text-gray-500 py-10">
-            <i class="fas fa-calendar-times text-4xl text-magenta-400/30 mb-3"></i>
-            <p>Este usuario no tiene eventos registrados</p>
-          </div>`;
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-calendar-times text-4xl text-magenta-400/30 mb-3"></i><p>Este usuario no tiene eventos registrados</p></div>`;
         return;
       }
-
       container.innerHTML = eventos.map(ev => {
         const youtubeId = extractYouTubeId(ev);
         return `
@@ -443,23 +373,8 @@
                <div class="block w-full h-full relative cursor-pointer"
                   ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
                   onclick="window.location.href='${CONFIG.BASE}/evento.html?id=${ev._id}'">
-                 ${ev.imageUrl ? `
-                   <img src="${ev.imageUrl}" alt="${ev.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                 ` : `
-                   <div class="w-full h-full bg-magenta-500/10 flex items-center justify-center">
-                     <i class="fas fa-calendar-alt text-3xl text-magenta-500/30"></i>
-                   </div>
-                 `}
-                 
-                 ${youtubeId ? `
-                   <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-                     <iframe class="w-full h-full" 
-                             src="" 
-                             frameborder="0" 
-                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                             allowfullscreen></iframe>
-                   </div>
-                 ` : ''}
+                 ${ev.imageUrl ? `<img src="${ev.imageUrl}" alt="${ev.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-magenta-500/10 flex items-center justify-center"><i class="fas fa-calendar-alt text-3xl text-magenta-500/30"></i></div>`}
+                 ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
                </div>
             </div>
             <div class="flex items-center gap-3 mb-3">
@@ -468,25 +383,18 @@
                  <span class="text-sm leading-none">${new Date(ev.date).getDate()}</span>
               </div>
               <div class="flex-1 min-w-0">
-                <a href="${CONFIG.BASE}/evento.html?id=${ev._id}" target="_blank">
-                  <h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3>
-                </a>
+                <a href="${CONFIG.BASE}/evento.html?id=${ev._id}" target="_blank"><h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3></a>
                 <p class="text-[10px] text-gray-500 truncate"><i class="fas fa-map-marker-alt mr-1"></i>${ev.location || 'Online'}</p>
               </div>
               ${(isLoggedIn() && (isOwner || isAdmin())) ? `
                 <div class="flex gap-1 shrink-0">
-                  <button onclick="openEditEvento('${ev._id}')" class="text-gray-500 hover:text-magenta-400 transition-colors p-1" title="Editar">
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                  <button onclick="deleteEvento('${ev._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar">
-                    <i class="fas fa-trash-alt text-xs"></i>
-                  </button>
+                  <button onclick="openEditEvento('${ev._id}')" class="text-gray-500 hover:text-magenta-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></button>
+                  <button onclick="deleteEvento('${ev._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                 </div>
               ` : ''}
             </div>
             <p class="text-xs text-gray-400 line-clamp-2">${ev.description || ''}</p>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
@@ -497,16 +405,10 @@
           ...favs.recursos.map(r => ({ ...r, type: 'recurso' })),
           ...favs.eventos.map(e => ({ ...e, type: 'evento' }))
       ].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-
       if (!allFavs.length) {
-        container.innerHTML = `
-          <div class="col-span-full text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
-            <i class="fas fa-heart-broken text-4xl text-gray-600 mb-3"></i>
-            <p>Aún no hay favoritos guardados</p>
-          </div>`;
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-dashed border-white/10"><i class="fas fa-heart-broken text-4xl text-gray-600 mb-3"></i><p>Aún no hay favoritos guardados</p></div>`;
         return;
       }
-
       container.innerHTML = allFavs.map(item => {
         const isPost = item.type === 'post';
         const isRecurso = item.type === 'recurso';
@@ -514,57 +416,36 @@
         const color = isPost ? 'cyan' : (isRecurso ? 'orange' : 'magenta');
         const icon = isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt');
         const youtubeId = extractYouTubeId(item);
-        
         return `
           <div class="rounded-2xl overflow-hidden border border-${color}-500/10 card-cyber group">
             <div class="block aspect-video bg-white/5 relative overflow-hidden cursor-pointer"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
                onclick="window.open('${link}', '_blank')">
-               ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-110">` : `
-                 <div class="w-full h-full flex items-center justify-center text-gray-700">
-                    <i class="fas fa-${icon} text-3xl"></i>
-                 </div>
-               `}
-               
-               ${youtubeId ? `
-                 <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-                   <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                 </div>
-               ` : ''}
-
-               <div class="absolute top-3 left-3 z-10">
-                 <span class="px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-${color}-400 uppercase tracking-widest">
-                   ${item.type}
-                 </span>
-               </div>
+               ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-full h-full object-cover transition-transform group-hover:scale-110">` : `<div class="w-full h-full flex items-center justify-center text-gray-700"><i class="fas fa-${icon} text-3xl"></i></div>`}
+               ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
+               <div class="absolute top-3 left-3 z-10"><span class="px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-${color}-400 uppercase tracking-widest">${item.type}</span></div>
             </div>
-            <div class="p-4">
-               <a href="${link}" target="_blank" class="block">
-                  <h3 class="font-bold text-white group-hover:text-${color}-400 transition-colors truncate mb-1">${item.title}</h3>
-               </a>
-               <p class="text-[10px] text-gray-500 flex items-center gap-2">
-                 <i class="fas fa-user-circle"></i> @${(item.author || item.creator)?.username || 'anónimo'}
-               </p>
-            </div>
-          </div>
-        `;
+            <div class="p-4"><a href="${link}" target="_blank" class="block"><h3 class="font-bold text-white group-hover:text-${color}-400 transition-colors truncate mb-1">${item.title}</h3></a><p class="text-[10px] text-gray-500 flex items-center gap-2"><i class="fas fa-user-circle"></i> @${(item.author || item.creator)?.username || 'anónimo'}</p></div>
+          </div>`;
       }).join('');
     }
 
     async function deletePost(postId) {
       if (!confirm('¿Estás seguro de que querés eliminar esta obra?')) return;
       const res = await apiRequest(`/posts/${postId}`, { method: 'DELETE' });
-      if (res?.ok) {
-        await loadProfile();
-      }
+      if (res?.ok) await loadProfile();
     }
 
     async function deleteRecurso(id) {
       if (!confirm('¿Estás seguro de que querés eliminar este recurso?')) return;
       const res = await apiRequest(`/recursos/${id}`, { method: 'DELETE' });
-      if (res?.ok) {
-        await loadProfile();
-      }
+      if (res?.ok) await loadProfile();
+    }
+
+    async function deleteEvento(id) {
+      if (!confirm('¿Estás seguro de que querés eliminar este evento?')) return;
+      const res = await apiRequest(`/eventos/${id}`, { method: 'DELETE' });
+      if (res?.ok) await loadProfile();
     }
 
     function toggleEditMode() {
@@ -572,215 +453,14 @@
     }
 
     // --- EDIT MODALS LOGIC ---
-    let editingItem = null;
-
-    function openEditPost(id) {
-      const container = document.getElementById('user-posts');
-      const posts = Array.from(container.querySelectorAll('h3')).map(h => ({ _id: h.closest('.card-cyber').querySelector('button[onclick*="deletePost"]').onclick.toString().match(/'(.*)'/)[1], title: h.innerText }));
-      // This is hacky. Better to store original data.
-      // Let's refetch the post data for safety.
-      loadItemToEdit('posts', id);
-    }
-
+    function openEditPost(id) { loadItemToEdit('posts', id); }
     function openEditRecurso(id) { loadItemToEdit('recursos', id); }
     function openEditEvento(id) { loadItemToEdit('eventos', id); }
 
-    async function loadItemToEdit(type, id) {
-      try {
-        const res = await fetch(`${CONFIG.API_URL}/${type}/${id}`);
-        const item = await res.json();
-        editingItem = { type, id, currentImageUrl: item.imageUrl };
-        
-        const modal = document.getElementById('global-edit-modal');
-        const content = document.getElementById('edit-modal-content');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-
-        let fieldsHtml = '';
-        if (type === 'posts') {
-          fieldsHtml = `
-            <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter">Editar <span class="text-cyan-400">Obra</span></h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Título</label>
-                <input type="text" id="edit-item-title" value="${item.title}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-cyan-500">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
-                <textarea id="edit-item-desc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-cyan-500 resize-none" rows="4">${item.description || ''}</textarea>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Etiquetas (separadas por coma)</label>
-                <input type="text" id="edit-item-tags" value="${(item.tags || []).join(', ')}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-cyan-500" placeholder="Ej: 3d, blender, neon">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Imagen (Subir nueva o dejar actual)</label>
-                <input type="file" id="edit-item-file" accept="image/*" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-500/20 file:text-cyan-400 file:cursor-pointer">
-              </div>
-            </div>
-          `;
-        } else if (type === 'recursos') {
-          fieldsHtml = `
-            <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter">Editar <span class="text-orange-400">Recurso</span></h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Título del Recurso</label>
-                <input type="text" id="edit-item-title" value="${item.title}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-orange-500">
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Tipo</label>
-                  <select id="edit-item-type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-orange-500">
-                    <option value="software" ${item.type === 'software' ? 'selected' : ''}>Software</option>
-                    <option value="github" ${item.type === 'github' ? 'selected' : ''}>GitHub / Código</option>
-                    <option value="drive" ${item.type === 'drive' ? 'selected' : ''}>Drive / Descarga</option>
-                    <option value="tutorial" ${item.type === 'tutorial' ? 'selected' : ''}>Tutorial / Guía</option>
-                    <option value="texto" ${item.type === 'texto' ? 'selected' : ''}>Texto / Artículo</option>
-                    <option value="other" ${item.type === 'other' ? 'selected' : ''}>Otro</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Enlace (URL)</label>
-                  <input type="url" id="edit-item-url" value="${item.url}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-orange-500">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
-                <textarea id="edit-item-desc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-orange-500 resize-none" rows="3">${item.description || ''}</textarea>
-              </div>
-               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Etiquetas</label>
-                <input type="text" id="edit-item-tags" value="${(item.tags || []).join(', ')}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-orange-500">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Imagen (Opcional)</label>
-                <input type="file" id="edit-item-file" accept="image/*" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 file:cursor-pointer">
-              </div>
-            </div>
-          `;
-        } else if (type === 'eventos') {
-          const date = item.date ? new Date(item.date).toISOString().slice(0, 16) : '';
-          fieldsHtml = `
-            <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter">Editar <span class="text-magenta-400">Evento</span></h3>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre del Evento</label>
-                <input type="text" id="edit-item-title" value="${item.title}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-magenta-500">
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
-                  <input type="datetime-local" id="edit-item-date" value="${date}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-magenta-500">
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Lugar / Enlace</label>
-                  <input type="text" id="edit-item-location" value="${item.location || ''}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-magenta-500">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Descripción</label>
-                <textarea id="edit-item-desc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-magenta-500 resize-none" rows="3">${item.description || ''}</textarea>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Imagen (URL o subir archivo abajo)</label>
-                <input type="text" id="edit-item-img-url" value="${item.imageUrl || ''}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-magenta-500 mb-2">
-                <input type="file" id="edit-item-file" accept="image/*" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-magenta-500/20 file:text-magenta-400 file:cursor-pointer">
-              </div>
-            </div>
-          `;
-        }
-
-        content.innerHTML = `
-          ${fieldsHtml}
-          <div class="pt-6 mt-6 border-t border-white/5">
-            <button id="save-edit-btn" onclick="saveEdit()" class="btn-primary w-full py-4 rounded-xl font-bold uppercase tracking-wider transition-all hover:scale-[1.02]">
-              <i class="fas fa-save mr-2"></i>Guardar Cambios
-            </button>
-          </div>
-        `;
-      } catch (err) {
-        alert('Error al cargar datos');
-      }
-    }
-
-    async function saveEdit() {
-      const btn = document.getElementById('save-edit-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
-
-      const { type, id, currentImageUrl } = editingItem;
-      const file = document.getElementById('edit-item-file')?.files[0];
-      
-      let imageUrl = currentImageUrl;
-      if (type === 'eventos') {
-        imageUrl = document.getElementById('edit-item-img-url').value.trim();
-      }
-
-      // Handle file upload if present
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-          const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData
-          });
-          if (uploadRes.ok) {
-            const data = await uploadRes.json();
-            imageUrl = data.url;
-          }
-        } catch (err) {
-          console.error('Error uploading image:', err);
-        }
-      }
-
-      const body = {
-        title: document.getElementById('edit-item-title').value.trim(),
-        description: document.getElementById('edit-item-desc').value.trim(),
-        imageUrl
-      };
-
-      if (type === 'posts') {
-        body.tags = document.getElementById('edit-item-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-      } else if (type === 'recursos') {
-        body.type = document.getElementById('edit-item-type').value;
-        body.url = document.getElementById('edit-item-url').value.trim();
-        body.tags = document.getElementById('edit-item-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-      } else if (type === 'eventos') {
-        body.date = document.getElementById('edit-item-date').value;
-        body.location = document.getElementById('edit-item-location').value.trim();
-      }
-
-      try {
-        const res = await apiRequest(`/${type}/${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(body)
-        });
-
-        if (res?.ok) {
-          closeGlobalEdit();
-          await loadProfile();
-        } else {
-          alert('Error al guardar cambios');
-        }
-      } catch (err) {
-        alert('Error de conexión');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar Cambios';
-      }
-    }
-
     function closeGlobalEdit() {
-      document.getElementById('global-edit-modal').classList.add('hidden');
-      document.getElementById('global-edit-modal').classList.remove('flex');
-    }
-
-    async function deleteEvento(id) {
-        if (!confirm('¿Estás seguro de que querés eliminar este evento?')) return;
-        const res = await apiRequest(`/eventos/${id}`, { method: 'DELETE' });
-        if (res?.ok) await loadProfile();
+      const modal = document.getElementById('global-edit-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
   </script>
 
