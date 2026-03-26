@@ -61,9 +61,9 @@
       if (!isLoggedIn()) {
         heroCta.innerHTML = `
           <div class="mt-6">
-            <a href="${CONFIG.BASE}/register.html" class="btn-primary inline-block text-black font-bold px-8 py-3 rounded-xl text-lg transition-all hover:scale-105">
+            <button onclick="showRegister()" class="btn-primary inline-block text-black font-bold px-8 py-3 rounded-xl text-lg transition-all hover:scale-105">
               <i class="fas fa-rocket mr-2"></i>Únete Ahora
-            </a>
+            </button>
           </div>`;
       }
       await loadFeed();

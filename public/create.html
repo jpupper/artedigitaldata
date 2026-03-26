@@ -109,7 +109,7 @@
   <script src="js/tagging.js"></script>
   <script src="js/forms.js"></script>
   <script>
-    if (!isLoggedIn()) window.location.href = 'login.html';
+    if (!isLoggedIn()) { showLogin(); return; }
 
     // Initialize Forms
     document.getElementById('post-fields-root').innerHTML = renderFields('post', 'post');

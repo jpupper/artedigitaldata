@@ -226,7 +226,7 @@
           </form>`;
         document.getElementById('comment-form').addEventListener('submit', addComment);
       } else {
-        formContainer.innerHTML = `<div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center text-gray-500 text-sm">Inicia sesión para comentar.</div>`;
+        formContainer.innerHTML = `<div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center text-gray-500 text-sm">Debes <button onclick="showLogin()" class="text-cyan-400 hover:underline">iniciar sesión</button> para comentar.</div>`;
       }
 
       const commentsList = document.getElementById('comments-list');
