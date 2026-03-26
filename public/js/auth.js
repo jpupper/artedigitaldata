@@ -94,7 +94,10 @@ async function syncSession() {
             }
         } else {
             // Authenticated locally but NOT centrally -> Logout
-            if (localLoggedIn) {
+            // ONLY force logout if we are on the same domain as the Auth Server
+            // Across different domains, background fetch often fails to send cookies (false negative)
+            const isSameOrigin = new URL(CONFIG.FSCAUTH_URL).origin === window.location.origin;
+            if (localLoggedIn && isSameOrigin) {
                 console.warn("[AUTH] Sesión central cerrada. Cerrando local...");
                 logout();
             }
