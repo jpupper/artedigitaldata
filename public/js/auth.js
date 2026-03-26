@@ -45,8 +45,61 @@ function getUserUsername() {
 function logout() {
   removeToken();
   removeUser();
-  window.location.href = CONFIG.BASE + '/login.html';
+  // Limpiar también en el centralizador
+  window.location.href = `${CONFIG.FSCAUTH_URL}/api/auth/logout?redirect=${encodeURIComponent(window.location.origin + CONFIG.BASE + '/')}`;
 }
+
+// Centralized Redirection logic
+function showLogin() {
+    const currentUrl = window.location.href;
+    window.location.href = `${CONFIG.FSCAUTH_URL}/login.html?redirect=${encodeURIComponent(currentUrl)}&origin=artedigitaldata`;
+}
+
+function showRegister() {
+    const currentUrl = window.location.href;
+    window.location.href = `${CONFIG.FSCAUTH_URL}/register.html?redirect=${encodeURIComponent(currentUrl)}&origin=artedigitaldata`;
+}
+
+/**
+ * SSO Check: Si no hay token local, intentamos ver si hay una sesión activa en el centralizador.
+ */
+async function checkSSO() {
+    if (isLoggedIn()) return;
+    
+    // Evitar infinitos redireccionamientos (usar sessionStorage como flag)
+    if (sessionStorage.getItem('fsc_sso_checked')) return;
+    sessionStorage.setItem('fsc_sso_checked', 'true');
+
+    const currentUrl = window.location.href;
+    // Redirigir al endpoint de sso-check del centralizador
+    window.location.href = `${CONFIG.FSCAUTH_URL}/api/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
+}
+
+// Initial session check on load
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  const urlUsername = urlParams.get('username');
+  const urlUserId = urlParams.get('userId');
+
+  if (urlToken && urlUsername) {
+    setToken(urlToken);
+    setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
+    
+    // Limpiar URL
+    urlParams.delete('token');
+    urlParams.delete('username');
+    urlParams.delete('userId');
+    const newQuery = urlParams.toString();
+    const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+    window.history.replaceState({}, document.title, newUrl);
+  } else {
+    // Si no estamos logueados y no venimos de un inteno fallido, chequear SSO
+    if (!isLoggedIn() && !urlParams.has('nosession')) {
+      checkSSO();
+    }
+  }
+});
 
 function parseJwt(token) {
   try {

@@ -25,6 +25,13 @@ window.CONFIG = {
 
     get STATIC_ORIGIN() {
         return window.location.origin + this.BASE;
+    },
+
+    get FSCAUTH_URL() {
+        if (this.isLocal) {
+            return window.location.origin + '/fscauth';
+        }
+        return VPS_ORIGIN + '/fscauth';
     }
 };
 

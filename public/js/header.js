@@ -67,12 +67,12 @@ function renderHeader() {
               <i class="fas fa-sign-out-alt"></i>
             </button>
           ` : `
-            <a href="${CONFIG.BASE}/login.html" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <button onclick="showLogin()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
               Iniciar Sesión
-            </a>
-            <a href="${CONFIG.BASE}/register.html" class="btn-primary px-5 py-2 rounded-lg text-sm transition-all">
+            </button>
+            <button onclick="showRegister()" class="btn-primary px-5 py-2 rounded-lg text-sm transition-all">
               Registrarse
-            </a>
+            </button>
           `}
         </div>
 
@@ -131,12 +131,12 @@ function renderHeader() {
               <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
             </button>
           ` : `
-            <a href="${CONFIG.BASE}/login.html" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5">
+            <button onclick="showLogin()" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 text-left w-full">
               Iniciar Sesión
-            </a>
-            <a href="${CONFIG.BASE}/register.html" class="btn-primary px-4 py-3 rounded-lg text-center mt-2">
+            </button>
+            <button onclick="showRegister()" class="btn-primary px-4 py-3 rounded-lg text-center mt-2 w-full">
               Registrarse
-            </a>
+            </button>
           `}
         </div>
       </div>
