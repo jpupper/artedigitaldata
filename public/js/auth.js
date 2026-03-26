@@ -75,30 +75,65 @@ async function checkSSO() {
     window.location.href = `${CONFIG.FSCAUTH_URL}/api/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
 }
 
-// Initial session check on load
-document.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlToken = urlParams.get('token');
-  const urlUsername = urlParams.get('username');
-  const urlUserId = urlParams.get('userId');
-
-  if (urlToken && urlUsername) {
-    setToken(urlToken);
-    setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
-    
-    // Limpiar URL
-    urlParams.delete('token');
-    urlParams.delete('username');
-    urlParams.delete('userId');
-    const newQuery = urlParams.toString();
-    const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
-    window.history.replaceState({}, document.title, newUrl);
-  } else {
-    // Si no estamos logueados y no venimos de un inteno fallido, chequear SSO
-    if (!isLoggedIn() && !urlParams.has('nosession')) {
-      checkSSO();
+/**
+ * Silent Session Sync: Checks if the central session matches the local state
+ * without redirecting. Used on window focus to catch logout from other tabs.
+ */
+async function syncSession() {
+    try {
+        const res = await fetch(`${CONFIG.FSCAUTH_URL}/api/auth/verify`, { credentials: 'include' });
+        const data = await res.json();
+        
+        const localLoggedIn = isLoggedIn();
+        
+        if (data.loggedIn) {
+            // Un-authenticated locally but logged in centrally -> Trigger SSO Flow (redirect for token)
+            if (!localLoggedIn) {
+                console.log("[AUTH] Nueva sesión detectada en FSC. Sincronizando...");
+                checkSSO();
+            }
+        } else {
+            // Authenticated locally but NOT centrally -> Logout
+            if (localLoggedIn) {
+                console.warn("[AUTH] Sesión central cerrada. Cerrando local...");
+                logout();
+            }
+        }
+    } catch (err) {
+        console.error("[AUTH] Error syncSession:", err);
     }
-  }
+}
+
+// Initial session check and synchronization on load
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    const urlUsername = urlParams.get('username');
+    const urlUserId = urlParams.get('userId');
+
+    if (urlToken && urlUsername) {
+        setToken(urlToken);
+        setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
+        
+        // Limpiar URL
+        urlParams.delete('token');
+        urlParams.delete('username');
+        urlParams.delete('userId');
+        urlParams.delete('ssoset');
+        const newQuery = urlParams.toString();
+        const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+        window.history.replaceState({}, document.title, newUrl);
+    } else {
+        // Si no estamos logueados y no venimos de un inteno fallido, chequear SSO
+        if (!isLoggedIn() && !urlParams.has('nosession')) {
+            checkSSO();
+        }
+    }
+
+    // Sincronización proactiva cuando el usuario vuelve a la pestaña
+    window.addEventListener('focus', () => {
+        syncSession();
+    });
 });
 
 function parseJwt(token) {
