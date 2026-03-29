@@ -127,29 +127,32 @@
         </div>
       </div>
     </div>
-
-    </div>
   </main>
 
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script>
-    if (!isLoggedIn()) { showLogin(); return; }
-
+    // Variables globales para que las funciones fuera de DOMContentLoaded puedan acceder
     let socket;
     let currentRoomId = null;
     let currentTab = 'rooms'; // 'rooms' or 'private'
     const user = getUser();
 
+    // Redirección si no está logueado (sin usar return en top-level)
+    if (!isLoggedIn()) { 
+      showLogin(); 
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+      if (!isLoggedIn()) return;
+
       socket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH });
 
       socket.on('newMessage', (msg) => {
         if (msg.room === currentRoomId) {
           appendMessage(msg);
         } else {
-          // If message is for another room, maybe show a notification if it's a DM
           if (currentTab === 'private') loadPrivateChats();
         }
       });
@@ -173,9 +176,9 @@
         e.preventDefault();
         const input = document.getElementById('msg-input');
         const content = input.value.trim();
-        if (!content || !currentRoomId) return;
+        if (!content || !currentRoomId || !user) return;
 
-        socket.emit('chatMessage', { roomId: currentRoomId, senderId: user.id, content });
+        socket.emit('chatMessage', { roomId: currentRoomId, senderId: user.id || user._id, content });
         input.value = '';
       });
 
@@ -190,6 +193,8 @@
         }
       });
     });
+
+    // --- FUNCIONES GLOBALES (FUERA DE DOMContentLoaded) ---
 
     function setTab(tab) {
       currentTab = tab;
@@ -219,6 +224,7 @@
     async function searchUsers(q) {
       try {
         const res = await apiRequest(`/chat/users/search?q=${q}`);
+        if (!res) return;
         const users = await res.json();
         const results = document.getElementById('search-results');
         
@@ -247,6 +253,7 @@
           method: 'POST',
           body: JSON.stringify({ recipientId })
         });
+        if (!res) return;
         const room = await res.json();
         if (room._id) {
           joinRoom(room._id, username, 'Chat Privado');
@@ -261,6 +268,7 @@
       const list = document.getElementById('rooms-list');
       try {
         const res = await apiRequest('/chat/private');
+        if (!res) return;
         const chats = await res.json();
 
         if (!chats.length) {
@@ -292,6 +300,7 @@
       const list = document.getElementById('rooms-list');
       try {
         const res = await apiRequest('/chat/rooms');
+        if (!res) return;
         const rooms = await res.json();
 
         if (!rooms.length) {
@@ -334,6 +343,10 @@
 
       try {
         const res = await apiRequest(`/chat/rooms/${roomId}/messages`);
+        if (!res) {
+            container.innerHTML = '<div class="text-center text-red-400 py-4">Sesión expirada</div>';
+            return;
+        }
         const messages = await res.json();
         container.innerHTML = '';
         messages.forEach(appendMessage);
@@ -348,7 +361,7 @@
 
     function appendMessage(msg) {
       const container = document.getElementById('messages-container');
-      const isMe = msg.sender?._id === user.id || msg.sender === user.id;
+      const isMe = msg.sender?._id === user?.id || msg.sender === user?.id || msg.sender?._id === user?._id;
       const senderName = msg.sender?.username || 'Anónimo';
       const senderAvatar = msg.sender?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${senderName}`;
       const time = new Date(msg.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
@@ -392,6 +405,7 @@
 
       try {
         const res = await apiRequest('/chat/users/all');
+        if (!res) return;
         const users = await res.json();
         
         list.innerHTML = users.map(u => `
@@ -429,7 +443,6 @@
       setTab('private');
       await startPrivateChat(userId, username);
     }
-
   </script>
 </body>
 </html>
