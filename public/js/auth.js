@@ -51,13 +51,42 @@ function logout() {
 
 // Centralized Redirection logic
 function showLogin() {
+    // If we already have a token in URL, don't redirect (let the loader handle it)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('token')) return;
+
+    if (isLoggedIn()) {
+        window.location.href = CONFIG.BASE + '/';
+        return;
+    }
+
     const currentUrl = window.location.href;
-    window.location.href = `${CONFIG.FSCAUTH_URL}/login.html?redirect=${encodeURIComponent(currentUrl)}&origin=artedigitaldata`;
+    // Ensure the redirect URL doesn't have existing auth params
+    const redirectUrl = new URL(currentUrl);
+    redirectUrl.searchParams.delete('token');
+    redirectUrl.searchParams.delete('username');
+    redirectUrl.searchParams.delete('userId');
+
+    window.location.href = `${CONFIG.FSCAUTH_URL}/login.html?redirect=${encodeURIComponent(redirectUrl.toString())}&origin=artedigitaldata`;
 }
 
 function showRegister() {
+    // If we already have a token in URL, don't redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('token')) return;
+
+    if (isLoggedIn()) {
+        window.location.href = CONFIG.BASE + '/';
+        return;
+    }
+
     const currentUrl = window.location.href;
-    window.location.href = `${CONFIG.FSCAUTH_URL}/register.html?redirect=${encodeURIComponent(currentUrl)}&origin=artedigitaldata`;
+    const redirectUrl = new URL(currentUrl);
+    redirectUrl.searchParams.delete('token');
+    redirectUrl.searchParams.delete('username');
+    redirectUrl.searchParams.delete('userId');
+
+    window.location.href = `${CONFIG.FSCAUTH_URL}/register.html?redirect=${encodeURIComponent(redirectUrl.toString())}&origin=artedigitaldata`;
 }
 
 /**
@@ -66,6 +95,10 @@ function showRegister() {
 async function checkSSO() {
     if (isLoggedIn()) return;
     
+    // Si ya tenemos token en URL, no redirigir (estamos procesándolo)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('token')) return;
+
     // Evitar infinitos redireccionamientos (usar sessionStorage como flag)
     if (sessionStorage.getItem('fsc_sso_checked')) return;
     sessionStorage.setItem('fsc_sso_checked', 'true');
@@ -108,7 +141,8 @@ async function syncSession() {
 }
 
 // Initial session check and synchronization on load
-document.addEventListener('DOMContentLoaded', () => {
+// Lo hacemos fuera del DOMContentLoaded para atrapar los tokens ANTES de que otros scripts redirijan
+(function initAuth() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
     const urlUsername = urlParams.get('username');
@@ -118,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setToken(urlToken);
         setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
         
-        // Limpiar URL
+        // Limpiar URL sin recargar
         urlParams.delete('token');
         urlParams.delete('username');
         urlParams.delete('userId');
@@ -126,18 +160,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const newQuery = urlParams.toString();
         const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
         window.history.replaceState({}, document.title, newUrl);
-    } else {
-        // Si no estamos logueados y no venimos de un inteno fallido, chequear SSO
-        if (!isLoggedIn() && !urlParams.has('nosession')) {
-            checkSSO();
+        
+        // Si estamos en login.html o register.html, redirigir a home
+        if (window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html')) {
+            window.location.href = CONFIG.BASE + '/';
         }
+    } else {
+        // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isLoggedIn() && !urlParams.has('nosession')) {
+                checkSSO();
+            }
+        });
     }
 
     // Sincronización proactiva cuando el usuario vuelve a la pestaña
     window.addEventListener('focus', () => {
         syncSession();
     });
-});
+})();
 
 function parseJwt(token) {
   try {

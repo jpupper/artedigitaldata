@@ -43,9 +43,6 @@ window.CONFIG = {
     },
 
     get FSCAUTH_URL() {
-        if (this.isLocal) {
-            return window.location.origin + '/fscauth';
-        }
         return VPS_ORIGIN + '/fscauth';
     },
 
