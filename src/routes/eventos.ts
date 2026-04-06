@@ -68,7 +68,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
-    if (evento.creator.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+    if (evento.creator.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -88,7 +88,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (title) evento.title = title;
     if (date) evento.date = date;
     if (location !== undefined) evento.location = location;
-    if (imageUrl) evento.imageUrl = imageUrl;
+    if (imageUrl !== undefined) evento.imageUrl = imageUrl;
     if (youtube_video !== undefined) evento.youtube_video = youtube_video;
 
     await evento.save();

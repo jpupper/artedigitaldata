@@ -87,14 +87,14 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
 
-    if (post.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+    if (post.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
     if (title) post.title = title;
     if (description !== undefined) post.description = description;
-    if (tags) post.tags = tags;
-    if (imageUrl) post.imageUrl = imageUrl;
+    if (tags !== undefined) post.tags = tags;
+    if (imageUrl !== undefined) post.imageUrl = imageUrl;
     if (youtube_video !== undefined) post.youtube_video = youtube_video;
 
     await post.save();

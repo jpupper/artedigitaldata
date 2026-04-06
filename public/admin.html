@@ -217,11 +217,12 @@
 
     async function refreshAll() {
       try {
+        const t = Date.now();
         const [usersRes, postsRes, recursosRes, eventosRes] = await Promise.all([
-          apiRequest('/admin/users'),
-          fetch(CONFIG.API_URL + '/posts'),
-          fetch(CONFIG.API_URL + '/recursos'),
-          fetch(CONFIG.API_URL + '/eventos')
+          apiRequest('/admin/users?t=' + t),
+          apiRequest('/posts?t=' + t),
+          apiRequest('/recursos?t=' + t),
+          apiRequest('/eventos?t=' + t)
         ]);
 
         data.users = await usersRes.json();
@@ -457,6 +458,9 @@
       if (res?.ok) {
         closeEditModal();
         refreshAll();
+      } else {
+        const errorData = res ? await res.json() : { error: 'Error desconocido' };
+        alert('Error al guardar: ' + (errorData.error || 'Error desconocido'));
       }
     });
   </script>
