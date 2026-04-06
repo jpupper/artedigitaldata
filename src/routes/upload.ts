@@ -32,11 +32,21 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
   try {
     if (!req.file) return res.status(400).json({ error: 'No se envió ningún archivo' });
 
-    // Generar la URL pública asumiendo que /img mapea a d:/Programacion/sistemasfullscreen/artedigitaldata/img
-    // Usamos el hostname dinamico o un path relativo
-    const relativeUrl = `/img/uploads/${req.file.filename}`;
+    // Usar protocol dinámico y el host verdadero del servidor NodeJS / VPS
+    let host = req.get('host') || 'vps-4455523-x.dattaweb.com';
+    let protocol = req.headers['x-forwarded-proto'] || req.protocol;
     
-    return res.json({ url: relativeUrl, public_id: req.file.filename });
+    // Forzar que si se ejecuta desde local test, se devuelva la IP/URL del VPS
+    // para cumplir con el requisito de "siempre se tienen que tomar desde el VPS"
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      host = 'vps-4455523-x.dattaweb.com';
+      protocol = 'https';
+    }
+
+    // Generar la URL absoluta a la imagen
+    const absoluteUrl = `${protocol}://${host}/artedigitaldata/img/uploads/${req.file.filename}`;
+    
+    return res.json({ url: absoluteUrl, public_id: req.file.filename });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
