@@ -71,7 +71,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     const recurso = await Recurso.findById(req.params.id);
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
 
-    if (recurso.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+    if (recurso.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -79,8 +79,8 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (description !== undefined) recurso.description = description;
     if (type) recurso.type = type;
     if (url) recurso.url = url;
-    if (tags) recurso.tags = tags;
-    if (imageUrl) recurso.imageUrl = imageUrl;
+    if (tags !== undefined) recurso.tags = tags;
+    if (imageUrl !== undefined) recurso.imageUrl = imageUrl;
     if (youtube_video !== undefined) recurso.youtube_video = youtube_video;
 
     await recurso.save();
