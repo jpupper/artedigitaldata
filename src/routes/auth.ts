@@ -69,7 +69,8 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Buscar el usuario en la DB central (vía el modelo User compartido) para obtener roles específicos de artedigital
     const dbUser = await User.findById(data.user.id);
-    const adRole = dbUser?.permissions?.artedigital?.role || 'USUARIO';
+    const globalRole = dbUser?.role || data.user.role || 'USER';
+    const adRole = dbUser?.permissions?.artedigital?.role || (globalRole === 'ADMIN' ? 'ADMINISTRADOR' : 'USUARIO');
 
     return res.json({ 
       token: data.token, 
@@ -92,11 +93,12 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     
     // Mapear campos para compatibilidad si es necesario
-    const adRole = user.permissions?.artedigital?.role || 'USUARIO';
+    const globalRole = user.role;
+    const adRole = user.permissions?.artedigital?.role || (globalRole === 'ADMIN' ? 'ADMINISTRADOR' : 'USUARIO');
     
     const responseData = {
       ...user.toObject(),
-      role: adRole // Sobrescribir el role global con el específico de artedigital
+      role: adRole // Sobrescribir el role global con el específico de artedigital (o el heredado)
     };
 
     return res.json(responseData);
