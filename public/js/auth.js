@@ -29,7 +29,7 @@ function isLoggedIn() {
 
 function isAdmin() {
   const user = getUser();
-  return user && user.role === 'ADMINISTRADOR';
+  return user && (user.role === 'ADMINISTRADOR' || user.role === 'ADMIN');
 }
 
 function getUserId() {
@@ -168,7 +168,24 @@ async function syncSession() {
     } else {
         // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
         document.addEventListener('DOMContentLoaded', () => {
-            if (!isLoggedIn() && !urlParams.has('nosession')) {
+            if (isLoggedIn()) {
+                // Update profile in background to get roles and fresh data
+                if (typeof apiRequest === 'function') {
+                    apiRequest('/auth/me')
+                        .then(res => res && res.json())
+                        .then(data => {
+                            if (data && !data.error) {
+                                const currentUser = getUser();
+                                const hasChanges = !currentUser || currentUser.role !== data.role || currentUser.avatar !== data.avatar;
+                                setUser({ ...data, id: data._id || data.id });
+                                if (hasChanges && typeof window.renderHeader === 'function') {
+                                    window.renderHeader();
+                                }
+                            }
+                        })
+                        .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
+                }
+            } else if (!urlParams.has('nosession')) {
                 checkSSO();
             }
         });
