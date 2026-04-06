@@ -8,8 +8,6 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import { Server as SocketServer } from 'socket.io';
 import bcrypt from 'bcryptjs';
-import { v2 as cloudinary } from 'cloudinary';
-
 import User from './src/models/User';
 import Message from './src/models/Message';
 import ChatRoom from './src/models/ChatRoom';
@@ -74,12 +72,6 @@ app.use((_req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 // API Routes
 const apiRouter = express.Router();
