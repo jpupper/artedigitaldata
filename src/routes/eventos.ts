@@ -137,7 +137,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   try {
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
-    if (evento.creator.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+    if (evento.creator.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'No autorizado' });
     }
     await evento.deleteOne();

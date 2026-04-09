@@ -114,7 +114,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   try {
     const recurso = await Recurso.findById(req.params.id);
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
-    if (recurso.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR') {
+    if (recurso.author.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'No autorizado' });
     }
     await recurso.deleteOne();

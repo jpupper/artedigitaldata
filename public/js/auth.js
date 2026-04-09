@@ -111,14 +111,22 @@ async function checkSSO() {
 /**
  * Silent Session Sync: Checks if the central session matches the local state
  * without redirecting. Used on window focus to catch logout from other tabs.
+ * NOTE: Only works when on same origin as auth server due to CORS/cookie restrictions.
  */
 async function syncSession() {
+    // Only attempt sync when on same origin as auth server
+    // Cross-origin fetch will fail CORS and cookies won't be sent anyway
+    const isSameOrigin = new URL(CONFIG.FSCAUTH_URL).origin === window.location.origin;
+    if (!isSameOrigin) {
+        return; // Skip sync for cross-origin scenarios
+    }
+
     try {
         const res = await fetch(`${CONFIG.FSCAUTH_URL}/api/auth/verify`, { credentials: 'include' });
         const data = await res.json();
-        
+
         const localLoggedIn = isLoggedIn();
-        
+
         if (data.loggedIn) {
             // Un-authenticated locally but logged in centrally -> Trigger SSO Flow (redirect for token)
             if (!localLoggedIn) {
@@ -127,10 +135,7 @@ async function syncSession() {
             }
         } else {
             // Authenticated locally but NOT centrally -> Logout
-            // ONLY force logout if we are on the same domain as the Auth Server
-            // Across different domains, background fetch often fails to send cookies (false negative)
-            const isSameOrigin = new URL(CONFIG.FSCAUTH_URL).origin === window.location.origin;
-            if (localLoggedIn && isSameOrigin) {
+            if (localLoggedIn) {
                 console.warn("[AUTH] Sesión central cerrada. Cerrando local...");
                 logout();
             }
