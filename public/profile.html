@@ -470,7 +470,7 @@
     async function loadUserTickets() {
       try {
         const res = await apiRequest('/tickets/my');
-        if (!res.ok) throw new Error();
+        if (!res || !res.ok) throw new Error();
         const tickets = await res.json();
         renderUserTickets(tickets);
       } catch (err) {
