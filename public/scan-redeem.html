@@ -137,6 +137,14 @@
         </div>
       </div>
 
+      <!-- View Only Message (for ticket owners who can't redeem) -->
+      <div id="view-only-message" class="hidden py-4 text-center">
+        <div class="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4">
+          <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+          <span class="text-blue-400 text-sm">Sos el dueño de esta entrada. Podés ver los detalles pero no canjearla.</span>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div id="actions" class="hidden mt-6 flex gap-3">
         <button onclick="resetView()" class="flex-1 py-3 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all">
@@ -291,32 +299,51 @@
     }
 
     function checkAuthorization() {
+      // Not logged in -> redirect to home
       if (!isLoggedIn()) {
-        isAuthorized = false;
-        document.getElementById('access-denied').classList.add('hidden');
-        document.getElementById('not-logged-in').classList.remove('hidden');
+        window.location.href = 'index.html';
         return;
       }
 
       const user = getUser();
       const event = currentEvent;
+      const ticket = currentTicket;
 
-      if (!event || !user) {
+      if (!event || !user || !ticket) {
         isAuthorized = false;
         return;
       }
 
+      // Check if user can redeem (creator, admin, door user)
       const isCreator = event.creator?._id?.toString() === user._id || event.creator?.toString() === user._id;
       const isAdmin = user.role === 'ADMINISTRADOR' || user.role === 'ADMIN';
       const isDoorUser = event.doorUsers?.some(id => id.toString() === user._id);
 
-      isAuthorized = isCreator || isAdmin || isDoorUser;
+      // Check if user is the ticket owner
+      const isTicketOwner = ticket.owner?._id?.toString() === user._id || 
+                            ticket.owner?.toString() === user._id ||
+                            (ticket.ownerEmail && user.email && ticket.ownerEmail.toLowerCase() === user.email.toLowerCase());
+
+      // Can redeem if creator, admin, or door user
+      const canRedeem = isCreator || isAdmin || isDoorUser;
+      
+      // Can view if can redeem OR is the ticket owner
+      const canView = canRedeem || isTicketOwner;
+
+      isAuthorized = canRedeem;
+
+      // If not authorized to view -> redirect to home
+      if (!canView) {
+        window.location.href = 'index.html';
+        return;
+      }
 
       // Update role text
       let roleText = '';
       if (isCreator) roleText = 'creador del evento';
       else if (isAdmin) roleText = 'administrador';
       else if (isDoorUser) roleText = 'usuario de puerta';
+      else if (isTicketOwner) roleText = 'dueño de la entrada';
       document.getElementById('user-role-text').innerText = roleText;
     }
 
@@ -384,18 +411,23 @@
       document.getElementById('not-logged-in').classList.add('hidden');
 
       if (!isLoggedIn()) {
-        document.getElementById('not-logged-in').classList.remove('hidden');
+        // Already handled in checkAuthorization - redirect
+        window.location.href = 'index.html';
+        return;
+      }
+
+      if (!isAuthorized) {
+        // User is ticket owner but cannot redeem - show ticket without redeem button
         document.getElementById('redeem-action').classList.add('hidden');
         document.getElementById('already-redeemed').classList.add('hidden');
-      } else if (!isAuthorized) {
-        document.getElementById('access-denied').classList.remove('hidden');
-        document.getElementById('redeem-action').classList.add('hidden');
-        document.getElementById('already-redeemed').classList.add('hidden');
+        document.getElementById('view-only-message').classList.remove('hidden');
       } else if (ticket.redeemed) {
+        document.getElementById('view-only-message').classList.add('hidden');
         document.getElementById('redeem-action').classList.add('hidden');
         document.getElementById('already-redeemed').classList.remove('hidden');
         document.getElementById('redeemed-date').innerText = new Date(ticket.redeemedAt).toLocaleString('es-AR');
       } else if (ticket.paymentStatus === 'pending') {
+        document.getElementById('view-only-message').classList.add('hidden');
         document.getElementById('redeem-action').classList.remove('hidden');
         document.getElementById('already-redeemed').classList.add('hidden');
         // Add warning about pending payment
@@ -404,6 +436,7 @@
         redeemBtn.classList.remove('bg-green-500', 'hover:bg-green-400');
         redeemBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
       } else {
+        document.getElementById('view-only-message').classList.add('hidden');
         document.getElementById('redeem-action').classList.remove('hidden');
         document.getElementById('already-redeemed').classList.add('hidden');
         // Reset button style
@@ -478,12 +511,15 @@
     function resetView() {
       // Clear URL params
       window.history.replaceState({}, document.title, window.location.pathname);
-      
+
       // Reset state
       currentTicket = null;
       currentEvent = null;
       isAuthorized = false;
-      
+
+      // Hide view-only message
+      document.getElementById('view-only-message').classList.add('hidden');
+
       // Show scanner
       document.getElementById('manual-code-input').value = '';
       showScanner();
@@ -499,6 +535,7 @@
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('ticket-section').classList.add('hidden');
       document.getElementById('error-section').classList.add('hidden');
+      document.getElementById('view-only-message').classList.add('hidden');
     }
   </script>
 </body>
