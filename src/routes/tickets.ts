@@ -74,6 +74,12 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
 
 // Issue manual ticket (creator/admin only)
 router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequest, res: Response) => {
+  console.log('[issue-manual] ========== REQUEST START ==========');
+  console.log('[issue-manual] URL:', req.originalUrl);
+  console.log('[issue-manual] Method:', req.method);
+  console.log('[issue-manual] Content-Type:', req.headers['content-type']);
+  console.log('[issue-manual] Raw body:', req.body);
+  console.log('[issue-manual] Body keys:', req.body ? Object.keys(req.body) : 'NO BODY');
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
@@ -87,7 +93,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     }
 
     const { ownerName, ownerEmail, ownerPhone, ownerId } = req.body;
-    console.log('[issue-manual] Full body:', req.body);
+    console.log('[issue-manual] Destructured values:', { ownerName, ownerEmail, ownerPhone, ownerId });
     console.log('[issue-manual] Received ownerId:', ownerId, 'Type:', typeof ownerId, 'Falsy?', !ownerId);
 
     // Check if max tickets reached
