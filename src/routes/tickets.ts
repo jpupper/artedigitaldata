@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth';
 import Ticket from '../models/Ticket';
 import Evento from '../models/Evento';
 import User from '../models/User';
@@ -205,7 +205,16 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 // Get my tickets
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const tickets = await Ticket.find({ owner: req.user!.id })
+    // Get user to check their email
+    const user = await User.findById(req.user!.id);
+    const userEmail = user?.email;
+
+    // Find tickets by owner OR by ownerEmail (case-insensitive, for tickets purchased before owner linking)
+    const query = userEmail
+      ? { $or: [{ owner: req.user!.id }, { ownerEmail: { $regex: new RegExp(`^${userEmail}$`, 'i') } }] }
+      : { owner: req.user!.id };
+
+    const tickets = await Ticket.find(query)
       .populate('event', 'title date location imageUrl')
       .sort({ createdAt: -1 });
 
@@ -333,7 +342,7 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
 });
 
 // Create free ticket (for events with 0 price or contribution mode)
-router.post('/event/:eventId/create-free', async (req: Request, res: Response) => {
+router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
@@ -351,20 +360,24 @@ router.post('/event/:eventId/create-free', async (req: Request, res: Response) =
     }
 
     const code = generateTicketCode();
-    const qrData = JSON.stringify({
+    const qrPayload = JSON.stringify({
       code,
       event: event._id,
       type: 'ticket'
     });
 
     // Generate QR code as data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(qrData);
+    const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
+
+    // Get user ID if authenticated
+    const ownerId = req.user?.id;
 
     // Create ticket with free/paid status
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
       qrData: qrCodeDataUrl,
+      owner: ownerId,
       ownerName: ownerName || '',
       ownerEmail: ownerEmail || '',
       ownerPhone: ownerPhone || '',

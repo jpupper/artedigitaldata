@@ -221,9 +221,13 @@
       try {
         // If free ticket
         if (currentEvent.ticketConfig.price === 0 || currentEvent.ticketConfig.isContribution) {
+          const headers = { 'Content-Type': 'application/json' };
+          const token = getToken();
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
           const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-free`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({
               ownerName: name,
               ownerEmail: email,

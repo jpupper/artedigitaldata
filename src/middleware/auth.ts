@@ -28,6 +28,29 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
   }
 }
 
+// Optional auth - sets req.user if token is valid, but doesn't require it
+export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    next();
+    return;
+  }
+
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET not defined');
+    const decoded = jwt.verify(token, secret) as {
+      id: string;
+      role: string;
+      username: string;
+    };
+    req.user = decoded;
+  } catch {
+    // Invalid token, continue without user
+  }
+  next();
+}
+
 export async function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   if (!req.user) {
     res.status(401).json({ error: 'No autenticado' });
