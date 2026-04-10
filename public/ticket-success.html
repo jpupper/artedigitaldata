@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¡Entrada Confirmada! - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-2xl mx-auto px-4">
+    <!-- Loading -->
+    <div id="loading" class="py-20 text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-magenta-500 mb-4"></i>
+      <p class="text-gray-500">Cargando tu entrada...</p>
+    </div>
+
+    <!-- Success Content -->
+    <div id="content" class="hidden">
+      <div class="text-center mb-8">
+        <div class="w-24 h-24 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+          <i class="fas fa-check text-5xl text-green-500"></i>
+        </div>
+        <h1 class="text-3xl font-black text-white mb-2">¡LISTO!</h1>
+        <p id="success-message" class="text-gray-400">Tu entrada ha sido confirmada.</p>
+      </div>
+
+      <!-- Ticket Card -->
+      <div class="rounded-3xl border border-white/10 card-cyber bg-black/40 overflow-hidden">
+        <div class="bg-gradient-to-r from-magenta-500/20 to-fuchsia-500/20 p-6 border-b border-white/10">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Entrada para</p>
+              <h2 id="event-title" class="text-xl font-black text-white"></h2>
+            </div>
+            <i class="fas fa-ticket-alt text-3xl text-magenta-500/50"></i>
+          </div>
+        </div>
+
+        <div class="p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Fecha</p>
+              <p id="event-date" class="text-white font-medium flex items-center gap-2">
+                <i class="fas fa-calendar text-magenta-500"></i>
+                <span><!-- Date --></span>
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Ubicación</p>
+              <p id="event-location" class="text-white font-medium flex items-center gap-2">
+                <i class="fas fa-map-marker-alt text-cyan-500"></i>
+                <span><!-- Location --></span>
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 pt-8">
+            <div class="text-center">
+              <p class="text-sm text-gray-400 mb-4">Presentá este código QR en la entrada:</p>
+              
+              <div class="inline-block p-4 bg-white rounded-2xl mb-4">
+                <img id="qr-code" src="" alt="QR Code" class="w-48 h-48">
+              </div>
+
+              <p id="ticket-code" class="text-2xl font-black text-magenta-400 tracking-widest font-mono mb-2">
+                <!-- Code -->
+              </p>
+              <p class="text-xs text-gray-500">Código de entrada</p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 mt-8 pt-6">
+            <div id="owner-info" class="space-y-2 text-sm text-gray-400">
+              <!-- Owner info -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Badge -->
+        <div id="status-badge" class="px-6 py-3 bg-green-500/10 border-t border-green-500/20 text-center">
+          <span class="text-green-400 font-bold flex items-center justify-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            Entrada Válida
+          </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="downloadTicket()" class="btn-primary px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+          <i class="fas fa-download"></i>
+          Descargar Entrada
+        </button>
+        <a href="calendario.html" class="px-8 py-3 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+          <i class="fas fa-calendar"></i>
+          Ver Calendario
+        </a>
+      </div>
+
+      <!-- Warning -->
+      <div class="mt-8 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+        <p class="text-sm text-yellow-400 flex items-start gap-3">
+          <i class="fas fa-exclamation-triangle mt-1"></i>
+          <span>No compartas este código QR con nadie. Cada entrada es única y personal. Si necesitás transferir tu entrada, contactá al organizador del evento.</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="hidden py-20 text-center">
+      <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
+      <h2 class="text-2xl font-bold text-white mb-2">Entrada no encontrada</h2>
+      <p class="text-gray-500 mb-8">El código de entrada no existe o ha sido eliminado.</p>
+      <a href="calendario.html" class="btn-primary px-8 py-3 rounded-xl">Volver al Calendario</a>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let currentTicket = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketCode = urlParams.get('ticket');
+
+      if (!ticketCode) {
+        showError();
+        return;
+      }
+
+      await loadTicket(ticketCode);
+    });
+
+    async function loadTicket(code) {
+      try {
+        // Try to get ticket details from the public endpoint
+        const res = await fetch(`${CONFIG.API_URL}/tickets/code/${code}`);
+        if (!res.ok) throw new Error();
+        const ticket = await res.json();
+        currentTicket = ticket;
+        renderTicket(ticket);
+      } catch (err) {
+        // If not logged in, show generic success
+        if (!isLoggedIn()) {
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('content').classList.remove('hidden');
+          document.getElementById('success-message').innerText = '¡Tu compra fue exitosa! Revisá tu email para obtener la entrada.';
+          document.getElementById('ticket-code').innerText = code.toUpperCase();
+          return;
+        }
+        showError();
+      }
+    }
+
+    function renderTicket(ticket) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+
+      const ev = ticket.event;
+      document.title = `Entrada - ${ev.title}`;
+
+      // Success message from event config
+      if (ev.ticketConfig?.successMessage) {
+        document.getElementById('success-message').innerText = ev.ticketConfig.successMessage;
+      }
+
+      // Event info
+      document.getElementById('event-title').innerText = ev.title;
+      document.getElementById('event-date').querySelector('span').innerText = new Date(ev.date).toLocaleDateString('es-AR', { 
+        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+      });
+      document.getElementById('event-location').querySelector('span').innerText = ev.location || 'Virtual';
+
+      // Ticket info
+      document.getElementById('ticket-code').innerText = ticket.code;
+      document.getElementById('qr-code').src = ticket.qrData;
+
+      // Owner info
+      const ownerInfo = document.getElementById('owner-info');
+      ownerInfo.innerHTML = `
+        <p><strong>Nombre:</strong> ${ticket.ownerName || 'No especificado'}</p>
+        <p><strong>Email:</strong> ${ticket.ownerEmail || 'No especificado'}</p>
+        ${ticket.ownerPhone ? `<p><strong>Teléfono:</strong> ${ticket.ownerPhone}</p>` : ''}
+      `;
+
+      // Status badge
+      const statusBadge = document.getElementById('status-badge');
+      if (ticket.redeemed) {
+        statusBadge.className = 'px-6 py-3 bg-gray-500/10 border-t border-gray-500/20 text-center';
+        statusBadge.innerHTML = `
+          <span class="text-gray-400 font-bold flex items-center justify-center gap-2">
+            <i class="fas fa-check-double"></i>
+            Entrada Canjeada el ${new Date(ticket.redeemedAt).toLocaleDateString('es-AR')}
+          </span>
+        `;
+      } else if (ticket.paymentStatus === 'pending') {
+        statusBadge.className = 'px-6 py-3 bg-yellow-500/10 border-t border-yellow-500/20 text-center';
+        statusBadge.innerHTML = `
+          <span class="text-yellow-400 font-bold flex items-center justify-center gap-2">
+            <i class="fas fa-clock"></i>
+            Pago Pendiente
+          </span>
+        `;
+      }
+    }
+
+    function showError() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+    }
+
+    function downloadTicket() {
+      if (!currentTicket) return;
+      
+      // Create a simple print/download of the ticket section
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Entrada - ${currentTicket.event.title}</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background: #000; color: #fff; }
+              .ticket { border: 2px solid #e91e63; padding: 30px; border-radius: 20px; max-width: 400px; margin: 0 auto; }
+              h1 { color: #e91e63; }
+              .qr { margin: 20px 0; }
+              .code { font-size: 24px; font-family: monospace; letter-spacing: 4px; color: #e91e63; }
+            </style>
+          </head>
+          <body>
+            <div class="ticket">
+              <h1>${currentTicket.event.title}</h1>
+              <p>${new Date(currentTicket.event.date).toLocaleDateString('es-AR')}</p>
+              <p>${currentTicket.event.location || 'Virtual'}</p>
+              <div class="qr">
+                <img src="${currentTicket.qrData}" width="200" height="200">
+              </div>
+              <p class="code">${currentTicket.code}</p>
+              <p>${currentTicket.ownerName || ''}</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  </script>
+</body>
+</html>

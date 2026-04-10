@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Todas las Entradas - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-12 max-w-7xl mx-auto px-4">
+    <!-- Access Denied -->
+    <div id="access-denied" class="hidden text-center py-20">
+      <i class="fas fa-lock text-5xl text-red-400/50 mb-4"></i>
+      <h2 class="text-2xl font-bold text-red-400">Acceso Denegado</h2>
+      <p class="text-gray-500 mt-2">Solo los administradores pueden acceder a este panel.</p>
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="hidden">
+      <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-black text-white">
+            <i class="fas fa-ticket-alt text-magenta-500 mr-2"></i>Todas las Entradas
+          </h1>
+          <p class="text-gray-400 mt-1">Administración global del sistema de entradas</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportTickets()" class="px-6 py-3 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center gap-2">
+            <i class="fas fa-download"></i>
+            Exportar CSV
+          </button>
+          <button onclick="loadTickets()" class="px-6 py-3 rounded-xl bg-magenta-500 text-black font-bold hover:bg-magenta-400 transition-all flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            Actualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Global Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div class="rounded-2xl border border-white/10 bg-black/40 p-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Total Entradas</p>
+          <p id="stat-total" class="text-3xl font-black text-white mt-2">0</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/40 p-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Eventos con Entradas</p>
+          <p id="stat-events" class="text-3xl font-black text-magenta-400 mt-2">0</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/40 p-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Entradas Pagadas</p>
+          <p id="stat-paid" class="text-3xl font-black text-green-400 mt-2">0</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/40 p-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Entradas Canjeadas</p>
+          <p id="stat-redeemed" class="text-3xl font-black text-cyan-400 mt-2">0</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/40 p-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Ingresos Estimados</p>
+          <p id="stat-revenue" class="text-3xl font-black text-yellow-400 mt-2">$0</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <div class="flex-1 relative">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+          <input type="text" id="search-input" placeholder="Buscar por código, evento, nombre o email..." 
+            oninput="filterTickets()"
+            class="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+        </div>
+        <select id="filter-status" onchange="filterTickets()" class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          <option value="all">Todos los estados</option>
+          <option value="pending">Pendientes</option>
+          <option value="completed">Pagadas</option>
+          <option value="free">Gratuitas</option>
+          <option value="redeemed">Canjeadas</option>
+        </select>
+        <select id="filter-event" onchange="filterTickets()" class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          <option value="all">Todos los eventos</option>
+        </select>
+      </div>
+
+      <!-- Tickets Table -->
+      <div class="rounded-2xl border border-white/10 bg-black/40 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10 bg-black/20">
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Código</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Evento</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Fecha Evento</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Dueño</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Estado</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Pago</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Canjeada</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-tbody">
+              <!-- Tickets will be injected here -->
+            </tbody>
+          </table>
+        </div>
+        <div id="no-tickets" class="hidden py-12 text-center text-gray-500">
+          <i class="fas fa-ticket-alt text-4xl mb-4 opacity-30"></i>
+          <p>No hay entradas</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-6">
+        <p id="pagination-info" class="text-sm text-gray-500"></p>
+        <div class="flex gap-2">
+          <button onclick="changePage(-1)" id="prev-btn" class="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-all disabled:opacity-50">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button onclick="changePage(1)" id="next-btn" class="px-4 py-2 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-all disabled:opacity-50">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let allTickets = [];
+    let filteredTickets = [];
+    let events = [];
+    let currentPage = 1;
+    const itemsPerPage = 25;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!isLoggedIn() || !isAdmin()) {
+        document.getElementById('access-denied').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('content').classList.remove('hidden');
+      await Promise.all([loadTickets(), loadEvents()]);
+    });
+
+    async function loadTickets() {
+      try {
+        const res = await apiRequest('/tickets');
+        if (!res.ok) throw new Error();
+        allTickets = await res.json();
+        calculateStats();
+        filterTickets();
+      } catch (err) {
+        console.error('Error loading tickets:', err);
+        alert('Error al cargar entradas');
+      }
+    }
+
+    async function loadEvents() {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/eventos`);
+        if (!res.ok) throw new Error();
+        events = await res.json();
+        
+        // Populate event filter
+        const select = document.getElementById('filter-event');
+        events.forEach(ev => {
+          if (ev.ticketConfig?.enabled) {
+            const option = document.createElement('option');
+            option.value = ev._id;
+            option.innerText = ev.title;
+            select.appendChild(option);
+          }
+        });
+      } catch (err) {
+        console.error('Error loading events:', err);
+      }
+    }
+
+    function calculateStats() {
+      const total = allTickets.length;
+      const uniqueEvents = new Set(allTickets.map(t => t.event?._id || t.event)).size;
+      const paid = allTickets.filter(t => t.paymentStatus === 'completed').length;
+      const redeemed = allTickets.filter(t => t.redeemed).length;
+      
+      // Calculate estimated revenue (this is a simplified calculation)
+      let revenue = 0;
+      allTickets.forEach(t => {
+        if (t.paymentStatus === 'completed' || t.paymentStatus === 'free') {
+          // We would need the event price here, using a placeholder
+          revenue += 0; // This would be calculated from event data
+        }
+      });
+
+      document.getElementById('stat-total').innerText = total;
+      document.getElementById('stat-events').innerText = uniqueEvents;
+      document.getElementById('stat-paid').innerText = paid;
+      document.getElementById('stat-redeemed').innerText = redeemed;
+      document.getElementById('stat-revenue').innerText = `$${revenue}`;
+    }
+
+    function filterTickets() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const status = document.getElementById('filter-status').value;
+      const eventId = document.getElementById('filter-event').value;
+
+      filteredTickets = allTickets.filter(t => {
+        const matchesSearch = 
+          t.code.toLowerCase().includes(search) ||
+          (t.ownerName && t.ownerName.toLowerCase().includes(search)) ||
+          (t.ownerEmail && t.ownerEmail.toLowerCase().includes(search)) ||
+          (t.event?.title && t.event.title.toLowerCase().includes(search));
+
+        const matchesStatus = status === 'all' || 
+          (status === 'redeemed' && t.redeemed) ||
+          (status !== 'redeemed' && t.paymentStatus === status);
+
+        const matchesEvent = eventId === 'all' || 
+          (t.event?._id === eventId || t.event === eventId);
+
+        return matchesSearch && matchesStatus && matchesEvent;
+      });
+
+      currentPage = 1;
+      renderTickets();
+    }
+
+    function renderTickets() {
+      const tbody = document.getElementById('tickets-tbody');
+      const noTickets = document.getElementById('no-tickets');
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageTickets = filteredTickets.slice(start, end);
+
+      // Update pagination
+      document.getElementById('pagination-info').innerText = 
+        `Mostrando ${start + 1}-${Math.min(end, filteredTickets.length)} de ${filteredTickets.length} entradas`;
+      document.getElementById('prev-btn').disabled = currentPage === 1;
+      document.getElementById('next-btn').disabled = end >= filteredTickets.length;
+
+      if (filteredTickets.length === 0) {
+        tbody.innerHTML = '';
+        noTickets.classList.remove('hidden');
+        return;
+      }
+
+      noTickets.classList.add('hidden');
+
+      tbody.innerHTML = pageTickets.map(t => {
+        let statusBadge, statusClass;
+        if (t.redeemed) {
+          statusBadge = '<i class="fas fa-check-double mr-1"></i>Canjeada';
+          statusClass = 'bg-cyan-500/20 text-cyan-400';
+        } else if (t.paymentStatus === 'completed') {
+          statusBadge = '<i class="fas fa-check mr-1"></i>Pagada';
+          statusClass = 'bg-green-500/20 text-green-400';
+        } else if (t.paymentStatus === 'free') {
+          statusBadge = '<i class="fas fa-gift mr-1"></i>Gratuita';
+          statusClass = 'bg-blue-500/20 text-blue-400';
+        } else if (t.paymentStatus === 'pending') {
+          statusBadge = '<i class="fas fa-clock mr-1"></i>Pendiente';
+          statusClass = 'bg-yellow-500/20 text-yellow-400';
+        } else {
+          statusBadge = '<i class="fas fa-times mr-1"></i>Fallida';
+          statusClass = 'bg-red-500/20 text-red-400';
+        }
+
+        const eventDate = t.event?.date ? new Date(t.event.date).toLocaleDateString('es-AR') : '-';
+
+        return `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-mono font-bold text-white">${t.code}</td>
+            <td class="px-6 py-4">
+              <a href="evento.html?id=${t.event?._id || t.event}" class="text-white hover:text-magenta-400 transition-colors font-medium">
+                ${t.event?.title || 'Evento desconocido'}
+              </a>
+            </td>
+            <td class="px-6 py-4 text-gray-400">${eventDate}</td>
+            <td class="px-6 py-4">
+              <div class="text-white font-medium">${t.ownerName || 'Sin nombre'}</div>
+              <div class="text-xs text-gray-500">${t.ownerEmail || ''}</div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">
+                ${statusBadge}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-gray-400 capitalize">${t.paymentStatus}</td>
+            <td class="px-6 py-4">
+              ${t.redeemed ? 
+                `<span class="text-cyan-400"><i class="fas fa-check mr-1"></i>${new Date(t.redeemedAt).toLocaleDateString('es-AR')}</span>` : 
+                '<span class="text-gray-500">-</span>'
+              }
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-2">
+                <a href="ticket-success.html?ticket=${t.code}" target="_blank" class="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-all text-xs">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <button onclick="deleteTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-xs">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      renderTickets();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteTicket(ticketId) {
+      if (!confirm('¿Eliminar esta entrada permanentemente?')) return;
+
+      try {
+        const res = await apiRequest(`/tickets/${ticketId}`, { method: 'DELETE' });
+        if (res.ok) {
+          await loadTickets();
+        } else {
+          alert('Error al eliminar entrada');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    function exportTickets() {
+      const headers = ['Código', 'Evento', 'Fecha Evento', 'Dueño', 'Email', 'Teléfono', 'Estado Pago', 'Canjeada', 'Fecha Canje', 'Fecha Compra'];
+      const rows = filteredTickets.map(t => [
+        t.code,
+        t.event?.title || 'N/A',
+        t.event?.date ? new Date(t.event.date).toISOString() : '',
+        t.ownerName || '',
+        t.ownerEmail || '',
+        t.ownerPhone || '',
+        t.paymentStatus,
+        t.redeemed ? 'Sí' : 'No',
+        t.redeemedAt ? new Date(t.redeemedAt).toISOString() : '',
+        new Date(t.createdAt).toISOString()
+      ]);
+
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => r.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `entradas_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  </script>
+</body>
+</html>

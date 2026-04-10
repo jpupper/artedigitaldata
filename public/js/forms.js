@@ -88,7 +88,9 @@ const FORM_TEMPLATES = {
     </div>
   `,
 
-  evento: (prefix, item = {}) => `
+  evento: (prefix, item = {}) => {
+    const tc = item.ticketConfig || {};
+    return `
     <div class="space-y-4">
       <div>
         <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre del Evento</label>
@@ -125,11 +127,83 @@ const FORM_TEMPLATES = {
         <input type="text" id="${prefix}-img-url" name="imageUrl" value="${item._id ? (item.imageUrl || '') : (item.imageUrl || '')}" placeholder="O pegá el enlace de la imagen..."
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors mt-2">
       </div>
+      
+      <!-- Ticket System Section -->
+      <div class="border-t border-white/10 pt-6 mt-6">
+        <div class="flex items-center gap-3 mb-4">
+          <input type="checkbox" id="${prefix}-ticket-enabled" ${tc.enabled ? 'checked' : ''}
+            class="w-5 h-5 rounded border-white/20 bg-white/5 text-magenta-500 focus:ring-magenta-500 focus:ring-offset-0"
+            onchange="toggleTicketConfig('${prefix}')">
+          <label for="${prefix}-ticket-enabled" class="text-sm font-bold text-white cursor-pointer">
+            <i class="fas fa-ticket-alt text-magenta-500 mr-2"></i>Activar sistema de entradas
+          </label>
+        </div>
+        
+        <div id="${prefix}-ticket-config" class="space-y-4 ${tc.enabled ? '' : 'hidden'}">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Precio (ARS)</label>
+              <input type="number" id="${prefix}-ticket-price" value="${tc.price || 0}" min="0" placeholder="0"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+              <p class="text-[10px] text-gray-500 mt-1">0 = entrada gratuita</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Cantidad máxima de entradas</label>
+              <input type="number" id="${prefix}-ticket-max" value="${tc.maxTickets || 100}" min="1"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Link de pago (MercadoPago)</label>
+            <input type="url" id="${prefix}-ticket-link" value="${tc.paymentLink || ''}" placeholder="https://mpago.la/..."
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+            <p class="text-[10px] text-gray-500 mt-1">Opcional - si no se especifica, se usa la API de MercadoPago</p>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Mensaje post-compra</label>
+            <textarea id="${prefix}-ticket-message" rows="2" placeholder="¡Gracias por tu compra! Presentá este QR en la entrada..."
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none resize-none">${tc.successMessage || ''}</textarea>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="${prefix}-ticket-contribution" ${tc.isContribution ? 'checked' : ''}
+              class="w-5 h-5 rounded border-white/20 bg-white/5 text-magenta-500 focus:ring-magenta-500 focus:ring-offset-0">
+            <label for="${prefix}-ticket-contribution" class="text-sm text-gray-300 cursor-pointer">
+              Evento con bono contribución (el usuario decide cuánto pagar)
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
-  `
+    `;
+  }
 };
 
 window.renderFields = (type, prefix, data = {}) => {
   if (!FORM_TEMPLATES[type]) return 'Tipo no soportado';
   return FORM_TEMPLATES[type](prefix, data);
+};
+
+window.toggleTicketConfig = (prefix) => {
+  const checkbox = document.getElementById(`${prefix}-ticket-enabled`);
+  const configDiv = document.getElementById(`${prefix}-ticket-config`);
+  if (checkbox && configDiv) {
+    configDiv.classList.toggle('hidden', !checkbox.checked);
+  }
+};
+
+window.getTicketConfig = (prefix) => {
+  const enabled = document.getElementById(`${prefix}-ticket-enabled`)?.checked || false;
+  if (!enabled) return { enabled: false };
+  
+  return {
+    enabled: true,
+    price: parseFloat(document.getElementById(`${prefix}-ticket-price`)?.value) || 0,
+    maxTickets: parseInt(document.getElementById(`${prefix}-ticket-max`)?.value) || 100,
+    paymentLink: document.getElementById(`${prefix}-ticket-link`)?.value || '',
+    successMessage: document.getElementById(`${prefix}-ticket-message`)?.value || '',
+    isContribution: document.getElementById(`${prefix}-ticket-contribution`)?.checked || false
+  };
 };

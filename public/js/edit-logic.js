@@ -41,16 +41,18 @@ async function loadItemToEdit(type, id, onComplete) {
     const colorMap = { post: 'cyan', recurso: 'orange', evento: 'magenta' };
 
     content.innerHTML = `
-      <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter">Editar <span class="text-${colorMap[normalizedType]}-400">${titleMap[normalizedType]}</span></h3>
-      ${renderFields(normalizedType, 'edit', item)}
-      <div class="pt-6 mt-6 border-t border-white/5">
+      <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter sticky top-0 bg-[#0d0d12] py-2 z-10">Editar <span class="text-${colorMap[normalizedType]}-400">${titleMap[normalizedType]}</span></h3>
+      <div class="space-y-6">
+        ${renderFields(normalizedType, 'edit', item)}
+      </div>
+      <div class="pt-6 mt-6 border-t border-white/5 sticky bottom-0 bg-[#0d0d12] pb-2">
         <button id="save-edit-btn" onclick="saveEdit()" class="btn-primary w-full py-4 rounded-xl font-bold uppercase tracking-wider transition-all hover:scale-[1.02]">
           <i class="fas fa-save mr-2"></i>Guardar Cambios
         </button>
       </div>
     `;
 
-    // Initialize tagging
+    // Initialize tagging and ticket config
     setTimeout(() => {
       if (typeof enableTagging === 'function') {
         enableTagging('edit-desc');
@@ -62,6 +64,10 @@ async function loadItemToEdit(type, id, onComplete) {
           });
           preview.innerHTML = formatMentions(desc.value) || 'Vista previa...';
         }
+      }
+      // Initialize ticket config visibility
+      if (typeof toggleTicketConfig === 'function') {
+        toggleTicketConfig('edit');
       }
     }, 100);
 
@@ -118,6 +124,7 @@ async function saveEdit() {
   } else if (type === 'evento') {
     body.date = document.getElementById('edit-date').value;
     body.location = document.getElementById('edit-location').value.trim();
+    body.ticketConfig = window.getTicketConfig('edit');
   }
 
   try {
