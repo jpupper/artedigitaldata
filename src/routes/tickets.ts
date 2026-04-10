@@ -338,12 +338,8 @@ router.get('/event/:eventId/stats', authMiddleware, async (req: AuthRequest, res
 });
 
 // Create MercadoPago preference for ticket purchase
-router.post('/event/:eventId/create-preference', async (req: Request, res: Response) => {
+router.post('/event/:eventId/create-preference', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
-    if (!mercadopago) {
-      return res.status(500).json({ error: 'MercadoPago no configurado' });
-    }
-
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
 
@@ -359,27 +355,53 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
       return res.status(400).json({ error: 'Se alcanzó el límite máximo de entradas' });
     }
 
-    // Determine unit price: use custom amount for contribution mode, otherwise event price
-    const unitPrice = event.ticketConfig.isContribution && amount != null
-      ? Math.max(1, parseFloat(amount))
-      : (event.ticketConfig.price || 1);
-
     const code = generateTicketCode();
     
     // Generate QR with scan-redeem URL
     const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${code}`;
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
+    // Get user ID if authenticated
+    const ownerId = req.user?.id && Types.ObjectId.isValid(req.user.id)
+      ? new Types.ObjectId(req.user.id)
+      : undefined;
+
     // Create ticket first (pending status)
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
       qrData: qrCodeDataUrl,
+      owner: ownerId,
       ownerName: ownerName || '',
       ownerEmail: ownerEmail || '',
       ownerPhone: ownerPhone || '',
       paymentStatus: 'pending'
     });
+
+    // --- Option A: event has a manual payment link (no API token needed) ---
+    if (event.ticketConfig.paymentLink) {
+      ticket.paymentStatus = 'free';
+      await ticket.save();
+      return res.json({
+        initPoint: event.ticketConfig.paymentLink,
+        ticketId: ticket._id,
+        code,
+        qrCode: qrCodeDataUrl,
+        usePaymentLink: true
+      });
+    }
+
+    // --- Option B: use MercadoPago API (requires access token) ---
+    if (!mercadopago) {
+      // Clean up ticket we just created since we can't process payment
+      await ticket.deleteOne();
+      return res.status(500).json({ error: 'MercadoPago no configurado. Configurá el Access Token o agregá un link de pago manual al evento.' });
+    }
+
+    // Determine unit price: use custom amount for contribution mode, otherwise event price
+    const unitPrice = event.ticketConfig.isContribution && amount != null
+      ? Math.max(1, parseFloat(amount))
+      : (event.ticketConfig.price || 1);
 
     // Create MercadoPago preference
     const preference = new Preference(mercadopago);
