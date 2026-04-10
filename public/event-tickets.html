@@ -389,12 +389,13 @@
       } else {
         resultsDiv.innerHTML = matches.map(user => {
           const displayName = user.displayName || user.username;
+          const avatarHtml = user.avatar
+            ? `<img src="${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
+            : `<div class="w-8 h-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
           return `
             <button type="button" onclick="selectUser('${user._id}', '${displayName.replace(/'/g, "\\'")}', '@${user.username}')"
               class="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0">
-              <div class="w-8 h-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xs font-bold">
-                ${displayName[0].toUpperCase()}
-              </div>
+              ${avatarHtml}
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-white font-medium truncate">${displayName}</p>
                 <p class="text-xs text-gray-500 truncate">@${user.username} · ${user.email}</p>
