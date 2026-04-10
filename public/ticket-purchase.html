@@ -240,7 +240,7 @@
             }
             const data = await res.json();
             if (data.initPoint) {
-              window.location.href = data.initPoint;
+              redirectToPayment(data);
             } else {
               throw new Error('No se pudo obtener el link de pago');
             }
@@ -276,7 +276,7 @@
 
         const data = await res.json();
         if (data.initPoint) {
-          window.location.href = data.initPoint;
+          redirectToPayment(data);
         } else {
           throw new Error('No se pudo obtener el link de pago');
         }
@@ -284,6 +284,17 @@
       } catch (err) {
         hideStatus();
         alert('Error: ' + err.message);
+      }
+    }
+
+    function redirectToPayment(data) {
+      if (data.usePaymentLink) {
+        // Manual payment link: show the ticket immediately, open payment in new tab
+        window.open(data.initPoint, '_blank');
+        window.location.href = `ticket-success.html?ticket=${data.code}`;
+      } else {
+        // MercadoPago API preference: redirect entirely to MP checkout
+        window.location.href = data.initPoint;
       }
     }
 
