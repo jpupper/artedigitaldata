@@ -123,11 +123,22 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
 // Get single ticket by code (PUBLIC - for QR validation)
 router.get('/code/:code', async (req: Request, res: Response) => {
   try {
-    const ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
+    let ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
       .populate('event', 'title date location ticketConfig')
       .populate('owner', 'username email');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    // Auto-generate QR if missing (for old tickets)
+    if (!ticket.qrData) {
+      const qrData = await QRCode.toDataURL(JSON.stringify({
+        code: ticket.code,
+        event: ticket.event._id || ticket.event,
+        type: 'ticket'
+      }));
+      ticket.qrData = qrData;
+      await ticket.save();
+    }
 
     // Return ticket data - QR verification is public
     const ticketObj = ticket.toObject();
