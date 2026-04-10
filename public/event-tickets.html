@@ -219,11 +219,15 @@
         const ev = await res.json();
         currentEvent = ev;
 
-        // Check if user is creator
-        const isCreator = getUserId() === ev.creator?._id;
-        const isAdmin = isAdmin();
+        // Check if user is creator (handle both string ID and object with _id)
+        const userId = getUserId();
+        const creatorId = ev.creator?._id || ev.creator;
+        const isEventCreator = userId && creatorId && userId.toString() === creatorId.toString();
+        const userIsAdmin = isAdmin();
 
-        if (!isCreator && !isAdmin) {
+        console.log('Debug - User ID:', userId, 'Creator ID:', creatorId, 'Is Creator:', isEventCreator, 'Is Admin:', userIsAdmin);
+
+        if (!isEventCreator && !userIsAdmin) {
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('access-denied').classList.remove('hidden');
           return;
