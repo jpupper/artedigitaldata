@@ -179,7 +179,22 @@
 
       // Ticket info
       document.getElementById('ticket-code').innerText = ticket.code;
-      document.getElementById('qr-code').src = ticket.qrData;
+      
+      // Debug QR data
+      console.log('Ticket QR Data:', ticket.qrData ? 'Present (length: ' + ticket.qrData.length + ')' : 'MISSING');
+      
+      // Set QR image with fallback
+      const qrImg = document.getElementById('qr-code');
+      if (ticket.qrData && ticket.qrData.startsWith('data:')) {
+        qrImg.src = ticket.qrData;
+        qrImg.onerror = () => {
+          qrImg.style.display = 'none';
+          qrImg.parentElement.innerHTML += '<p class="text-red-400 text-sm">Error cargando QR</p>';
+        };
+      } else {
+        qrImg.style.display = 'none';
+        qrImg.parentElement.innerHTML += '<p class="text-yellow-400 text-sm">QR no disponible</p>';
+      }
 
       // Owner info
       const ownerInfo = document.getElementById('owner-info');
