@@ -56,25 +56,16 @@
           <span id="form-title">Comprar Entrada</span>
         </h2>
 
+        <!-- User info summary (read-only) -->
+        <div id="buyer-summary" class="rounded-2xl bg-white/5 border border-white/10 px-5 py-4 mb-6 flex items-center gap-4">
+          <div id="buyer-avatar" class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-black shrink-0 text-sm"></div>
+          <div>
+            <p id="buyer-display-name" class="text-white font-bold text-sm"></p>
+            <p id="buyer-display-email" class="text-gray-400 text-xs"></p>
+          </div>
+        </div>
+
         <form id="purchase-form" class="space-y-6">
-          <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre completo *</label>
-            <input type="text" id="buyer-name" required placeholder="Tu nombre"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Email *</label>
-            <input type="email" id="buyer-email" required placeholder="tu@email.com"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Teléfono</label>
-            <input type="tel" id="buyer-phone" placeholder="+54 11..."
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
-          </div>
-
           <!-- Contribution amount for contribution events -->
           <div id="contribution-section" class="hidden">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Monto de contribución (ARS)</label>
@@ -208,11 +199,17 @@
         priceDisplay.innerText = `$${ev.ticketConfig.price} ARS`;
       }
 
-      // Pre-fill form with logged-in user data
+      // Show logged-in user info
       const user = getUser();
       if (user) {
-        document.getElementById('buyer-name').value = user.displayName || user.username || '';
-        document.getElementById('buyer-email').value = user.email || '';
+        const avatarEl = document.getElementById('buyer-avatar');
+        if (user.avatar) {
+          avatarEl.innerHTML = `<img src="${user.avatar}" class="w-full h-full object-cover rounded-full">`;
+        } else {
+          avatarEl.innerText = (user.displayName || user.username || '?')[0].toUpperCase();
+        }
+        document.getElementById('buyer-display-name').innerText = user.displayName || user.username || '';
+        document.getElementById('buyer-display-email').innerText = user.email || '';
       }
 
       // Form submission
@@ -222,9 +219,10 @@
     async function handlePurchase(e) {
       e.preventDefault();
       
-      const name = document.getElementById('buyer-name').value.trim();
-      const email = document.getElementById('buyer-email').value.trim();
-      const phone = document.getElementById('buyer-phone').value.trim();
+      const user = getUser();
+      const name = user?.displayName || user?.username || '';
+      const email = user?.email || '';
+      const phone = '';
 
       try {
         // --- CONTRIBUTION MODE ---
