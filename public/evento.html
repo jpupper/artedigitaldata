@@ -193,18 +193,8 @@
         const now = new Date();
         const eventDate = new Date(ev.date);
         if (eventDate > now) {
-          ticketActions.classList.remove('hidden');
-          ticketActions.innerHTML = `
-            <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
-              <i class="fas fa-ticket-alt text-xl"></i>
-              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-            </a>
-            ${ev.ticketConfig.price > 0 ? `
-            <p class="text-center text-xs text-gray-500">
-              Precio: $${ev.ticketConfig.price} ARS
-            </p>
-            ` : ''}
-          `;
+          // Check ticket availability
+          checkTicketAvailability(ev);
         } else {
           ticketActions.classList.remove('hidden');
           ticketActions.innerHTML = `
@@ -367,6 +357,69 @@
         }
       } catch (err) {
         console.error(err);
+      }
+    }
+
+    async function checkTicketAvailability(ev) {
+      const ticketActions = document.getElementById('ticket-actions');
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/tickets/event/${ev._id}/stats`);
+        if (res.ok) {
+          const stats = await res.json();
+          const maxTickets = ev.ticketConfig.maxTickets || 100;
+          const total = stats.total || 0;
+          const available = maxTickets - total;
+          
+          if (available <= 0) {
+            // SOLD OUT
+            ticketActions.classList.remove('hidden');
+            ticketActions.innerHTML = `
+              <button disabled class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-red-500/20 text-red-500 font-bold cursor-not-allowed border border-red-500/30">
+                <i class="fas fa-times-circle"></i>
+                SOLD OUT
+              </button>
+              <p class="text-center text-xs text-gray-500 mt-2">
+                Se agotaron las entradas (${total}/${maxTickets})
+              </p>
+            `;
+          } else {
+            // Available
+            ticketActions.classList.remove('hidden');
+            ticketActions.innerHTML = `
+              <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
+                <i class="fas fa-ticket-alt text-xl"></i>
+                ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+              </a>
+              ${ev.ticketConfig.price > 0 ? `
+              <p class="text-center text-xs text-gray-500">
+                Precio: $${ev.ticketConfig.price} ARS
+              </p>
+              ` : ''}
+              <p class="text-center text-xs text-green-400">
+                <i class="fas fa-check-circle mr-1"></i>${available} disponibles de ${maxTickets}
+              </p>
+            `;
+          }
+        } else {
+          // If can't get stats, show button anyway
+          ticketActions.classList.remove('hidden');
+          ticketActions.innerHTML = `
+            <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
+              <i class="fas fa-ticket-alt text-xl"></i>
+              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+            </a>
+          `;
+        }
+      } catch (err) {
+        console.error('Error checking ticket availability:', err);
+        // Show button on error
+        ticketActions.classList.remove('hidden');
+        ticketActions.innerHTML = `
+          <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
+            <i class="fas fa-ticket-alt text-xl"></i>
+            ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+          </a>
+        `;
       }
     }
 

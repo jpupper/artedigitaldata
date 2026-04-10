@@ -65,21 +65,94 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
   }
 });
 
-// Get single ticket by code (public, for QR validation)
-router.get('/code/:code', authMiddleware, async (req: AuthRequest, res: Response) => {
+// Issue manual ticket (creator/admin only)
+router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const event = await Evento.findById(req.params.eventId);
+    if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    // Only event creator or admin can issue manual tickets
+    const isCreator = event.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const { ownerName, ownerEmail, ownerPhone } = req.body;
+
+    // Check if max tickets reached
+    const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
+    if (ticketCount >= event.ticketConfig.maxTickets) {
+      return res.status(400).json({ error: 'Se alcanzó el límite máximo de entradas' });
+    }
+
+    // Generate unique code
+    let code: string;
+    let existingTicket;
+    do {
+      code = generateTicketCode();
+      existingTicket = await Ticket.findOne({ code });
+    } while (existingTicket);
+
+    // Generate QR data
+    const qrData = await QRCode.toDataURL(JSON.stringify({
+      code,
+      event: req.params.eventId,
+      type: 'ticket'
+    }));
+
+    // Create ticket
+    const ticket = await Ticket.create({
+      event: req.params.eventId,
+      code,
+      qrData,
+      ownerName,
+      ownerEmail,
+      ownerPhone,
+      paymentStatus: 'free',
+      paymentId: 'MANUAL'
+    });
+
+    return res.status(201).json(ticket);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single ticket by code (PUBLIC - for QR validation)
+router.get('/code/:code', async (req: Request, res: Response) => {
   try {
     const ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
+      .populate('event', 'title date location ticketConfig')
+      .populate('owner', 'username email');
+
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    // Return ticket data - QR verification is public
+    const ticketObj = ticket.toObject();
+    return res.json(ticketObj);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get full ticket details (requires auth - for admin/creator/owner)
+router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id)
       .populate('event', 'title date location creator ticketConfig')
       .populate('owner', 'username email');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
-    // Check if user is event creator or admin
+    // Check permissions
     const event = ticket.event as any;
     const isCreator = event.creator.toString() === req.user!.id;
     const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isOwner = ticket.owner?._id?.toString() === req.user!.id;
 
-    if (!isCreator && !isAdmin && ticket.owner?._id?.toString() !== req.user!.id) {
+    if (!isCreator && !isAdmin && !isOwner) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
