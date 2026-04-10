@@ -6,6 +6,7 @@ import User from '../models/User';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import QRCode from 'qrcode';
 import { Types } from 'mongoose';
+import { sendTicketEmail } from '../utils/mailer';
 
 const router = Router();
 
@@ -382,6 +383,15 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
     if (event.ticketConfig.paymentLink) {
       ticket.paymentStatus = 'free';
       await ticket.save();
+
+      // Send confirmation email
+      const recipientEmail = ownerEmail || (req.user?.id ? (await User.findById(req.user.id))?.email : undefined);
+      if (recipientEmail) {
+        sendTicketEmail(recipientEmail, ownerName || 'Usuario', { code, qrData: qrCodeDataUrl }, event).catch(err =>
+          console.error('[Tickets] Error sending ticket email:', err)
+        );
+      }
+
       return res.json({
         initPoint: event.ticketConfig.paymentLink,
         ticketId: ticket._id,
@@ -486,6 +496,14 @@ router.post('/event/:eventId/create-free', authMiddleware, async (req: AuthReque
       paymentStatus: event.ticketConfig.price === 0 || event.ticketConfig.isContribution ? 'free' : 'pending'
     });
 
+    // Send confirmation email
+    const recipientEmail = ownerEmail || (req.user?.id ? (await User.findById(req.user.id))?.email : undefined);
+    if (recipientEmail) {
+      sendTicketEmail(recipientEmail, ownerName || 'Usuario', { code, qrData: qrCodeDataUrl }, event).catch(err =>
+        console.error('[Tickets] Error sending ticket email:', err)
+      );
+    }
+
     return res.json({
       ticketId: ticket._id,
       code,
@@ -511,11 +529,22 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const payment = await paymentClient.get({ id: paymentId });
 
         if (payment.external_reference && payment.status === 'approved') {
-          const ticket = await Ticket.findById(payment.external_reference);
+          const ticket = await Ticket.findById(payment.external_reference).populate('event', 'title date location');
           if (ticket) {
             ticket.paymentId = String(paymentId);
             ticket.paymentStatus = 'completed';
             await ticket.save();
+
+            // Send confirmation email
+            const recipientEmail = ticket.ownerEmail || (ticket.owner ? (await User.findById(ticket.owner))?.email : undefined);
+            if (recipientEmail && ticket.event) {
+              sendTicketEmail(
+                recipientEmail,
+                ticket.ownerName || 'Usuario',
+                { code: ticket.code, qrData: ticket.qrData },
+                ticket.event as any
+              ).catch(e => console.error('[Tickets] Webhook email error:', e));
+            }
           }
         }
       } catch (mpErr) {
