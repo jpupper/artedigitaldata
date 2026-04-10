@@ -242,12 +242,23 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 // Get my tickets
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
+  console.log('[Tickets/My] Route hit! URL:', req.originalUrl, 'Method:', req.method);
   try {
+    console.log('[Tickets/My] User from token:', req.user);
+
+    // Validar que el ID del usuario sea válido antes de convertir
+    if (!req.user?.id || !Types.ObjectId.isValid(req.user.id)) {
+      console.error('[Tickets/My] Invalid user ID:', req.user?.id);
+      return res.status(400).json({ error: 'ID de usuario inválido', userId: req.user?.id });
+    }
+
     // Convertir el ID del usuario a ObjectId para comparación correcta con MongoDB
     const userObjectId = new Types.ObjectId(req.user!.id);
+    console.log('[Tickets/My] Converted ObjectId:', userObjectId);
 
     // Get user to check their email
     const user = await User.findById(req.user!.id);
+    console.log('[Tickets/My] User from DB:', user);
     const userEmail = user?.email;
 
     // Find tickets by owner OR by ownerEmail (case-insensitive, for tickets purchased before owner linking)
@@ -256,10 +267,12 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     const query = escapedEmail
       ? { $or: [{ owner: userObjectId }, { ownerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }] }
       : { owner: userObjectId };
+    console.log('[Tickets/My] Query:', JSON.stringify(query));
 
     const tickets = await Ticket.find(query)
       .populate('event', 'title date location imageUrl')
       .sort({ createdAt: -1 });
+    console.log('[Tickets/My] Tickets found:', tickets.length);
 
     // Manually populate owner for each ticket
     const ownerIds = tickets.filter(t => t.owner).map(t => t.owner!.toString());
@@ -284,7 +297,8 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     return res.json(tickets);
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    console.error('[Tickets/My] ERROR:', err);
+    return res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -433,8 +447,10 @@ router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
 
-    // Get user ID if authenticated
-    const ownerId = req.user?.id;
+    // Get user ID if authenticated and convert to ObjectId
+    const ownerId = req.user?.id && Types.ObjectId.isValid(req.user.id)
+      ? new Types.ObjectId(req.user.id)
+      : undefined;
 
     // Create ticket with free/paid status
     const ticket = await Ticket.create({
