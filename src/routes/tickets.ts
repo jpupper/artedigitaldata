@@ -127,7 +127,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     } while (existingTicket);
 
     // Generate QR data with scan-redeem URL
-    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${code}`;
     const qrData = await QRCode.toDataURL(scanUrl);
 
     // If ownerId provided, verify user exists and get their data
@@ -184,7 +184,7 @@ router.get('/code/:code', async (req: Request, res: Response) => {
 
     // Auto-generate QR if missing (for old tickets or if qrData is empty)
     if (!ticket.qrData || ticket.qrData === '') {
-      const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
+      const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${ticket.code}`;
       const qrData = await QRCode.toDataURL(scanUrl);
       ticket.qrData = qrData;
       await ticket.save();
@@ -362,7 +362,7 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
     const code = generateTicketCode();
     
     // Generate QR with scan-redeem URL
-    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${code}`;
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
     // Create ticket first (pending status)
@@ -439,7 +439,7 @@ router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest
     const code = generateTicketCode();
     
     // Generate QR with scan-redeem URL
-    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${code}`;
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
     // Get user ID if authenticated and convert to ObjectId
@@ -542,7 +542,7 @@ router.post('/:ticketId/regenerate-qr', authMiddleware, async (req: AuthRequest,
     }
 
     // Generate new QR with scan-redeem URL
-    const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
+    const scanUrl = `https://artedigitaldata.com/scan-redeem.html?code=${ticket.code}`;
     const qrData = await QRCode.toDataURL(scanUrl);
 
     ticket.qrData = qrData;
