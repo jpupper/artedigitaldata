@@ -8,6 +8,7 @@ export interface AuthRequest extends Request<any, any, any, any> {
 
 export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.split(' ')[1];
+  console.log('[AuthMiddleware] Token present:', !!token, 'Path:', req.path);
   if (!token) {
     res.status(401).json({ error: 'Token no proporcionado' });
     return;
@@ -21,9 +22,11 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
       role: string;
       username: string;
     };
+    console.log('[AuthMiddleware] Token decoded:', decoded);
     req.user = decoded;
     next();
-  } catch {
+  } catch (err: any) {
+    console.error('[AuthMiddleware] Token verification failed:', err.message);
     res.status(401).json({ error: 'Token inválido o expirado' });
   }
 }
