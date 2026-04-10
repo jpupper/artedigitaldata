@@ -56,17 +56,33 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
     }
 
     const tickets = await Ticket.find({ event: req.params.eventId })
-      .populate('owner', '_id username email avatar')
       .sort({ createdAt: -1 });
 
-    // Debug: log first ticket owner info
-    if (tickets.length > 0) {
-      console.log('[list-tickets] First ticket owner field:', tickets[0].owner);
-      console.log('[list-tickets] First ticket ownerName:', tickets[0].ownerName);
-      console.log('[list-tickets] Populated owner:', tickets[0].owner ? 'YES' : 'NO');
-    }
+    // Manually populate owner since User is in different database
+    const ownerIds = tickets.filter(t => t.owner).map(t => t.owner!.toString());
+    const uniqueOwnerIds = [...new Set(ownerIds)];
 
-    return res.json(tickets);
+    // Fetch all users that own tickets
+    const users = await User.find({ _id: { $in: uniqueOwnerIds } })
+      .select('_id username email displayName avatar');
+
+    // Create a map for quick lookup
+    const userMap = new Map();
+    users.forEach(u => userMap.set(u._id.toString(), u));
+
+    // Add owner data to each ticket
+    const ticketsWithOwner = tickets.map(t => {
+      const ticketObj = t.toObject();
+      if (t.owner) {
+        const ownerData = userMap.get(t.owner.toString());
+        if (ownerData) {
+          ticketObj.owner = ownerData;
+        }
+      }
+      return ticketObj;
+    });
+
+    return res.json(ticketsWithOwner);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -74,12 +90,6 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
 
 // Issue manual ticket (creator/admin only)
 router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequest, res: Response) => {
-  console.log('[issue-manual] ========== REQUEST START ==========');
-  console.log('[issue-manual] URL:', req.originalUrl);
-  console.log('[issue-manual] Method:', req.method);
-  console.log('[issue-manual] Content-Type:', req.headers['content-type']);
-  console.log('[issue-manual] Raw body:', req.body);
-  console.log('[issue-manual] Body keys:', req.body ? Object.keys(req.body) : 'NO BODY');
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
@@ -93,8 +103,6 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     }
 
     const { ownerName, ownerEmail, ownerPhone, ownerId } = req.body;
-    console.log('[issue-manual] Destructured values:', { ownerName, ownerEmail, ownerPhone, ownerId });
-    console.log('[issue-manual] Received ownerId:', ownerId, 'Type:', typeof ownerId, 'Falsy?', !ownerId);
 
     // Check if max tickets reached
     const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
@@ -123,21 +131,17 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     let finalOwnerEmail = ownerEmail;
 
     if (ownerId) {
-      console.log('[issue-manual] Looking up user with ID:', ownerId);
       const user = await User.findById(ownerId);
       if (!user) {
-        console.log('[issue-manual] User not found for ID:', ownerId);
         return res.status(400).json({ error: 'Usuario no encontrado' });
       }
       owner = user._id;
-      console.log('[issue-manual] Found user, setting owner to:', owner);
       // Use user's data if not explicitly provided
       finalOwnerName = ownerName || user.displayName || user.username;
       finalOwnerEmail = ownerEmail || user.email;
     }
 
     // Create ticket
-    console.log('[issue-manual] Creating ticket with owner:', owner, 'ownerName:', finalOwnerName);
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
@@ -149,13 +153,17 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       paymentStatus: 'free',
       paymentId: 'MANUAL'
     });
-    console.log('[issue-manual] Ticket created with owner:', ticket.owner);
 
-    // Populate owner for response
-    const populatedTicket = await Ticket.findById(ticket._id)
-      .populate('owner', '_id username email displayName avatar');
+    // Prepare response with owner data
+    const ticketObj = ticket.toObject();
+    if (ticket.owner) {
+      const ownerData = await User.findById(ticket.owner).select('_id username email displayName avatar');
+      if (ownerData) {
+        ticketObj.owner = ownerData.toObject();
+      }
+    }
 
-    return res.status(201).json(populatedTicket);
+    return res.status(201).json(ticketObj);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -165,14 +173,12 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
 router.get('/code/:code', async (req: Request, res: Response) => {
   try {
     let ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
-      .populate('event', 'title date location ticketConfig creator')
-      .populate('owner', '_id username email');
+      .populate('event', 'title date location ticketConfig creator');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
     // Auto-generate QR if missing (for old tickets or if qrData is empty)
     if (!ticket.qrData || ticket.qrData === '') {
-      console.log(`[QR] Generating missing QR for ticket ${ticket.code}`);
       const qrData = await QRCode.toDataURL(JSON.stringify({
         code: ticket.code,
         event: ticket.event._id || ticket.event,
@@ -182,17 +188,17 @@ router.get('/code/:code', async (req: Request, res: Response) => {
       await ticket.save();
     }
 
-    // Return ticket data - QR verification is public
+    // Manually populate owner from auth database
     const ticketObj = ticket.toObject();
-
-    // Ensure qrData is present in response
-    if (!ticketObj.qrData) {
-      console.error(`[QR] Ticket ${ticket.code} still missing qrData after save!`);
+    if (ticket.owner) {
+      const owner = await User.findById(ticket.owner).select('_id username email displayName avatar');
+      if (owner) {
+        ticketObj.owner = owner.toObject();
+      }
     }
 
     return res.json(ticketObj);
   } catch (err: any) {
-    console.error('[QR] Error fetching ticket by code:', err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -200,9 +206,21 @@ router.get('/code/:code', async (req: Request, res: Response) => {
 // Get full ticket details (requires auth - for admin/creator/owner)
 router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const ticket = await Ticket.findById(req.params.id)
-      .populate('event', 'title date location creator ticketConfig')
-      .populate('owner', '_id username email');
+    let ticket = await Ticket.findById(req.params.id)
+      .populate('event', 'title date location creator ticketConfig');
+
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    // Manually populate owner from auth database
+    const ticketObj = ticket.toObject();
+    if (ticket.owner) {
+      const owner = await User.findById(ticket.owner).select('_id username email displayName avatar');
+      if (owner) {
+        ticketObj.owner = owner.toObject();
+      }
+    }
+
+    ticket = ticketObj as any;
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
@@ -239,6 +257,27 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     const tickets = await Ticket.find(query)
       .populate('event', 'title date location imageUrl')
       .sort({ createdAt: -1 });
+
+    // Manually populate owner for each ticket
+    const ownerIds = tickets.filter(t => t.owner).map(t => t.owner!.toString());
+    const uniqueOwnerIds = [...new Set(ownerIds)];
+
+    if (uniqueOwnerIds.length > 0) {
+      const users = await User.find({ _id: { $in: uniqueOwnerIds } })
+        .select('_id username email displayName avatar');
+
+      const userMap = new Map();
+      users.forEach(u => userMap.set(u._id.toString(), u));
+
+      tickets.forEach(t => {
+        if (t.owner) {
+          const userData = userMap.get(t.owner.toString());
+          if (userData) {
+            (t as any).owner = userData;
+          }
+        }
+      });
+    }
 
     return res.json(tickets);
   } catch (err: any) {
