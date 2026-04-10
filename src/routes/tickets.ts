@@ -47,11 +47,12 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
 
-    // Only event creator or admin can see all tickets
+    // Only event creator, admin, or door user can see all tickets
     const isCreator = event.creator.toString() === req.user!.id;
     const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isDoorUser = event.doorUsers?.some((id: any) => id.toString() === req.user!.id);
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin && !isDoorUser) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -118,12 +119,10 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       existingTicket = await Ticket.findOne({ code });
     } while (existingTicket);
 
-    // Generate QR data
-    const qrData = await QRCode.toDataURL(JSON.stringify({
-      code,
-      event: req.params.eventId,
-      type: 'ticket'
-    }));
+    // Generate QR data with scan-redeem URL
+    const baseUrl = process.env.BASE_URL || '';
+    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const qrData = await QRCode.toDataURL(scanUrl);
 
     // If ownerId provided, verify user exists and get their data
     let owner = null;
@@ -179,11 +178,9 @@ router.get('/code/:code', async (req: Request, res: Response) => {
 
     // Auto-generate QR if missing (for old tickets or if qrData is empty)
     if (!ticket.qrData || ticket.qrData === '') {
-      const qrData = await QRCode.toDataURL(JSON.stringify({
-        code: ticket.code,
-        event: ticket.event._id || ticket.event,
-        type: 'ticket'
-      }));
+      const baseUrl = process.env.BASE_URL || '';
+      const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
+      const qrData = await QRCode.toDataURL(scanUrl);
       ticket.qrData = qrData;
       await ticket.save();
     }
@@ -302,7 +299,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Get ticket stats for an event (for creator dashboard)
+// Get ticket stats for an event (for creator/dashboard)
 router.get('/event/:eventId/stats', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
@@ -310,8 +307,9 @@ router.get('/event/:eventId/stats', authMiddleware, async (req: AuthRequest, res
 
     const isCreator = event.creator.toString() === req.user!.id;
     const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isDoorUser = event.doorUsers?.some((id: any) => id.toString() === req.user!.id);
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin && !isDoorUser) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -357,14 +355,11 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
     }
 
     const code = generateTicketCode();
-    const qrData = JSON.stringify({
-      code,
-      event: event._id,
-      type: 'ticket'
-    });
-
-    // Generate QR code as data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(qrData);
+    
+    // Generate QR with scan-redeem URL
+    const baseUrl = process.env.BASE_URL || '';
+    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
     // Create ticket first (pending status)
     const ticket = await Ticket.create({
@@ -438,14 +433,11 @@ router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest
     }
 
     const code = generateTicketCode();
-    const qrPayload = JSON.stringify({
-      code,
-      event: event._id,
-      type: 'ticket'
-    });
-
-    // Generate QR code as data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(qrPayload);
+    
+    // Generate QR with scan-redeem URL
+    const baseUrl = process.env.BASE_URL || '';
+    const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
     // Get user ID if authenticated and convert to ObjectId
     const ownerId = req.user?.id && Types.ObjectId.isValid(req.user.id)
@@ -511,8 +503,9 @@ router.post('/:ticketId/redeem', authMiddleware, async (req: AuthRequest, res: R
     const event = ticket.event as any;
     const isCreator = event.creator.toString() === req.user!.id;
     const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isDoorUser = event.doorUsers?.some((id: any) => id.toString() === req.user!.id);
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin && !isDoorUser) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -545,12 +538,10 @@ router.post('/:ticketId/regenerate-qr', authMiddleware, async (req: AuthRequest,
       return res.status(403).json({ error: 'No autorizado' });
     }
 
-    // Generate new QR
-    const qrData = await QRCode.toDataURL(JSON.stringify({
-      code: ticket.code,
-      event: ticket.event._id || ticket.event,
-      type: 'ticket'
-    }));
+    // Generate new QR with scan-redeem URL
+    const baseUrl = process.env.BASE_URL || '';
+    const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
+    const qrData = await QRCode.toDataURL(scanUrl);
 
     ticket.qrData = qrData;
     await ticket.save();
@@ -571,8 +562,9 @@ router.post('/redeem-by-code', authMiddleware, async (req: AuthRequest, res: Res
     const event = ticket.event as any;
     const isCreator = event.creator.toString() === req.user!.id;
     const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isDoorUser = event.doorUsers?.some((id: any) => id.toString() === req.user!.id);
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin && !isDoorUser) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 

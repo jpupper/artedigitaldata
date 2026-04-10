@@ -124,6 +124,13 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       };
     }
     
+    // Hydrate door users
+    if (response.doorUsers && response.doorUsers.length > 0) {
+      const doorUsers = await User.find({ _id: { $in: response.doorUsers } })
+        .select('_id username email displayName avatar');
+      (response as any).doorUsers = doorUsers;
+    }
+    
     return res.json(response);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -174,6 +181,98 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     }
     await evento.deleteOne();
     return res.json({ message: 'Evento eliminado' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Add door user to event (creator/admin only)
+router.post('/:id/door-users', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId } = req.body;
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    // Only event creator or admin can add door users
+    const isCreator = evento.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    // Verify user exists
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    // Add to door users if not already present
+    if (!evento.doorUsers) evento.doorUsers = [];
+    const alreadyExists = evento.doorUsers.some((id: any) => id.toString() === userId);
+    if (alreadyExists) {
+      return res.status(400).json({ error: 'El usuario ya es puerta de este evento' });
+    }
+
+    evento.doorUsers.push(userId);
+    await evento.save();
+
+    // Return hydrated door users
+    const doorUsers = await User.find({ _id: { $in: evento.doorUsers } })
+      .select('_id username email displayName avatar');
+
+    return res.json({ message: 'Usuario agregado como puerta', doorUsers });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Remove door user from event (creator/admin only)
+router.delete('/:id/door-users/:userId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    // Only event creator or admin can remove door users
+    const isCreator = evento.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    // Remove from door users
+    if (!evento.doorUsers) evento.doorUsers = [];
+    evento.doorUsers = evento.doorUsers.filter((id: any) => id.toString() !== req.params.userId);
+    await evento.save();
+
+    // Return hydrated door users
+    const doorUsers = await User.find({ _id: { $in: evento.doorUsers } })
+      .select('_id username email displayName avatar');
+
+    return res.json({ message: 'Usuario eliminado de puerta', doorUsers });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get door users for an event (creator/admin only)
+router.get('/:id/door-users', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    // Only event creator or admin can see door users
+    const isCreator = evento.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    // Return hydrated door users
+    const doorUsers = await User.find({ _id: { $in: evento.doorUsers || [] } })
+      .select('_id username email displayName avatar');
+
+    return res.json(doorUsers);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
