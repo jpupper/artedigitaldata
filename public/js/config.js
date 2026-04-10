@@ -25,9 +25,9 @@ window.CONFIG = {
     },
 
     get API_URL() {
-        // Para la prueba de MercadoPago, usamos el servidor LOCAL si estamos en local
-        const origin = this.isLocal ? window.location.origin : (this.IS_NODE_SERVER ? window.location.origin : VPS_ORIGIN);
-        return origin + this.BASE + '/api';
+        // Volvemos a tu lógica original que funciona en el servidor
+        const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
+        return origin + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
