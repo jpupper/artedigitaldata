@@ -59,6 +59,13 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
       .populate('owner', '_id username email avatar')
       .sort({ createdAt: -1 });
 
+    // Debug: log first ticket owner info
+    if (tickets.length > 0) {
+      console.log('[list-tickets] First ticket owner field:', tickets[0].owner);
+      console.log('[list-tickets] First ticket ownerName:', tickets[0].ownerName);
+      console.log('[list-tickets] Populated owner:', tickets[0].owner ? 'YES' : 'NO');
+    }
+
     return res.json(tickets);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -217,8 +224,10 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     const userEmail = user?.email;
 
     // Find tickets by owner OR by ownerEmail (case-insensitive, for tickets purchased before owner linking)
-    const query = userEmail
-      ? { $or: [{ owner: req.user!.id }, { ownerEmail: { $regex: new RegExp(`^${userEmail}$`, 'i') } }] }
+    // Escape special regex characters in email
+    const escapedEmail = userEmail?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const query = escapedEmail
+      ? { $or: [{ owner: req.user!.id }, { ownerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }] }
       : { owner: req.user!.id };
 
     const tickets = await Ticket.find(query)
