@@ -80,6 +80,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     }
 
     const { ownerName, ownerEmail, ownerPhone, ownerId } = req.body;
+    console.log('[issue-manual] Received ownerId:', ownerId, 'Type:', typeof ownerId);
 
     // Check if max tickets reached
     const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
@@ -108,17 +109,21 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     let finalOwnerEmail = ownerEmail;
 
     if (ownerId) {
+      console.log('[issue-manual] Looking up user with ID:', ownerId);
       const user = await User.findById(ownerId);
       if (!user) {
+        console.log('[issue-manual] User not found for ID:', ownerId);
         return res.status(400).json({ error: 'Usuario no encontrado' });
       }
       owner = user._id;
+      console.log('[issue-manual] Found user, setting owner to:', owner);
       // Use user's data if not explicitly provided
       finalOwnerName = ownerName || user.displayName || user.username;
       finalOwnerEmail = ownerEmail || user.email;
     }
 
     // Create ticket
+    console.log('[issue-manual] Creating ticket with owner:', owner, 'ownerName:', finalOwnerName);
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
@@ -130,6 +135,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       paymentStatus: 'free',
       paymentId: 'MANUAL'
     });
+    console.log('[issue-manual] Ticket created with owner:', ticket.owner);
 
     // Populate owner for response
     const populatedTicket = await Ticket.findById(ticket._id)
