@@ -9,6 +9,13 @@ import { Types } from 'mongoose';
 
 const router = Router();
 
+// Validate BASE_URL configuration
+const baseUrl = process.env.BASE_URL || '';
+if (!baseUrl) {
+  console.warn('[Tickets] WARNING: BASE_URL environment variable is not set. QR codes will generate with relative URLs.');
+  console.warn('[Tickets] Please add BASE_URL=https://artedigitaldata.com to your .env file');
+}
+
 // Initialize MercadoPago
 const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
 const mercadopago = mpAccessToken ? new MercadoPagoConfig({ accessToken: mpAccessToken }) : null;
@@ -120,7 +127,6 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     } while (existingTicket);
 
     // Generate QR data with scan-redeem URL
-    const baseUrl = process.env.BASE_URL || '';
     const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
     const qrData = await QRCode.toDataURL(scanUrl);
 
@@ -178,7 +184,6 @@ router.get('/code/:code', async (req: Request, res: Response) => {
 
     // Auto-generate QR if missing (for old tickets or if qrData is empty)
     if (!ticket.qrData || ticket.qrData === '') {
-      const baseUrl = process.env.BASE_URL || '';
       const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
       const qrData = await QRCode.toDataURL(scanUrl);
       ticket.qrData = qrData;
@@ -357,7 +362,6 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
     const code = generateTicketCode();
     
     // Generate QR with scan-redeem URL
-    const baseUrl = process.env.BASE_URL || '';
     const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
@@ -435,7 +439,6 @@ router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest
     const code = generateTicketCode();
     
     // Generate QR with scan-redeem URL
-    const baseUrl = process.env.BASE_URL || '';
     const scanUrl = `${baseUrl}/scan-redeem.html?code=${code}`;
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl);
 
@@ -539,7 +542,6 @@ router.post('/:ticketId/regenerate-qr', authMiddleware, async (req: AuthRequest,
     }
 
     // Generate new QR with scan-redeem URL
-    const baseUrl = process.env.BASE_URL || '';
     const scanUrl = `${baseUrl}/scan-redeem.html?code=${ticket.code}`;
     const qrData = await QRCode.toDataURL(scanUrl);
 
