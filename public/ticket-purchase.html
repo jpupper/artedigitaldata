@@ -185,15 +185,20 @@
       const btnText = document.getElementById('btn-text');
       const formTitle = document.getElementById('form-title');
       
-      if (ev.ticketConfig.price === 0) {
-        priceDisplay.innerText = 'GRATIS';
-        btnText.innerText = 'RESERVAR ENTRADA';
-        formTitle.innerText = 'Reservar Entrada';
-      } else if (ev.ticketConfig.isContribution) {
+      if (ev.ticketConfig.isContribution) {
         priceDisplay.innerText = 'A TU ELECCIÓN';
         btnText.innerText = 'CONTRIBUIR Y RESERVAR';
         formTitle.innerText = 'Bono Contribución';
-        document.getElementById('contribution-section').classList.remove('hidden');
+        const contribSection = document.getElementById('contribution-section');
+        contribSection.classList.remove('hidden');
+        // Pre-fill with event price as suggested default
+        if (ev.ticketConfig.price > 0) {
+          document.getElementById('contribution-amount').value = ev.ticketConfig.price;
+        }
+      } else if (ev.ticketConfig.price === 0) {
+        priceDisplay.innerText = 'GRATIS';
+        btnText.innerText = 'RESERVAR ENTRADA';
+        formTitle.innerText = 'Reservar Entrada';
       } else {
         priceDisplay.innerText = `$${ev.ticketConfig.price} ARS`;
       }
@@ -216,44 +221,52 @@
       const email = document.getElementById('buyer-email').value.trim();
       const phone = document.getElementById('buyer-phone').value.trim();
 
-      showStatus('Procesando', 'Generando tu entrada...');
-
       try {
-        // If free ticket
-        if (currentEvent.ticketConfig.price === 0 || currentEvent.ticketConfig.isContribution) {
-          const headers = { 'Content-Type': 'application/json' };
-          const token = getToken();
-          if (token) headers['Authorization'] = `Bearer ${token}`;
+        // --- CONTRIBUTION MODE ---
+        if (currentEvent.ticketConfig.isContribution) {
+          const amount = parseFloat(document.getElementById('contribution-amount').value) || 0;
 
-          const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-free`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              ownerName: name,
-              ownerEmail: email,
-              ownerPhone: phone
-            })
-          });
-
-          if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || 'Error al crear la entrada');
+          if (amount > 0) {
+            // Pay via MercadoPago with the chosen contribution amount
+            showStatus('Procesando', 'Preparando el pago...');
+            const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-preference`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ownerName: name, ownerEmail: email, ownerPhone: phone, amount })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || 'Error al crear preferencia de pago');
+            }
+            const data = await res.json();
+            if (data.initPoint) {
+              window.location.href = data.initPoint;
+            } else {
+              throw new Error('No se pudo obtener el link de pago');
+            }
+          } else {
+            // Amount is 0 — ask for confirmation
+            const confirmed = confirm('¿Seguro que querés continuar sin contribuir?');
+            if (!confirmed) return;
+            showStatus('Procesando', 'Generando tu entrada...');
+            await createFreeTicket(name, email, phone);
           }
-
-          const ticket = await res.json();
-          window.location.href = `ticket-success.html?ticket=${ticket.code}`;
           return;
         }
 
-        // If paid ticket - create preference
+        // --- FREE EVENT ---
+        if (currentEvent.ticketConfig.price === 0) {
+          showStatus('Procesando', 'Generando tu entrada...');
+          await createFreeTicket(name, email, phone);
+          return;
+        }
+
+        // --- PAID EVENT (non-contribution) --- always go through MercadoPago
+        showStatus('Procesando', 'Preparando el pago...');
         const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-preference`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ownerName: name,
-            ownerEmail: email,
-            ownerPhone: phone
-          })
+          body: JSON.stringify({ ownerName: name, ownerEmail: email, ownerPhone: phone })
         });
 
         if (!res.ok) {
@@ -262,8 +275,6 @@
         }
 
         const data = await res.json();
-        
-        // Redirect to MercadoPago
         if (data.initPoint) {
           window.location.href = data.initPoint;
         } else {
@@ -274,6 +285,26 @@
         hideStatus();
         alert('Error: ' + err.message);
       }
+    }
+
+    async function createFreeTicket(name, email, phone) {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-free`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ownerName: name, ownerEmail: email, ownerPhone: phone })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al crear la entrada');
+      }
+
+      const ticket = await res.json();
+      window.location.href = `ticket-success.html?ticket=${ticket.code}`;
     }
 
     function showError(msg) {

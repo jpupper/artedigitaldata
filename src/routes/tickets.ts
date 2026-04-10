@@ -3,7 +3,7 @@ import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth';
 import Ticket from '../models/Ticket';
 import Evento from '../models/Evento';
 import User from '../models/User';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import QRCode from 'qrcode';
 import { Types } from 'mongoose';
 
@@ -351,13 +351,18 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
       return res.status(400).json({ error: 'Sistema de entradas no activado para este evento' });
     }
 
-    const { ownerName, ownerEmail, ownerPhone } = req.body;
+    const { ownerName, ownerEmail, ownerPhone, amount } = req.body;
 
     // Check if max tickets reached
     const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
     if (ticketCount >= event.ticketConfig.maxTickets) {
       return res.status(400).json({ error: 'Se alcanzó el límite máximo de entradas' });
     }
+
+    // Determine unit price: use custom amount for contribution mode, otherwise event price
+    const unitPrice = event.ticketConfig.isContribution && amount != null
+      ? Math.max(1, parseFloat(amount))
+      : (event.ticketConfig.price || 1);
 
     const code = generateTicketCode();
     
@@ -385,7 +390,7 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
           title: `Entrada - ${event.title}`,
           description: `Código: ${code}`,
           quantity: 1,
-          unit_price: event.ticketConfig.price || 0,
+          unit_price: unitPrice,
           currency_id: 'ARS'
         }
       ],
@@ -476,17 +481,23 @@ router.post('/webhook', async (req: Request, res: Response) => {
   try {
     const { type, data } = req.body;
 
-    if (type === 'payment') {
+    if (type === 'payment' && data?.id && mercadopago) {
       const paymentId = data.id;
-      // In a real implementation, you would verify the payment status with MercadoPago API
-      // For now, we assume payment is completed when webhook is called
+      try {
+        // Fetch the payment from MP API to get external_reference and status
+        const paymentClient = new Payment(mercadopago);
+        const payment = await paymentClient.get({ id: paymentId });
 
-      // Find ticket by external reference
-      const ticket = await Ticket.findById(data.external_reference);
-      if (ticket) {
-        ticket.paymentId = paymentId;
-        ticket.paymentStatus = 'completed';
-        await ticket.save();
+        if (payment.external_reference && payment.status === 'approved') {
+          const ticket = await Ticket.findById(payment.external_reference);
+          if (ticket) {
+            ticket.paymentId = String(paymentId);
+            ticket.paymentStatus = 'completed';
+            await ticket.save();
+          }
+        }
+      } catch (mpErr) {
+        console.error('Webhook MP fetch error:', mpErr);
       }
     }
 
