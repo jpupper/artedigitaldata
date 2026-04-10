@@ -203,44 +203,7 @@ router.get('/code/:code', async (req: Request, res: Response) => {
   }
 });
 
-// Get full ticket details (requires auth - for admin/creator/owner)
-router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    let ticket = await Ticket.findById(req.params.id)
-      .populate('event', 'title date location creator ticketConfig');
-
-    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
-
-    // Manually populate owner from auth database
-    const ticketObj = ticket.toObject();
-    if (ticket.owner) {
-      const owner = await User.findById(ticket.owner).select('_id username email displayName avatar');
-      if (owner) {
-        ticketObj.owner = owner.toObject();
-      }
-    }
-
-    ticket = ticketObj as any;
-
-    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
-
-    // Check permissions
-    const event = ticket.event as any;
-    const isCreator = event.creator.toString() === req.user!.id;
-    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
-    const isOwner = ticket.owner?._id?.toString() === req.user!.id;
-
-    if (!isCreator && !isAdmin && !isOwner) {
-      return res.status(403).json({ error: 'No autorizado' });
-    }
-
-    return res.json(ticket);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Get my tickets
+// Get my tickets - MUST be before /:id to avoid route collision
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
   console.log('[Tickets/My] Route hit! URL:', req.originalUrl, 'Method:', req.method);
   try {
@@ -299,6 +262,43 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
   } catch (err: any) {
     console.error('[Tickets/My] ERROR:', err);
     return res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
+// Get full ticket details (requires auth - for admin/creator/owner)
+router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    let ticket = await Ticket.findById(req.params.id)
+      .populate('event', 'title date location creator ticketConfig');
+
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    // Manually populate owner from auth database
+    const ticketObj = ticket.toObject();
+    if (ticket.owner) {
+      const owner = await User.findById(ticket.owner).select('_id username email displayName avatar');
+      if (owner) {
+        ticketObj.owner = owner.toObject();
+      }
+    }
+
+    ticket = ticketObj as any;
+
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    // Check permissions
+    const event = ticket.event as any;
+    const isCreator = event.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    const isOwner = ticket.owner?._id?.toString() === req.user!.id;
+
+    if (!isCreator && !isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    return res.json(ticket);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
