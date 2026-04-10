@@ -32,7 +32,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const tickets = await Ticket.find()
       .populate('event', 'title date location')
-      .populate('owner', 'username email')
+      .populate('owner', '_id username email')
       .sort({ createdAt: -1 });
 
     return res.json(tickets);
@@ -56,7 +56,7 @@ router.get('/event/:eventId', authMiddleware, async (req: AuthRequest, res: Resp
     }
 
     const tickets = await Ticket.find({ event: req.params.eventId })
-      .populate('owner', 'username email avatar')
+      .populate('owner', '_id username email avatar')
       .sort({ createdAt: -1 });
 
     return res.json(tickets);
@@ -79,7 +79,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       return res.status(403).json({ error: 'No autorizado' });
     }
 
-    const { ownerName, ownerEmail, ownerPhone } = req.body;
+    const { ownerName, ownerEmail, ownerPhone, ownerId } = req.body;
 
     // Check if max tickets reached
     const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
@@ -102,19 +102,40 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       type: 'ticket'
     }));
 
+    // If ownerId provided, verify user exists and get their data
+    let owner = null;
+    let finalOwnerName = ownerName;
+    let finalOwnerEmail = ownerEmail;
+
+    if (ownerId) {
+      const user = await User.findById(ownerId);
+      if (!user) {
+        return res.status(400).json({ error: 'Usuario no encontrado' });
+      }
+      owner = user._id;
+      // Use user's data if not explicitly provided
+      finalOwnerName = ownerName || user.displayName || user.username;
+      finalOwnerEmail = ownerEmail || user.email;
+    }
+
     // Create ticket
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
       qrData,
-      ownerName,
-      ownerEmail,
+      owner,
+      ownerName: finalOwnerName,
+      ownerEmail: finalOwnerEmail,
       ownerPhone,
       paymentStatus: 'free',
       paymentId: 'MANUAL'
     });
 
-    return res.status(201).json(ticket);
+    // Populate owner for response
+    const populatedTicket = await Ticket.findById(ticket._id)
+      .populate('owner', '_id username email displayName avatar');
+
+    return res.status(201).json(populatedTicket);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -124,13 +145,14 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
 router.get('/code/:code', async (req: Request, res: Response) => {
   try {
     let ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
-      .populate('event', 'title date location ticketConfig')
-      .populate('owner', 'username email');
+      .populate('event', 'title date location ticketConfig creator')
+      .populate('owner', '_id username email');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
-    // Auto-generate QR if missing (for old tickets)
-    if (!ticket.qrData) {
+    // Auto-generate QR if missing (for old tickets or if qrData is empty)
+    if (!ticket.qrData || ticket.qrData === '') {
+      console.log(`[QR] Generating missing QR for ticket ${ticket.code}`);
       const qrData = await QRCode.toDataURL(JSON.stringify({
         code: ticket.code,
         event: ticket.event._id || ticket.event,
@@ -142,8 +164,15 @@ router.get('/code/:code', async (req: Request, res: Response) => {
 
     // Return ticket data - QR verification is public
     const ticketObj = ticket.toObject();
+
+    // Ensure qrData is present in response
+    if (!ticketObj.qrData) {
+      console.error(`[QR] Ticket ${ticket.code} still missing qrData after save!`);
+    }
+
     return res.json(ticketObj);
   } catch (err: any) {
+    console.error('[QR] Error fetching ticket by code:', err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -153,7 +182,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
       .populate('event', 'title date location creator ticketConfig')
-      .populate('owner', 'username email');
+      .populate('owner', '_id username email');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
@@ -254,7 +283,7 @@ router.post('/event/:eventId/create-preference', async (req: Request, res: Respo
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
-      qrData,
+      qrData: qrCodeDataUrl,
       ownerName: ownerName || '',
       ownerEmail: ownerEmail || '',
       ownerPhone: ownerPhone || '',
@@ -335,7 +364,7 @@ router.post('/event/:eventId/create-free', async (req: Request, res: Response) =
     const ticket = await Ticket.create({
       event: req.params.eventId,
       code,
-      qrData,
+      qrData: qrCodeDataUrl,
       ownerName: ownerName || '',
       ownerEmail: ownerEmail || '',
       ownerPhone: ownerPhone || '',
