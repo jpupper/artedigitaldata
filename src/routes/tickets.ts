@@ -80,7 +80,8 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
     }
 
     const { ownerName, ownerEmail, ownerPhone, ownerId } = req.body;
-    console.log('[issue-manual] Received ownerId:', ownerId, 'Type:', typeof ownerId);
+    console.log('[issue-manual] Full body:', req.body);
+    console.log('[issue-manual] Received ownerId:', ownerId, 'Type:', typeof ownerId, 'Falsy?', !ownerId);
 
     // Check if max tickets reached
     const ticketCount = await Ticket.countDocuments({ event: req.params.eventId });
