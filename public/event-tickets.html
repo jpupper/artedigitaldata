@@ -117,8 +117,43 @@
         </div>
       </div>
 
-      <!-- Manual Ticket Issue Button -->
-      <div class="mb-6 flex justify-end">
+      <!-- Door Users Management (Creator/Admin only) -->
+      <div id="door-users-section" class="hidden mb-6 rounded-2xl border border-white/10 bg-black/40 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fas fa-door-open text-cyan-500"></i>
+              Usuarios de Puerta
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">Estos usuarios pueden escanear y canjear entradas en la puerta del evento.</p>
+          </div>
+        </div>
+        
+        <!-- Door Users List -->
+        <div id="door-users-list" class="flex flex-wrap gap-2 mb-4">
+          <!-- Door users will be injected here -->
+        </div>
+        
+        <!-- Add Door User -->
+        <div class="relative">
+          <div class="flex gap-2">
+            <div class="flex-1 relative">
+              <input type="text" id="door-user-search" placeholder="Buscar usuario por nombre o @usuario..." 
+                oninput="searchDoorUsers(this.value)"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-white focus:border-cyan-500 focus:outline-none">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            </div>
+          </div>
+          
+          <!-- Search Results -->
+          <div id="door-user-results" class="hidden absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a24] shadow-xl">
+            <!-- Results will be injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Ticket Issue Button (Creator/Admin only) -->
+      <div id="manual-ticket-section" class="hidden mb-6 flex justify-end">
         <button onclick="showManualTicketModal()" id="manual-ticket-btn" class="px-6 py-3 rounded-xl bg-fuchsia-500 text-white font-bold hover:bg-fuchsia-400 transition-all flex items-center gap-2">
           <i class="fas fa-plus"></i>
           Enviar Entrada Manual
@@ -320,19 +355,23 @@
         const ev = await res.json();
         currentEvent = ev;
 
-        // Check if user is creator (handle both string ID and object with _id)
+        // Check if user is creator, admin, or door user
         const userId = getUserId();
         const creatorId = ev.creator?._id || ev.creator;
         const isEventCreator = userId && creatorId && userId.toString() === creatorId.toString();
         const userIsAdmin = isAdmin();
+        const isDoorUser = ev.doorUsers?.some(u => (u._id || u).toString() === userId);
 
-        console.log('Debug - User ID:', userId, 'Creator ID:', creatorId, 'Is Creator:', isEventCreator, 'Is Admin:', userIsAdmin);
+        console.log('Debug - User ID:', userId, 'Creator ID:', creatorId, 'Is Creator:', isEventCreator, 'Is Admin:', userIsAdmin, 'Is Door User:', isDoorUser);
 
-        if (!isEventCreator && !userIsAdmin) {
+        if (!isEventCreator && !userIsAdmin && !isDoorUser) {
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('access-denied').classList.remove('hidden');
           return;
         }
+
+        // Store permissions for UI control
+        window.eventPermissions = { isEventCreator, userIsAdmin, isDoorUser };
 
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('content').classList.remove('hidden');
@@ -340,6 +379,13 @@
         document.getElementById('event-name').innerText = ev.title;
         document.getElementById('back-link').href = `evento.html?id=${ev._id}`;
         document.getElementById('view-event-link').href = `evento.html?id=${ev._id}`;
+
+        // Show/hide sections based on permissions
+        if (isEventCreator || userIsAdmin) {
+          document.getElementById('door-users-section').classList.remove('hidden');
+          document.getElementById('manual-ticket-section').classList.remove('hidden');
+          renderDoorUsers(ev.doorUsers || []);
+        }
 
         await Promise.all([loadTickets(), loadStats(), loadUsersForSelector()]);
       } catch (err) {
@@ -549,6 +595,9 @@
           statusClass = 'bg-red-500/20 text-red-400';
         }
 
+        const perms = window.eventPermissions || {};
+        const canDelete = perms.isEventCreator || perms.userIsAdmin;
+
         return `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
             <td class="px-6 py-4 font-mono font-bold text-white">${t.code}</td>
@@ -581,9 +630,11 @@
                 <button onclick="viewTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-all text-xs">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button onclick="deleteTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-xs">
-                  <i class="fas fa-trash"></i>
-                </button>
+                ${canDelete ? `
+                  <button onclick="deleteTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-xs">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                ` : ''}
               </div>
             </td>
           </tr>
@@ -798,6 +849,146 @@
         alert('Error de conexión');
       }
     }
+
+    // Door User Management Functions
+    function renderDoorUsers(doorUsers) {
+      const container = document.getElementById('door-users-list');
+      if (!doorUsers || doorUsers.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-sm italic">No hay usuarios de puerta asignados</p>';
+        return;
+      }
+
+      container.innerHTML = doorUsers.map(user => {
+        const displayName = user.displayName || user.username;
+        const avatar = user.avatar
+          ? `<img src="${user.avatar}" class="w-6 h-6 rounded-full object-cover" alt="${displayName}">`
+          : `<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
+
+        return `
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+            ${avatar}
+            <span class="text-sm text-cyan-400">${displayName}</span>
+            <button onclick="removeDoorUser('${user._id}')" class="ml-2 text-cyan-400 hover:text-red-400 transition-colors">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function searchDoorUsers(query) {
+      const resultsDiv = document.getElementById('door-user-results');
+
+      if (!query.trim()) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      const lowerQuery = query.toLowerCase();
+      const matches = allUsers.filter(user =>
+        user.username.toLowerCase().includes(lowerQuery) ||
+        (user.displayName && user.displayName.toLowerCase().includes(lowerQuery)) ||
+        user.email.toLowerCase().includes(lowerQuery)
+      ).slice(0, 10);
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = `
+          <div class="px-4 py-3 text-sm text-gray-500">
+            <i class="fas fa-search mr-2"></i>No se encontraron usuarios
+          </div>
+        `;
+      } else {
+        resultsDiv.innerHTML = matches.map(user => {
+          const displayName = user.displayName || user.username;
+          const avatar = user.avatar
+            ? `<img src="${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
+            : `<div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
+
+          // Check if user is already a door user
+          const currentDoorUsers = currentEvent?.doorUsers || [];
+          const isAlreadyDoorUser = currentDoorUsers.some(u => (u._id || u).toString() === user._id);
+
+          if (isAlreadyDoorUser) {
+            return `
+              <div class="w-full px-4 py-3 text-left bg-white/5 flex items-center gap-3 border-b border-white/5 last:border-0 opacity-50">
+                ${avatar}
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-white font-medium truncate">${displayName}</p>
+                  <p class="text-xs text-gray-500 truncate">@${user.username} · Ya es puerta</p>
+                </div>
+                <i class="fas fa-check text-green-500 text-xs"></i>
+              </div>
+            `;
+          }
+
+          return `
+            <button type="button" onclick="addDoorUser('${user._id}')"
+              class="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0">
+              ${avatar}
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-white font-medium truncate">${displayName}</p>
+                <p class="text-xs text-gray-500 truncate">@${user.username} · ${user.email}</p>
+              </div>
+              <i class="fas fa-plus text-cyan-500 text-xs"></i>
+            </button>
+          `;
+        }).join('');
+      }
+
+      resultsDiv.classList.remove('hidden');
+    }
+
+    async function addDoorUser(userId) {
+      document.getElementById('door-user-results').classList.add('hidden');
+      document.getElementById('door-user-search').value = '';
+
+      try {
+        const res = await apiRequest(`/eventos/${currentEventId}/door-users`, {
+          method: 'POST',
+          body: JSON.stringify({ userId })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          currentEvent.doorUsers = data.doorUsers;
+          renderDoorUsers(data.doorUsers);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al agregar usuario de puerta');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function removeDoorUser(userId) {
+      if (!confirm('¿Eliminar este usuario de puerta?')) return;
+
+      try {
+        const res = await apiRequest(`/eventos/${currentEventId}/door-users/${userId}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          currentEvent.doorUsers = data.doorUsers;
+          renderDoorUsers(data.doorUsers);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al eliminar usuario de puerta');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    // Close door user search results when clicking outside
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('door-users-section');
+      if (container && !container.contains(e.target)) {
+        document.getElementById('door-user-results').classList.add('hidden');
+      }
+    });
   </script>
 </body>
 </html>

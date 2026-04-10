@@ -27,6 +27,7 @@ export interface IEvento extends Document {
   likes: Types.ObjectId[];
   comments: IComment[];
   ticketConfig: ITicketConfig;
+  doorUsers: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +62,7 @@ const EventoSchema: Schema = new Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
     ticketConfig: { type: TicketConfigSchema, default: () => ({ enabled: false }) },
+    doorUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

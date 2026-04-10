@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canjear Entrada - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-2xl mx-auto px-4">
+    <!-- Scanner Mode -->
+    <div id="scanner-section" class="hidden">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-black text-white mb-2">
+          <i class="fas fa-qrcode text-green-500 mr-2"></i>
+          Escanear Entrada
+        </h1>
+        <p class="text-gray-400">Escaneá el código QR de la entrada para canjearla</p>
+      </div>
+
+      <div class="rounded-3xl border border-white/10 bg-black/40 p-6">
+        <div id="scanner-container" class="rounded-2xl overflow-hidden border border-white/10 mb-4"></div>
+        
+        <div class="flex gap-2">
+          <input type="text" id="manual-code-input" placeholder="O ingresá el código manualmente..." 
+            class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-green-500 focus:outline-none uppercase">
+          <button onclick="loadTicketByCode()" class="px-6 py-3 rounded-xl bg-green-500 text-black font-bold hover:bg-green-400 transition-all">
+            <i class="fas fa-search mr-2"></i>
+            Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden py-20 text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-magenta-500 mb-4"></i>
+      <p class="text-gray-500">Cargando entrada...</p>
+    </div>
+
+    <!-- Ticket Info & Redeem -->
+    <div id="ticket-section" class="hidden">
+      <!-- Access Denied -->
+      <div id="access-denied" class="hidden py-12 text-center">
+        <i class="fas fa-lock text-6xl text-red-500 mb-6"></i>
+        <h2 class="text-2xl font-bold text-white mb-2">Acceso Denegado</h2>
+        <p class="text-gray-500 mb-6">No tenés permisos para canjear esta entrada.</p>
+        <p class="text-sm text-gray-600 mb-8">Solo el creador del evento, administradores o usuarios de puerta pueden canjear entradas.</p>
+        <button onclick="resetView()" class="btn-primary px-8 py-3 rounded-xl">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Volver
+        </button>
+      </div>
+
+      <!-- Not Logged In -->
+      <div id="not-logged-in" class="hidden py-12 text-center">
+        <i class="fas fa-user-lock text-6xl text-yellow-500 mb-6"></i>
+        <h2 class="text-2xl font-bold text-white mb-2">Iniciá Sesión</h2>
+        <p class="text-gray-500 mb-8">Necesitás estar logueado para canjear entradas.</p>
+        <button onclick="redirectToLogin()" class="btn-primary px-8 py-3 rounded-xl">
+          <i class="fas fa-sign-in-alt mr-2"></i>
+          Iniciar Sesión
+        </button>
+      </div>
+
+      <!-- Ticket Card -->
+      <div id="ticket-card" class="hidden rounded-3xl border border-white/10 card-cyber bg-black/40 overflow-hidden">
+        <div class="bg-gradient-to-r from-magenta-500/20 to-fuchsia-500/20 p-6 border-b border-white/10">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Entrada para</p>
+              <a id="event-link" href="#" class="text-xl font-black text-white hover:text-magenta-400 transition-colors flex items-center gap-2 group">
+                <span id="event-title"></span>
+                <i class="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition-opacity text-magenta-400"></i>
+              </a>
+            </div>
+            <i class="fas fa-ticket-alt text-3xl text-magenta-500/50"></i>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Ticket Status Badge -->
+          <div id="ticket-status-badge" class="mb-6">
+            <!-- Dynamic status badge -->
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="rounded-xl bg-white/5 p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Código</p>
+              <p id="ticket-code" class="text-xl font-mono font-bold text-white tracking-wider"></p>
+            </div>
+            <div class="rounded-xl bg-white/5 p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Fecha del Evento</p>
+              <p id="event-date" class="text-white flex items-center gap-2">
+                <i class="fas fa-calendar text-magenta-500"></i>
+                <span><!-- Date --></span>
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 pt-6 mb-6">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-3">Datos del Asistente</p>
+            <div id="owner-info" class="space-y-2 text-sm text-gray-400">
+              <!-- Owner info -->
+            </div>
+          </div>
+
+          <!-- Redeem Action -->
+          <div id="redeem-action" class="hidden border-t border-white/10 pt-6">
+            <div class="bg-green-500/10 rounded-xl p-4 mb-4">
+              <p class="text-green-400 text-sm flex items-start gap-3">
+                <i class="fas fa-info-circle mt-0.5"></i>
+                <span>Vos sos <strong id="user-role-text">creador del evento</strong> y podés canjear esta entrada.</span>
+              </p>
+            </div>
+            <button onclick="redeemTicket()" id="redeem-btn" class="w-full py-4 rounded-xl bg-green-500 text-black font-bold hover:bg-green-400 transition-all flex items-center justify-center gap-2 text-lg">
+              <i class="fas fa-door-open"></i>
+              CANJEAR ENTRADA
+            </button>
+          </div>
+
+          <!-- Already Redeemed -->
+          <div id="already-redeemed" class="hidden border-t border-white/10 pt-6">
+            <div class="bg-gray-500/10 rounded-xl p-4">
+              <p class="text-gray-400 text-sm flex items-start gap-3">
+                <i class="fas fa-check-double mt-0.5"></i>
+                <span>Esta entrada ya fue canjeada <span id="redeemed-date"></span>.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div id="actions" class="hidden mt-6 flex gap-3">
+        <button onclick="resetView()" class="flex-1 py-3 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all">
+          <i class="fas fa-qrcode mr-2"></i>
+          Escanear Otra
+        </button>
+        <a href="calendario.html" class="flex-1 py-3 rounded-xl btn-primary font-bold text-center">
+          <i class="fas fa-calendar mr-2"></i>
+          Calendario
+        </a>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-section" class="hidden py-20 text-center">
+      <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
+      <h2 class="text-2xl font-bold text-white mb-2">Entrada no encontrada</h2>
+      <p class="text-gray-500 mb-8">El código de entrada no existe o ha sido eliminado.</p>
+      <button onclick="resetView()" class="btn-primary px-8 py-3 rounded-xl">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Volver
+      </button>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="hidden fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
+      <div class="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0d0d12] p-8 text-center">
+        <div id="result-icon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4">
+          <!-- Icon -->
+        </div>
+        <h4 id="result-title" class="text-xl font-bold text-white mb-2"></h4>
+        <p id="result-message" class="text-gray-400 mb-6"></p>
+        <button onclick="closeResultModal()" class="w-full btn-primary py-3 rounded-xl font-bold">
+          CONTINUAR
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let currentTicket = null;
+    let currentEvent = null;
+    let scanner = null;
+    let isAuthorized = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketCode = urlParams.get('code');
+
+      if (ticketCode) {
+        // Code provided in URL - load ticket directly
+        await loadTicket(ticketCode.toUpperCase());
+      } else {
+        // No code - show scanner
+        showScanner();
+      }
+    });
+
+    function showScanner() {
+      hideAllSections();
+      document.getElementById('scanner-section').classList.remove('hidden');
+      
+      // Initialize scanner
+      if (!scanner) {
+        scanner = new Html5Qrcode('scanner-container');
+      }
+
+      scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => {
+        console.error('Scanner error:', err);
+        // Don't show alert - let user use manual input
+      });
+    }
+
+    function hideScanner() {
+      if (scanner) {
+        scanner.stop().catch(() => {});
+      }
+    }
+
+    async function onScanSuccess(decodedText) {
+      // Stop scanning
+      hideScanner();
+
+      // Try to parse QR data
+      let code;
+      try {
+        const data = JSON.parse(decodedText);
+        code = data.code;
+      } catch {
+        // If not JSON, use raw text (might be just the code)
+        code = decodedText;
+      }
+
+      if (code) {
+        await loadTicket(code.toUpperCase());
+      }
+    }
+
+    function onScanFailure(err) {
+      // Ignore scan failures (happens frequently when no QR is in view)
+    }
+
+    function loadTicketByCode() {
+      const code = document.getElementById('manual-code-input').value.trim();
+      if (!code) {
+        showResult('error', 'Ingresá un código', 'Por favor ingresá el código de la entrada.');
+        return;
+      }
+      loadTicket(code.toUpperCase());
+    }
+
+    async function loadTicket(code) {
+      hideAllSections();
+      document.getElementById('loading').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/tickets/code/${code}`);
+        
+        if (!res.ok) {
+          hideAllSections();
+          document.getElementById('error-section').classList.remove('hidden');
+          return;
+        }
+
+        const ticket = await res.json();
+        currentTicket = ticket;
+        currentEvent = ticket.event;
+
+        // Check authorization
+        checkAuthorization();
+
+        // Render ticket
+        renderTicket();
+
+        hideAllSections();
+        document.getElementById('ticket-section').classList.remove('hidden');
+        document.getElementById('ticket-card').classList.remove('hidden');
+        document.getElementById('actions').classList.remove('hidden');
+      } catch (err) {
+        console.error('Error loading ticket:', err);
+        hideAllSections();
+        document.getElementById('error-section').classList.remove('hidden');
+      }
+    }
+
+    function checkAuthorization() {
+      if (!isLoggedIn()) {
+        isAuthorized = false;
+        document.getElementById('access-denied').classList.add('hidden');
+        document.getElementById('not-logged-in').classList.remove('hidden');
+        return;
+      }
+
+      const user = getUser();
+      const event = currentEvent;
+
+      if (!event || !user) {
+        isAuthorized = false;
+        return;
+      }
+
+      const isCreator = event.creator?._id?.toString() === user._id || event.creator?.toString() === user._id;
+      const isAdmin = user.role === 'ADMINISTRADOR' || user.role === 'ADMIN';
+      const isDoorUser = event.doorUsers?.some(id => id.toString() === user._id);
+
+      isAuthorized = isCreator || isAdmin || isDoorUser;
+
+      // Update role text
+      let roleText = '';
+      if (isCreator) roleText = 'creador del evento';
+      else if (isAdmin) roleText = 'administrador';
+      else if (isDoorUser) roleText = 'usuario de puerta';
+      document.getElementById('user-role-text').innerText = roleText;
+    }
+
+    function renderTicket() {
+      const ticket = currentTicket;
+      const event = currentEvent;
+
+      // Event info
+      document.getElementById('event-title').innerText = event.title;
+      document.getElementById('event-link').href = `evento.html?id=${event._id || event.id}`;
+      document.getElementById('event-date').querySelector('span').innerText = new Date(event.date).toLocaleDateString('es-AR', { 
+        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+      });
+
+      // Ticket code
+      document.getElementById('ticket-code').innerText = ticket.code;
+
+      // Status badge
+      const statusBadge = document.getElementById('ticket-status-badge');
+      if (ticket.redeemed) {
+        statusBadge.innerHTML = `
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-500/20 text-gray-400">
+            <i class="fas fa-check-double"></i>
+            <span class="font-bold">Entrada Canjeada</span>
+            <span class="text-sm ml-auto">${new Date(ticket.redeemedAt).toLocaleString('es-AR')}</span>
+          </div>
+        `;
+      } else if (ticket.paymentStatus === 'pending') {
+        statusBadge.innerHTML = `
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-yellow-500/20 text-yellow-400">
+            <i class="fas fa-clock"></i>
+            <span class="font-bold">Pago Pendiente</span>
+          </div>
+        `;
+      } else {
+        statusBadge.innerHTML = `
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/20 text-green-400">
+            <i class="fas fa-check-circle"></i>
+            <span class="font-bold">Entrada Válida</span>
+          </div>
+        `;
+      }
+
+      // Owner info
+      const ownerInfo = document.getElementById('owner-info');
+      ownerInfo.innerHTML = `
+        <p><strong>Nombre:</strong> ${ticket.ownerName || 'No especificado'}</p>
+        <p><strong>Email:</strong> ${ticket.ownerEmail || 'No especificado'}</p>
+        ${ticket.ownerPhone ? `<p><strong>Teléfono:</strong> ${ticket.ownerPhone}</p>` : ''}
+        ${ticket.owner ? `
+          <div class="mt-2 pt-2 border-t border-white/10">
+            <p class="flex items-center gap-2">
+              <i class="fas fa-user-check text-fuchsia-500"></i>
+              <strong>Vinculado a:</strong>
+              <a href="perfil.html?user=${ticket.owner._id || ticket.owner}" class="text-fuchsia-400 hover:text-fuchsia-300">
+                @${ticket.owner.username || 'usuario'}
+              </a>
+            </p>
+          </div>
+        ` : ''}
+      `;
+
+      // Show/hide redeem action based on authorization and ticket status
+      document.getElementById('access-denied').classList.add('hidden');
+      document.getElementById('not-logged-in').classList.add('hidden');
+
+      if (!isLoggedIn()) {
+        document.getElementById('not-logged-in').classList.remove('hidden');
+        document.getElementById('redeem-action').classList.add('hidden');
+        document.getElementById('already-redeemed').classList.add('hidden');
+      } else if (!isAuthorized) {
+        document.getElementById('access-denied').classList.remove('hidden');
+        document.getElementById('redeem-action').classList.add('hidden');
+        document.getElementById('already-redeemed').classList.add('hidden');
+      } else if (ticket.redeemed) {
+        document.getElementById('redeem-action').classList.add('hidden');
+        document.getElementById('already-redeemed').classList.remove('hidden');
+        document.getElementById('redeemed-date').innerText = new Date(ticket.redeemedAt).toLocaleString('es-AR');
+      } else if (ticket.paymentStatus === 'pending') {
+        document.getElementById('redeem-action').classList.remove('hidden');
+        document.getElementById('already-redeemed').classList.add('hidden');
+        // Add warning about pending payment
+        const redeemBtn = document.getElementById('redeem-btn');
+        redeemBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> CANJEAR (PAGO PENDIENTE)';
+        redeemBtn.classList.remove('bg-green-500', 'hover:bg-green-400');
+        redeemBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
+      } else {
+        document.getElementById('redeem-action').classList.remove('hidden');
+        document.getElementById('already-redeemed').classList.add('hidden');
+        // Reset button style
+        const redeemBtn = document.getElementById('redeem-btn');
+        redeemBtn.innerHTML = '<i class="fas fa-door-open"></i> CANJEAR ENTRADA';
+        redeemBtn.classList.add('bg-green-500', 'hover:bg-green-400');
+        redeemBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
+      }
+    }
+
+    async function redeemTicket() {
+      if (!currentTicket || !isAuthorized) return;
+
+      const btn = document.getElementById('redeem-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+      try {
+        const res = await apiRequest('/tickets/redeem-by-code', {
+          method: 'POST',
+          body: JSON.stringify({ code: currentTicket.code })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          currentTicket = data.ticket;
+          
+          showResult('success', '¡Entrada Canjeada!', 
+            `La entrada ${data.ticket.code} ha sido canjeada exitosamente.`);
+          
+          // Update UI
+          renderTicket();
+        } else {
+          const err = await res.json();
+          showResult('error', 'Error', err.error || 'No se pudo canjear la entrada');
+        }
+      } catch (err) {
+        console.error('Error redeeming:', err);
+        showResult('error', 'Error', 'Error de conexión. Intentá de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-door-open"></i> CANJEAR ENTRADA';
+      }
+    }
+
+    function showResult(type, title, message) {
+      const modal = document.getElementById('result-modal');
+      const iconDiv = document.getElementById('result-icon');
+      const titleEl = document.getElementById('result-title');
+      const messageEl = document.getElementById('result-message');
+
+      modal.classList.remove('hidden');
+
+      if (type === 'success') {
+        iconDiv.className = 'w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 bg-green-500/20';
+        iconDiv.innerHTML = '<i class="fas fa-check text-4xl text-green-500"></i>';
+        titleEl.className = 'text-xl font-bold text-green-400 mb-2';
+      } else {
+        iconDiv.className = 'w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 bg-red-500/20';
+        iconDiv.innerHTML = '<i class="fas fa-times text-4xl text-red-500"></i>';
+        titleEl.className = 'text-xl font-bold text-red-400 mb-2';
+      }
+
+      titleEl.innerText = title;
+      messageEl.innerText = message;
+    }
+
+    function closeResultModal() {
+      document.getElementById('result-modal').classList.add('hidden');
+    }
+
+    function resetView() {
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Reset state
+      currentTicket = null;
+      currentEvent = null;
+      isAuthorized = false;
+      
+      // Show scanner
+      document.getElementById('manual-code-input').value = '';
+      showScanner();
+    }
+
+    function redirectToLogin() {
+      const currentUrl = encodeURIComponent(window.location.href);
+      window.location.href = `login.html?redirect=${currentUrl}`;
+    }
+
+    function hideAllSections() {
+      document.getElementById('scanner-section').classList.add('hidden');
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('ticket-section').classList.add('hidden');
+      document.getElementById('error-section').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
