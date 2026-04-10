@@ -21,7 +21,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
     
-    const [hydrated] = await hydrate([evento], 'creator participants');
+    // Hydrate creator first
+    const [withCreator] = await hydrate([evento], 'creator');
+    // Then hydrate participants
+    const [hydrated] = await hydrate([withCreator], 'participants');
     
     // Ensure ticketConfig is always returned (for old events without this field)
     if (!hydrated.ticketConfig) {
