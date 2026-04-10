@@ -55,10 +55,15 @@
               </div>
             </div>
             <div class="flex flex-col justify-center">
-              <button onclick="shareEvent()" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-cyan-500 hover:text-black transition-all">
-                <i class="fas fa-share-alt group-hover:scale-110 transition-transform"></i>
-                COMPARTIR EVENTO
-              </button>
+              <div class="flex flex-col gap-3">
+                <button onclick="shareEvent()" class="group flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-cyan-500 hover:text-black transition-all">
+                  <i class="fas fa-share-alt group-hover:scale-110 transition-transform"></i>
+                  COMPARTIR EVENTO
+                </button>
+                <div id="ticket-actions" class="hidden">
+                  <!-- Ticket buttons will be injected here -->
+                </div>
+              </div>
             </div>
           </div>
 
@@ -133,6 +138,8 @@
         const res = await fetch(`${CONFIG.API_URL}/eventos/${currentEventId}`);
         if (!res.ok) throw new Error();
         const ev = await res.json();
+        console.log('Evento cargado:', ev);
+        console.log('ticketConfig:', ev.ticketConfig);
         renderEvent(ev);
       } catch (err) {
         showError();
@@ -161,16 +168,52 @@
       const avatarCont = document.getElementById('creator-avatar');
       avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase();
 
-      // Edit Button
+      // Edit Button and Ticket Management
       const editBtnContainer = document.createElement('div');
+      editBtnContainer.className = 'flex gap-2';
       if (isCreator) {
           editBtnContainer.innerHTML = `
             <button onclick="loadItemToEdit('eventos', '${ev._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-magenta-500/30 text-magenta-400 hover:bg-magenta-500/10 transition-all font-bold text-sm">
               <i class="fas fa-edit"></i>
               <span>Editar</span>
             </button>
+            ${ev.ticketConfig?.enabled ? `
+            <a href="event-tickets.html?event=${ev._id}" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all font-bold text-sm">
+              <i class="fas fa-ticket-alt"></i>
+              <span>Administrar Entradas</span>
+            </a>
+            ` : ''}
           `;
           document.querySelector('.flex.flex-wrap.items-center').appendChild(editBtnContainer);
+      }
+      
+      // Ticket actions for buyers
+      const ticketActions = document.getElementById('ticket-actions');
+      if (ev.ticketConfig?.enabled) {
+        const now = new Date();
+        const eventDate = new Date(ev.date);
+        if (eventDate > now) {
+          ticketActions.classList.remove('hidden');
+          ticketActions.innerHTML = `
+            <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
+              <i class="fas fa-ticket-alt text-xl"></i>
+              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+            </a>
+            ${ev.ticketConfig.price > 0 ? `
+            <p class="text-center text-xs text-gray-500">
+              Precio: $${ev.ticketConfig.price} ARS
+            </p>
+            ` : ''}
+          `;
+        } else {
+          ticketActions.classList.remove('hidden');
+          ticketActions.innerHTML = `
+            <button disabled class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gray-500/20 text-gray-500 font-bold cursor-not-allowed">
+              <i class="fas fa-calendar-times"></i>
+              EVENTO FINALIZADO
+            </button>
+          `;
+        }
       }
 
       const imgContainer = document.getElementById('event-image-container');
@@ -354,12 +397,12 @@
   </script>
 
   <!-- Global Edit Modal -->
-  <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
-    <div class="w-full max-w-lg rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative">
-      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+  <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-start justify-center bg-black/80 px-4 py-8 backdrop-blur-md overflow-y-auto">
+    <div class="w-full max-w-3xl rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative my-auto">
+      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10 bg-black/50 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">
         <i class="fas fa-times"></i>
       </button>
-      <div id="edit-modal-content"></div>
+      <div id="edit-modal-content" class="max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide"></div>
     </div>
   </div>
 </body>

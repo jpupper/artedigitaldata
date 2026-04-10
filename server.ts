@@ -21,6 +21,7 @@ import eventosRoutes from './src/routes/eventos';
 import uploadRoutes from './src/routes/upload';
 import profileRoutes from './src/routes/profile';
 import searchRoutes from './src/routes/search';
+import ticketRoutes from './src/routes/tickets';
 import { hydrate } from './src/utils/userHydration';
 
 const PORT = process.env.PORT || 2495;
@@ -84,6 +85,7 @@ apiRouter.use('/recursos', recursosRoutes);
 apiRouter.use('/eventos', eventosRoutes);
 apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/profile', profileRoutes);
+apiRouter.use('/tickets', ticketRoutes);
 
 // Registrar API en ambos paths (con y sin prefijo) para máxima compatibilidad
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones

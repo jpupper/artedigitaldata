@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprar Entrada - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-12 max-w-2xl mx-auto px-4">
+    <!-- Loading -->
+    <div id="loading" class="py-20 text-center">
+      <i class="fas fa-spinner fa-spin text-4xl text-magenta-500 mb-4"></i>
+      <p class="text-gray-500">Cargando información del evento...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="hidden py-20 text-center">
+      <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
+      <h2 class="text-2xl font-bold text-white mb-2">Error</h2>
+      <p id="error-msg" class="text-gray-500 mb-8">No se pudo cargar el evento.</p>
+      <a href="calendario.html" class="btn-primary px-8 py-3 rounded-xl">Volver al Calendario</a>
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="hidden">
+      <!-- Event Summary -->
+      <div class="rounded-3xl overflow-hidden border border-white/10 card-cyber bg-black/40 mb-6">
+        <div id="event-image" class="aspect-video w-full bg-magenta-500/5 flex items-center justify-center">
+          <!-- Image injected here -->
+        </div>
+        <div class="p-6">
+          <h1 id="event-title" class="text-2xl font-black text-white mb-2"></h1>
+          <div class="flex items-center gap-4 text-sm text-gray-400">
+            <span id="event-date" class="flex items-center gap-2">
+              <i class="fas fa-calendar text-magenta-500"></i>
+              <!-- Date -->
+            </span>
+            <span id="event-location" class="flex items-center gap-2">
+              <i class="fas fa-map-marker-alt text-cyan-500"></i>
+              <!-- Location -->
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase Form -->
+      <div class="rounded-3xl border border-white/10 card-cyber bg-black/40 p-8">
+        <h2 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+          <i class="fas fa-ticket-alt text-magenta-500"></i>
+          <span id="form-title">Comprar Entrada</span>
+        </h2>
+
+        <form id="purchase-form" class="space-y-6">
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre completo *</label>
+            <input type="text" id="buyer-name" required placeholder="Tu nombre"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Email *</label>
+            <input type="email" id="buyer-email" required placeholder="tu@email.com"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Teléfono</label>
+            <input type="tel" id="buyer-phone" placeholder="+54 11..."
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+          </div>
+
+          <!-- Contribution amount for contribution events -->
+          <div id="contribution-section" class="hidden">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Monto de contribución (ARS)</label>
+            <input type="number" id="contribution-amount" min="0" placeholder="Ingresá el monto"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+            <p class="text-[10px] text-gray-500 mt-1">Este es un evento con bono contribución. El monto es a tu elección.</p>
+          </div>
+
+          <div class="border-t border-white/10 pt-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-gray-400">Precio:</span>
+              <span id="ticket-price" class="text-2xl font-black text-white"></span>
+            </div>
+            
+            <div id="payment-container" class="hidden">
+              <!-- MercadoPago button will be injected here -->
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full btn-primary py-4 rounded-2xl font-black text-lg hover:scale-[1.01] transition-transform">
+              <i class="fas fa-lock mr-2"></i>
+              <span id="btn-text">PROCEDER AL PAGO</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Status Overlay -->
+        <div id="status-overlay" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md items-center justify-center z-[10000] p-4">
+          <div class="text-center max-w-sm w-full">
+            <div class="mb-6 flex justify-center">
+              <div class="relative w-24 h-24">
+                <div class="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+                <div id="status-spinner" class="absolute inset-0 border-4 border-t-magenta-500 rounded-full animate-spin"></div>
+              </div>
+            </div>
+            <h2 id="status-title" class="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Procesando...</h2>
+            <p id="status-msg" class="text-gray-400">Generando tu entrada...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let currentEvent = null;
+    let ticketCreated = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const eventId = urlParams.get('event');
+
+      if (!eventId) {
+        showError('No se especificó un evento');
+        return;
+      }
+
+      await loadEvent(eventId);
+    });
+
+    async function loadEvent(eventId) {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/eventos/${eventId}`);
+        if (!res.ok) throw new Error();
+        const ev = await res.json();
+        currentEvent = ev;
+        renderEvent(ev);
+      } catch (err) {
+        showError('No se pudo cargar el evento');
+      }
+    }
+
+    function renderEvent(ev) {
+      document.getElementById('loading').classList.add('hidden');
+      
+      // Check if tickets are enabled
+      if (!ev.ticketConfig?.enabled) {
+        showError('Este evento no tiene sistema de entradas activado');
+        return;
+      }
+
+      // Check if event is in the past
+      const eventDate = new Date(ev.date);
+      const now = new Date();
+      if (eventDate < now) {
+        showError('Este evento ya ha finalizado');
+        return;
+      }
+
+      document.getElementById('content').classList.remove('hidden');
+      document.title = `Comprar Entrada - ${ev.title}`;
+
+      // Event image
+      const imgContainer = document.getElementById('event-image');
+      if (ev.imageUrl) {
+        imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+      } else {
+        imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
+      }
+
+      document.getElementById('event-title').innerText = ev.title;
+      document.getElementById('event-date').innerHTML = `<i class="fas fa-calendar text-magenta-500"></i> ${new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+      document.getElementById('event-location').innerHTML = `<i class="fas fa-map-marker-alt text-cyan-500"></i> ${ev.location || 'Virtual'}`;
+
+      // Price display
+      const priceDisplay = document.getElementById('ticket-price');
+      const btnText = document.getElementById('btn-text');
+      const formTitle = document.getElementById('form-title');
+      
+      if (ev.ticketConfig.price === 0) {
+        priceDisplay.innerText = 'GRATIS';
+        btnText.innerText = 'RESERVAR ENTRADA';
+        formTitle.innerText = 'Reservar Entrada';
+      } else if (ev.ticketConfig.isContribution) {
+        priceDisplay.innerText = 'A TU ELECCIÓN';
+        btnText.innerText = 'CONTRIBUIR Y RESERVAR';
+        formTitle.innerText = 'Bono Contribución';
+        document.getElementById('contribution-section').classList.remove('hidden');
+      } else {
+        priceDisplay.innerText = `$${ev.ticketConfig.price} ARS`;
+      }
+
+      // Form submission
+      document.getElementById('purchase-form').addEventListener('submit', handlePurchase);
+    }
+
+    async function handlePurchase(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('buyer-name').value.trim();
+      const email = document.getElementById('buyer-email').value.trim();
+      const phone = document.getElementById('buyer-phone').value.trim();
+
+      showStatus('Procesando', 'Generando tu entrada...');
+
+      try {
+        // If free ticket
+        if (currentEvent.ticketConfig.price === 0 || currentEvent.ticketConfig.isContribution) {
+          const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-free`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerName: name,
+              ownerEmail: email,
+              ownerPhone: phone
+            })
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al crear la entrada');
+          }
+
+          const ticket = await res.json();
+          window.location.href = `ticket-success.html?ticket=${ticket.code}`;
+          return;
+        }
+
+        // If paid ticket - create preference
+        const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-preference`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ownerName: name,
+            ownerEmail: email,
+            ownerPhone: phone
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Error al crear preferencia de pago');
+        }
+
+        const data = await res.json();
+        
+        // Redirect to MercadoPago
+        if (data.initPoint) {
+          window.location.href = data.initPoint;
+        } else {
+          throw new Error('No se pudo obtener el link de pago');
+        }
+
+      } catch (err) {
+        hideStatus();
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+      document.getElementById('error-msg').innerText = msg;
+    }
+
+    function showStatus(title, msg) {
+      const overlay = document.getElementById('status-overlay');
+      document.getElementById('status-title').innerText = title;
+      document.getElementById('status-msg').innerText = msg;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function hideStatus() {
+      const overlay = document.getElementById('status-overlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+  </script>
+</body>
+</html>

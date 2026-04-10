@@ -262,7 +262,10 @@
         const date = document.getElementById('event-date').value;
         const location = document.getElementById('event-location').value.trim();
         const file = document.getElementById('event-file').files[0];
-        let imageUrl = document.getElementById('event-img-url').value.trim(); // Corregido el ID
+        let imageUrl = document.getElementById('event-img-url').value.trim();
+        
+        // Get ticket configuration
+        const ticketConfig = window.getTicketConfig('event');
 
         showStatus('Publicando Evento', 'Notificando a los artistas etiquedados...');
 
@@ -286,7 +289,7 @@
 
         const res = await apiRequest('/eventos', {
           method: 'POST',
-          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video })
+          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig })
         });
 
         if (res?.ok) {

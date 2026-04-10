@@ -6,6 +6,15 @@ export interface IComment {
   createdAt: Date;
 }
 
+export interface ITicketConfig {
+  enabled: boolean;
+  price: number;
+  paymentLink: string;
+  successMessage: string;
+  maxTickets: number;
+  isContribution: boolean;
+}
+
 export interface IEvento extends Document {
   title: string;
   description: string;
@@ -17,6 +26,7 @@ export interface IEvento extends Document {
   participants: Types.ObjectId[];
   likes: Types.ObjectId[];
   comments: IComment[];
+  ticketConfig: ITicketConfig;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +38,15 @@ const CommentSchema: Schema = new Schema(
   },
   { timestamps: true }
 );
+
+const TicketConfigSchema: Schema = new Schema({
+  enabled: { type: Boolean, default: false },
+  price: { type: Number, default: 0 },
+  paymentLink: { type: String, default: '' },
+  successMessage: { type: String, default: '' },
+  maxTickets: { type: Number, default: 100 },
+  isContribution: { type: Boolean, default: false },
+}, { _id: false });
 
 const EventoSchema: Schema = new Schema(
   {
@@ -41,6 +60,7 @@ const EventoSchema: Schema = new Schema(
     participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
+    ticketConfig: { type: TicketConfigSchema, default: () => ({ enabled: false }) },
   },
   { timestamps: true }
 );
