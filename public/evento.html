@@ -155,7 +155,14 @@
       document.title = `${ev.title} - Arte Digital Data`;
       document.getElementById('event-title').innerText = ev.title;
       document.getElementById('event-description').innerHTML = formatMentions(ev.description) || 'Sin descripción disponible.';
-      document.getElementById('event-location').innerText = ev.location || 'Virtual / Por definir';
+      const locationEl = document.getElementById('event-location');
+      const loc = ev.location || 'Virtual / Por definir';
+      const isUrl = /^https?:\/\//i.test(loc);
+      if (isUrl) {
+        locationEl.innerHTML = `<a href="${loc}" target="_blank" rel="noopener" class="text-cyan-400 hover:underline break-all">${loc}</a>`;
+      } else {
+        locationEl.innerText = loc;
+      }
       
       const date = new Date(ev.date);
       document.getElementById('event-date-badge').innerText = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -386,10 +393,12 @@
             // Available
             ticketActions.classList.remove('hidden');
             ticketActions.innerHTML = `
-              <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
-                <i class="fas fa-ticket-alt text-xl"></i>
-                ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-              </a>
+              <div class="group flex items-center justify-center">
+                <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
+                  <i class="fas fa-ticket-alt text-xl"></i>
+                  ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+                </a>
+              </div>
               ${ev.ticketConfig.price > 0 ? `
               <p class="text-center text-xs text-gray-500">
                 Precio: $${ev.ticketConfig.price} ARS
@@ -404,10 +413,12 @@
           // If can't get stats, show button anyway
           ticketActions.classList.remove('hidden');
           ticketActions.innerHTML = `
-            <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
-              <i class="fas fa-ticket-alt text-xl"></i>
-              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-            </a>
+            <div class="group flex items-center justify-center">
+              <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
+                <i class="fas fa-ticket-alt text-xl"></i>
+                ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+              </a>
+            </div>
           `;
         }
       } catch (err) {
@@ -415,10 +426,12 @@
         // Show button on error
         ticketActions.classList.remove('hidden');
         ticketActions.innerHTML = `
-          <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25">
-            <i class="fas fa-ticket-alt text-xl"></i>
-            ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-          </a>
+          <div class="group flex items-center justify-center">
+            <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
+              <i class="fas fa-ticket-alt text-xl"></i>
+              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+            </a>
+          </div>
         `;
       }
     }
