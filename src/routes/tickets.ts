@@ -243,6 +243,9 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 // Get my tickets
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    // Convertir el ID del usuario a ObjectId para comparación correcta con MongoDB
+    const userObjectId = new Types.ObjectId(req.user!.id);
+
     // Get user to check their email
     const user = await User.findById(req.user!.id);
     const userEmail = user?.email;
@@ -251,8 +254,8 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     // Escape special regex characters in email
     const escapedEmail = userEmail?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const query = escapedEmail
-      ? { $or: [{ owner: req.user!.id }, { ownerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }] }
-      : { owner: req.user!.id };
+      ? { $or: [{ owner: userObjectId }, { ownerEmail: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } }] }
+      : { owner: userObjectId };
 
     const tickets = await Ticket.find(query)
       .populate('event', 'title date location imageUrl')
