@@ -34,7 +34,10 @@
           <div class="flex justify-between items-start">
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Entrada para</p>
-              <h2 id="event-title" class="text-xl font-black text-white"></h2>
+              <a id="event-link" href="#" class="text-xl font-black text-white hover:text-magenta-400 transition-colors flex items-center gap-2 group">
+                <span id="event-title"></span>
+                <i class="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition-opacity text-magenta-400"></i>
+              </a>
             </div>
             <i class="fas fa-ticket-alt text-3xl text-magenta-500/50"></i>
           </div>
@@ -62,14 +65,33 @@
             <div class="text-center">
               <p class="text-sm text-gray-400 mb-4">Presentá este código QR en la entrada:</p>
               
-              <div class="inline-block p-4 bg-white rounded-2xl mb-4">
+              <div class="inline-block p-4 bg-white rounded-2xl mb-4 relative">
                 <img id="qr-code" src="" alt="QR Code" class="w-48 h-48">
+                <!-- Admin: Regenerate QR Button -->
+                <button id="regenerate-qr-btn" onclick="regenerateQR()" class="hidden absolute -top-3 -right-3 w-10 h-10 bg-yellow-500 text-black rounded-full shadow-lg hover:bg-yellow-400 transition-all" title="Regenerar QR">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
               </div>
 
               <p id="ticket-code" class="text-2xl font-black text-magenta-400 tracking-widest font-mono mb-2">
                 <!-- Code -->
               </p>
               <p class="text-xs text-gray-500">Código de entrada</p>
+            </div>
+          </div>
+
+          <!-- Admin Actions -->
+          <div id="admin-actions" class="hidden border-t border-white/10 mt-6 pt-6">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-3">Acciones Administrador</p>
+            <div class="flex flex-wrap gap-3">
+              <a id="manage-tickets-link" href="#" class="px-4 py-2 rounded-lg bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30 hover:bg-fuchsia-500/30 transition-all text-sm font-bold flex items-center gap-2">
+                <i class="fas fa-ticket-alt"></i>
+                Ver Todas las Entradas
+              </a>
+              <button onclick="regenerateQR()" class="px-4 py-2 rounded-lg bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30 transition-all text-sm font-bold flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i>
+                Regenerar QR
+              </button>
             </div>
           </div>
 
@@ -170,12 +192,27 @@
         document.getElementById('success-message').innerText = ev.ticketConfig.successMessage;
       }
 
-      // Event info
+      // Event info with link
+      const eventLink = document.getElementById('event-link');
       document.getElementById('event-title').innerText = ev.title;
+      eventLink.href = `evento.html?id=${ev._id || ev.id}`;
       document.getElementById('event-date').querySelector('span').innerText = new Date(ev.date).toLocaleDateString('es-AR', { 
         day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
       });
       document.getElementById('event-location').querySelector('span').innerText = ev.location || 'Virtual';
+      
+      // Check if user is admin or event creator
+      const user = getUser();
+      const isAdmin = user && (user.role === 'ADMINISTRADOR' || user.role === 'ADMIN');
+      const creatorId = ev.creator?._id || ev.creator;
+      const isCreator = user && creatorId && user._id === creatorId;
+      
+      if (isAdmin || isCreator) {
+        // Show admin actions
+        document.getElementById('admin-actions').classList.remove('hidden');
+        document.getElementById('regenerate-qr-btn').classList.remove('hidden');
+        document.getElementById('manage-tickets-link').href = `event-tickets.html?event=${ev._id || ev.id}`;
+      }
 
       // Ticket info
       document.getElementById('ticket-code').innerText = ticket.code;
@@ -263,6 +300,39 @@
       `);
       printWindow.document.close();
       printWindow.print();
+    }
+
+    // Regenerate QR for admin/creator
+    async function regenerateQR() {
+      if (!currentTicket) return;
+      
+      if (!confirm('¿Estás seguro de que querés regenerar el QR de esta entrada?')) return;
+      
+      try {
+        const res = await apiRequest(`/tickets/${currentTicket._id}/regenerate-qr`, {
+          method: 'POST'
+        });
+        
+        if (res.ok) {
+          const updatedTicket = await res.json();
+          currentTicket = updatedTicket;
+          
+          // Update QR image
+          const qrImg = document.getElementById('qr-code');
+          if (updatedTicket.qrData) {
+            qrImg.src = updatedTicket.qrData;
+            qrImg.style.display = 'block';
+            qrImg.parentElement.querySelector('p')?.remove();
+          }
+          
+          alert('QR regenerado exitosamente');
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al regenerar QR');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
     }
   </script>
 </body>
