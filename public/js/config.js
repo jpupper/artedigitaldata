@@ -5,9 +5,7 @@ window.CONFIG = {
     NODE_HOSTS: [
         'localhost',
         '127.0.0.1',
-        'vps-4455523-x.dattaweb.com',
-        'artedigitaldata.com',
-        'www.artedigitaldata.com'
+        'vps-4455523-x.dattaweb.com'
     ],
 
     get isLocal() {
@@ -27,10 +25,8 @@ window.CONFIG = {
     },
 
     get API_URL() {
-        // Lógica robusta: si estoy en el dominio real, uso el mismo origen para evitar CORS
-        const origin = (window.location.hostname.includes('artedigitaldata.com')) 
-            ? window.location.origin 
-            : (this.isLocal ? VPS_ORIGIN : window.location.origin);
+        // El usuario quiere que en LOCAL se usen siempre los datos del VPS
+        const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
         return origin + '/artedigitaldata/api';
     },
 
