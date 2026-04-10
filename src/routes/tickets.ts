@@ -380,7 +380,8 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
     });
 
     // --- Option A: event has a manual payment link (no API token needed) ---
-    if (event.ticketConfig.paymentLink) {
+    // Contribution events skip this so the MP API can apply the user-chosen amount
+    if (event.ticketConfig.paymentLink && !event.ticketConfig.isContribution) {
       ticket.paymentStatus = 'free';
       await ticket.save();
 
@@ -403,9 +404,11 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
 
     // --- Option B: use MercadoPago API (requires access token) ---
     if (!mercadopago) {
-      // Clean up ticket we just created since we can't process payment
       await ticket.deleteOne();
-      return res.status(500).json({ error: 'MercadoPago no configurado. Configurá el Access Token o agregá un link de pago manual al evento.' });
+      const msg = event.ticketConfig.isContribution
+        ? 'Para eventos con bono contribución es necesario configurar el Access Token de MercadoPago (MERCADOPAGO_ACCESS_TOKEN).'
+        : 'MercadoPago no configurado. Configurá el Access Token o agregá un link de pago manual al evento.';
+      return res.status(500).json({ error: msg });
     }
 
     // Determine unit price: use custom amount for contribution mode, otherwise event price
