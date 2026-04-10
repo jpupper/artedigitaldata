@@ -338,7 +338,7 @@ router.get('/event/:eventId/stats', authMiddleware, async (req: AuthRequest, res
 });
 
 // Create MercadoPago preference for ticket purchase
-router.post('/event/:eventId/create-preference', optionalAuth, async (req: AuthRequest, res: Response) => {
+router.post('/event/:eventId/create-preference', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
@@ -446,7 +446,7 @@ router.post('/event/:eventId/create-preference', optionalAuth, async (req: AuthR
 });
 
 // Create free ticket (for events with 0 price or contribution mode)
-router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest, res: Response) => {
+router.post('/event/:eventId/create-free', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });

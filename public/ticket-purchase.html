@@ -125,6 +125,11 @@
     let ticketCreated = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      if (!isLoggedIn()) {
+        showLogin();
+        return;
+      }
+
       const urlParams = new URLSearchParams(window.location.search);
       const eventId = urlParams.get('event');
 
@@ -229,9 +234,12 @@
           if (amount > 0) {
             // Pay via MercadoPago with the chosen contribution amount
             showStatus('Procesando', 'Preparando el pago...');
+            const prefHeaders = { 'Content-Type': 'application/json' };
+            const prefToken = getToken();
+            if (prefToken) prefHeaders['Authorization'] = `Bearer ${prefToken}`;
             const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-preference`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: prefHeaders,
               body: JSON.stringify({ ownerName: name, ownerEmail: email, ownerPhone: phone, amount })
             });
             if (!res.ok) {
@@ -263,9 +271,12 @@
 
         // --- PAID EVENT (non-contribution) --- always go through MercadoPago
         showStatus('Procesando', 'Preparando el pago...');
+        const paidHeaders = { 'Content-Type': 'application/json' };
+        const paidToken = getToken();
+        if (paidToken) paidHeaders['Authorization'] = `Bearer ${paidToken}`;
         const res = await fetch(`${CONFIG.API_URL}/tickets/event/${currentEvent._id}/create-preference`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: paidHeaders,
           body: JSON.stringify({ ownerName: name, ownerEmail: email, ownerPhone: phone })
         });
 
