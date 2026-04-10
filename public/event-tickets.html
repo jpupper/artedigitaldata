@@ -767,8 +767,6 @@
       const phone = document.getElementById('manual-phone').value.trim();
       const ownerId = document.getElementById('manual-owner-id').value;
 
-      console.log('[Frontend] Sending manual ticket with ownerId:', ownerId, 'selectedUser:', selectedUser);
-
       try {
         const body = {
           ownerName: name,
@@ -779,9 +777,6 @@
         // Only add ownerId if a user was selected
         if (ownerId) {
           body.ownerId = ownerId;
-          console.log('[Frontend] Adding ownerId to body:', ownerId);
-        } else {
-          console.log('[Frontend] No ownerId selected, sending without owner');
         }
 
         const res = await apiRequest(`/tickets/event/${currentEventId}/issue-manual`, {
