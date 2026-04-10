@@ -146,4 +146,32 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     }
 });
 
+// Get all users (requires auth - for admin/creator to issue tickets)
+router.get('/users', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    // Only admin or event creators should access this
+    const users = await User.find()
+      .select('_id username email displayName avatar')
+      .sort({ username: 1 });
+
+    return res.json(users);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single user by ID (requires auth)
+router.get('/users/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('_id username email displayName avatar');
+
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    return res.json(user);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

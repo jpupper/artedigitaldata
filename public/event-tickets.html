@@ -148,7 +148,7 @@
             <thead>
               <tr class="border-b border-white/10 bg-black/20">
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Código</th>
-                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Dueño</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Dueño / Usuario</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Estado</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Pago</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Fecha</th>
@@ -222,8 +222,45 @@
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
-      
+
       <form id="manual-ticket-form" onsubmit="issueManualTicket(event)" class="space-y-4">
+        <!-- User Search -->
+        <div class="relative">
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">
+            <i class="fas fa-user text-fuchsia-500 mr-1"></i>Buscar Usuario (Opcional)
+          </label>
+          <div class="relative">
+            <input type="text" id="user-search-input" placeholder="Escribí el nombre o @usuario..."
+              oninput="searchUsers(this.value)"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-10 text-white focus:border-fuchsia-500 focus:outline-none transition-colors">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            <button type="button" id="clear-user-btn" onclick="clearSelectedUser()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-400">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <input type="hidden" id="manual-owner-id" value="">
+
+          <!-- Search Results Dropdown -->
+          <div id="user-search-results" class="hidden absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a24] shadow-xl">
+            <!-- Results will be injected here -->
+          </div>
+
+          <!-- Selected User Badge -->
+          <div id="selected-user-badge" class="hidden mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
+            <i class="fas fa-user-check text-fuchsia-500"></i>
+            <span id="selected-user-name" class="text-sm text-fuchsia-400 font-medium"></span>
+            <button type="button" onclick="clearSelectedUser()" class="ml-auto text-fuchsia-400 hover:text-white">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1">Buscá y seleccioná un usuario para vincular la entrada</p>
+        </div>
+
+        <div class="border-t border-white/10 pt-4">
+          <p class="text-xs text-gray-400 uppercase font-bold mb-3">Datos del Asistente</p>
+        </div>
+
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre completo *</label>
           <input type="text" id="manual-name" required placeholder="Nombre del asistente"
@@ -304,13 +341,119 @@
         document.getElementById('back-link').href = `evento.html?id=${ev._id}`;
         document.getElementById('view-event-link').href = `evento.html?id=${ev._id}`;
 
-        await Promise.all([loadTickets(), loadStats()]);
+        await Promise.all([loadTickets(), loadStats(), loadUsersForSelector()]);
       } catch (err) {
         console.error('Error loading event:', err);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('access-denied').classList.remove('hidden');
       }
     }
+
+    // User search cache
+    let allUsers = [];
+    let selectedUser = null;
+
+    // Load all users for search
+    async function loadUsersForSelector() {
+      try {
+        const res = await apiRequest('/auth/users');
+        if (!res.ok) throw new Error();
+        allUsers = await res.json();
+      } catch (err) {
+        console.error('Error loading users:', err);
+      }
+    }
+
+    // Search users function
+    function searchUsers(query) {
+      const resultsDiv = document.getElementById('user-search-results');
+
+      if (!query.trim()) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      const lowerQuery = query.toLowerCase();
+      const matches = allUsers.filter(user =>
+        user.username.toLowerCase().includes(lowerQuery) ||
+        (user.displayName && user.displayName.toLowerCase().includes(lowerQuery)) ||
+        user.email.toLowerCase().includes(lowerQuery)
+      ).slice(0, 10); // Limit to 10 results
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = `
+          <div class="px-4 py-3 text-sm text-gray-500">
+            <i class="fas fa-search mr-2"></i>No se encontraron usuarios
+          </div>
+        `;
+      } else {
+        resultsDiv.innerHTML = matches.map(user => {
+          const displayName = user.displayName || user.username;
+          return `
+            <button type="button" onclick="selectUser('${user._id}', '${displayName.replace(/'/g, "\\'")}', '@${user.username}')"
+              class="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0">
+              <div class="w-8 h-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xs font-bold">
+                ${displayName[0].toUpperCase()}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-white font-medium truncate">${displayName}</p>
+                <p class="text-xs text-gray-500 truncate">@${user.username} · ${user.email}</p>
+              </div>
+              <i class="fas fa-plus text-fuchsia-500 text-xs"></i>
+            </button>
+          `;
+        }).join('');
+      }
+
+      resultsDiv.classList.remove('hidden');
+    }
+
+    // Select a user
+    function selectUser(userId, displayName, username) {
+      selectedUser = { _id: userId, displayName, username };
+      document.getElementById('manual-owner-id').value = userId;
+
+      // Show badge
+      document.getElementById('selected-user-name').textContent = `${displayName} (${username})`;
+      document.getElementById('selected-user-badge').classList.remove('hidden');
+      document.getElementById('clear-user-btn').classList.remove('hidden');
+
+      // Hide results and clear input
+      document.getElementById('user-search-results').classList.add('hidden');
+      document.getElementById('user-search-input').value = '';
+
+      // Auto-fill data if empty
+      const user = allUsers.find(u => u._id === userId);
+      if (user) {
+        const nameField = document.getElementById('manual-name');
+        const emailField = document.getElementById('manual-email');
+
+        if (!nameField.value) {
+          nameField.value = user.displayName || user.username || '';
+        }
+        if (!emailField.value) {
+          emailField.value = user.email || '';
+        }
+      }
+    }
+
+    // Clear selected user
+    function clearSelectedUser() {
+      selectedUser = null;
+      document.getElementById('manual-owner-id').value = '';
+      document.getElementById('selected-user-badge').classList.add('hidden');
+      document.getElementById('clear-user-btn').classList.add('hidden');
+      document.getElementById('user-search-input').value = '';
+      document.getElementById('user-search-results').classList.add('hidden');
+    }
+
+    // Close search results when clicking outside
+    document.addEventListener('click', (e) => {
+      const container = document.querySelector('.relative:has(#user-search-input)');
+      if (container && !container.contains(e.target)) {
+        document.getElementById('user-search-results').classList.add('hidden');
+      }
+    });
 
     async function loadTickets() {
       try {
@@ -411,6 +554,14 @@
             <td class="px-6 py-4">
               <div class="text-white font-medium">${t.ownerName || 'Sin nombre'}</div>
               <div class="text-xs text-gray-500">${t.ownerEmail || ''}</div>
+              ${t.owner ? `
+                <div class="mt-1 flex items-center gap-1">
+                  <i class="fas fa-user-check text-fuchsia-500 text-xs"></i>
+                  <a href="perfil.html?user=${t.owner._id || t.owner}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
+                    @${t.owner.username || 'usuario'}
+                  </a>
+                </div>
+              ` : '<div class="mt-1 text-xs text-gray-600"><i class="fas fa-user-slash mr-1"></i>Sin usuario vinculado</div>'}
             </td>
             <td class="px-6 py-4">
               <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">
@@ -604,28 +755,38 @@
     function closeManualTicketModal() {
       document.getElementById('manual-ticket-modal').classList.add('hidden');
       document.getElementById('manual-ticket-form').reset();
+      clearSelectedUser();
     }
 
     async function issueManualTicket(e) {
       e.preventDefault();
-      
+
       const name = document.getElementById('manual-name').value.trim();
       const email = document.getElementById('manual-email').value.trim();
       const phone = document.getElementById('manual-phone').value.trim();
+      const ownerId = document.getElementById('manual-owner-id').value;
 
       try {
+        const body = {
+          ownerName: name,
+          ownerEmail: email,
+          ownerPhone: phone
+        };
+
+        // Only add ownerId if a user was selected
+        if (ownerId) {
+          body.ownerId = ownerId;
+        }
+
         const res = await apiRequest(`/tickets/event/${currentEventId}/issue-manual`, {
           method: 'POST',
-          body: JSON.stringify({
-            ownerName: name,
-            ownerEmail: email,
-            ownerPhone: phone
-          })
+          body: JSON.stringify(body)
         });
 
         if (res.ok) {
           const ticket = await res.json();
-          alert(`¡Entrada enviada exitosamente!\nCódigo: ${ticket.code}`);
+          const linkedUser = ticket.owner ? `\nVinculado a: @${ticket.owner.username}` : '';
+          alert(`¡Entrada enviada exitosamente!\nCódigo: ${ticket.code}${linkedUser}`);
           closeManualTicketModal();
           await Promise.all([loadTickets(), loadStats()]);
         } else {

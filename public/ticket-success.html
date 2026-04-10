@@ -235,10 +235,23 @@
 
       // Owner info
       const ownerInfo = document.getElementById('owner-info');
+      const linkedUserHtml = ticket.owner ? `
+        <div class="mt-3 pt-3 border-t border-white/10">
+          <p class="flex items-center gap-2">
+            <i class="fas fa-user-check text-fuchsia-500"></i>
+            <strong>Vinculado a:</strong>
+            <a href="perfil.html?user=${ticket.owner._id || ticket.owner}" class="text-fuchsia-400 hover:text-fuchsia-300">
+              @${ticket.owner.username || 'usuario'}
+            </a>
+          </p>
+        </div>
+      ` : '';
+
       ownerInfo.innerHTML = `
         <p><strong>Nombre:</strong> ${ticket.ownerName || 'No especificado'}</p>
         <p><strong>Email:</strong> ${ticket.ownerEmail || 'No especificado'}</p>
         ${ticket.ownerPhone ? `<p><strong>Teléfono:</strong> ${ticket.ownerPhone}</p>` : ''}
+        ${linkedUserHtml}
       `;
 
       // Status badge

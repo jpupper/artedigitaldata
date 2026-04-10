@@ -93,7 +93,7 @@
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Código</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Evento</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Fecha Evento</th>
-                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Dueño</th>
+                <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Dueño / Usuario Vinculado</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Estado</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Pago</th>
                 <th class="text-left px-6 py-4 text-magenta-400 font-bold uppercase text-xs">Canjeada</th>
@@ -282,6 +282,14 @@
             <td class="px-6 py-4">
               <div class="text-white font-medium">${t.ownerName || 'Sin nombre'}</div>
               <div class="text-xs text-gray-500">${t.ownerEmail || ''}</div>
+              ${t.owner ? `
+                <div class="mt-1 flex items-center gap-1">
+                  <i class="fas fa-user-check text-fuchsia-500 text-xs"></i>
+                  <a href="perfil.html?user=${t.owner._id || t.owner}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
+                    @${t.owner.username || 'usuario'}
+                  </a>
+                </div>
+              ` : '<div class="mt-1 text-xs text-gray-600"><i class="fas fa-user-slash mr-1"></i>Sin usuario vinculado</div>'}
             </td>
             <td class="px-6 py-4">
               <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">

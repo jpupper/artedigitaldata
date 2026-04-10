@@ -198,6 +198,13 @@
         priceDisplay.innerText = `$${ev.ticketConfig.price} ARS`;
       }
 
+      // Pre-fill form with logged-in user data
+      const user = getUser();
+      if (user) {
+        document.getElementById('buyer-name').value = user.displayName || user.username || '';
+        document.getElementById('buyer-email').value = user.email || '';
+      }
+
       // Form submission
       document.getElementById('purchase-form').addEventListener('submit', handlePurchase);
     }
