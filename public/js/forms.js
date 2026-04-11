@@ -162,6 +162,13 @@ const FORM_TEMPLATES = {
           </div>
           
           <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Mensaje en página de compra</label>
+            <textarea id="${prefix}-ticket-purchase-message" rows="2" placeholder="Ej: Todos los asistentes entran al sorteo de una tablet..."
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none resize-none">${tc.purchaseMessage || ''}</textarea>
+            <p class="text-[10px] text-gray-500 mt-1">Se muestra en la pantalla de compra, antes de confirmar.</p>
+          </div>
+
+          <div>
             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Mensaje post-compra</label>
             <textarea id="${prefix}-ticket-message" rows="2" placeholder="¡Gracias por tu compra! Presentá este QR en la entrada..."
               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none resize-none">${tc.successMessage || ''}</textarea>
@@ -204,6 +211,7 @@ window.getTicketConfig = (prefix) => {
     maxTickets: parseInt(document.getElementById(`${prefix}-ticket-max`)?.value) || 100,
     paymentLink: document.getElementById(`${prefix}-ticket-link`)?.value || '',
     successMessage: document.getElementById(`${prefix}-ticket-message`)?.value || '',
+    purchaseMessage: document.getElementById(`${prefix}-ticket-purchase-message`)?.value || '',
     isContribution: document.getElementById(`${prefix}-ticket-contribution`)?.checked || false
   };
 };

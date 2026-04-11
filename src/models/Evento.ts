@@ -11,6 +11,7 @@ export interface ITicketConfig {
   price: number;
   paymentLink: string;
   successMessage: string;
+  purchaseMessage: string;
   maxTickets: number;
   isContribution: boolean;
 }
@@ -45,6 +46,7 @@ const TicketConfigSchema: Schema = new Schema({
   price: { type: Number, default: 0 },
   paymentLink: { type: String, default: '' },
   successMessage: { type: String, default: '' },
+  purchaseMessage: { type: String, default: '' },
   maxTickets: { type: Number, default: 100 },
   isContribution: { type: Boolean, default: false },
 }, { _id: false });
