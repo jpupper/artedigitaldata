@@ -35,15 +35,17 @@
           <!-- Image injected here -->
         </div>
         <div class="p-6">
-          <h1 id="event-title" class="text-2xl font-black text-white mb-2"></h1>
-          <div class="flex items-center gap-4 text-sm text-gray-400">
+          <a id="event-title-link" href="#" class="text-2xl font-black text-white mb-2 hover:text-magenta-400 transition-colors flex items-center gap-2 group">
+            <span id="event-title"></span>
+            <i class="fas fa-external-link-alt text-sm text-magenta-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </a>
+          <div class="flex flex-wrap items-center gap-3 text-sm text-gray-400 mt-2">
             <span id="event-date" class="flex items-center gap-2">
               <i class="fas fa-calendar text-magenta-500"></i>
               <!-- Date -->
             </span>
-            <span id="event-location" class="flex items-center gap-2">
-              <i class="fas fa-map-marker-alt text-cyan-500"></i>
-              <!-- Location -->
+            <span id="event-location">
+              <!-- Location injected by JS -->
             </span>
           </div>
         </div>
@@ -172,9 +174,31 @@
         imgContainer.innerHTML = `<i class="fas fa-calendar-alt text-6xl text-magenta-500/20"></i>`;
       }
 
+      const eventId = new URLSearchParams(window.location.search).get('event');
       document.getElementById('event-title').innerText = ev.title;
+      document.getElementById('event-title-link').href = `evento.html?id=${eventId}`;
       document.getElementById('event-date').innerHTML = `<i class="fas fa-calendar text-magenta-500"></i> ${new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
-      document.getElementById('event-location').innerHTML = `<i class="fas fa-map-marker-alt text-cyan-500"></i> ${ev.location || 'Virtual'}`;
+
+      const locEl = document.getElementById('event-location');
+      const loc = ev.location || '';
+      const isLocUrl = /^https?:\/\//i.test(loc);
+      if (isLocUrl) {
+        const isGMaps = /google\.com\/maps|maps\.google|maps\.app\.goo\.gl/i.test(loc);
+        locEl.innerHTML = `<a href="${loc}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all font-bold text-xs">
+          <i class="fas ${isGMaps ? 'fa-map-marker-alt' : 'fa-external-link-alt'}"></i>
+          ${isGMaps ? 'Ver en Google Maps' : 'Ver ubicación'}
+        </a>`;
+      } else {
+        locEl.innerHTML = loc ? `<i class="fas fa-map-marker-alt text-cyan-500"></i> ${loc}` : '';
+      }
+
+      // Purchase message banner
+      if (ev.ticketConfig.purchaseMessage) {
+        const banner = document.createElement('div');
+        banner.className = 'rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/30 px-5 py-4 mb-6 flex items-start gap-3';
+        banner.innerHTML = `<i class="fas fa-star text-fuchsia-400 mt-0.5 shrink-0"></i><p class="text-fuchsia-200 text-sm leading-relaxed">${ev.ticketConfig.purchaseMessage}</p>`;
+        document.getElementById('purchase-form').parentElement.insertBefore(banner, document.getElementById('buyer-summary'));
+      }
 
       // Price display
       const priceDisplay = document.getElementById('ticket-price');
