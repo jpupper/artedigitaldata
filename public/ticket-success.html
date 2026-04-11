@@ -150,10 +150,24 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const ticketCode = urlParams.get('ticket');
+      const paymentId = urlParams.get('payment_id');
+      const paymentStatus = urlParams.get('status');
 
       if (!ticketCode) {
         showError();
         return;
+      }
+
+      // If MP redirected back with a payment_id, sync payment status first
+      if (paymentId && paymentStatus === 'approved' && isLoggedIn()) {
+        try {
+          await apiRequest('/tickets/sync-payment', {
+            method: 'POST',
+            body: JSON.stringify({ payment_id: paymentId, ticket_code: ticketCode })
+          });
+        } catch (e) {
+          console.warn('sync-payment failed:', e);
+        }
       }
 
       await loadTicket(ticketCode);
@@ -251,6 +265,7 @@
         <p><strong>Nombre:</strong> ${ticket.ownerName || 'No especificado'}</p>
         <p><strong>Email:</strong> ${ticket.ownerEmail || 'No especificado'}</p>
         ${ticket.ownerPhone ? `<p><strong>Teléfono:</strong> ${ticket.ownerPhone}</p>` : ''}
+        ${ticket.amountPaid > 0 ? `<p><strong>Monto pagado:</strong> $${ticket.amountPaid.toLocaleString('es-AR')} ARS</p>` : ''}
         ${linkedUserHtml}
       `;
 

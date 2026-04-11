@@ -159,7 +159,13 @@
       const loc = ev.location || 'Virtual / Por definir';
       const isUrl = /^https?:\/\//i.test(loc);
       if (isUrl) {
-        locationEl.innerHTML = `<a href="${loc}" target="_blank" rel="noopener" class="text-cyan-400 hover:underline break-all">${loc}</a>`;
+        const isGoogleMaps = /google\.com\/maps|maps\.google|maps\.app\.goo\.gl/i.test(loc);
+        locationEl.innerHTML = `
+          <a href="${loc}" target="_blank" rel="noopener"
+            class="inline-flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 transition-all font-bold text-sm">
+            <i class="fas ${isGoogleMaps ? 'fa-map-marker-alt' : 'fa-external-link-alt'}"></i>
+            ${isGoogleMaps ? 'Ver en Google Maps' : 'Ver ubicación'}
+          </a>`;
       } else {
         locationEl.innerText = loc;
       }
