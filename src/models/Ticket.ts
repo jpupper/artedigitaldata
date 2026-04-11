@@ -12,6 +12,7 @@ export interface ITicket extends Document {
   redeemedAt?: Date;
   paymentId?: string;
   paymentStatus: 'pending' | 'completed' | 'failed' | 'free';
+  amountPaid?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ const TicketSchema: Schema = new Schema(
     redeemedAt: { type: Date, required: false },
     paymentId: { type: String, default: '' },
     paymentStatus: { type: String, enum: ['pending', 'completed', 'failed', 'free'], default: 'pending' },
+    amountPaid: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

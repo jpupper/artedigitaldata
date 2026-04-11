@@ -519,6 +519,48 @@ router.post('/event/:eventId/create-free', authMiddleware, async (req: AuthReque
   }
 });
 
+// Sync payment status from MP (called by frontend after redirect back from MP)
+router.post('/sync-payment', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { payment_id, ticket_code } = req.body;
+    if (!payment_id || !ticket_code) {
+      return res.status(400).json({ error: 'payment_id y ticket_code son requeridos' });
+    }
+    if (!mercadopago) {
+      return res.status(500).json({ error: 'MercadoPago no configurado' });
+    }
+
+    const paymentClient = new Payment(mercadopago);
+    const payment = await paymentClient.get({ id: payment_id });
+
+    const ticket = await Ticket.findOne({ code: ticket_code });
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    if (payment.status === 'approved' && ticket.paymentStatus !== 'completed') {
+      ticket.paymentId = String(payment_id);
+      ticket.paymentStatus = 'completed';
+      ticket.amountPaid = typeof payment.transaction_amount === 'number' ? payment.transaction_amount : (ticket.amountPaid || 0);
+      await ticket.save();
+
+      // Send confirmation email
+      const recipientEmail = ticket.ownerEmail || (req.user?.id ? (await User.findById(req.user.id))?.email : undefined);
+      if (recipientEmail) {
+        const event = await Evento.findById(ticket.event);
+        if (event) {
+          sendTicketEmail(recipientEmail, ticket.ownerName || 'Usuario', { code: ticket.code, qrData: ticket.qrData }, event).catch(e =>
+            console.error('[Tickets] sync-payment email error:', e)
+          );
+        }
+      }
+    }
+
+    return res.json({ status: ticket.paymentStatus, amountPaid: ticket.amountPaid });
+  } catch (err: any) {
+    console.error('sync-payment error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // MercadoPago webhook
 router.post('/webhook', async (req: Request, res: Response) => {
   try {
@@ -536,6 +578,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
           if (ticket) {
             ticket.paymentId = String(paymentId);
             ticket.paymentStatus = 'completed';
+            ticket.amountPaid = typeof payment.transaction_amount === 'number' ? payment.transaction_amount : (ticket.amountPaid || 0);
             await ticket.save();
 
             // Send confirmation email
