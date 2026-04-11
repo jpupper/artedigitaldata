@@ -398,7 +398,7 @@
             <p class="flex items-center gap-2">
               <i class="fas fa-user-check text-fuchsia-500"></i>
               <strong>Vinculado a:</strong>
-              <a href="profile.html?user=${ticket.owner._id || ticket.owner}" class="text-fuchsia-400 hover:text-fuchsia-300">
+              <a href="profile.html?user=${ticket.owner.username || ticket.owner}" class="text-fuchsia-400 hover:text-fuchsia-300">
                 @${ticket.owner.username || 'usuario'}
               </a>
             </p>
