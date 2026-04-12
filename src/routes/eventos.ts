@@ -3,6 +3,7 @@ import Evento from '../models/Evento';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import User from '../models/User';
 import { hydrate, hydrateComments } from '../utils/userHydration';
+import Notification from '../models/Notification';
 
 const router = Router();
 
@@ -147,13 +148,30 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
 
     const userId = req.user!.id;
     const idx = (evento.likes || []).findIndex((id: any) => id.toString() === userId);
+    let isAdding = false;
     if (idx === -1) {
       if (!evento.likes) evento.likes = [];
       evento.likes.push(userId as any);
+      isAdding = true;
     } else {
       evento.likes.splice(idx, 1);
     }
     await evento.save();
+
+    if (isAdding && evento.creator.toString() !== userId) {
+      const actor = await User.findById(userId).select('username displayName avatar');
+      Notification.create({
+        recipient: evento.creator,
+        type: 'like_evento',
+        actor: userId,
+        actorName: actor?.displayName || actor?.username || '',
+        actorAvatar: actor?.avatar || '',
+        resourceId: evento._id.toString(),
+        resourceTitle: evento.title,
+        resourceType: 'evento',
+      }).catch(() => {});
+    }
+
     return res.json(evento);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

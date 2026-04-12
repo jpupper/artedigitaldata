@@ -111,6 +111,10 @@
       <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-ticket-alt mr-2 text-fuchsia-500"></i>ENTRADAS
       </button>
+      <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="tab-btn hidden px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+        <i class="fas fa-bell mr-2 text-yellow-400"></i>NOTIFICACIONES
+        <span id="notif-badge" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black"></span>
+      </button>
     </div>
 
     <!-- Content Sections -->
@@ -155,7 +159,26 @@
         </div>
       </div>
     </div>
-  </main>  <script src="js/config.js"></script>
+
+    <div id="section-notificaciones" class="content-section hidden">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-black text-white flex items-center gap-2">
+          <i class="fas fa-bell text-yellow-400"></i> Notificaciones
+        </h2>
+        <button id="mark-all-read-btn" onclick="markAllNotificationsRead()" class="px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold transition-all">
+          <i class="fas fa-check-double mr-1"></i>Marcar todas como leídas
+        </button>
+      </div>
+      <div id="user-notifications" class="space-y-3">
+        <div class="text-center text-gray-500 py-10">
+          <i class="fas fa-spinner fa-spin text-2xl text-yellow-400 mb-3"></i>
+          <p>Cargando notificaciones...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -180,7 +203,10 @@
       }
 
       isOwner = currentUser && currentUser.username === targetUsername;
-      if (isOwner) document.getElementById('edit-profile-btn').classList.remove('hidden');
+      if (isOwner) {
+        document.getElementById('edit-profile-btn').classList.remove('hidden');
+        document.getElementById('tab-notificaciones').classList.remove('hidden');
+      }
 
       await loadProfile();
 
@@ -290,9 +316,10 @@
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
 
-        // Load tickets if viewing own profile
+        // Load tickets and notifications if viewing own profile
         if (isOwner) {
           loadUserTickets();
+          loadUserNotifications();
         }
       } catch (err) {
         console.error("Error loading profile:", err);
