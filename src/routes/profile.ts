@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import Post from '../models/Post';
 import Recurso from '../models/Recurso';
@@ -36,6 +37,20 @@ router.get('/:username', async (req: Request, res: Response) => {
     const user = await User.findOne({ username: req.params.username }).select('-password');
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
+    // Determine if the requester is the owner (to expose email)
+    const userObj = user.toObject() as any;
+    const authHeader = req.headers['authorization'];
+    let isOwnerRequest = false;
+    if (authHeader) {
+      try {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) throw new Error('no secret');
+        const decoded: any = jwt.verify(authHeader.replace('Bearer ', ''), secret);
+        isOwnerRequest = decoded.id === user._id.toString() || decoded.userId === user._id.toString();
+      } catch { /* invalid token — treat as guest */ }
+    }
+    if (!isOwnerRequest) delete userObj.email;
+
     // Favorites (items liked by this user)
     const likedPosts = await Post.find({ likes: user._id }).sort({ createdAt: -1 });
     const likedRecursos = await Recurso.find({ likes: user._id }).sort({ createdAt: -1 });
@@ -53,7 +68,7 @@ router.get('/:username', async (req: Request, res: Response) => {
     const doorEvents = await Evento.find({ doorUsers: user._id }).sort({ date: 1 });
 
     return res.json({ 
-      user, 
+      user: userObj, 
       posts: await hydrate(posts), 
       recursos: await hydrate(recursos), 
       eventos: await hydrate(eventos, 'creator'),
