@@ -631,6 +631,16 @@
                     <i class="fas fa-door-open mr-1"></i>Canjear
                   </button>
                 ` : ''}
+                ${!t.redeemed && t.paymentStatus === 'pending' && (perms.isEventCreator || perms.userIsAdmin) ? `
+                  <button onclick="approvePayment('${t._id}')" class="px-3 py-1 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all text-xs font-bold" title="Aprobar pago manualmente">
+                    <i class="fas fa-check mr-1"></i>Aprobar
+                  </button>
+                ` : ''}
+                ${!t.redeemed && t.paymentStatus === 'pending' ? `
+                  <button onclick="redeemTicket('${t._id}', true)" class="px-3 py-1 rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 transition-all text-xs font-bold" title="Canjear aunque el pago esté pendiente">
+                    <i class="fas fa-door-open mr-1"></i>Canjear
+                  </button>
+                ` : ''}
                 <button onclick="viewTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-all text-xs">
                   <i class="fas fa-eye"></i>
                 </button>
@@ -646,8 +656,27 @@
       }).join('');
     }
 
-    async function redeemTicket(ticketId) {
-      if (!confirm('¿Marcar esta entrada como canjeada?')) return;
+    async function approvePayment(ticketId) {
+      if (!confirm('¿Aprobar el pago de esta entrada manualmente? Esto la marcará como pagada aunque MercadoPago no lo haya confirmado aún.')) return;
+
+      try {
+        const res = await apiRequest(`/tickets/${ticketId}/approve-payment`, { method: 'POST' });
+        if (res.ok) {
+          await Promise.all([loadTickets(), loadStats()]);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al aprobar pago');
+        }
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function redeemTicket(ticketId, isPending = false) {
+      const msg = isPending
+        ? '¿Canjear esta entrada aunque el pago está pendiente? El pago aún no fue confirmado por MercadoPago.'
+        : '¿Marcar esta entrada como canjeada?';
+      if (!confirm(msg)) return;
 
       try {
         const res = await apiRequest(`/tickets/${ticketId}/redeem`, { method: 'POST' });

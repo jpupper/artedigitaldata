@@ -1,0 +1,4 @@
+.chat-messages { height: calc(100vh - 320px); }
+@media (max-width: 768px) { .chat-messages { height: calc(100vh - 380px); } }
+.msg-bubble { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
