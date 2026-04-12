@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import User from './src/models/User';
 import Message from './src/models/Message';
 import ChatRoom from './src/models/ChatRoom';
+import Notification from './src/models/Notification';
 
 import authRoutes from './src/routes/auth';
 import adminRoutes from './src/routes/admin';
@@ -22,6 +23,7 @@ import uploadRoutes from './src/routes/upload';
 import profileRoutes from './src/routes/profile';
 import searchRoutes from './src/routes/search';
 import ticketRoutes from './src/routes/tickets';
+import notificationRoutes from './src/routes/notifications';
 import { hydrate } from './src/utils/userHydration';
 
 const PORT = process.env.PORT || 2495;
@@ -95,6 +97,7 @@ apiRouter.use('/eventos', eventosRoutes);
 apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/profile', profileRoutes);
 apiRouter.use('/tickets', ticketRoutes);
+apiRouter.use('/notifications', notificationRoutes);
 
 // Registrar API en ambos paths (con y sin prefijo) para máxima compatibilidad
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
@@ -182,6 +185,24 @@ io.on('connection', (socket) => {
       });
       const [hydrated] = await hydrate([message], 'sender');
       io.to(data.roomId).emit('newMessage', hydrated);
+
+      // Notify recipients of private messages
+      const room = await ChatRoom.findById(data.roomId);
+      if (room && room.isPrivate) {
+        const sender = await User.findById(data.senderId).select('username displayName avatar');
+        const recipients = room.participants.filter((p: any) => p.toString() !== data.senderId);
+        for (const recipientId of recipients) {
+          Notification.create({
+            recipient: recipientId,
+            type: 'private_message',
+            actor: data.senderId,
+            actorName: sender?.displayName || sender?.username || '',
+            actorAvatar: sender?.avatar || '',
+            resourceId: data.roomId,
+            message: data.content.substring(0, 100),
+          }).catch(() => {});
+        }
+      }
     } catch (err) {
       console.error('[Socket] Error guardando mensaje:', err);
     }

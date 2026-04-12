@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import Recurso from '../models/Recurso';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { hydrate, hydrateComments } from '../utils/userHydration';
+import Notification from '../models/Notification';
+import User from '../models/User';
 
 const router = Router();
 
@@ -97,13 +99,30 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
 
     const userId = req.user!.id;
     const idx = (recurso.likes || []).findIndex((id: any) => id.toString() === userId);
+    let isAdding = false;
     if (idx === -1) {
       if (!recurso.likes) recurso.likes = [];
       recurso.likes.push(userId as any);
+      isAdding = true;
     } else {
       recurso.likes.splice(idx, 1);
     }
     await recurso.save();
+
+    if (isAdding && recurso.author.toString() !== userId) {
+      const actor = await User.findById(userId).select('username displayName avatar');
+      Notification.create({
+        recipient: recurso.author,
+        type: 'like_recurso',
+        actor: userId,
+        actorName: actor?.displayName || actor?.username || '',
+        actorAvatar: actor?.avatar || '',
+        resourceId: recurso._id.toString(),
+        resourceTitle: recurso.title,
+        resourceType: 'recurso',
+      }).catch(() => {});
+    }
+
     return res.json(recurso);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

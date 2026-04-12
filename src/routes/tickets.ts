@@ -8,6 +8,7 @@ import QRCode from 'qrcode';
 import { Types } from 'mongoose';
 import { sendTicketEmail } from '../utils/mailer';
 import { notifyUser } from '../../server';
+import Notification from '../models/Notification';
 
 const router = Router();
 
@@ -508,6 +509,32 @@ router.post('/event/:eventId/create-free', authMiddleware, async (req: AuthReque
       );
     }
 
+    // Notify buyer
+    if (ownerId) {
+      Notification.create({
+        recipient: ownerId,
+        type: 'ticket_purchased',
+        resourceId: ticket._id.toString(),
+        resourceTitle: event.title,
+        resourceType: 'evento',
+        message: `Tu entrada para "${event.title}" ha sido confirmada. Código: ${code}`,
+      }).catch(() => {});
+    }
+
+    // Notify event creator of new ticket sale
+    if (event.creator.toString() !== ownerId?.toString()) {
+      Notification.create({
+        recipient: event.creator,
+        type: 'ticket_sold',
+        actor: ownerId,
+        actorName: ownerName || '',
+        resourceId: ticket._id.toString(),
+        resourceTitle: event.title,
+        resourceType: 'evento',
+        message: `Se vendió una entrada para "${event.title}"${ownerName ? ` a ${ownerName}` : ''}.`,
+      }).catch(() => {});
+    }
+
     return res.json({
       ticketId: ticket._id,
       code,
@@ -545,12 +572,37 @@ router.post('/sync-payment', authMiddleware, async (req: AuthRequest, res: Respo
 
       // Send confirmation email
       const recipientEmail = ticket.ownerEmail || (req.user?.id ? (await User.findById(req.user.id))?.email : undefined);
-      if (recipientEmail) {
-        const event = await Evento.findById(ticket.event);
-        if (event) {
-          sendTicketEmail(recipientEmail, ticket.ownerName || 'Usuario', { code: ticket.code, qrData: ticket.qrData }, event).catch(e =>
-            console.error('[Tickets] sync-payment email error:', e)
-          );
+      const event = await Evento.findById(ticket.event);
+      if (recipientEmail && event) {
+        sendTicketEmail(recipientEmail, ticket.ownerName || 'Usuario', { code: ticket.code, qrData: ticket.qrData }, event).catch(e =>
+          console.error('[Tickets] sync-payment email error:', e)
+        );
+      }
+
+      if (event) {
+        // Notify buyer
+        if (ticket.owner) {
+          Notification.create({
+            recipient: ticket.owner,
+            type: 'ticket_purchased',
+            resourceId: ticket._id.toString(),
+            resourceTitle: event.title,
+            resourceType: 'evento',
+            message: `Tu entrada para "${event.title}" ha sido confirmada. Código: ${ticket.code}`,
+          }).catch(() => {});
+        }
+        // Notify event creator
+        if (event.creator.toString() !== ticket.owner?.toString()) {
+          Notification.create({
+            recipient: event.creator,
+            type: 'ticket_sold',
+            actor: ticket.owner,
+            actorName: ticket.ownerName || '',
+            resourceId: ticket._id.toString(),
+            resourceTitle: event.title,
+            resourceType: 'evento',
+            message: `Se vendió una entrada para "${event.title}"${ticket.ownerName ? ` a ${ticket.ownerName}` : ''}.`,
+          }).catch(() => {});
         }
       }
     }
@@ -575,22 +627,49 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const payment = await paymentClient.get({ id: paymentId });
 
         if (payment.external_reference && payment.status === 'approved') {
-          const ticket = await Ticket.findById(payment.external_reference).populate('event', 'title date location');
+          const ticket = await Ticket.findById(payment.external_reference).populate('event', 'title date location creator');
           if (ticket) {
             ticket.paymentId = String(paymentId);
             ticket.paymentStatus = 'completed';
             ticket.amountPaid = typeof payment.transaction_amount === 'number' ? payment.transaction_amount : (ticket.amountPaid || 0);
             await ticket.save();
 
+            const ev = ticket.event as any;
+
             // Send confirmation email
             const recipientEmail = ticket.ownerEmail || (ticket.owner ? (await User.findById(ticket.owner))?.email : undefined);
-            if (recipientEmail && ticket.event) {
+            if (recipientEmail && ev) {
               sendTicketEmail(
                 recipientEmail,
                 ticket.ownerName || 'Usuario',
                 { code: ticket.code, qrData: ticket.qrData },
-                ticket.event as any
+                ev
               ).catch(e => console.error('[Tickets] Webhook email error:', e));
+            }
+
+            // Notify buyer
+            if (ticket.owner && ev) {
+              Notification.create({
+                recipient: ticket.owner,
+                type: 'ticket_purchased',
+                resourceId: ticket._id.toString(),
+                resourceTitle: ev.title,
+                resourceType: 'evento',
+                message: `Tu entrada para "${ev.title}" ha sido confirmada. Código: ${ticket.code}`,
+              }).catch(() => {});
+            }
+            // Notify event creator
+            if (ev && ev.creator.toString() !== ticket.owner?.toString()) {
+              Notification.create({
+                recipient: ev.creator,
+                type: 'ticket_sold',
+                actor: ticket.owner,
+                actorName: ticket.ownerName || '',
+                resourceId: ticket._id.toString(),
+                resourceTitle: ev.title,
+                resourceType: 'evento',
+                message: `Se vendió una entrada para "${ev.title}"${ticket.ownerName ? ` a ${ticket.ownerName}` : ''}.`,
+              }).catch(() => {});
             }
           }
         }
