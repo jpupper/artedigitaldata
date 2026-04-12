@@ -119,6 +119,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
         price: 0,
         paymentLink: '',
         successMessage: '',
+        purchaseMessage: '',
         maxTickets: 100,
         isContribution: false
       };
