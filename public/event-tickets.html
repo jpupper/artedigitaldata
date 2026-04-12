@@ -892,7 +892,7 @@
       }
 
       container.innerHTML = doorUsers.map(user => {
-        const displayName = user.displayName || user.username;
+        const displayName = user.displayName || user.username || '?';
         const avatar = user.avatar
           ? `<img src="${user.avatar}" class="w-6 h-6 rounded-full object-cover" alt="${displayName}">`
           : `<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;

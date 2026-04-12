@@ -24,7 +24,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     // Hydrate creator first
     const [withCreator] = await hydrate([evento], 'creator');
     // Then hydrate participants
-    const [hydrated] = await hydrate([withCreator], 'participants');
+    const [withParticipants] = await hydrate([withCreator], 'participants');
+    // Then hydrate doorUsers
+    const [hydrated] = await hydrate([withParticipants], 'doorUsers');
     
     // Ensure ticketConfig is always returned (for old events without this field)
     if (!hydrated.ticketConfig) {
