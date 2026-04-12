@@ -314,14 +314,22 @@
         return;
       }
 
+      // Get user ID (handle both _id and id fields)
+      const userId = user._id || user.id;
+      if (!userId) {
+        isAuthorized = false;
+        return;
+      }
+
       // Check if user can redeem (creator, admin, door user)
-      const isCreator = event.creator?._id?.toString() === user._id || event.creator?.toString() === user._id;
+      const eventCreatorId = event.creator?._id?.toString() || event.creator?.toString();
+      const isCreator = eventCreatorId === userId.toString();
       const isAdmin = user.role === 'ADMINISTRADOR' || user.role === 'ADMIN';
-      const isDoorUser = event.doorUsers?.some(id => id.toString() === user._id);
+      const isDoorUser = event.doorUsers?.some(id => id.toString() === userId.toString());
 
       // Check if user is the ticket owner
-      const isTicketOwner = ticket.owner?._id?.toString() === user._id || 
-                            ticket.owner?.toString() === user._id ||
+      const ticketOwnerId = ticket.owner?._id?.toString() || ticket.owner?.toString();
+      const isTicketOwner = ticketOwnerId === userId.toString() || 
                             (ticket.ownerEmail && user.email && ticket.ownerEmail.toLowerCase() === user.email.toLowerCase());
 
       // Can redeem if creator, admin, or door user
