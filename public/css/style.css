@@ -123,3 +123,45 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-cyan);
 }
+
+/* QR Scanner Styles */
+#scanner-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+#scanner-container video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover;
+  border-radius: 1rem;
+}
+
+#scanner-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Scanner overlay fix for mobile */
+#scanner-container > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+}
+
+#scanner-container > div > div {
+  position: relative !important;
+  height: 100% !important;
+}
+
+/* Ensure scanner elements don't overflow */
+#scanner-container > div > div > div {
+  max-height: 100% !important;
+}
