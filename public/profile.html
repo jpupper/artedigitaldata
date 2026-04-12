@@ -32,9 +32,8 @@
               <span id="xp-points-label" class="text-xs text-gray-500"></span>
             </div>
             <div class="w-full h-2 rounded-full bg-white/5 overflow-hidden">
-              <div id="xp-bar-fill" class="h-full rounded-full transition-all duration-700" style="width:0%"></div>
+              <div id="xp-bar-fill" class="h-full rounded-full bg-[var(--color-cyan)] transition-all duration-700" style="width:0%"></div>
             </div>
-            <p id="xp-next-label" class="text-[10px] text-gray-600 mt-1"></p>
           </div>
         </div>
         <div id="edit-profile-btn" class="hidden mt-4 md:mt-0">
@@ -47,6 +46,16 @@
       <!-- Edit Form (hidden by default) -->
       <div id="edit-form" class="hidden mt-6 pt-6 border-t border-white/10">
         <form id="profile-edit-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Email</label>
+            <div class="relative">
+              <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+              <input type="text" id="edit-email-display" readonly
+                class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-gray-400 placeholder-gray-600 cursor-default select-all"
+                placeholder="No disponible">
+            </div>
+            <p class="text-[11px] text-gray-600 mt-1">El email no es editable desde aquí.</p>
+          </div>
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-2">Nombre a Mostrar</label>
             <input type="text" id="edit-display-name" placeholder="Tu nombre artístico o real"
@@ -322,6 +331,7 @@
         }
 
         if (isOwner) {
+          document.getElementById('edit-email-display').value = profile.email || 'No disponible';
           document.getElementById('edit-display-name').value = profile.displayName || '';
           document.getElementById('edit-bio').value = profile.bio || '';
           document.getElementById('edit-avatar-url').value = profile.avatar || '';
@@ -410,14 +420,10 @@
         ? Math.min(100, Math.round(((xp - level.min) / (nextLevel.min - level.min)) * 100))
         : 100;
 
-      document.getElementById('xp-level-label').textContent = `⭐ ${level.name}`;
+      document.getElementById('xp-level-label').textContent = `NIVEL ${level.index + 1}`;
       document.getElementById('xp-points-label').textContent = `${xp} XP`;
       const fill = document.getElementById('xp-bar-fill');
-      fill.className = `h-full rounded-full transition-all duration-700 bg-gradient-to-r ${level.color}`;
       setTimeout(() => { fill.style.width = pct + '%'; }, 50);
-      document.getElementById('xp-next-label').textContent = nextLevel
-        ? `Faltan ${nextLevel.min - xp} XP para "${nextLevel.name}"`
-        : '¡Nivel máximo alcanzado!';
       bar.classList.remove('hidden');
     }
 
