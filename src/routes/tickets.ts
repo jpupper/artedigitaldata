@@ -179,7 +179,7 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
 router.get('/code/:code', async (req: Request, res: Response) => {
   try {
     let ticket = await Ticket.findOne({ code: req.params.code.toUpperCase() })
-      .populate('event', 'title date location ticketConfig creator');
+      .populate('event', 'title date location ticketConfig creator doorUsers');
 
     if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
 
