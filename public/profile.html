@@ -230,7 +230,7 @@
       try {
         const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`);
         if (!res.ok) throw new Error('Not found');
-        const { user: profile, posts, recursos, eventos, favorites } = await res.json();
+        const { user: profile, posts, recursos, eventos, doorEvents, favorites } = await res.json();
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
         const bioText = profile.bio || 'Sin bio';
@@ -275,7 +275,7 @@
         
         renderUserPosts(posts);
         renderUserRecursos(recursos || []);
-        renderUserEventos(eventos || []);
+        renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
 
         // Load tickets if viewing own profile
@@ -376,44 +376,64 @@
       }).join('');
     }
 
-    function renderUserEventos(eventos) {
+    function renderUserEventos(eventos, doorEvents) {
+      if (typeof window.renderUserEventos === 'function' && window.renderUserEventos !== renderUserEventos) {
+        window.renderUserEventos(eventos, doorEvents);
+        return;
+      }
       const container = document.getElementById('user-eventos');
-      if (!eventos.length) {
+      const hasDoorEvents = doorEvents && doorEvents.length > 0;
+      const hasOwnEvents = eventos && eventos.length > 0;
+      if (!hasOwnEvents && !hasDoorEvents) {
         container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-calendar-times text-4xl text-magenta-400/30 mb-3"></i><p>Este usuario no tiene eventos registrados</p></div>`;
         return;
       }
-      container.innerHTML = eventos.map(ev => {
-        const youtubeId = extractYouTubeId(ev);
-        return `
-          <div class="rounded-2xl p-5 border border-magenta-500/10 bg-white/5 hover:border-magenta-500/30 transition-all flex flex-col h-full group">
-            <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
-               <div class="block w-full h-full relative cursor-pointer"
-                  ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-                  onclick="window.location.href='${CONFIG.BASE}/evento.html?id=${ev._id}'">
-                 ${ev.imageUrl ? `<img src="${ev.imageUrl}" alt="${ev.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-magenta-500/10 flex items-center justify-center"><i class="fas fa-calendar-alt text-3xl text-magenta-500/30"></i></div>`}
-                 ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
-               </div>
+      let html = '';
+      if (hasOwnEvents) {
+        if (hasDoorEvents) html += `<div class="col-span-full mb-2"><h3 class="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-calendar-alt text-magenta-500"></i>Mis Eventos</h3></div>`;
+        html += eventos.map(ev => renderEventoCardInline(ev, false)).join('');
+      }
+      if (hasDoorEvents) {
+        html += `<div class="col-span-full mt-6 mb-2"><h3 class="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-door-open text-cyan-500"></i>Control de Acceso / Puerta</h3><p class="text-xs text-gray-600 mt-1">Eventos donde podés escanear y canjear entradas</p></div>`;
+        html += doorEvents.map(ev => renderEventoCardInline(ev, true)).join('');
+      }
+      container.innerHTML = html;
+    }
+
+    function renderEventoCardInline(ev, isDoorEvent) {
+      const youtubeId = extractYouTubeId(ev);
+      const borderColor = isDoorEvent ? 'border-cyan-500/20 hover:border-cyan-500/40' : 'border-magenta-500/10 hover:border-magenta-500/30';
+      const dateColor = isDoorEvent ? 'bg-cyan-500/20 text-cyan-400' : 'bg-magenta-500/20 text-magenta-400';
+      return `
+        <div class="rounded-2xl p-5 border ${borderColor} bg-white/5 transition-all flex flex-col h-full group">
+          <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
+             <div class="block w-full h-full relative cursor-pointer"
+                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
+                onclick="window.location.href='${CONFIG.BASE}/evento.html?id=${ev._id}'">
+               ${ev.imageUrl ? `<img src="${ev.imageUrl}" alt="${ev.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-magenta-500/10 flex items-center justify-center"><i class="fas fa-calendar-alt text-3xl text-magenta-500/30"></i></div>`}
+               ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
+             </div>
+          </div>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg ${dateColor} flex flex-col items-center justify-center font-bold shrink-0">
+               <span class="text-[10px] leading-none uppercase">${new Date(ev.date).toLocaleDateString('es-AR', { month: 'short' })}</span>
+               <span class="text-sm leading-none">${new Date(ev.date).getDate()}</span>
             </div>
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 rounded-lg bg-magenta-500/20 flex flex-col items-center justify-center text-magenta-400 font-bold shrink-0">
-                 <span class="text-[10px] leading-none uppercase">${new Date(ev.date).toLocaleDateString('es-AR', { month: 'short' })}</span>
-                 <span class="text-sm leading-none">${new Date(ev.date).getDate()}</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <a href="${CONFIG.BASE}/evento.html?id=${ev._id}" target="_blank"><h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3></a>
-                <p class="text-[10px] text-gray-500 truncate"><i class="fas fa-map-marker-alt mr-1"></i>${ev.location || 'Online'}</p>
-              </div>
-              ${(isLoggedIn() && (isOwner || isAdmin())) ? `
-                <div class="flex gap-1 shrink-0">
-                  ${ev.ticketConfig?.enabled ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${ev._id}" class="text-green-400 hover:text-green-300 transition-colors p-1" title="Administrar entradas"><i class="fas fa-ticket-alt text-xs"></i></a>` : ''}
-                  <button onclick="openEditEvento('${ev._id}')" class="text-gray-500 hover:text-magenta-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></button>
-                  <button onclick="deleteEvento('${ev._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
-                </div>
+            <div class="flex-1 min-w-0">
+              <a href="${CONFIG.BASE}/evento.html?id=${ev._id}" target="_blank"><h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3></a>
+              <p class="text-[10px] text-gray-500 truncate"><i class="fas fa-map-marker-alt mr-1"></i>${ev.location || 'Online'}</p>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              ${isDoorEvent ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${ev._id}" class="px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-all text-xs font-bold flex items-center gap-1"><i class="fas fa-door-open"></i><span>Puerta</span></a>` : ''}
+              ${(!isDoorEvent && isLoggedIn() && (isOwner || isAdmin())) ? `
+                ${ev.ticketConfig?.enabled ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${ev._id}" class="text-green-400 hover:text-green-300 transition-colors p-1"><i class="fas fa-ticket-alt text-xs"></i></a>` : ''}
+                <button onclick="openEditEvento('${ev._id}')" class="text-gray-500 hover:text-magenta-400 transition-colors p-1"><i class="fas fa-edit text-xs"></i></button>
+                <button onclick="deleteEvento('${ev._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash-alt text-xs"></i></button>
               ` : ''}
             </div>
-            <p class="text-xs text-gray-400 line-clamp-2">${ev.description || ''}</p>
-          </div>`;
-      }).join('');
+          </div>
+          <p class="text-xs text-gray-400 line-clamp-2">${ev.description || ''}</p>
+        </div>`;
     }
 
     function renderUserFavorites(favs) {
