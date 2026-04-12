@@ -144,6 +144,8 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/notifications.js"></script>
   <script>
     let currentTicket = null;
 
@@ -213,7 +215,22 @@
       document.getElementById('event-date').querySelector('span').innerText = new Date(ev.date).toLocaleDateString('es-AR', { 
         day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
       });
-      document.getElementById('event-location').querySelector('span').innerText = ev.location || 'Virtual';
+      // Render location with Google Maps button
+      const locationEl = document.getElementById('event-location');
+      if (ev.location && ev.location.startsWith('http')) {
+        // It's already a URL
+        locationEl.innerHTML = `<a href="${ev.location}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-all text-xs font-bold">
+          <i class="fas fa-map-marker-alt"></i>Ver Ubicación
+        </a>`;
+      } else if (ev.location) {
+        // Create Google Maps search URL
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`;
+        locationEl.innerHTML = `<a href="${mapsUrl}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-all text-xs font-bold truncate max-w-[200px] md:max-w-xs">
+          <i class="fas fa-map-marker-alt"></i>${ev.location}
+        </a>`;
+      } else {
+        locationEl.querySelector('span').innerText = 'Virtual';
+      }
       
       // Check if user is admin or event creator
       const user = getUser();

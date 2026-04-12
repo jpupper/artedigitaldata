@@ -7,6 +7,7 @@ import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import QRCode from 'qrcode';
 import { Types } from 'mongoose';
 import { sendTicketEmail } from '../utils/mailer';
+import { notifyUser } from '../../server';
 
 const router = Router();
 
@@ -628,6 +629,18 @@ router.post('/:ticketId/redeem', authMiddleware, async (req: AuthRequest, res: R
     ticket.redeemedAt = new Date();
     await ticket.save();
 
+    // Notify ticket owner if they have an owner ID
+    if (ticket.owner) {
+      notifyUser(ticket.owner.toString(), 'ticketRedeemed', {
+        ticketId: ticket._id,
+        code: ticket.code,
+        eventTitle: event.title,
+        eventId: event._id || event.id,
+        redeemedAt: ticket.redeemedAt,
+        message: `Tu entrada para "${event.title}" ha sido canjeada exitosamente.`
+      });
+    }
+
     return res.json({ message: 'Entrada canjeada exitosamente', ticket });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -713,6 +726,18 @@ router.post('/redeem-by-code', authMiddleware, async (req: AuthRequest, res: Res
     ticket.redeemed = true;
     ticket.redeemedAt = new Date();
     await ticket.save();
+
+    // Notify ticket owner if they have an owner ID
+    if (ticket.owner) {
+      notifyUser(ticket.owner.toString(), 'ticketRedeemed', {
+        ticketId: ticket._id,
+        code: ticket.code,
+        eventTitle: event.title,
+        eventId: event._id || event.id,
+        redeemedAt: ticket.redeemedAt,
+        message: `Tu entrada para "${event.title}" ha sido canjeada exitosamente.`
+      });
+    }
 
     return res.json({ message: 'Entrada canjeada exitosamente', ticket });
   } catch (err: any) {

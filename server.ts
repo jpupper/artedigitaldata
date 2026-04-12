@@ -39,6 +39,15 @@ const io = new SocketServer(server, {
   cors: { origin: '*', methods: ['GET', 'POST', 'PATCH'] },
 });
 
+// Export io for use in routes
+export { io };
+
+// Helper function to send notifications to specific users
+export function notifyUser(userId: string, event: string, data: any) {
+  io.to(`user_${userId}`).emit(event, data);
+  console.log(`[Notification] Sent ${event} to user_${userId}`);
+}
+
 // Favicon local (silenciar error 404)
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
 
@@ -148,6 +157,12 @@ app.use((req, res, next) => {
 // ========== SOCKET.IO ==========
 io.on('connection', (socket) => {
   console.log(`[Socket] Cliente conectado: ${socket.id}`);
+
+  // Allow users to join their own room for notifications
+  socket.on('joinUserRoom', (userId: string) => {
+    socket.join(`user_${userId}`);
+    console.log(`[Socket] ${socket.id} se unió a sala user_${userId}`);
+  });
 
   socket.on('joinRoom', async (roomId: string) => {
     socket.join(roomId);
