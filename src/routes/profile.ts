@@ -50,11 +50,14 @@ router.get('/:username', async (req: Request, res: Response) => {
       ]
     }).sort({ date: 1 });
 
+    const doorEvents = await Evento.find({ doorUsers: user._id }).sort({ date: 1 });
+
     return res.json({ 
       user, 
       posts: await hydrate(posts), 
       recursos: await hydrate(recursos), 
-      eventos: await hydrate(eventos, 'creator'), 
+      eventos: await hydrate(eventos, 'creator'),
+      doorEvents: await hydrate(doorEvents, 'creator'),
       favorites: {
         posts: await hydrate(likedPosts),
         recursos: await hydrate(likedRecursos),
