@@ -9,6 +9,41 @@
   <link rel="stylesheet" href="css/style.css">
   <!-- QR Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    /* Scanner container fixes - high specificity */
+    #scanner-container {
+      position: relative !important;
+      width: 100% !important;
+      height: 300px !important;
+      max-height: 50vh !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      border-radius: 1rem !important;
+      background: #000 !important;
+    }
+    #scanner-container * {
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+    #scanner-container video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 1rem !important;
+    }
+    #scanner-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* Target the library's injected elements */
+    #scanner-container > div,
+    #scanner-container > div > div,
+    #scanner-container > div > div > div {
+      width: 100% !important;
+      height: 100% !important;
+      position: relative !important;
+    }
+  </style>
 </head>
 <body class="min-h-screen">
   <div id="app-header"></div>
@@ -25,7 +60,7 @@
       </div>
 
       <div class="rounded-3xl border border-white/10 bg-black/40 p-6">
-        <div id="scanner-container" class="rounded-2xl overflow-hidden border border-white/10 mb-4" style="height: 300px; max-height: 50vh; background: #000;"></div>
+        <div id="scanner-container" class="rounded-2xl overflow-hidden border border-white/10 mb-4"></div>
         
         <div class="flex gap-2">
           <input type="text" id="manual-code-input" placeholder="O ingresá el código manualmente..." 
@@ -162,7 +197,8 @@
     <div id="error-section" class="hidden py-20 text-center">
       <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-6"></i>
       <h2 class="text-2xl font-bold text-white mb-2">Entrada no encontrada</h2>
-      <p class="text-gray-500 mb-8">El código de entrada no existe o ha sido eliminado.</p>
+      <p class="text-gray-500 mb-2">El código de entrada no existe o ha sido eliminado.</p>
+      <p id="error-code-display" class="text-magenta-400 font-mono text-lg mb-8"></p>
       <button onclick="resetView()" class="btn-primary px-8 py-3 rounded-xl">
         <i class="fas fa-arrow-left mr-2"></i>
         Volver
@@ -242,8 +278,20 @@
         const data = JSON.parse(decodedText);
         code = data.code;
       } catch {
-        // If not JSON, use raw text (might be just the code)
-        code = decodedText;
+        // If not JSON, check if it's a URL
+        if (decodedText.includes('scan-redeem.html') || decodedText.includes('?code=')) {
+          // Extract code from URL
+          try {
+            const url = new URL(decodedText);
+            code = url.searchParams.get('code');
+          } catch {
+            // Not a valid URL, use raw text
+            code = decodedText;
+          }
+        } else {
+          // Just the raw code
+          code = decodedText;
+        }
       }
 
       if (code) {
@@ -273,6 +321,7 @@
         
         if (!res.ok) {
           hideAllSections();
+          document.getElementById('error-code-display').innerText = `Código: ${code}`;
           document.getElementById('error-section').classList.remove('hidden');
           return;
         }
@@ -294,6 +343,7 @@
       } catch (err) {
         console.error('Error loading ticket:', err);
         hideAllSections();
+        document.getElementById('error-code-display').innerText = `Código: ${code}`;
         document.getElementById('error-section').classList.remove('hidden');
       }
     }
@@ -525,8 +575,9 @@
       currentEvent = null;
       isAuthorized = false;
 
-      // Hide view-only message
+      // Hide view-only message and error code
       document.getElementById('view-only-message').classList.add('hidden');
+      document.getElementById('error-code-display').innerText = '';
 
       // Show scanner
       document.getElementById('manual-code-input').value = '';
