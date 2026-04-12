@@ -1,0 +1,13 @@
+.type-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.type-card.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-cyan);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px -10px rgba(0, 245, 255, 0.3);
+}
+.type-card.active i {
+  color: var(--color-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.5));
+}

@@ -634,6 +634,34 @@ router.post('/:ticketId/redeem', authMiddleware, async (req: AuthRequest, res: R
   }
 });
 
+// Manually approve payment (creator/admin only)
+router.post('/:ticketId/approve-payment', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const ticket = await Ticket.findById(req.params.ticketId).populate('event');
+    if (!ticket) return res.status(404).json({ error: 'Entrada no encontrada' });
+
+    const event = ticket.event as any;
+    const isCreator = event.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    if (ticket.paymentStatus === 'completed' || ticket.paymentStatus === 'free') {
+      return res.status(400).json({ error: 'Esta entrada ya está aprobada' });
+    }
+
+    ticket.paymentStatus = 'completed';
+    ticket.paymentId = ticket.paymentId || 'MANUAL_APPROVAL';
+    await ticket.save();
+
+    return res.json({ message: 'Pago aprobado manualmente', ticket });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Regenerate QR (admin/creator only)
 router.post('/:ticketId/regenerate-qr', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
