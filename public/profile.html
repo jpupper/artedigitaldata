@@ -24,7 +24,18 @@
           <p id="profile-bio" class="text-gray-400 mt-2"></p>
           <p id="profile-meta" class="text-sm text-gray-500 mt-2"></p>
           <div id="profile-socials" class="flex flex-wrap gap-2 mt-4"></div>
-        </div>
+
+          <!-- XP Level Bar (always shown) -->
+          <div id="xp-level-bar" class="hidden mt-5 w-full">
+            <div class="flex items-center justify-between mb-1">
+              <span id="xp-level-label" class="text-xs font-black tracking-widest uppercase text-[var(--color-cyan)]"></span>
+              <span id="xp-points-label" class="text-xs text-gray-500"></span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+              <div id="xp-bar-fill" class="h-full rounded-full transition-all duration-700" style="width:0%"></div>
+            </div>
+            <p id="xp-next-label" class="text-[10px] text-gray-600 mt-1"></p>
+          </div>
         </div>
         <div id="edit-profile-btn" class="hidden mt-4 md:mt-0">
           <button onclick="toggleEditMode()" class="px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-bold transition-all shadow-[0_0_20px_rgba(0,255,255,0.05)]">
@@ -92,6 +103,22 @@
           </button>
         </form>
       </div>
+    </div>
+
+    <!-- Profile Completion Widget (owner only, shown via JS) -->
+    <div id="profile-completion-widget" class="hidden mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-black text-yellow-400 flex items-center gap-2">
+          <i class="fas fa-star"></i> Completá tu perfil
+        </h3>
+        <button onclick="document.getElementById('profile-completion-widget').classList.add('hidden')" class="text-gray-600 hover:text-gray-400 text-xs transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="w-full h-1.5 rounded-full bg-white/5 mb-3 overflow-hidden">
+        <div id="completion-bar" class="h-full rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-700" style="width:0%"></div>
+      </div>
+      <div id="completion-tasks" class="flex flex-wrap gap-2"></div>
     </div>
 
     <!-- Tabs -->
@@ -189,12 +216,14 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const targetUsername = params.get('user');
-    const currentUser = getUser();
+    let currentUser = getUser();
     let isOwner = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = getUser();
+
       if (!targetUsername) {
-        if (isLoggedIn()) {
+        if (isLoggedIn() && currentUser) {
           window.location.href = CONFIG.BASE + `/profile.html?user=${currentUser.username}`;
         } else {
           showLogin();
@@ -202,7 +231,9 @@
         return;
       }
 
-      isOwner = currentUser && currentUser.username === targetUsername;
+      isOwner = !!(currentUser && currentUser.username &&
+        currentUser.username.toLowerCase() === targetUsername.toLowerCase());
+
       if (isOwner) {
         document.getElementById('edit-profile-btn').classList.remove('hidden');
         document.getElementById('tab-notificaciones').classList.remove('hidden');
@@ -266,7 +297,10 @@
 
     async function loadProfile() {
       try {
-        const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`);
+        const headers = {};
+        const tok = getToken();
+        if (tok) headers['Authorization'] = `Bearer ${tok}`;
+        const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`, { headers });
         if (!res.ok) throw new Error('Not found');
         const { user: profile, posts, recursos, eventos, doorEvents, favorites } = await res.json();
 
@@ -316,8 +350,12 @@
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
 
-        // Load tickets and notifications if viewing own profile
+        // XP level bar (shown for everyone)
+        renderXPLevel(profile, posts, recursos || [], eventos || []);
+
+        // Owner-only: completion widget + owner tabs
         if (isOwner) {
+          renderProfileCompletion(profile, posts, recursos || [], eventos || []);
           loadUserTickets();
           loadUserNotifications();
         }
@@ -325,6 +363,114 @@
         console.error("Error loading profile:", err);
         document.getElementById('profile-username').textContent = 'Usuario no encontrado';
       }
+    }
+
+    // ─── XP / Level System ────────────────────────────────────────────────────
+    const XP_LEVELS = [
+      { name: 'Observador',     min: 0,    max: 99,   color: 'from-gray-500 to-gray-400' },
+      { name: 'Aprendiz',       min: 100,  max: 299,  color: 'from-green-600 to-green-400' },
+      { name: 'Creador',        min: 300,  max: 699,  color: 'from-cyan-600 to-cyan-400' },
+      { name: 'Artista',        min: 700,  max: 1499, color: 'from-blue-600 to-blue-400' },
+      { name: 'Maestro',        min: 1500, max: 2999, color: 'from-fuchsia-600 to-fuchsia-400' },
+      { name: 'Leyenda Digital',min: 3000, max: 9999, color: 'from-yellow-500 to-orange-400' },
+    ];
+
+    function calcXP(profile, posts, recursos, eventos) {
+      let xp = 0;
+      if (profile.bio && profile.bio.trim().length > 10) xp += 50;
+      if (profile.avatar) xp += 50;
+      if (profile.email) xp += 30;
+      if (profile.displayName && profile.displayName !== profile.username) xp += 20;
+      const socials = profile.socials || {};
+      if (socials.instagram || socials.discord || socials.whatsapp || socials.facebook || socials.tiktok) xp += 30;
+      xp += posts.length * 20;
+      xp += recursos.length * 15;
+      xp += eventos.length * 25;
+      const totalLikes = posts.reduce((s, p) => s + (p.likes?.length || 0), 0)
+                       + recursos.reduce((s, r) => s + (r.likes?.length || 0), 0)
+                       + eventos.reduce((s, e) => s + (e.likes?.length || 0), 0);
+      xp += totalLikes * 5;
+      return xp;
+    }
+
+    function getLevelForXP(xp) {
+      for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
+        if (xp >= XP_LEVELS[i].min) return { ...XP_LEVELS[i], index: i };
+      }
+      return { ...XP_LEVELS[0], index: 0 };
+    }
+
+    function renderXPLevel(profile, posts, recursos, eventos) {
+      const bar = document.getElementById('xp-level-bar');
+      if (!bar) return;
+      const xp = calcXP(profile, posts, recursos, eventos);
+      const level = getLevelForXP(xp);
+      const nextLevel = XP_LEVELS[level.index + 1];
+      const pct = nextLevel
+        ? Math.min(100, Math.round(((xp - level.min) / (nextLevel.min - level.min)) * 100))
+        : 100;
+
+      document.getElementById('xp-level-label').textContent = `⭐ ${level.name}`;
+      document.getElementById('xp-points-label').textContent = `${xp} XP`;
+      const fill = document.getElementById('xp-bar-fill');
+      fill.className = `h-full rounded-full transition-all duration-700 bg-gradient-to-r ${level.color}`;
+      setTimeout(() => { fill.style.width = pct + '%'; }, 50);
+      document.getElementById('xp-next-label').textContent = nextLevel
+        ? `Faltan ${nextLevel.min - xp} XP para "${nextLevel.name}"`
+        : '¡Nivel máximo alcanzado!';
+      bar.classList.remove('hidden');
+    }
+
+    // ─── Profile Completion Widget ─────────────────────────────────────────────
+    function renderProfileCompletion(profile, posts, recursos, eventos) {
+      const hasContent = posts.length > 0 || recursos.length > 0 || eventos.length > 0;
+      const tasks = [
+        {
+          done: !!(profile.bio && profile.bio.trim().length > 10),
+          label: 'Escribir bio',
+          icon: 'fa-align-left',
+          action: "toggleEditMode()",
+        },
+        {
+          done: !!profile.avatar,
+          label: 'Foto de perfil',
+          icon: 'fa-camera',
+          action: "toggleEditMode()",
+        },
+        {
+          done: !!profile.email,
+          label: 'Email verificado',
+          icon: 'fa-envelope',
+          action: null,
+        },
+        {
+          done: hasContent,
+          label: 'Primera publicación',
+          icon: 'fa-palette',
+          action: `window.location.href='${CONFIG.BASE}/create.html'`,
+        },
+      ];
+
+      const pending = tasks.filter(t => !t.done);
+      if (!pending.length) {
+        document.getElementById('profile-completion-widget').classList.add('hidden');
+        return;
+      }
+
+      const completedCount = tasks.filter(t => t.done).length;
+      const pct = Math.round((completedCount / tasks.length) * 100);
+      document.getElementById('completion-bar').style.width = pct + '%';
+
+      document.getElementById('completion-tasks').innerHTML = pending.map(t => `
+        <button
+          ${t.action ? `onclick="${t.action}"` : ''}
+          class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 text-yellow-400 hover:bg-yellow-500/15 transition-all text-xs font-bold ${!t.action ? 'opacity-60 cursor-default' : ''}">
+          <i class="fas ${t.icon} text-[10px]"></i>
+          ${t.label}
+          <i class="fas fa-arrow-right text-[8px] opacity-60"></i>
+        </button>`).join('');
+
+      document.getElementById('profile-completion-widget').classList.remove('hidden');
     }
 
     function switchTab(tab) {
