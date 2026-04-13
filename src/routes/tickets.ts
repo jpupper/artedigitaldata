@@ -41,7 +41,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     const tickets = await Ticket.find()
-      .populate('event', 'title date location')
+      .populate('event', 'title date location ticketConfig')
       .populate('owner', '_id username email')
       .sort({ createdAt: -1 });
 
