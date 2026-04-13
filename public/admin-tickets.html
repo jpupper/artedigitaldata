@@ -296,7 +296,15 @@
                 ${statusBadge}
               </span>
             </td>
-            <td class="px-6 py-4 text-gray-400 capitalize">${t.paymentStatus}</td>
+            <td class="px-6 py-4 text-gray-300 font-medium">
+              ${t.amountPaid > 0
+                ? `$${Number(t.amountPaid).toLocaleString('es-AR')} ARS`
+                : (t.paymentStatus === 'free' 
+                    ? '<span class="text-green-400">Gratis</span>' 
+                    : (t.paymentStatus === 'pending' && t.event?.ticketConfig?.price > 0
+                        ? `<span class="text-yellow-400">$${Number(t.event.ticketConfig.price).toLocaleString('es-AR')} ARS</span>`
+                        : '<span class="text-gray-600">—</span>'))}
+            </td>
             <td class="px-6 py-4">
               ${t.redeemed ? 
                 `<span class="text-cyan-400"><i class="fas fa-check mr-1"></i>${new Date(t.redeemedAt).toLocaleDateString('es-AR')}</span>` : 
