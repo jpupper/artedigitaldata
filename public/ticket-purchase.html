@@ -334,7 +334,9 @@
       try {
         // --- CONTRIBUTION MODE ---
         if (currentEvent.ticketConfig.isContribution) {
-          const amount = parseFloat(document.getElementById('contribution-amount').value) || 0;
+          const rawValue = document.getElementById('contribution-amount').value;
+          const amount = parseFloat(rawValue) || 0;
+          console.log(`[Contribution] Raw input value: "${rawValue}", parsed amount: ${amount}`);
 
           if (amount > 0) {
             // Pay via MercadoPago with the chosen contribution amount
