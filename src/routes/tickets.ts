@@ -831,6 +831,63 @@ router.post('/redeem-by-code', authMiddleware, async (req: AuthRequest, res: Res
   }
 });
 
+// Send ticket emails to all buyers of an event (creator/admin only)
+router.post('/event/:eventId/send-emails', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const event = await Evento.findById(req.params.eventId);
+    if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    const isCreator = event.creator.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    // Find all tickets for this event that have a valid email and are paid/free
+    const tickets = await Ticket.find({
+      event: req.params.eventId,
+      ownerEmail: { $exists: true, $ne: '' },
+      paymentStatus: { $in: ['completed', 'free'] }
+    });
+
+    if (tickets.length === 0) {
+      return res.status(400).json({ error: 'No hay entradas con email para enviar' });
+    }
+
+    let sent = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const ticket of tickets) {
+      try {
+        await sendTicketEmail(
+          ticket.ownerEmail!,
+          ticket.ownerName || 'Usuario',
+          { code: ticket.code, qrData: ticket.qrData },
+          event
+        );
+        sent++;
+      } catch (err: any) {
+        failed++;
+        errors.push(`${ticket.ownerEmail}: ${err.message}`);
+        console.error(`[Tickets] Error sending email to ${ticket.ownerEmail}:`, err.message);
+      }
+    }
+
+    return res.json({
+      message: `Emails enviados: ${sent}/${tickets.length}`,
+      sent,
+      failed,
+      total: tickets.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (err: any) {
+    console.error('[Tickets] Error sending bulk emails:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete ticket
 router.delete('/:ticketId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
