@@ -413,10 +413,17 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
       return res.status(500).json({ error: msg });
     }
 
-    // Determine unit price: use custom amount for contribution mode, otherwise event price
-    const unitPrice = event.ticketConfig.isContribution && amount != null
-      ? Math.max(1, parseFloat(amount))
-      : (event.ticketConfig.price || 1);
+    // Determine unit price:
+    // - If the client sent an explicit amount (contribution mode), always honour it
+    // - Otherwise fall back to the event's configured price
+    let unitPrice: number;
+    const parsedAmount = amount != null ? parseFloat(amount) : NaN;
+    if (!isNaN(parsedAmount) && parsedAmount >= 1) {
+      unitPrice = parsedAmount;
+    } else {
+      unitPrice = event.ticketConfig.price || 1;
+    }
+    console.log(`[Tickets] unitPrice=${unitPrice} (body.amount=${amount}, parsed=${parsedAmount}, isContribution=${event.ticketConfig.isContribution}, eventPrice=${event.ticketConfig.price})`);
 
     // Create MercadoPago preference
     const preference = new Preference(mercadopago);
