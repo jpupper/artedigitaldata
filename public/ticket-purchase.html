@@ -354,6 +354,7 @@
             const data = await res.json();
             if (data.initPoint) {
               redirectToPayment(data);
+              return; // Add return to prevent executing the fallback paid event logic
             } else {
               throw new Error('No se pudo obtener el link de pago');
             }
