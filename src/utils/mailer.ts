@@ -63,6 +63,13 @@ export const sendTicketEmail = async (
   });
   const ticketUrl = `${process.env.BASE_URL || 'https://artedigitaldata.com'}/ticket-success.html?ticket=${ticket.code}`;
 
+  // Extract base64 content from data URI for CID embedding
+  const base64Match = ticket.qrData.match(/^data:image\/(png|jpeg|gif);base64,(.+)$/);
+  const qrAttachment = base64Match
+    ? { filename: 'qr-entrada.png', content: Buffer.from(base64Match[2], 'base64'), cid: 'qrcode' }
+    : null;
+  const qrImgSrc = qrAttachment ? 'cid:qrcode' : ticket.qrData;
+
   const mailOptions = {
     from: `"Arte Digital Data" <${process.env.SMTP_USER}>`,
     to: email,
@@ -92,7 +99,7 @@ export const sendTicketEmail = async (
 
           <div style="text-align: center; margin: 28px 0;">
             <p style="color: #64748b; font-size: 12px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">QR para la entrada</p>
-            <img src="${ticket.qrData}" alt="QR Entrada" style="width: 200px; height: 200px; border-radius: 12px; border: 2px solid rgba(255,0,224,0.3);">
+            <img src="${qrImgSrc}" alt="QR Entrada" width="200" height="200" style="width: 200px; height: 200px; border-radius: 12px; border: 2px solid rgba(255,0,224,0.3);">
           </div>
 
           <div style="text-align: center; margin-top: 28px;">
@@ -104,6 +111,7 @@ export const sendTicketEmail = async (
         </p>
       </div>
     `,
+    ...(qrAttachment ? { attachments: [qrAttachment] } : {}),
   };
 
   return transporter.sendMail(mailOptions);
