@@ -299,4 +299,57 @@ router.get('/:id/door-users', authMiddleware, async (req: AuthRequest, res: Resp
   }
 });
 
+// Pin an event (admin only)
+router.post('/:id/pin', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    // Only admin can pin events
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'No autorizado - Solo administradores pueden pinear eventos' });
+    }
+
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    evento.pinned = true;
+    await evento.save();
+
+    return res.json({ message: 'Evento pinnado', pinned: true, evento });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Unpin an event (admin only)
+router.post('/:id/unpin', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    // Only admin can unpin events
+    const isAdmin = req.user!.role === 'ADMINISTRADOR' || req.user!.role === 'ADMIN';
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'No autorizado - Solo administradores pueden despin eventos' });
+    }
+
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    evento.pinned = false;
+    await evento.save();
+
+    return res.json({ message: 'Evento despinnado', pinned: false, evento });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get pinned events (public)
+router.get('/pinned/list', async (_req: Request, res: Response) => {
+  try {
+    const eventos = await Evento.find({ pinned: true }).sort({ date: 1 });
+    const final = await hydrate(eventos, 'creator');
+    return res.json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
