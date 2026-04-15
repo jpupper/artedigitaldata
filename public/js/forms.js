@@ -90,6 +90,19 @@ const FORM_TEMPLATES = {
 
   evento: (prefix, item = {}) => {
     const tc = item.ticketConfig || {};
+    const participantsHtml = (item.participants || []).map(p => {
+      const pid = p && p._id ? String(p._id) : (typeof p === 'string' ? p : '');
+      const pname = (p && p.username) ? p.username : (pid || '?');
+      const pavatar = p && p.avatar ? p.avatar : '';
+      const avatarHtml = pavatar
+        ? '<img src="' + pavatar + '" class="w-full h-full object-cover">'
+        : pname[0].toUpperCase();
+      return '<div class="participant-chip flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white" data-id="' + pid + '" data-username="' + pname + '">'
+        + '<div class="w-5 h-5 rounded-full bg-magenta-500/20 flex items-center justify-center text-[9px] font-bold text-magenta-400 overflow-hidden">' + avatarHtml + '</div>'
+        + '<span class="font-bold text-xs">' + pname + '</span>'
+        + '<button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>'
+        + '</div>';
+    }).join('');
     return `
     <div class="space-y-4">
       <div>
@@ -145,15 +158,7 @@ const FORM_TEMPLATES = {
         </div>
         <div id="${prefix}-participant-suggestions" class="hidden bg-[#0d0d12] border border-white/10 rounded-xl overflow-hidden mb-3 max-h-40 overflow-y-auto"></div>
         <div id="${prefix}-participants-list" class="flex flex-wrap gap-2 min-h-[2rem]">
-          ${(item.participants || []).map(p => `
-            <div class="participant-chip flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white" data-id="${p._id || p}">
-              <div class="w-5 h-5 rounded-full bg-magenta-500/20 flex items-center justify-center text-[9px] font-bold text-magenta-400 overflow-hidden">
-                ${p.avatar ? `<img src="${p.avatar}" class="w-full h-full object-cover">` : (p.username || '?')[0].toUpperCase()}
-              </div>
-              <span class="font-bold text-xs">${p.username || p}</span>
-              <button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>
-            </div>
-          `).join('')}
+          ${participantsHtml}
         </div>
       </div>
 
@@ -251,16 +256,18 @@ window.searchParticipants = async (prefix, query) => {
       return;
     }
     suggestionsEl.classList.remove('hidden');
-    suggestionsEl.innerHTML = users.map(u => `
-      <div class="suggestion-row flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"
-           data-id="${u._id}" data-username="${u.label}" data-avatar="${u.avatar || ''}"
-           onclick="selectParticipantSuggestion('${prefix}', this)">
-        <div class="w-7 h-7 rounded-full bg-magenta-500/20 flex items-center justify-center text-xs font-bold text-magenta-400 overflow-hidden shrink-0">
-          ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : (u.label || '?')[0].toUpperCase()}
-        </div>
-        <span class="text-sm text-white font-bold">@${u.label}</span>
-      </div>
-    `).join('');
+    suggestionsEl.innerHTML = users.map(u => {
+      const uid = u._id || u.id || '';
+      const avatarInner = u.avatar
+        ? '<img src="' + u.avatar + '" class="w-full h-full object-cover">'
+        : (u.label || '?')[0].toUpperCase();
+      return '<div class="suggestion-row flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"'
+        + ' data-id="' + uid + '" data-username="' + u.label + '" data-avatar="' + (u.avatar || '') + '"'
+        + ' onclick="selectParticipantSuggestion(\'' + prefix + '\', this)">'
+        + '<div class="w-7 h-7 rounded-full bg-magenta-500/20 flex items-center justify-center text-xs font-bold text-magenta-400 overflow-hidden shrink-0">' + avatarInner + '</div>'
+        + '<span class="text-sm text-white font-bold">@' + u.label + '</span>'
+        + '</div>';
+    }).join('');
   } catch(e) {
     suggestionsEl.classList.add('hidden');
   }
@@ -314,14 +321,17 @@ window.syncParticipantsFromDescription = async (prefix, description) => {
   if (!description) return;
   const mentions = description.match(/@(\w+)/g);
   if (!mentions) return;
-  const usernames = mentions.map(m => m.substring(1));
+  const usernames = [...new Set(mentions.map(m => m.substring(1)))];
   try {
     for (const username of usernames) {
       const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(username)}`);
       if (!res.ok) continue;
       const results = await res.json();
       const user = results.find(r => r.type === 'user' && r.label.toLowerCase() === username.toLowerCase());
-      if (user) addParticipantChip(prefix, { _id: user._id, username: user.label, avatar: user.avatar || '' });
+      if (user) {
+        const uid = user._id || user.id || '';
+        if (uid) addParticipantChip(prefix, { _id: uid, username: user.label, avatar: user.avatar || '' });
+      }
     }
   } catch(e) {}
 };
