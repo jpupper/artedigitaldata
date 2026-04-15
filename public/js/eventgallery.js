@@ -10,7 +10,8 @@ class EventGallery {
     this.currentIndex = 0;
     this.autoplayEnabled = true;
     this.autoplayInterval = null;
-    this.autoplayDuration = 8000;
+    this.autoplayDuration = 15000;
+    this.scrollInterval = null;
     this.transitioning = false;
 
     this.stageEl = null;
@@ -206,6 +207,8 @@ class EventGallery {
     if (!this.stageEl) return;
     if (animate) {
       this.transitioning = true;
+      clearInterval(this.scrollInterval);
+      this.scrollInterval = null;
       this.stageEl.classList.add('leaving');
       setTimeout(() => {
         this.stageEl.classList.remove('leaving');
@@ -235,16 +238,21 @@ class EventGallery {
 
     const navHtml = this.buildNavHtml();
 
+    const locationDisplay = location.length > 60 ? location.substring(0, 60) + '…' : location;
+    const description = ev.description || '';
+
     this.stageEl.innerHTML =
       '<div class="eg-stage-avatar eg-stage-avatar--event">' + avatarHtml + '</div>'
       + '<div class="eg-stage-info">'
       +   '<div class="eg-stage-name">' + this.escHtml(ev.title) + '</div>'
       +   (date ? '<div class="eg-stage-username"><i class="fas fa-calendar" style="margin-right:4px"></i>' + date + '</div>' : '')
-      +   (location ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(location) + '</div>' : '')
+      +   (locationDisplay ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(locationDisplay) + '</div>' : '')
+      +   (description ? '<p class="eg-stage-bio">' + this.escHtml(description) + '</p>' : '')
       +   navHtml
       + '</div>';
 
     this.attachNavListeners();
+    this.startInfoScroll();
   }
 
   doRenderParticipantSlide(p) {
@@ -271,6 +279,29 @@ class EventGallery {
       + '</div>';
 
     this.attachNavListeners();
+    this.startInfoScroll();
+  }
+
+  startInfoScroll() {
+    if (this.scrollInterval) clearInterval(this.scrollInterval);
+    const info = this.stageEl ? this.stageEl.querySelector('.eg-stage-info') : null;
+    if (!info) return;
+    info.scrollTop = 0;
+    // Wait 1.5s then slowly scroll over the remaining duration
+    setTimeout(() => {
+      const scrollable = info.scrollHeight - info.clientHeight;
+      if (scrollable <= 0) return;
+      const duration = this.autoplayDuration - 2000; // leave 2s at end
+      const steps = 60;
+      const stepDelay = duration / steps;
+      const stepSize = scrollable / steps;
+      let step = 0;
+      this.scrollInterval = setInterval(() => {
+        step++;
+        info.scrollTop = Math.min(stepSize * step, scrollable);
+        if (step >= steps) clearInterval(this.scrollInterval);
+      }, stepDelay);
+    }, 1500);
   }
 
   buildNavHtml() {
@@ -322,7 +353,9 @@ class EventGallery {
   stopAutoplay() {
     this.autoplayEnabled = false;
     clearInterval(this.autoplayInterval);
+    clearInterval(this.scrollInterval);
     this.autoplayInterval = null;
+    this.scrollInterval = null;
     if (this.progressBar) { this.progressBar.style.transition = 'none'; this.progressBar.style.width = '0%'; }
     if (this.autoplayBtn) { this.autoplayBtn.classList.remove('playing'); this.autoplayBtn.innerHTML = '<i class="fas fa-play"></i> Auto'; }
   }
