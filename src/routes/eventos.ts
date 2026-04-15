@@ -24,8 +24,8 @@ router.get('/:id', async (req: Request, res: Response) => {
     
     // Hydrate creator first
     const [withCreator] = await hydrate([evento], 'creator');
-    // Then hydrate participants
-    const [withParticipants] = await hydrate([withCreator], 'participants');
+    // Then hydrate participants (include bio and socials for gallery)
+    const [withParticipants] = await hydrate([withCreator], 'participants', 'username avatar displayName bio socials');
     // Then hydrate doorUsers
     const [hydrated] = await hydrate([withParticipants], 'doorUsers');
     
