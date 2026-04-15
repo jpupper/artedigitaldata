@@ -10,7 +10,7 @@ class EventGallery {
     this.currentIndex = 0;
     this.autoplayEnabled = true;
     this.autoplayInterval = null;
-    this.autoplayDuration = 5000;
+    this.autoplayDuration = 8000;
     this.transitioning = false;
 
     this.stageEl = null;
@@ -239,10 +239,10 @@ class EventGallery {
       '<div class="eg-stage-avatar eg-stage-avatar--event">' + avatarHtml + '</div>'
       + '<div class="eg-stage-info">'
       +   '<div class="eg-stage-name">' + this.escHtml(ev.title) + '</div>'
-      +   (date ? '<div class="eg-stage-username"><i class="fas fa-calendar mr-1"></i>' + date + '</div>' : '')
-      +   (location ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt mr-1"></i>' + this.escHtml(location) + '</div>' : '')
-      + '</div>'
-      + navHtml;
+      +   (date ? '<div class="eg-stage-username"><i class="fas fa-calendar" style="margin-right:4px"></i>' + date + '</div>' : '')
+      +   (location ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(location) + '</div>' : '')
+      +   navHtml
+      + '</div>';
 
     this.attachNavListeners();
   }
@@ -267,8 +267,8 @@ class EventGallery {
       +   (bio ? '<p class="eg-stage-bio">' + this.escHtml(bio) + '</p>' : '')
       +   (socialsHtml ? '<div class="eg-stage-socials">' + socialsHtml + '</div>' : '')
       +   (username ? '<a href="profile.html?user=' + this.escHtml(username) + '" class="eg-profile-btn"><i class="fas fa-user"></i> Ver Perfil</a>' : '')
-      + '</div>'
-      + navHtml;
+      +   navHtml
+      + '</div>';
 
     this.attachNavListeners();
   }
