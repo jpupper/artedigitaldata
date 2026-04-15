@@ -37,33 +37,31 @@
 
           <h1 id="event-title" class="text-4xl md:text-5xl font-black text-white mb-6"></h1>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-            <div class="space-y-4">
-              <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                <i class="fas fa-clock text-magenta-500 mt-1"></i>
-                <div>
-                  <h4 class="text-xs font-bold text-gray-500 uppercase">Hora</h4>
-                  <p id="event-time" class="text-white font-medium"></p>
-                </div>
-              </div>
-              <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                <i class="fas fa-map-marker-alt text-cyan-500 mt-1"></i>
-                <div>
-                  <h4 class="text-xs font-bold text-gray-500 uppercase">Ubicación</h4>
-                  <p id="event-location" class="text-white font-medium"></p>
-                </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+            <!-- Hora -->
+            <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+              <i class="fas fa-clock text-magenta-500 mt-1"></i>
+              <div>
+                <h4 class="text-xs font-bold text-gray-500 uppercase">Hora</h4>
+                <p id="event-time" class="text-white font-medium"></p>
               </div>
             </div>
-            <div class="flex flex-col justify-center">
-              <div class="flex flex-col gap-3">
-                <button onclick="shareEvent()" class="group flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-cyan-500 hover:text-black transition-all">
-                  <i class="fas fa-share-alt group-hover:scale-110 transition-transform"></i>
-                  COMPARTIR EVENTO
-                </button>
-                <div id="ticket-actions" class="hidden">
-                  <!-- Ticket buttons will be injected here -->
-                </div>
+            <!-- Compartir -->
+            <button onclick="shareEvent()" class="group flex items-center justify-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-cyan-500 hover:text-black transition-all h-full">
+              <i class="fas fa-share-alt group-hover:scale-110 transition-transform"></i>
+              COMPARTIR EVENTO
+            </button>
+            <!-- Ubicación -->
+            <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+              <i class="fas fa-map-marker-alt text-cyan-500 mt-1"></i>
+              <div>
+                <h4 class="text-xs font-bold text-gray-500 uppercase">Ubicación</h4>
+                <p id="event-location" class="text-white font-medium"></p>
               </div>
+            </div>
+            <!-- Comprar Entrada -->
+            <div id="ticket-actions" class="hidden h-full">
+              <!-- Ticket button will be injected here -->
             </div>
           </div>
 
@@ -153,6 +151,11 @@
       document.getElementById('event-content').classList.remove('hidden');
 
       const isCreator = isLoggedIn() && getUserId() === ev.creator?._id;
+      
+      // Show pin button for admins
+      if (isAdmin()) {
+        renderPinButton(ev.pinned);
+      }
 
       document.title = `${ev.title} - Arte Digital Data`;
       document.getElementById('event-title').innerText = ev.title;
@@ -213,7 +216,7 @@
         } else {
           ticketActions.classList.remove('hidden');
           ticketActions.innerHTML = `
-            <button disabled class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gray-500/20 text-gray-500 font-bold cursor-not-allowed">
+            <button disabled class="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gray-500/20 text-gray-500 font-bold cursor-not-allowed h-full">
               <i class="fas fa-calendar-times"></i>
               EVENTO FINALIZADO
             </button>
@@ -389,44 +392,29 @@
             // SOLD OUT
             ticketActions.classList.remove('hidden');
             ticketActions.innerHTML = `
-              <button disabled class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-red-500/20 text-red-500 font-bold cursor-not-allowed border border-red-500/30">
+              <button disabled class="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-red-500/20 text-red-500 font-bold cursor-not-allowed border border-red-500/30 h-full">
                 <i class="fas fa-times-circle"></i>
                 SOLD OUT
               </button>
-              <p class="text-center text-xs text-gray-500 mt-2">
-                Se agotaron las entradas (${total}/${maxTickets})
-              </p>
             `;
           } else {
             // Available
             ticketActions.classList.remove('hidden');
             ticketActions.innerHTML = `
-              <div class="group flex items-center justify-center">
-                <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
-                  <i class="fas fa-ticket-alt text-xl"></i>
-                  ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-                </a>
-              </div>
-              ${ev.ticketConfig.price > 0 ? `
-              <p class="text-center text-xs text-gray-500">
-                Precio: $${ev.ticketConfig.price} ARS
-              </p>
-              ` : ''}
-              <p class="text-center text-xs text-green-400">
-                <i class="fas fa-check-circle mr-1"></i>${available} disponibles de ${maxTickets}
-              </p>
+              <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-bold hover:scale-[1.02] transition-all shadow-lg shadow-magenta-500/25 h-full w-full">
+                <i class="fas fa-ticket-alt text-xl"></i>
+                ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+              </a>
             `;
           }
         } else {
           // If can't get stats, show button anyway
           ticketActions.classList.remove('hidden');
           ticketActions.innerHTML = `
-            <div class="group flex items-center justify-center">
-              <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
-                <i class="fas fa-ticket-alt text-xl"></i>
-                ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-              </a>
-            </div>
+            <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-bold hover:scale-[1.02] transition-all shadow-lg shadow-magenta-500/25 h-full w-full">
+              <i class="fas fa-ticket-alt text-xl"></i>
+              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+            </a>
           `;
         }
       } catch (err) {
@@ -434,12 +422,10 @@
         // Show button on error
         ticketActions.classList.remove('hidden');
         ticketActions.innerHTML = `
-          <div class="group flex items-center justify-center">
-            <a href="ticket-purchase.html?event=${ev._id}" class="flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-black uppercase tracking-wider hover:scale-[1.02] transition-transform shadow-lg shadow-magenta-500/25 w-full">
-              <i class="fas fa-ticket-alt text-xl"></i>
-              ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
-            </a>
-          </div>
+          <a href="ticket-purchase.html?event=${ev._id}" class="group flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white font-bold hover:scale-[1.02] transition-all shadow-lg shadow-magenta-500/25 h-full w-full">
+            <i class="fas fa-ticket-alt text-xl"></i>
+            ${ev.ticketConfig.price === 0 ? 'RESERVAR ENTRADA' : 'COMPRAR ENTRADA'}
+          </a>
         `;
       }
     }
@@ -467,6 +453,57 @@
       const modal = document.getElementById('global-edit-modal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+
+    // Pin/Unpin event (admin only)
+    async function togglePinEvent() {
+      if (!isLoggedIn() || !isAdmin()) {
+        alert('Solo administradores pueden pinear/despinear eventos');
+        return;
+      }
+      
+      try {
+        const ev = await (await fetch(`${CONFIG.API_URL}/eventos/${currentEventId}`)).json();
+        const isPinned = ev.pinned;
+        const action = isPinned ? 'unpin' : 'pin';
+        const confirmMsg = isPinned ? '¿Despinnar este evento?' : '¿Pinnar este evento como destacado?';
+        
+        if (!confirm(confirmMsg)) return;
+        
+        const res = await apiRequest(`/eventos/${currentEventId}/${action}`, { method: 'POST' });
+        if (res.ok) {
+          const result = await res.json();
+          renderPinButton(result.pinned);
+          alert(isPinned ? 'Evento despinnado' : 'Evento pinnado como destacado');
+        }
+      } catch (err) {
+        console.error('Error toggling pin:', err);
+        alert('Error al cambiar estado del pin');
+      }
+    }
+
+    // Render pin button for admin
+    function renderPinButton(isPinned) {
+      let btn = document.getElementById('pin-event-btn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'pin-event-btn';
+        btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl border transition-all font-bold text-sm';
+        // Insert after like button
+        const likeBtn = document.getElementById('like-btn');
+        if (likeBtn) {
+          likeBtn.after(btn);
+        }
+      }
+      
+      if (isPinned) {
+        btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all font-bold text-sm';
+        btn.innerHTML = '<i class="fas fa-thumbtack"></i><span>DESPINS</span>';
+      } else {
+        btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-gray-400 hover:border-cyan-500/30 hover:text-cyan-400 transition-all font-bold text-sm';
+        btn.innerHTML = '<i class="fas fa-thumbtack transform rotate-45"></i><span>PIN</span>';
+      }
+      btn.onclick = togglePinEvent;
     }
   </script>
 
