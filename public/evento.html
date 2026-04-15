@@ -71,7 +71,12 @@
           </div>
 
           <div id="participants-section" class="pt-8 border-t border-white/5 mb-10">
-            <h4 class="text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">Participantes Etiquetados</h4>
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Participantes Etiquetados</h4>
+              <a id="gallery-link" href="#" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/10 to-fuchsia-500/10 border border-cyan-500/30 text-cyan-400 font-bold text-xs uppercase tracking-widest hover:from-cyan-500/20 hover:to-fuchsia-500/20 transition-all">
+                <i class="fas fa-th-large"></i> Ver Galería
+              </a>
+            </div>
             <div id="participants-list" class="flex flex-wrap gap-3">
               <!-- Participants will be injected here -->
             </div>
@@ -268,6 +273,8 @@
       // Participants
       const participantsSection = document.getElementById('participants-section');
       const participantsList = document.getElementById('participants-list');
+      const galleryLink = document.getElementById('gallery-link');
+      if (galleryLink) galleryLink.href = `eventgallery.html?id=${ev._id}`;
       if (ev.participants?.length) {
         participantsSection.classList.remove('hidden');
         participantsList.innerHTML = ev.participants.map(p => `

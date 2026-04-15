@@ -50,19 +50,24 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl, youtube_video, ticketConfig } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants } = req.body;
     if (!title || !date) return res.status(400).json({ error: 'Título y fecha son obligatorios' });
 
     // Parse @usernames from description
-    const participants: any[] = [];
+    const participantSet = new Set<string>();
     if (description) {
       const mentions = description.match(/@(\w+)/g);
       if (mentions) {
         const usernames = mentions.map((m: string) => m.substring(1));
         const foundUsers = await User.find({ username: { $in: usernames } }).select('_id');
-        foundUsers.forEach(u => participants.push(u._id));
+        foundUsers.forEach(u => participantSet.add(u._id.toString()));
       }
     }
+    // Merge manually added participants
+    if (Array.isArray(manualParticipants)) {
+      manualParticipants.forEach((id: string) => { if (id) participantSet.add(id); });
+    }
+    const participants = Array.from(participantSet);
 
     const evento = await Evento.create({
       title,
@@ -93,16 +98,24 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     }
 
     // Re-parse participants if description changed
+    const { manualParticipants: manualP } = req.body;
     if (description !== undefined) {
-      const participants: any[] = [];
+      const participantSet = new Set<string>();
       const mentions = description.match(/@(\w+)/g);
       if (mentions) {
         const usernames = mentions.map((m: string) => m.substring(1));
         const foundUsers = await User.find({ username: { $in: usernames } }).select('_id');
-        foundUsers.forEach(u => participants.push(u._id));
+        foundUsers.forEach(u => participantSet.add(u._id.toString()));
       }
-      evento.participants = participants;
+      if (Array.isArray(manualP)) {
+        manualP.forEach((id: string) => { if (id) participantSet.add(id); });
+      }
+      evento.participants = Array.from(participantSet) as any;
       evento.description = description;
+    } else if (Array.isArray(manualP)) {
+      const participantSet = new Set<string>((evento.participants || []).map((id: any) => id.toString()));
+      manualP.forEach((id: string) => { if (id) participantSet.add(id); });
+      evento.participants = Array.from(participantSet) as any;
     }
 
     if (title) evento.title = title;
