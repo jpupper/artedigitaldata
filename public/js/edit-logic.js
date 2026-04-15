@@ -61,6 +61,9 @@ async function loadItemToEdit(type, id, onComplete) {
         if (desc && preview) {
           desc.addEventListener('input', () => {
             preview.innerHTML = formatMentions(desc.value) || 'Vista previa...';
+            if (normalizedType === 'evento' && typeof syncParticipantsFromDescription === 'function') {
+              syncParticipantsFromDescription('edit', desc.value);
+            }
           });
           preview.innerHTML = formatMentions(desc.value) || 'Vista previa...';
         }
@@ -125,6 +128,9 @@ async function saveEdit() {
     body.date = document.getElementById('edit-date').value;
     body.location = document.getElementById('edit-location').value.trim();
     body.ticketConfig = window.getTicketConfig('edit');
+    if (typeof getParticipantIds === 'function') {
+      body.manualParticipants = getParticipantIds('edit');
+    }
   }
 
   try {

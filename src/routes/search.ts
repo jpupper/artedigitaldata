@@ -47,7 +47,7 @@ router.get('/', async (req: Request, res: Response) => {
     ]);
 
     const results = [
-      ...users.map(u => ({ type: 'user', id: u.username, label: u.displayName || u.username, avatar: u.avatar })),
+      ...users.map(u => ({ type: 'user', id: u.username, _id: u._id, label: u.displayName || u.username, avatar: u.avatar })),
       ...posts.map(p => ({ type: 'post', id: p._id, label: p.title, author: (p.author as any)?.username, image: p.imageUrl, date: p.createdAt, youtube_video: p.youtube_video, description: p.description })),
       ...events.map(e => ({ type: 'event', id: e._id, label: e.title, date: e.date, image: e.imageUrl, desc: e.description, youtube_video: e.youtube_video })),
       ...resources.map(r => ({ type: 'resource', id: r._id, label: r.title, author: (r.author as any)?.username, url: r.url, resourceType: r.type, youtube_video: r.youtube_video, description: r.description }))
