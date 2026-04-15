@@ -128,6 +128,35 @@ const FORM_TEMPLATES = {
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors mt-2">
       </div>
       
+      <!-- Participants Section -->
+      <div class="border-t border-white/10 pt-6 mt-6">
+        <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-widest">
+          <i class="fas fa-users text-magenta-500 mr-2"></i>Participantes del Evento
+        </h4>
+        <p class="text-[10px] text-gray-500 mb-3">También se agregan automáticamente cuando etiquetás @usuarios en la descripción.</p>
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="${prefix}-participant-search" placeholder="Buscar usuario por nombre..."
+            class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:border-magenta-500 focus:outline-none transition-colors"
+            oninput="searchParticipants('${prefix}', this.value)">
+          <button type="button" onclick="addParticipantFromSearch('${prefix}')"
+            class="px-4 py-2 rounded-xl bg-magenta-500/20 border border-magenta-500/30 text-magenta-400 font-bold text-sm hover:bg-magenta-500/40 transition-all">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div id="${prefix}-participant-suggestions" class="hidden bg-[#0d0d12] border border-white/10 rounded-xl overflow-hidden mb-3 max-h-40 overflow-y-auto"></div>
+        <div id="${prefix}-participants-list" class="flex flex-wrap gap-2 min-h-[2rem]">
+          ${(item.participants || []).map(p => `
+            <div class="participant-chip flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white" data-id="${p._id || p}">
+              <div class="w-5 h-5 rounded-full bg-magenta-500/20 flex items-center justify-center text-[9px] font-bold text-magenta-400 overflow-hidden">
+                ${p.avatar ? `<img src="${p.avatar}" class="w-full h-full object-cover">` : (p.username || '?')[0].toUpperCase()}
+              </div>
+              <span class="font-bold text-xs">${p.username || p}</span>
+              <button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
       <!-- Ticket System Section -->
       <div class="border-t border-white/10 pt-6 mt-6">
         <div class="flex items-center gap-3 mb-4">
@@ -199,6 +228,108 @@ window.toggleTicketConfig = (prefix) => {
   if (checkbox && configDiv) {
     configDiv.classList.toggle('hidden', !checkbox.checked);
   }
+};
+
+let _participantSearchSelected = {};
+
+window.searchParticipants = async (prefix, query) => {
+  const suggestionsEl = document.getElementById(`${prefix}-participant-suggestions`);
+  if (!suggestionsEl) return;
+  if (!query || query.length < 2) {
+    suggestionsEl.classList.add('hidden');
+    suggestionsEl.innerHTML = '';
+    _participantSearchSelected[prefix] = null;
+    return;
+  }
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return;
+    const results = await res.json();
+    const users = results.filter(r => r.type === 'user');
+    if (users.length === 0) {
+      suggestionsEl.classList.add('hidden');
+      return;
+    }
+    suggestionsEl.classList.remove('hidden');
+    suggestionsEl.innerHTML = users.map(u => `
+      <div class="suggestion-row flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"
+           data-id="${u._id}" data-username="${u.label}" data-avatar="${u.avatar || ''}"
+           onclick="selectParticipantSuggestion('${prefix}', this)">
+        <div class="w-7 h-7 rounded-full bg-magenta-500/20 flex items-center justify-center text-xs font-bold text-magenta-400 overflow-hidden shrink-0">
+          ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : (u.label || '?')[0].toUpperCase()}
+        </div>
+        <span class="text-sm text-white font-bold">@${u.label}</span>
+      </div>
+    `).join('');
+  } catch(e) {
+    suggestionsEl.classList.add('hidden');
+  }
+};
+
+window.selectParticipantSuggestion = (prefix, el) => {
+  const id = el.dataset.id;
+  const username = el.dataset.username;
+  const avatar = el.dataset.avatar;
+  _participantSearchSelected[prefix] = { _id: id, username, avatar };
+  const searchInput = document.getElementById(`${prefix}-participant-search`);
+  if (searchInput) searchInput.value = username;
+  const suggestionsEl = document.getElementById(`${prefix}-participant-suggestions`);
+  if (suggestionsEl) suggestionsEl.classList.add('hidden');
+  addParticipantChip(prefix, { _id: id, username, avatar });
+};
+
+window.addParticipantFromSearch = (prefix) => {
+  const selected = _participantSearchSelected[prefix];
+  if (!selected) return;
+  addParticipantChip(prefix, selected);
+  const searchInput = document.getElementById(`${prefix}-participant-search`);
+  if (searchInput) searchInput.value = '';
+  _participantSearchSelected[prefix] = null;
+};
+
+window.addParticipantChip = (prefix, user) => {
+  const listEl = document.getElementById(`${prefix}-participants-list`);
+  if (!listEl) return;
+  const existing = listEl.querySelector(`[data-id="${user._id}"]`);
+  if (existing) return;
+  const chip = document.createElement('div');
+  chip.className = 'participant-chip flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white';
+  chip.dataset.id = user._id;
+  chip.dataset.username = user.username;
+  chip.innerHTML = `
+    <div class="w-5 h-5 rounded-full bg-magenta-500/20 flex items-center justify-center text-[9px] font-bold text-magenta-400 overflow-hidden">
+      ${user.avatar ? `<img src="${user.avatar}" class="w-full h-full object-cover">` : (user.username || '?')[0].toUpperCase()}
+    </div>
+    <span class="font-bold text-xs">${user.username}</span>
+    <button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>
+  `;
+  listEl.appendChild(chip);
+};
+
+window.removeParticipantChip = (btn) => {
+  btn.closest('.participant-chip').remove();
+};
+
+window.syncParticipantsFromDescription = async (prefix, description) => {
+  if (!description) return;
+  const mentions = description.match(/@(\w+)/g);
+  if (!mentions) return;
+  const usernames = mentions.map(m => m.substring(1));
+  try {
+    for (const username of usernames) {
+      const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(username)}`);
+      if (!res.ok) continue;
+      const results = await res.json();
+      const user = results.find(r => r.type === 'user' && r.label.toLowerCase() === username.toLowerCase());
+      if (user) addParticipantChip(prefix, { _id: user._id, username: user.label, avatar: user.avatar || '' });
+    }
+  } catch(e) {}
+};
+
+window.getParticipantIds = (prefix) => {
+  const listEl = document.getElementById(`${prefix}-participants-list`);
+  if (!listEl) return [];
+  return Array.from(listEl.querySelectorAll('.participant-chip')).map(chip => chip.dataset.id).filter(Boolean);
 };
 
 window.getTicketConfig = (prefix) => {

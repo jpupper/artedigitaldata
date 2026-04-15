@@ -7,21 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .type-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .type-card.active {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--color-cyan);
-      transform: translateY(-4px);
-      box-shadow: 0 10px 30px -10px rgba(0, 245, 255, 0.3);
-    }
-    .type-card.active i {
-      color: var(--color-cyan);
-      filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.5));
-    }
-  </style>
+  <link rel="stylesheet" href="css/create.css">
 </head>
 <body class="min-h-screen">
   <div id="app-header"></div>
@@ -130,6 +116,9 @@
           enableTagging(desc.id);
           desc.addEventListener('input', () => {
             preview.innerHTML = formatMentions(desc.value) || 'Vista previa de menciones...';
+            if (prefix === 'event') {
+              syncParticipantsFromDescription('event', desc.value);
+            }
           });
         }
       });
@@ -287,9 +276,11 @@
           }
         }
 
+        const manualParticipants = getParticipantIds('event');
+
         const res = await apiRequest('/eventos', {
           method: 'POST',
-          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig })
+          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants })
         });
 
         if (res?.ok) {
