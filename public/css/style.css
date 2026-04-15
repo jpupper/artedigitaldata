@@ -181,3 +181,24 @@ select:focus {
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
 }
+
+/* Gradient animation for ticket buttons */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+  animation: gradientMove 3s ease infinite;
+}
+
+/* Shimmer effect for hover */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.group:hover .animate-shimmer {
+  animation: shimmer 1s ease-out;
+}
