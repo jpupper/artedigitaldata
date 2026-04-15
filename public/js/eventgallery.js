@@ -56,28 +56,22 @@ class EventGallery {
     const wrapper = document.getElementById('eg-wrapper');
     wrapper.innerHTML = '';
 
-    // Header — event title only, no subtitle
+    // Header — event title + AUTO button
     const header = document.createElement('header');
     header.className = 'eg-header';
-    header.innerHTML = '<div class="eg-event-title">' + this.escHtml(this.evento.title) + '</div>';
-    wrapper.appendChild(header);
 
-    // Controls bar
-    const controls = document.createElement('div');
-    controls.className = 'flex items-center justify-center gap-4 py-3';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'eg-event-title';
+    titleEl.textContent = this.evento.title;
+    header.appendChild(titleEl);
 
     this.autoplayBtn = document.createElement('button');
     this.autoplayBtn.className = 'eg-autoplay-btn playing';
     this.autoplayBtn.innerHTML = '<i class="fas fa-play"></i> Auto';
     this.autoplayBtn.addEventListener('click', () => this.toggleAutoplay());
-    controls.appendChild(this.autoplayBtn);
+    header.appendChild(this.autoplayBtn);
 
-    const backBtn = document.createElement('a');
-    backBtn.href = 'evento.html?id=' + this.evento._id;
-    backBtn.className = 'eg-autoplay-btn';
-    backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Volver al Evento';
-    controls.appendChild(backBtn);
-    wrapper.appendChild(controls);
+    wrapper.appendChild(header);
 
     // Stage
     const stageWrap = document.createElement('section');
