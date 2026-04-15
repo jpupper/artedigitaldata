@@ -179,9 +179,17 @@
                   </div>
                   <span class="text-xs font-bold text-gray-400">${ev.creator?.username || 'Anónimo'}</span>
                 </div>
-                <a href="evento.html?id=${ev._id}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
-                  Ver Evento <i class="fas fa-arrow-right ml-1"></i>
-                </a>
+                ${ev.ticketConfig?.enabled ? `
+                  <a href="ticket-purchase.html?event=${ev._id}" class="group relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white text-xs font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] overflow-hidden">
+                    <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></span>
+                    <i class="fas fa-ticket-alt"></i>
+                    ${ev.ticketConfig.price === 0 ? 'RESERVAR' : 'COMPRAR'}
+                  </a>
+                ` : `
+                  <a href="evento.html?id=${ev._id}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
+                    Ver Evento <i class="fas fa-arrow-right ml-1"></i>
+                  </a>
+                `}
               </div>
             </div>
           </div>
