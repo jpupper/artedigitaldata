@@ -162,6 +162,13 @@ router.post('/event/:eventId/issue-manual', authMiddleware, async (req: AuthRequ
       paymentId: 'MANUAL'
     });
 
+    // Send confirmation email
+    if (finalOwnerEmail) {
+      sendTicketEmail(finalOwnerEmail, finalOwnerName || 'Usuario', { code, qrData }, event).catch(err =>
+        console.error('[Tickets] Error sending manual ticket email:', err)
+      );
+    }
+
     // Prepare response with owner data
     const ticketObj = ticket.toObject();
     if (ticket.owner) {
