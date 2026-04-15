@@ -29,8 +29,8 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
     users.forEach(u => { 
         const userData = u.toObject();
         userMap[u._id.toString()] = {
+            ...userData,
             _id: u._id,
-            username: userData.username,
             avatar: userData.avatar || '',
             displayName: userData.displayName || userData.username
         };
