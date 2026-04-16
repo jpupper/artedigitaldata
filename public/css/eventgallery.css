@@ -134,11 +134,28 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0;
   min-width: 0;
-  max-height: 420px;
+  min-height: 0;
+}
+
+.eg-stage-header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+}
+
+.eg-stage-bio-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   overflow-y: auto;
   padding-right: 4px;
+  min-height: 0;
+  max-height: 340px;
 }
 
 @keyframes eg-stage-in {
@@ -502,6 +519,17 @@
   .eg-stage-info {
     align-items: center;
     text-align: center;
+  }
+
+  .eg-stage-header {
+    align-items: center;
+    text-align: center;
+  }
+
+  .eg-stage-bio-scroll {
+    align-items: center;
+    text-align: center;
+    max-height: 220px;
   }
 
   .eg-stage-bio {
