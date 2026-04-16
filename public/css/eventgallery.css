@@ -12,6 +12,16 @@
   --gallery-chip-size-sm: 76px;
 }
 
+@keyframes eg-chip-in {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.85); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0);   }
+}
+
+@keyframes eg-label-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* ---- Background ---- */
 .eg-bg {
   background: var(--gallery-bg);
@@ -317,7 +327,7 @@
 
 .eg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--gallery-chip-size), 1fr));
+  grid-template-columns: repeat(var(--eg-cols, 5), 1fr);
   gap: 14px;
   max-width: 960px;
   margin: 0 auto;
@@ -340,6 +350,7 @@
   align-items: center;
   justify-content: flex-end;
   user-select: none;
+  animation: eg-chip-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .eg-chip:hover {
@@ -396,9 +407,17 @@
   text-transform: uppercase;
   color: #fff;
   text-align: center;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.eg-chip-label-inner {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.eg-chip-label-inner.scrolling {
+  animation: eg-label-scroll 4s linear infinite;
+  padding-right: 2rem;
 }
 
 .eg-chip-active-indicator {
@@ -504,7 +523,7 @@
 
   .eg-grid {
     gap: 8px;
-    grid-template-columns: repeat(auto-fill, minmax(var(--gallery-chip-size-sm), 1fr));
+    grid-template-columns: repeat(var(--eg-cols, 4), 1fr);
   }
 }
 

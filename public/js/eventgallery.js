@@ -50,12 +50,28 @@ class EventGallery {
     }
   }
 
+  calcCols(total) {
+    // Find the column count that produces the fewest orphan chips (most even rows)
+    // Prefer values between 3 and 6
+    let best = 4, bestRemainder = total;
+    for (let c = 3; c <= 6; c++) {
+      const r = total % c;
+      const score = r === 0 ? -1 : r; // 0 remainder = perfect, lower = better
+      if (score < bestRemainder) { bestRemainder = score; best = c; }
+    }
+    return best;
+  }
+
   renderLayout() {
     const loadingEl = document.getElementById('eg-loading');
     if (loadingEl) loadingEl.remove();
 
     const wrapper = document.getElementById('eg-wrapper');
     wrapper.innerHTML = '';
+
+    // Set optimal column count on grid CSS variable
+    const cols = this.calcCols(this.slides.length);
+    document.documentElement.style.setProperty('--eg-cols', cols);
 
     // Header — event title + AUTO button
     const header = document.createElement('header');
@@ -119,19 +135,37 @@ class EventGallery {
     document.body.appendChild(pbWrap);
   }
 
+  buildChipLabel(text) {
+    const label = document.createElement('div');
+    label.className = 'eg-chip-label';
+    const inner = document.createElement('span');
+    inner.className = 'eg-chip-label-inner';
+    inner.textContent = text;
+    label.appendChild(inner);
+    // After mount, check if it overflows and apply scroll animation
+    requestAnimationFrame(() => {
+      if (inner.scrollWidth > label.clientWidth + 2) {
+        // Duplicate text for seamless loop
+        inner.textContent = text + '\u00a0\u00a0\u00a0\u00a0' + text;
+        inner.classList.add('scrolling');
+      }
+    });
+    return label;
+  }
+
   buildChip(slide, index) {
     const chip = document.createElement('div');
     chip.className = 'eg-chip';
     chip.dataset.index = index;
     chip.setAttribute('role', 'button');
     chip.setAttribute('tabindex', '0');
+    chip.style.animationDelay = (index * 55) + 'ms';
 
     const indicator = document.createElement('div');
     indicator.className = 'eg-chip-active-indicator';
     chip.appendChild(indicator);
 
     if (slide.type === 'event') {
-      // Event flyer chip
       if (slide.data.imageUrl) {
         const img = document.createElement('img');
         img.src = slide.data.imageUrl;
@@ -145,13 +179,9 @@ class EventGallery {
         ico.innerHTML = '<i class="fas fa-calendar-alt" style="font-size:1.6rem;color:#FF00E0"></i>';
         chip.appendChild(ico);
       }
-      const label = document.createElement('div');
-      label.className = 'eg-chip-label';
-      label.textContent = 'EVENTO';
-      chip.appendChild(label);
+      chip.appendChild(this.buildChipLabel('EVENTO'));
       chip.setAttribute('aria-label', 'Flyer del evento');
     } else {
-      // Participant chip
       const p = slide.data;
       const name = p.displayName || p.username || 'Artista';
       chip.setAttribute('aria-label', name);
@@ -169,10 +199,7 @@ class EventGallery {
         initial.textContent = name[0].toUpperCase();
         chip.appendChild(initial);
       }
-      const label = document.createElement('div');
-      label.className = 'eg-chip-label';
-      label.textContent = name;
-      chip.appendChild(label);
+      chip.appendChild(this.buildChipLabel(name));
     }
 
     chip.addEventListener('click', () => {
