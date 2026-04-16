@@ -268,11 +268,15 @@ class EventGallery {
     this.stageEl.innerHTML =
       '<div class="eg-stage-avatar eg-stage-avatar--event">' + avatarHtml + '</div>'
       + '<div class="eg-stage-info">'
-      +   '<div class="eg-stage-name">' + this.escHtml(ev.title) + '</div>'
-      +   (date ? '<div class="eg-stage-username"><i class="fas fa-calendar" style="margin-right:4px"></i>' + date + '</div>' : '')
-      +   (locationDisplay ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(locationDisplay) + '</div>' : '')
-      +   (description ? '<p class="eg-stage-bio" data-full="' + this.escHtml(description) + '"></p>' : '')
-      +   navHtml
+      +   '<div class="eg-stage-header">'
+      +     '<div class="eg-stage-name">' + this.escHtml(ev.title) + '</div>'
+      +     (date ? '<div class="eg-stage-username"><i class="fas fa-calendar" style="margin-right:4px"></i>' + date + '</div>' : '')
+      +     (locationDisplay ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(locationDisplay) + '</div>' : '')
+      +   '</div>'
+      +   '<div class="eg-stage-bio-scroll">'
+      +     (description ? '<p class="eg-stage-bio" data-full="' + this.escHtml(description) + '"></p>' : '')
+      +     navHtml
+      +   '</div>'
       + '</div>';
 
     this.attachNavListeners();
@@ -295,12 +299,16 @@ class EventGallery {
     this.stageEl.innerHTML =
       '<div class="eg-stage-avatar">' + avatarHtml + '</div>'
       + '<div class="eg-stage-info">'
-      +   '<div class="eg-stage-name">' + this.escHtml(name) + '</div>'
-      +   (username ? '<div class="eg-stage-username">@' + this.escHtml(username) + '</div>' : '')
-      +   (bio ? '<p class="eg-stage-bio" data-full="' + this.escHtml(bio) + '"></p>' : '')
-      +   (socialsHtml ? '<div class="eg-stage-socials">' + socialsHtml + '</div>' : '')
-      +   (username ? '<a href="profile.html?user=' + this.escHtml(username) + '" class="eg-profile-btn"><i class="fas fa-user"></i> Ver Perfil</a>' : '')
-      +   navHtml
+      +   '<div class="eg-stage-header">'
+      +     '<div class="eg-stage-name">' + this.escHtml(name) + '</div>'
+      +     (username ? '<div class="eg-stage-username">@' + this.escHtml(username) + '</div>' : '')
+      +   '</div>'
+      +   '<div class="eg-stage-bio-scroll">'
+      +     (bio ? '<p class="eg-stage-bio" data-full="' + this.escHtml(bio) + '"></p>' : '')
+      +     (socialsHtml ? '<div class="eg-stage-socials">' + socialsHtml + '</div>' : '')
+      +     (username ? '<a href="profile.html?user=' + this.escHtml(username) + '" class="eg-profile-btn"><i class="fas fa-user"></i> Ver Perfil</a>' : '')
+      +     navHtml
+      +   '</div>'
       + '</div>';
 
     this.attachNavListeners();
@@ -327,24 +335,25 @@ class EventGallery {
 
   startInfoScroll() {
     if (this.scrollInterval) clearInterval(this.scrollInterval);
-    const info = this.stageEl ? this.stageEl.querySelector('.eg-stage-info') : null;
+    const info = this.stageEl ? this.stageEl.querySelector('.eg-stage-bio-scroll') : null;
     if (!info) return;
     info.scrollTop = 0;
-    // Wait 1.5s then slowly scroll over the remaining duration
+    // Start scrolling after a short pause, measuring scrollHeight live on every tick
+    // so it adapts as the typewriter keeps adding content
+    const duration = this.autoplayDuration - 2500;
+    const stepDelay = 120; // ms per tick
+    const steps = Math.floor(duration / stepDelay);
+    let step = 0;
     setTimeout(() => {
-      const scrollable = info.scrollHeight - info.clientHeight;
-      if (scrollable <= 0) return;
-      const duration = this.autoplayDuration - 2000; // leave 2s at end
-      const steps = 60;
-      const stepDelay = duration / steps;
-      const stepSize = scrollable / steps;
-      let step = 0;
       this.scrollInterval = setInterval(() => {
         step++;
-        info.scrollTop = Math.min(stepSize * step, scrollable);
+        const scrollable = info.scrollHeight - info.clientHeight;
+        if (scrollable > 0) {
+          info.scrollTop = Math.min((scrollable / steps) * step, scrollable);
+        }
         if (step >= steps) clearInterval(this.scrollInterval);
       }, stepDelay);
-    }, 1500);
+    }, 800);
   }
 
   buildNavHtml() {
