@@ -12,6 +12,7 @@ class EventGallery {
     this.autoplayInterval = null;
     this.autoplayDuration = 15000;
     this.scrollInterval = null;
+    this.typewriterTimeout = null;
     this.transitioning = false;
 
     this.stageEl = null;
@@ -202,7 +203,9 @@ class EventGallery {
     if (animate) {
       this.transitioning = true;
       clearInterval(this.scrollInterval);
+      clearTimeout(this.typewriterTimeout);
       this.scrollInterval = null;
+      this.typewriterTimeout = null;
       this.stageEl.classList.add('leaving');
       setTimeout(() => {
         this.stageEl.classList.remove('leaving');
@@ -241,11 +244,12 @@ class EventGallery {
       +   '<div class="eg-stage-name">' + this.escHtml(ev.title) + '</div>'
       +   (date ? '<div class="eg-stage-username"><i class="fas fa-calendar" style="margin-right:4px"></i>' + date + '</div>' : '')
       +   (locationDisplay ? '<div class="eg-stage-username" style="margin-top:4px"><i class="fas fa-map-marker-alt" style="margin-right:4px"></i>' + this.escHtml(locationDisplay) + '</div>' : '')
-      +   (description ? '<p class="eg-stage-bio">' + this.escHtml(description) + '</p>' : '')
+      +   (description ? '<p class="eg-stage-bio" data-full="' + this.escHtml(description) + '"></p>' : '')
       +   navHtml
       + '</div>';
 
     this.attachNavListeners();
+    this.typewriterBio(this.stageEl.querySelector('.eg-stage-bio'));
     this.startInfoScroll();
   }
 
@@ -266,14 +270,32 @@ class EventGallery {
       + '<div class="eg-stage-info">'
       +   '<div class="eg-stage-name">' + this.escHtml(name) + '</div>'
       +   (username ? '<div class="eg-stage-username">@' + this.escHtml(username) + '</div>' : '')
-      +   (bio ? '<p class="eg-stage-bio">' + this.escHtml(bio) + '</p>' : '')
+      +   (bio ? '<p class="eg-stage-bio" data-full="' + this.escHtml(bio) + '"></p>' : '')
       +   (socialsHtml ? '<div class="eg-stage-socials">' + socialsHtml + '</div>' : '')
       +   (username ? '<a href="profile.html?user=' + this.escHtml(username) + '" class="eg-profile-btn"><i class="fas fa-user"></i> Ver Perfil</a>' : '')
       +   navHtml
       + '</div>';
 
     this.attachNavListeners();
+    this.typewriterBio(this.stageEl.querySelector('.eg-stage-bio'));
     this.startInfoScroll();
+  }
+
+  typewriterBio(el) {
+    if (!el) return;
+    if (this.typewriterTimeout) clearTimeout(this.typewriterTimeout);
+    const fullText = el.dataset.full || '';
+    if (!fullText) return;
+    el.textContent = '';
+    let i = 0;
+    const speed = Math.max(10, Math.min(30, Math.floor(12000 / fullText.length)));
+    const type = () => {
+      if (i < fullText.length) {
+        el.textContent += fullText[i++];
+        this.typewriterTimeout = setTimeout(type, speed);
+      }
+    };
+    type();
   }
 
   startInfoScroll() {
@@ -348,8 +370,10 @@ class EventGallery {
     this.autoplayEnabled = false;
     clearInterval(this.autoplayInterval);
     clearInterval(this.scrollInterval);
+    clearTimeout(this.typewriterTimeout);
     this.autoplayInterval = null;
     this.scrollInterval = null;
+    this.typewriterTimeout = null;
     if (this.progressBar) { this.progressBar.style.transition = 'none'; this.progressBar.style.width = '0%'; }
     if (this.autoplayBtn) { this.autoplayBtn.classList.remove('playing'); this.autoplayBtn.innerHTML = '<i class="fas fa-play"></i> Auto'; }
   }

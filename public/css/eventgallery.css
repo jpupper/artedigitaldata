@@ -316,9 +316,8 @@
 }
 
 .eg-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--gallery-chip-size), 1fr));
   gap: 14px;
   max-width: 960px;
   margin: 0 auto;
@@ -328,8 +327,8 @@
 /* ---- Grid chip ---- */
 .eg-chip {
   position: relative;
-  width: var(--gallery-chip-size);
-  height: var(--gallery-chip-size);
+  width: 100%;
+  aspect-ratio: 1 / 1;
   border-radius: 16px;
   border: 1.5px solid var(--gallery-grid-border);
   background: #101016;
@@ -505,6 +504,7 @@
 
   .eg-grid {
     gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(var(--gallery-chip-size-sm), 1fr));
   }
 }
 
