@@ -143,4 +143,26 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   }
 });
 
+router.delete('/:id/comment/:commentId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const recurso = await Recurso.findById(req.params.id);
+    if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
+
+    const comment = (recurso.comments as any).id(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: 'Comentario no encontrado' });
+
+    if (comment.user.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    (recurso.comments as any).pull(req.params.commentId);
+    await recurso.save();
+    
+    const final = await hydrateComments(recurso);
+    return res.json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
