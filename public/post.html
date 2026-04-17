@@ -141,7 +141,9 @@
                   `}
 
                   <div id="comments-list" class="space-y-6">
-                    ${post.comments?.length ? post.comments.map(c => `
+                    ${post.comments?.length ? post.comments.map(c => {
+                      const isCommentOwner = isLoggedIn() && (getUserId() === c.user?._id || isAdmin());
+                      return `
                       <div class="flex gap-4">
                         <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
                           ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
@@ -154,13 +156,20 @@
                           <div class="bg-white/5 rounded-2xl px-4 py-3">
                             <div class="flex justify-between items-center mb-1">
                               <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
-                              <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                              <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                                ${isCommentOwner ? `
+                                  <button onclick="deleteComment('${c._id}', '${post._id}')" class="text-gray-600 hover:text-red-500 transition-colors text-xs" title="Borrar comentario">
+                                    <i class="fas fa-trash"></i>
+                                  </button>
+                                ` : ''}
+                              </div>
                             </div>
                             <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
                           </div>
                         </div>
                       </div>
-                    `).reverse().join('') : `
+                    `;}).reverse().join('') : `
                       <div class="text-center py-10 text-gray-600 italic">
                         No hay comentarios aún. ¡Sé el primero!
                       </div>
@@ -179,6 +188,20 @@
 
       } catch (err) {
         container.innerHTML = `<div class="text-center py-20">Obra no encontrada</div>`;
+      }
+    }
+
+    async function deleteComment(commentId, postId) {
+      if (!confirm('¿Eliminar este comentario?')) return;
+      try {
+        const res = await apiRequest(`/posts/${postId}/comment/${commentId}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          await loadPost(postId);
+        }
+      } catch (err) {
+        alert('Error al eliminar comentario');
       }
     }
 
