@@ -382,4 +382,26 @@ router.get('/pinned/list', async (_req: Request, res: Response) => {
   }
 });
 
+router.delete('/:id/comment/:commentId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const evento = await Evento.findById(req.params.id);
+    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+
+    const comment = (evento.comments as any).id(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: 'Comentario no encontrado' });
+
+    if (comment.user.toString() !== req.user!.id && req.user!.role !== 'ADMINISTRADOR' && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    (evento.comments as any).pull(req.params.commentId);
+    await evento.save();
+    
+    const final = await hydrateComments(evento);
+    return res.json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

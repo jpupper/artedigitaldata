@@ -192,9 +192,15 @@
       avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase();
 
       // Edit Button and Ticket Management
-      const editBtnContainer = document.createElement('div');
-      editBtnContainer.className = 'flex gap-2';
       if (isCreator) {
+          let editBtnContainer = document.getElementById('edit-btn-evento');
+          if (!editBtnContainer) {
+              editBtnContainer = document.createElement('div');
+              editBtnContainer.id = 'edit-btn-evento';
+              editBtnContainer.className = 'flex gap-2';
+              const actionFlex = document.querySelector('.flex.flex-wrap.items-center');
+              if (actionFlex) actionFlex.appendChild(editBtnContainer);
+          }
           editBtnContainer.innerHTML = `
             <button onclick="loadItemToEdit('eventos', '${ev._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-magenta-500/30 text-magenta-400 hover:bg-magenta-500/10 transition-all font-bold text-sm">
               <i class="fas fa-edit"></i>
@@ -207,7 +213,6 @@
             </a>
             ` : ''}
           `;
-          document.querySelector('.flex.flex-wrap.items-center').appendChild(editBtnContainer);
       }
       
       // Ticket actions for buyers
@@ -251,14 +256,21 @@
 
       // YouTube Badge
       if (ev.youtube_video) {
-        const badge = document.createElement('div');
-        badge.className = "mb-6";
+        let badge = document.getElementById('youtube-badge-evento');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'youtube-badge-evento';
+            badge.className = "mb-6";
+            document.getElementById('event-description').after(badge);
+        }
         badge.innerHTML = `
           <a href="${ev.youtube_video}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
             <i class="fab fa-youtube text-lg"></i> Ver Streaming / Video
           </a>
         `;
-        document.getElementById('event-description').after(badge);
+      } else {
+        const badge = document.getElementById('youtube-badge-evento');
+        if (badge) badge.remove();
       }
 
       // Likes
@@ -319,7 +331,9 @@
       }
 
       const commentsList = document.getElementById('comments-list');
-      commentsList.innerHTML = (ev.comments || []).map(c => `
+      commentsList.innerHTML = (ev.comments || []).map(c => {
+        const isCommentOwner = isLoggedIn() && (getUserId() === c.user?._id || isAdmin());
+        return `
         <div class="flex gap-4 scroll-mt-24">
           <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
             ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
@@ -332,13 +346,34 @@
             <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">
               <div class="flex justify-between items-center mb-1">
                 <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
-                <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                  ${isCommentOwner ? `
+                    <button onclick="deleteComment('${c._id}')" class="text-gray-600 hover:text-red-500 transition-colors text-xs" title="Borrar mensaje">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  ` : ''}
+                </div>
               </div>
               <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
             </div>
           </div>
         </div>
-      `).reverse().join('') || `<div class="text-center py-10 text-gray-600 italic">No hay mensajes aún.</div>`;
+      `;}).reverse().join('') || `<div class="text-center py-10 text-gray-600 italic">No hay mensajes aún.</div>`;
+    }
+
+    async function deleteComment(commentId) {
+      if (!confirm('¿Eliminar este mensaje?')) return;
+      try {
+        const res = await apiRequest(`/eventos/${currentEventId}/comment/${commentId}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          await loadEvent();
+        }
+      } catch (err) {
+        alert('Error al eliminar mensaje');
+      }
     }
 
     async function addComment(e) {
