@@ -526,6 +526,9 @@
       document.getElementById('status-msg').innerText = msg;
       overlay.classList.remove('hidden');
 
+      overlay.classList.add('flex');
+    }
+
     function hideStatus() {
       const overlay = document.getElementById('status-overlay');
       overlay.classList.add('hidden');
