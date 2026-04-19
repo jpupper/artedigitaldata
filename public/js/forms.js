@@ -179,7 +179,6 @@ const FORM_TEMPLATES = {
               <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Precio (ARS)</label>
               <input type="number" id="${prefix}-ticket-price" value="${tc.price || 0}" min="0" placeholder="0"
                 class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
-              <p class="text-[10px] text-gray-500 mt-1">0 = entrada gratuita</p>
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Cantidad máxima de entradas</label>
@@ -192,7 +191,6 @@ const FORM_TEMPLATES = {
             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Link de pago (MercadoPago)</label>
             <input type="url" id="${prefix}-ticket-link" value="${tc.paymentLink || ''}" placeholder="https://mpago.la/..."
               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
-            <p class="text-[10px] text-gray-500 mt-1">Opcional - si no se especifica, se usa la API de MercadoPago</p>
           </div>
 
           <div>
