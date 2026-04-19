@@ -66,6 +66,25 @@
             <p id="buyer-display-email" class="text-gray-400 text-xs"></p>
           </div>
         </div>
+        <div id="buyer-info-section" class="hidden rounded-2xl bg-white/5 border border-white/10 p-6 mb-6 space-y-4">
+          <h3 class="text-sm font-black text-white uppercase tracking-widest">Datos de compra</h3>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nombre</label>
+            <input type="text" id="buyer-name" placeholder="Ej: Juan Pérez"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Correo electrónico</label>
+            <input type="email" id="buyer-email" placeholder="ejemplo@mail.com"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Teléfono (opcional)</label>
+            <input type="tel" id="buyer-phone" placeholder="(011) 15 1234-5678"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          </div>
+          <p class="text-[10px] text-gray-400">No necesitas estar registrado para comprar entradas. Solo necesitamos un email para enviártela.</p>
+        </div>
 
         <form id="purchase-form" class="space-y-6">
           <!-- Contribution amount for contribution events -->
@@ -201,11 +220,6 @@
     let pendingTicketData = null; // Stores data for free ticket confirmation
 
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!isLoggedIn()) {
-        showLogin();
-        return;
-      }
-
       const urlParams = new URLSearchParams(window.location.search);
       const eventId = urlParams.get('event');
 
@@ -283,6 +297,13 @@
         document.getElementById('purchase-form').parentElement.insertBefore(banner, document.getElementById('buyer-summary'));
       }
 
+      if (ev.ticketConfig.mode === 'manual') {
+        const manualHint = document.createElement('div');
+        manualHint.className = 'rounded-2xl bg-yellow-500/10 border border-yellow-500/20 px-5 py-4 mb-6 flex items-start gap-3';
+        manualHint.innerHTML = `<i class="fas fa-hand-holding-usd text-yellow-400 mt-0.5 shrink-0"></i><p class="text-yellow-100 text-sm leading-relaxed">Este evento está en modo manual. El mensaje de compra debe incluir CBU/alias de MercadoPago y avisar que el administrador te enviará la entrada luego de la transferencia.</p>`;
+        document.getElementById('purchase-form').parentElement.insertBefore(manualHint, document.getElementById('buyer-summary'));
+      }
+
       // Price display
       const priceDisplay = document.getElementById('ticket-price');
       const btnText = document.getElementById('btn-text');
@@ -325,13 +346,19 @@
 
     async function handlePurchase(e) {
       e.preventDefault();
-      
       const user = getUser();
-      const name = user?.displayName || user?.username || '';
-      const email = user?.email || '';
-      const phone = '';
+      const nameInput = document.getElementById('buyer-name')?.value.trim() || '';
+      const emailInput = document.getElementById('buyer-email')?.value.trim() || '';
+      const phoneInput = document.getElementById('buyer-phone')?.value.trim() || '';
+
+      const name = nameInput || user?.displayName || user?.username || '';
+      const email = emailInput || user?.email || '';
+      const phone = phoneInput || '';
 
       try {
+        if (!email) {
+          throw new Error('Debes ingresar un correo electrónico para recibir la entrada.');
+        }
         // --- CONTRIBUTION MODE ---
         if (currentEvent.ticketConfig.isContribution) {
           const rawValue = document.getElementById('contribution-amount').value;
@@ -375,7 +402,7 @@
           return;
         }
 
-        // --- PAID EVENT (non-contribution) --- always go through MercadoPago
+        // --- PAID EVENT (non-contribution) --- always go through MercadoPago or manual purchase request
         showStatus('Procesando', 'Preparando el pago...');
         const paidHeaders = { 'Content-Type': 'application/json' };
         const paidToken = getToken();
@@ -392,6 +419,10 @@
         }
 
         const data = await res.json();
+        if (data.manualMode) {
+          window.location.href = `ticket-success.html?ticket=${data.code}`;
+          return;
+        }
         if (data.initPoint) {
           redirectToPayment(data);
         } else {
@@ -466,10 +497,6 @@
       const modal = document.getElementById('free-ticket-modal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
-    }
-
-    async function closeFreeTicketModal(confirmed) {
-      hideFreeTicketModal();
 
       if (confirmed && pendingTicketData) {
         // User chose to get free ticket

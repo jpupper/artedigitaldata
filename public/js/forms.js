@@ -194,12 +194,33 @@ const FORM_TEMPLATES = {
               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
             <p class="text-[10px] text-gray-500 mt-1">Opcional - si no se especifica, se usa la API de MercadoPago</p>
           </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Modo de cobro</label>
+            <div class="flex flex-wrap gap-3">
+              <label class="flex items-center gap-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded-xl px-3 py-2 cursor-pointer">
+                <input type="radio" name="${prefix}-ticket-mode" value="auto" ${!tc.mode || tc.mode === 'auto' ? 'checked' : ''} class="w-4 h-4 text-magenta-500 bg-white/5 border-white/10 focus:ring-magenta-500" onchange="updateTicketMode('${prefix}')">
+                <span class="font-bold">Auto</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded-xl px-3 py-2 cursor-pointer">
+                <input type="radio" name="${prefix}-ticket-mode" value="manual" ${tc.mode === 'manual' ? 'checked' : ''} class="w-4 h-4 text-magenta-500 bg-white/5 border-white/10 focus:ring-magenta-500" onchange="updateTicketMode('${prefix}')">
+                <span class="font-bold">Manual</span>
+              </label>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-2">Auto = MercadoPago con alias de artedigitaldata. Manual = el comprador ve el CBU/alias en el mensaje de compra y el administrador envía la entrada.</p>
+          </div>
+          <div id="${prefix}-manual-payment-info-container" class="${tc.mode === 'manual' ? '' : 'hidden'}">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">CBU / Alias de MercadoPago</label>
+            <input type="text" id="${prefix}-ticket-manual-info" value="${tc.manualPaymentInfo || ''}" placeholder="Ej: aliasmercadopago o 0001234500012345678901"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+            <p class="text-[10px] text-gray-500 mt-1">Esta información se mostrará en la página de compra cuando el modo manual esté activado.</p>
+          </div>
           
           <div>
             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Mensaje en página de compra</label>
             <textarea id="${prefix}-ticket-purchase-message" rows="2" placeholder="Ej: Todos los asistentes entran al sorteo de una tablet..."
               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none resize-none">${tc.purchaseMessage || ''}</textarea>
-            <p class="text-[10px] text-gray-500 mt-1">Se muestra en la pantalla de compra, antes de confirmar.</p>
+            <p class="text-[10px] text-gray-500 mt-1">Se muestra en la pantalla de compra. En modo manual pegá CBU o alias de MercadoPago y avisá al comprador que luego el administrador le enviará la entrada.</p>
           </div>
 
           <div>
@@ -248,11 +269,18 @@ window.searchParticipants = async (prefix, query) => {
   }
   try {
     const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return;
+    if (!res.ok) {
+      suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+      _participantSearchSelected[prefix] = null;
+      return;
+    }
     const results = await res.json();
     const users = results.filter(r => r.type === 'user');
     if (users.length === 0) {
       suggestionsEl.classList.add('hidden');
+      suggestionsEl.innerHTML = '';
+      _participantSearchSelected[prefix] = null;
       return;
     }
     suggestionsEl.classList.remove('hidden');
@@ -263,13 +291,23 @@ window.searchParticipants = async (prefix, query) => {
         : (u.label || '?')[0].toUpperCase();
       return '<div class="suggestion-row flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"'
         + ' data-id="' + uid + '" data-username="' + u.label + '" data-avatar="' + (u.avatar || '') + '"'
-        + ' onclick="selectParticipantSuggestion(\'' + prefix + '\', this)">'
+        + ' onclick="selectParticipantSuggestion(\'' + prefix + '\', this)">' 
         + '<div class="w-7 h-7 rounded-full bg-magenta-500/20 flex items-center justify-center text-xs font-bold text-magenta-400 overflow-hidden shrink-0">' + avatarInner + '</div>'
         + '<span class="text-sm text-white font-bold">@' + u.label + '</span>'
         + '</div>';
     }).join('');
-  } catch(e) {
+  } catch (e) {
     suggestionsEl.classList.add('hidden');
+    suggestionsEl.innerHTML = '';
+    _participantSearchSelected[prefix] = null;
+  }
+};
+
+window.updateTicketMode = (prefix) => {
+  const selectedMode = document.querySelector(`input[name="${prefix}-ticket-mode"]:checked`)?.value;
+  const manualInfoContainer = document.getElementById(`${prefix}-manual-payment-info-container`);
+  if (manualInfoContainer) {
+    manualInfoContainer.classList.toggle('hidden', selectedMode !== 'manual');
   }
 };
 
@@ -353,6 +391,8 @@ window.getTicketConfig = (prefix) => {
     paymentLink: document.getElementById(`${prefix}-ticket-link`)?.value || '',
     successMessage: document.getElementById(`${prefix}-ticket-message`)?.value || '',
     purchaseMessage: document.getElementById(`${prefix}-ticket-purchase-message`)?.value || '',
+    manualPaymentInfo: document.getElementById(`${prefix}-ticket-manual-info`)?.value || '',
+    mode: document.querySelector(`input[name="${prefix}-ticket-mode"]:checked`)?.value || 'auto',
     isContribution: document.getElementById(`${prefix}-ticket-contribution`)?.checked || false
   };
 };
