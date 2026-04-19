@@ -347,8 +347,8 @@ router.get('/event/:eventId/stats', authMiddleware, async (req: AuthRequest, res
   }
 });
 
-// Create MercadoPago preference for ticket purchase
-router.post('/event/:eventId/create-preference', authMiddleware, async (req: AuthRequest, res: Response) => {
+// Create MercadoPago preference for ticket purchase or manual ticket request
+router.post('/event/:eventId/create-preference', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
@@ -390,6 +390,20 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
 
     // --- Option A: event has a manual payment link (no API token needed) ---
     // Contribution events skip this so the MP API can apply the user-chosen amount
+    if (event.ticketConfig.mode === 'manual') {
+      // Manual mode: buyer receives payment instructions and ticket is created in pending state.
+      ticket.paymentStatus = 'pending';
+      await ticket.save();
+      return res.json({
+        manualMode: true,
+        initPoint: event.ticketConfig.paymentLink || '',
+        manualPaymentInfo: event.ticketConfig.manualPaymentInfo || '',
+        ticketId: ticket._id,
+        code,
+        qrCode: qrCodeDataUrl
+      });
+    }
+
     if (event.ticketConfig.paymentLink && !event.ticketConfig.isContribution) {
       ticket.paymentStatus = 'free';
       await ticket.save();
@@ -475,7 +489,7 @@ router.post('/event/:eventId/create-preference', authMiddleware, async (req: Aut
 });
 
 // Create free ticket (for events with 0 price or contribution mode)
-router.post('/event/:eventId/create-free', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/event/:eventId/create-free', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Evento.findById(req.params.eventId);
     if (!event) return res.status(404).json({ error: 'Evento no encontrado' });

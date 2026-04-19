@@ -36,9 +36,18 @@ router.get('/:id', async (req: Request, res: Response) => {
         price: 0,
         paymentLink: '',
         successMessage: '',
+        purchaseMessage: '',
+        mode: 'auto',
+        manualPaymentInfo: '',
         maxTickets: 100,
         isContribution: false
       };
+    } else {
+      hydrated.ticketConfig.purchaseMessage = hydrated.ticketConfig.purchaseMessage || '';
+      hydrated.ticketConfig.mode = hydrated.ticketConfig.mode || 'auto';
+      hydrated.ticketConfig.manualPaymentInfo = hydrated.ticketConfig.manualPaymentInfo || '';
+      hydrated.ticketConfig.maxTickets = hydrated.ticketConfig.maxTickets || 100;
+      hydrated.ticketConfig.isContribution = hydrated.ticketConfig.isContribution || false;
     }
     
     const final = await hydrateComments(hydrated);
@@ -136,9 +145,17 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
         paymentLink: '',
         successMessage: '',
         purchaseMessage: '',
+        mode: 'auto',
+        manualPaymentInfo: '',
         maxTickets: 100,
         isContribution: false
       };
+    } else {
+      response.ticketConfig.purchaseMessage = response.ticketConfig.purchaseMessage || '';
+      response.ticketConfig.mode = response.ticketConfig.mode || 'auto';
+      response.ticketConfig.manualPaymentInfo = response.ticketConfig.manualPaymentInfo || '';
+      response.ticketConfig.maxTickets = response.ticketConfig.maxTickets || 100;
+      response.ticketConfig.isContribution = response.ticketConfig.isContribution || false;
     }
     
     // Hydrate door users

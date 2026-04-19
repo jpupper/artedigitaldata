@@ -12,6 +12,8 @@ export interface ITicketConfig {
   paymentLink: string;
   successMessage: string;
   purchaseMessage: string;
+  manualPaymentInfo?: string;
+  mode?: string;
   maxTickets: number;
   isContribution: boolean;
 }
@@ -48,6 +50,8 @@ const TicketConfigSchema: Schema = new Schema({
   paymentLink: { type: String, default: '' },
   successMessage: { type: String, default: '' },
   purchaseMessage: { type: String, default: '' },
+  mode: { type: String, enum: ['auto', 'manual'], default: 'auto' },
+  manualPaymentInfo: { type: String, default: '' },
   maxTickets: { type: Number, default: 100 },
   isContribution: { type: Boolean, default: false },
 }, { _id: false });
