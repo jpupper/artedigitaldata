@@ -105,6 +105,20 @@
               <!-- MercadoPago button will be injected here -->
             </div>
 
+            <div id="manual-payment-result" class="hidden rounded-3xl border border-yellow-500/20 bg-yellow-500/10 p-6 mt-6 text-sm text-yellow-100 space-y-4">
+              <h3 class="text-lg font-black text-white">Instrucciones de pago</h3>
+              <p id="manual-payment-text" class="leading-relaxed"></p>
+              <div id="manual-link-container" class="hidden">
+                <p class="font-bold text-white">Link de MercadoPago:</p>
+                <a id="manual-payment-link" href="#" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition-colors">Abrir pago</a>
+              </div>
+              <div id="manual-cbu-container" class="hidden">
+                <p class="font-bold text-white">CBU / Alias:</p>
+                <div id="manual-payment-info" class="rounded-xl bg-black/40 border border-white/10 p-4 break-words"></div>
+              </div>
+              <p class="text-[12px] text-gray-300">Una vez realizada la transferencia, el administrador del evento te enviará la entrada.</p>
+            </div>
+
             <button type="submit" id="submit-btn" class="w-full btn-primary py-4 rounded-2xl font-black text-lg hover:scale-[1.01] transition-transform">
               <i class="fas fa-lock mr-2"></i>
               <span id="btn-text">PROCEDER AL PAGO</span>
@@ -420,7 +434,7 @@
 
         const data = await res.json();
         if (data.manualMode) {
-          window.location.href = `ticket-success.html?ticket=${data.code}`;
+          showManualPaymentResult(data);
           return;
         }
         if (data.initPoint) {
@@ -444,6 +458,40 @@
         // MercadoPago API preference: redirect entirely to MP checkout
         window.location.href = data.initPoint;
       }
+    }
+
+    function showManualPaymentResult(data) {
+      const result = document.getElementById('manual-payment-result');
+      const text = document.getElementById('manual-payment-text');
+      const linkContainer = document.getElementById('manual-link-container');
+      const manualLink = document.getElementById('manual-payment-link');
+      const cbuContainer = document.getElementById('manual-cbu-container');
+      const cbuInfo = document.getElementById('manual-payment-info');
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (!result || !text || !submitBtn) return;
+      hideStatus();
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      text.innerText = 'Tu solicitud de entrada ha sido registrada. Completa el pago con los datos a continuación y espera a que el administrador confirme tu entrada.';
+
+      if (data.initPoint) {
+        linkContainer.classList.remove('hidden');
+        manualLink.href = data.initPoint;
+        manualLink.innerText = 'Abrir pago en MercadoPago';
+      } else {
+        linkContainer.classList.add('hidden');
+      }
+
+      if (data.manualPaymentInfo) {
+        cbuContainer.classList.remove('hidden');
+        cbuInfo.innerText = data.manualPaymentInfo;
+      } else {
+        cbuContainer.classList.add('hidden');
+      }
+
+      result.classList.remove('hidden');
+      document.getElementById('payment-container')?.classList.add('hidden');
     }
 
     async function createFreeTicket(name, email, phone) {
@@ -477,8 +525,6 @@
       document.getElementById('status-title').innerText = title;
       document.getElementById('status-msg').innerText = msg;
       overlay.classList.remove('hidden');
-      overlay.classList.add('flex');
-    }
 
     function hideStatus() {
       const overlay = document.getElementById('status-overlay');
