@@ -57,9 +57,22 @@ window.CONFIG = {
 // Exponemos también como variable global directa para scripts que no usen window.
 const CONFIG = window.CONFIG;
 
-console.log("%c[CONFIG] Initialized v4", "color: #00F5FF; font-weight: bold;", {
-    isLocal: CONFIG.isLocal,
-    BASE: CONFIG.BASE,
-    API_URL: CONFIG.API_URL,
-    currentOrigin: window.location.origin
-});
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function sanitizeUrl(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        return ['http:', 'https:'].includes(parsed.protocol) ? url : '';
+    } catch {
+        return '';
+    }
+}
