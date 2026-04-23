@@ -217,7 +217,7 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="js/notifications.js"></script>
   <script src="js/tagging.js"></script>
   <script src="js/forms.js"></script>
@@ -233,7 +233,7 @@
 
       if (!targetUsername) {
         if (isLoggedIn() && currentUser) {
-          window.location.href = CONFIG.BASE + `/profile.html?user=${currentUser.username}`;
+          window.location.href = `profile?user=${currentUser.username}`;
         } else {
           showLogin();
         }
@@ -453,7 +453,7 @@
           done: hasContent,
           label: 'Primera publicación',
           icon: 'fa-palette',
-          action: `window.location.href='${CONFIG.BASE}/create.html'`,
+          action: `window.location.href='create'`,
         },
       ];
 
@@ -503,14 +503,14 @@
             <div class="relative aspect-video overflow-hidden">
               <div class="block w-full h-full relative cursor-pointer"
                  ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-                 onclick="window.location.href='${CONFIG.BASE}/post.html?id=${p._id}'">
+                 onclick="window.location.href='post?id=${p._id}'">
                 ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-white/5 flex items-center justify-center"><i class="fas fa-palette text-3xl text-gray-700"></i></div>`}
                 ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
               </div>
             </div>
             <div class="p-4">
               <div class="flex items-start justify-between gap-2 mb-1">
-                <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="block hover:text-[var(--color-cyan)] transition-colors flex-1">
+                <a href="post?id=${p._id}" target="_blank" class="block hover:text-[var(--color-cyan)] transition-colors flex-1">
                   <h3 class="font-bold text-white line-clamp-1">${p.title}</h3>
                 </a>
                 ${(isLoggedIn() && (isOwner || isAdmin())) ? `
@@ -523,7 +523,7 @@
               <p class="text-gray-400 text-sm line-clamp-2">${p.description || ''}</p>
               <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
                 <span><i class="fas fa-heart text-fuchsia-400 mr-1"></i>${p.likes?.length || 0}</span>
-                <a href="${CONFIG.BASE}/post.html?id=${p._id}" target="_blank" class="hover:text-cyan-400"><i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}</a>
+                <a href="post?id=${p._id}" target="_blank" class="hover:text-cyan-400"><i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}</a>
                 <span>${new Date(p.createdAt).toLocaleDateString('es-AR')}</span>
               </div>
             </div>
@@ -544,13 +544,13 @@
              <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
                <div class="block w-full h-full relative cursor-pointer"
                   ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-                  onclick="window.location.href='${CONFIG.BASE}/recurso.html?id=${r._id}'">
+                  onclick="window.location.href='recurso?id=${r._id}'">
                  ${r.imageUrl ? `<img src="${r.imageUrl}" alt="${r.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-white/5 flex items-center justify-center"><i class="fas fa-box-open text-3xl text-gray-700 opacity-30"></i></div>`}
                  ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
                </div>
              </div>
             <div class="flex items-start justify-between gap-2 mb-2">
-              <a href="${CONFIG.BASE}/recurso.html?id=${r._id}" target="_blank" class="block hover:text-orange-400 transition-colors flex-1">
+              <a href="recurso?id=${r._id}" target="_blank" class="block hover:text-orange-400 transition-colors flex-1">
                 <h3 class="font-bold text-white line-clamp-1">${r.title}</h3>
               </a>
               ${(isLoggedIn() && (isOwner || isAdmin())) ? `
@@ -600,7 +600,7 @@
           <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
              <div class="block w-full h-full relative cursor-pointer"
                 ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-                onclick="window.location.href='${CONFIG.BASE}/evento.html?id=${ev._id}'">
+                onclick="window.location.href='evento?id=${ev._id}'">
                ${ev.imageUrl ? `<img src="${ev.imageUrl}" alt="${ev.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-magenta-500/10 flex items-center justify-center"><i class="fas fa-calendar-alt text-3xl text-magenta-500/30"></i></div>`}
                ${youtubeId ? `<div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black"><iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : ''}
              </div>
@@ -611,13 +611,13 @@
                <span class="text-sm leading-none">${new Date(ev.date).getDate()}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <a href="${CONFIG.BASE}/evento.html?id=${ev._id}" target="_blank"><h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3></a>
+              <a href="evento?id=${ev._id}" target="_blank"><h3 class="font-bold text-white group-hover:text-magenta-400 transition-colors truncate">${ev.title}</h3></a>
               <p class="text-[10px] text-gray-500 truncate"><i class="fas fa-map-marker-alt mr-1"></i>${ev.location || 'Online'}</p>
             </div>
             <div class="flex gap-1 shrink-0">
-              ${isDoorEvent ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${ev._id}" class="px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-all text-xs font-bold flex items-center gap-1"><i class="fas fa-door-open"></i><span>Puerta</span></a>` : ''}
+              ${isDoorEvent ? `<a href="event-tickets?event=${ev._id}" class="px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-all text-xs font-bold flex items-center gap-1"><i class="fas fa-door-open"></i><span>Puerta</span></a>` : ''}
               ${(!isDoorEvent && isLoggedIn() && (isOwner || isAdmin())) ? `
-                ${ev.ticketConfig?.enabled ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${ev._id}" class="text-green-400 hover:text-green-300 transition-colors p-1"><i class="fas fa-ticket-alt text-xs"></i></a>` : ''}
+                ${ev.ticketConfig?.enabled ? `<a href="event-tickets?event=${ev._id}" class="text-green-400 hover:text-green-300 transition-colors p-1"><i class="fas fa-ticket-alt text-xs"></i></a>` : ''}
                 <button onclick="openEditEvento('${ev._id}')" class="text-gray-500 hover:text-magenta-400 transition-colors p-1"><i class="fas fa-edit text-xs"></i></button>
                 <button onclick="deleteEvento('${ev._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash-alt text-xs"></i></button>
               ` : ''}
@@ -641,7 +641,7 @@
       container.innerHTML = allFavs.map(item => {
         const isPost = item.type === 'post';
         const isRecurso = item.type === 'recurso';
-        const link = isPost ? `post.html?id=${item._id}` : (isRecurso ? `recurso.html?id=${item._id}` : `evento.html?id=${item._id}`);
+        const link = isPost ? `post?id=${item._id}` : (isRecurso ? `recurso?id=${item._id}` : `evento?id=${item._id}`);
         const color = isPost ? 'cyan' : (isRecurso ? 'orange' : 'magenta');
         const icon = isPost ? 'palette' : (isRecurso ? 'box-open' : 'calendar-alt');
         const youtubeId = extractYouTubeId(item);
@@ -712,7 +712,7 @@
           <div class="text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
             <i class="fas fa-ticket-alt text-4xl text-fuchsia-400/30 mb-3"></i>
             <p class="mb-2">No tenés entradas todavía</p>
-            <a href="calendario.html" class="text-fuchsia-400 hover:text-fuchsia-300 text-sm">
+            <a href="calendario" class="text-fuchsia-400 hover:text-fuchsia-300 text-sm">
               <i class="fas fa-calendar mr-1"></i>Ver eventos disponibles
             </a>
           </div>
@@ -761,7 +761,7 @@
               <div class="flex-1 p-5">
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div>
-                    <a href="evento.html?id=${ev._id || ev.id}" class="text-lg font-bold text-white hover:text-fuchsia-400 transition-colors">
+                    <a href="evento?id=${ev._id || ev.id}" class="text-lg font-bold text-white hover:text-fuchsia-400 transition-colors">
                       ${ev.title}
                     </a>
                     <p class="text-sm text-gray-500 mt-1">
@@ -788,7 +788,7 @@
 
                 <!-- Actions -->
                 <div class="flex gap-3 mt-4 pt-4 border-t border-white/10">
-                  <a href="ticket-success.html?ticket=${t.code}" class="flex-1 px-4 py-2 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/30 hover:bg-fuchsia-500/20 transition-all text-sm font-bold text-center">
+                  <a href="ticket-success?ticket=${t.code}" class="flex-1 px-4 py-2 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/30 hover:bg-fuchsia-500/20 transition-all text-sm font-bold text-center">
                     <i class="fas fa-eye mr-1"></i>Ver Entrada
                   </a>
                   ${!isRedeemed && isFree ? `
@@ -806,7 +806,7 @@
 
     // Download ticket QR
     function downloadTicketQR(code) {
-      window.open(`ticket-success.html?ticket=${code}`, '_blank');
+      window.open(`ticket-success?ticket=${code}`, '_blank');
     }
 
     function toggleEditMode() {

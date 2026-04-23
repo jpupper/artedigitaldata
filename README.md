@@ -19,43 +19,60 @@ Bienvenido a **Arte Digital Data**, una plataforma integral diseñada como una r
 ## 🛠️ Requisitos Previos
 
 Antes de comenzar, asegúrate de tener instalado:
-*   [Node.js](https://nodejs.org/) (Versión 16 o superior recomendada)
-*   [MongoDB](https://www.mongodb.com/try/download/community) (Local o en la nube)
+*   [Node.js](https://nodejs.org/) (Versión 18 o superior recomendada)
 *   [Git](https://git-scm.com/)
+*   MongoDB solo es necesario si vas a correr el backend localmente.
 
 ---
 
-## ⚙️ Configuración del Entorno (.env)
+## 🚀 Modo 1: Solo Frontend (conectado al backend remoto)
 
-El proyecto utiliza variables de entorno para proteger la información sensible. Sigue estos pasos:
+Esta es la forma más rápida. No necesitás MongoDB ni `.env`. Los datos se cargan desde el servidor VPS de producción.
 
-1.  Localiza el archivo `.env.example` en la raíz del proyecto.
-2.  Crea una copia llamada `.env`.
-3.  Completa los datos necesarios:
-    *   **Servidor**: Puerto de ejecución.
-    *   **Base de Datos**: URL de conexión a MongoDB.
-    *   **JWT**: Una clave secreta larga para la seguridad de las sesiones.
-    *   **Cloudinary**: Tus credenciales de la API de Cloudinary para la subida de imágenes.
-    *   **Deploy**: Datos de tu VPS y FTP para el despliegue automático.
+### Pasos
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/jpupper/artedigitaldata.git
+   cd artedigitaldata
+   ```
+2. Ejecuta el script:
+   ```
+   run-frontend.bat
+   ```
+3. Abrí [http://localhost:3000/](http://localhost:3000/) en tu navegador.
+
+> La primera vez que se ejecute, `npx serve` descarga el paquete automáticamente. No requiere instalación previa.
 
 ---
 
-## 🛠️ Instalación y Uso Local
+## 🛠️ Modo 2: Full Stack Local (frontend + backend propio)
 
-Para facilitar el trabajo en Windows, el proyecto incluye scripts automatizados:
+Usá este modo si querés modificar el backend o trabajar con una base de datos propia.
 
-### 1. Instalación Inicial
-Ejecuta el archivo `install.bat`. Este script instalará todas las dependencias de Node.js necesarias.
+### Requisitos adicionales
+*   [MongoDB](https://www.mongodb.com/try/download/community) (local o en la nube via Atlas)
+*   Cuenta en [Cloudinary](https://cloudinary.com/) para subida de imágenes
+
+### Configuración del Entorno (.env)
+
+1.  Copiá el archivo `.env.example` como `.env`:
+    ```bash
+    copy .env.example .env
+    ```
+2.  Completá los valores obligatorios:
+    *   `MONGODB_URI` — URL de conexión a tu MongoDB
+    *   `JWT_SECRET` — clave secreta larga y aleatoria
+    *   `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — credenciales de Cloudinary
+    *   El resto (`VPS_*`, `FTP_*`, `GITHUB_TOKEN`) son opcionales y solo se usan para deploy
+
+### Instalación y arranque
+
 ```bash
-./install.bat
+install.bat   # instala dependencias npm
+run.bat       # inicia el servidor con recarga automática
 ```
 
-### 2. Ejecutar el Servidor
-Ejecuta el archivo `run.bat`. Esto iniciará el servidor de desarrollo con recarga automática (Nodemon).
-```bash
-./run.bat
-```
-El servidor estará disponible en: [http://localhost:2495/artedigital/](http://localhost:2495/artedigital/)
+El servidor local estará en: [http://localhost:2495/artedigitaldata/](http://localhost:2495/artedigitaldata/)
 
 ---
 
