@@ -56,16 +56,16 @@ function renderHeader() {
             <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1">
               <i class="fas fa-plus-circle text-xs"></i> CREAR
             </a>
-            <a href="${CONFIG.BASE}/profile.html?user=${user?.username}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
+            <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
               ${user?.avatar ? `
-                <img src="${user.avatar}" alt="${user.username}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400">
+                <img src="${sanitizeUrl(user.avatar)}" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400">
               ` : `
                 <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/30">
                   <i class="fas fa-user-astronaut"></i>
                 </div>
               `}
               <span class="text-sm font-bold text-gray-300 group-hover:text-cyan-400 transition-colors uppercase">
-                ${user?.displayName || user?.username || 'Usuario'}
+                ${escapeHTML(user?.displayName || user?.username || 'Usuario')}
               </span>
             </a>
             <button onclick="logout()" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Salir">
@@ -114,15 +114,15 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/chat.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
             <i class="fas fa-comments mr-2"></i> CHAT
           </a>
-          <a href="${CONFIG.BASE}/profile.html?user=${user?.username || ''}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
+          <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             ${user?.avatar ? `
-              <img src="${user.avatar}" alt="${user.username}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30">
+              <img src="${sanitizeUrl(user.avatar)}" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30">
             ` : `
               <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                 <i class="fas fa-user-astronaut text-xs"></i>
               </div>
             `}
-            <span class="uppercase">${user?.displayName || user?.username || 'MI PERFIL'}</span>
+            <span class="uppercase">${escapeHTML(user?.displayName || user?.username || 'MI PERFIL')}</span>
           </a>
           ` : ''}
           ${admin ? `
