@@ -9,25 +9,36 @@
  */
 function formatMentions(text) {
   if (!text) return '';
-  
-  // Replace URLs with clickable links
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  let formattedText = text.replace(urlRegex, (url) => {
-    // Detect YouTube link
-    const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const ytMatch = url.match(ytRegex);
-    if (ytMatch) {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600/30 transition-all font-bold text-[10px] uppercase my-1 tracking-wider">
-        <i class="fab fa-youtube text-sm"></i> Ver en YouTube
-      </a>`;
-    }
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${url}</a>`;
-  });
 
-  // Regex to find @mentions (words starting with @ followed by alphanumeric)
-  return formattedText.replace(/@(\w+)/g, (match, username) => {
-    return `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`;
-  });
+  const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+  const segments = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    }
+    segments.push({ type: 'url', content: match[1] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+
+  return segments.map(seg => {
+    if (seg.type === 'url') {
+      const safeUrl = escapeHTML(seg.content);
+      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      if (ytRegex.test(seg.content)) {
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600/30 transition-all font-bold text-[10px] uppercase my-1 tracking-wider"><i class="fab fa-youtube text-sm"></i> Ver en YouTube</a>`;
+      }
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${safeUrl}</a>`;
+    }
+    return escapeHTML(seg.content).replace(/@(\w+)/g, (_, username) =>
+      `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`
+    );
+  }).join('');
 }
 
 // Ensure it's available globally immediately
