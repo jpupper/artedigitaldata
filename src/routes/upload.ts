@@ -12,7 +12,7 @@ function getSubfolder(req: any): string {
   if (referer.includes('profile')) return 'profiles';
   if (referer.includes('recurso')) return 'recursos';
   if (referer.includes('evento')) return 'eventos';
-  if (referer.includes('create') || referer.includes('post') || referer.includes('obras')) return 'posts';
+  if (referer.includes('create') || referer.includes('post') || referer.includes('obras') || referer.includes('concurso')) return 'posts';
   return 'general';
 }
 
