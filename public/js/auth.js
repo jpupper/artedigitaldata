@@ -217,7 +217,14 @@ function parseJwt(token) {
 
 async function apiRequest(endpoint, options = {}) {
   const token = getToken();
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const headers = { ...options.headers };
+  
+  if (options.body && !(options.body instanceof FormData)) {
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+  }
+
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(CONFIG.API_URL + endpoint, { ...options, headers });
