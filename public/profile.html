@@ -366,7 +366,7 @@
           if (s.tiktok) socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-500/10 text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a>`;
         }
         
-        renderUserPosts(posts);
+        renderUserPosts(posts.filter(p => !p.isContest));
         renderUserConcursos(posts.filter(p => p.isContest));
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);

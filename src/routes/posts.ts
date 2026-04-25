@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 });
+    const posts = await Post.find({ isContest: { $ne: true } }).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
     return res.json(hydratedPosts);
   } catch (err: any) {
