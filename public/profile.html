@@ -138,6 +138,9 @@
       <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-box-open mr-2"></i>RECURSOS
       </button>
+      <button onclick="switchTab('concursos')" id="tab-concursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+        <i class="fas fa-trophy mr-2 text-yellow-500"></i>MIS IMAGENES
+      </button>
       <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
       </button>
@@ -167,6 +170,14 @@
       <div id="user-recursos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center text-gray-500 py-10">
           <p>Cargando recursos...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-concursos" class="content-section hidden">
+      <div id="user-concursos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-10">
+          <p>Cargando tus imágenes del concurso...</p>
         </div>
       </div>
     </div>
@@ -356,6 +367,7 @@
         }
         
         renderUserPosts(posts);
+        renderUserConcursos(posts.filter(p => p.isContest));
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
@@ -525,6 +537,37 @@
                 <span><i class="fas fa-heart text-fuchsia-400 mr-1"></i>${p.likes?.length || 0}</span>
                 <a href="post?id=${p._id}" target="_blank" class="hover:text-cyan-400"><i class="fas fa-comment mr-1"></i>${p.comments?.length || 0}</a>
                 <span>${new Date(p.createdAt).toLocaleDateString('es-AR')}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderUserConcursos(contestPosts) {
+      const container = document.getElementById('user-concursos');
+      if (!contestPosts.length) {
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-dashed border-white/10">
+          <i class="fas fa-trophy text-4xl text-yellow-500/20 mb-3"></i>
+          <p>Aún no participaste en ningún concurso</p>
+          <a href="concurso" class="text-yellow-500 hover:text-yellow-400 text-sm font-bold block mt-2">¡Participar ahora!</a>
+        </div>`;
+        return;
+      }
+      container.innerHTML = contestPosts.map(p => {
+        return `
+          <div class="rounded-2xl overflow-hidden border border-yellow-500/20 card-cyber group relative">
+            <div class="absolute top-3 left-3 z-10">
+              <span class="px-2 py-1 rounded-lg bg-yellow-500 text-black text-[9px] font-black uppercase tracking-widest shadow-lg">
+                ${p.contestMonth || 'CONCURSO'}
+              </span>
+            </div>
+            <div class="relative aspect-square overflow-hidden cursor-pointer" onclick="window.location.href='post?id=${p._id}'">
+              <img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                <h4 class="text-white font-bold truncate">${p.title}</h4>
+                <div class="flex items-center gap-2 text-xs text-yellow-500 font-bold">
+                  <i class="fas fa-heart"></i> ${p.likes?.length || 0} VOTOS
+                </div>
               </div>
             </div>
           </div>`;

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concurso Mensual - Arte Digital Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .contest-card:hover .contest-overlay {
+            opacity: 1;
+        }
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(to right, #eab308, #f97316);
+            padding: 1px;
+            border-radius: 2rem;
+        }
+        .gradient-border-inner {
+            background: #0d0d12;
+            border-radius: calc(2rem - 1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen scrollbar-hide">
+    <div id="app-header"></div>
+
+    <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+        <!-- Hero Section -->
+        <section class="mb-10 text-center py-12 relative overflow-hidden rounded-[3rem]">
+            <div class="absolute inset-0 bg-yellow-500/5 opacity-20 pointer-events-none"></div>
+            <div class="relative z-10">
+                <h1 class="text-5xl md:text-7xl font-black text-white mb-4 uppercase tracking-tighter">
+                    <i class="fas fa-trophy text-yellow-500 mr-4 animate-bounce"></i>Concurso <span class="gradient-text">Mensual</span>
+                </h1>
+                <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+                    La competencia creativa de Arte Digital Data. Subí tu obra, sumá votos y convertite en el artista del mes.
+                </p>
+                <div id="current-month-badge" class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 font-black text-lg uppercase tracking-widest shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+                    <i class="fas fa-calendar-star"></i>
+                    <span id="month-display">Cargando...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Participation Flow -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-20">
+            <!-- Upload Section (Left/Center) -->
+            <div class="lg:col-span-2">
+                <section id="upload-section" class="hidden">
+                    <div class="p-8 md:p-10 rounded-[2.5rem] border border-white/10 bg-[#0d0d12]/80 backdrop-blur-2xl card-cyber">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+                                <i class="fas fa-plus text-yellow-500 text-xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-black text-white uppercase tracking-tight">Participar Ahora</h2>
+                        </div>
+
+                        <form id="contest-form" class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3 ml-1">Nombre de tu Obra</label>
+                                        <input type="text" id="title" required class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/20 focus:outline-none transition-all placeholder:text-gray-700 font-bold" placeholder="Ej: Neón Distópico 2077">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3 ml-1">Breve Descripción</label>
+                                        <textarea id="description" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-yellow-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium resize-none h-32" placeholder="Contanos un poco sobre tu proceso o inspiración..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col">
+                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3 ml-1">Archivo de Imagen</label>
+                                    <div id="drop-zone" class="relative flex-1 group cursor-pointer border-2 border-dashed border-white/10 rounded-[2rem] p-8 text-center hover:border-yellow-500/50 hover:bg-yellow-500/5 transition-all flex flex-col items-center justify-center">
+                                        <input type="file" id="file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                                        
+                                        <div id="preview-container" class="hidden w-full h-full">
+                                            <img id="preview-img" class="w-full h-full object-contain rounded-xl shadow-2xl">
+                                            <button type="button" id="remove-file" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center backdrop-blur-md">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+
+                                        <div id="upload-prompt" class="space-y-4">
+                                            <div class="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform border border-white/5">
+                                                <i class="fas fa-image text-3xl text-gray-600 group-hover:text-yellow-500 transition-colors"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-white font-bold">Seleccioná tu imagen</p>
+                                                <p class="text-gray-500 text-sm mt-1">PNG, JPG o WEBP (Máx. 10MB)</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submit-btn" class="w-full py-5 rounded-[1.5rem] bg-gradient-to-r from-yellow-500 via-orange-500 to-yellow-600 text-black font-black uppercase tracking-[0.2em] hover:scale-[1.01] hover:shadow-[0_0_40px_rgba(234,179,8,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                                <i class="fas fa-paper-plane"></i>
+                                PUBLICAR Y PARTICIPAR
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="login-prompt" class="p-12 rounded-[3rem] border border-dashed border-white/10 bg-white/5 text-center">
+                    <div class="w-20 h-20 rounded-3xl bg-yellow-500/10 flex items-center justify-center mx-auto mb-6 border border-yellow-500/20">
+                        <i class="fas fa-lock text-3xl text-yellow-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white mb-3 uppercase tracking-tight">Iniciá Sesión para Participar</h3>
+                    <p class="text-gray-500 max-w-sm mx-auto mb-8">Unite a la comunidad para subir tus obras y votar por otros artistas.</p>
+                    <button onclick="showLogin()" class="btn-primary px-10 py-4 rounded-2xl font-black text-sm tracking-widest">
+                        INGRESAR AHORA
+                    </button>
+                </section>
+            </div>
+
+            <!-- Rules / Info (Right) -->
+            <div class="space-y-6">
+                <div class="p-8 rounded-[2rem] border border-white/10 bg-[#0d0d12]/40 backdrop-blur-xl">
+                    <h3 class="text-lg font-black text-white mb-6 uppercase tracking-widest border-b border-white/5 pb-4">
+                        <i class="fas fa-info-circle text-cyan-500 mr-2"></i>Reglas
+                    </h3>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0 border border-cyan-500/30">
+                                <span class="text-[10px] font-bold text-cyan-400">1</span>
+                            </div>
+                            <p class="text-gray-400 text-sm">La obra debe ser de tu autoría.</p>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0 border border-cyan-500/30">
+                                <span class="text-[10px] font-bold text-cyan-400">2</span>
+                            </div>
+                            <p class="text-gray-400 text-sm">Cualquier estilo digital es bienvenido (AI, 3D, 2D).</p>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0 border border-cyan-500/30">
+                                <span class="text-[10px] font-bold text-cyan-400">3</span>
+                            </div>
+                            <p class="text-gray-400 text-sm">El ganador será el que más <i class="fas fa-heart text-red-500 mx-1"></i> obtenga al final del mes.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="p-8 rounded-[2rem] border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-orange-500/5 backdrop-blur-xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                        <i class="fas fa-crown text-8xl text-yellow-500"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-white mb-2 uppercase tracking-widest">Premio del Mes</h3>
+                    <p class="text-yellow-500 font-bold mb-4">Mención Especial + Badges</p>
+                    <p class="text-gray-400 text-xs leading-relaxed">El ganador recibirá una insignia exclusiva en su perfil y su obra será destacada en la home durante todo el mes siguiente.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Section -->
+        <section class="mt-20">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-white/5 pb-8">
+                <div>
+                    <h2 class="text-4xl font-black text-white uppercase tracking-tighter mb-2">Galería de Participantes</h2>
+                    <p class="text-gray-500">Explorá las obras que están compitiendo este mes.</p>
+                </div>
+                <div class="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10">
+                    <button class="px-5 py-2 rounded-xl bg-yellow-500 text-black font-black text-xs uppercase tracking-widest">Más Votados</button>
+                    <button class="px-5 py-2 rounded-xl text-gray-500 font-black text-xs uppercase tracking-widest hover:text-white transition-colors">Recientes</button>
+                </div>
+            </div>
+
+            <div id="contest-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <!-- Loading State -->
+                <div class="col-span-full text-center py-32">
+                    <div class="relative inline-block">
+                        <div class="w-16 h-16 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin"></div>
+                        <i class="fas fa-trophy absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-yellow-500"></i>
+                    </div>
+                    <p class="text-gray-500 font-black uppercase tracking-[0.3em] mt-6 text-sm">Sincronizando Galería...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/tagging.js"></script>
+    <script>
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const currentMonthDisplay = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('month-display').innerText = currentMonthDisplay;
+            
+            if (isLoggedIn()) {
+                document.getElementById('upload-section').classList.remove('hidden');
+                document.getElementById('login-prompt').classList.add('hidden');
+            }
+
+            loadContestEntries();
+            setupUpload();
+        });
+
+        async function loadContestEntries() {
+            const container = document.getElementById('contest-container');
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/posts/contest/${currentMonth}`);
+                if (!res.ok) throw new Error();
+                const entries = await res.json();
+                renderEntries(entries);
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center text-red-400 py-10 bg-red-500/5 rounded-3xl border border-red-500/20">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p class="font-bold">Error al cargar las obras. Por favor intenta de nuevo.</p>
+                    </div>`;
+            }
+        }
+
+        function renderEntries(entries) {
+            const container = document.getElementById('contest-container');
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-32 px-10 rounded-[3rem] border border-dashed border-white/10 bg-white/5 group hover:border-yellow-500/30 transition-all duration-700">
+                        <div class="w-24 h-24 rounded-[2rem] bg-white/5 flex items-center justify-center mx-auto mb-8 border border-white/5 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-palette text-5xl text-gray-700 group-hover:text-yellow-500/50 transition-colors"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-2 uppercase tracking-tight">¡No hay participantes todavía!</h3>
+                        <p class="text-gray-500 text-lg">Sé el primero en subir tu obra y empezá a sumar votos.</p>
+                    </div>`;
+                return;
+            }
+
+            // Ordenar por votos
+            entries.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+
+            container.innerHTML = entries.map((entry, index) => {
+                const isTop = index < 3;
+                const badgeColor = index === 0 ? 'bg-yellow-500' : (index === 1 ? 'bg-gray-300' : (index === 2 ? 'bg-orange-500' : 'bg-white/10'));
+                const icon = index === 0 ? 'fa-crown' : (index === 1 ? 'fa-medal' : (index === 2 ? 'fa-award' : 'fa-check'));
+
+                return `
+                    <div class="group rounded-[2.5rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-yellow-500/30 hover:shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber relative">
+                        <!-- Ranking Badge -->
+                        <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
+                            <div class="${badgeColor} text-black w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform -rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                                <i class="fas ${icon} text-lg"></i>
+                            </div>
+                            ${index === 0 ? '<span class="bg-yellow-500/20 text-yellow-500 text-[10px] font-black px-3 py-1 rounded-lg border border-yellow-500/30 backdrop-blur-md">LÍDER ACTUAL</span>' : ''}
+                        </div>
+
+                        <!-- Image Container -->
+                        <div class="relative aspect-square overflow-hidden cursor-pointer" onclick="window.location.href='post.html?id=${entry._id}'">
+                            <img src="${entry.imageUrl}" alt="${entry.title}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0d0d12] via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500"></div>
+                            
+                            <!-- Quick Info Overlay -->
+                            <div class="absolute inset-x-0 bottom-0 p-8 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                <h4 class="text-xl font-black text-white mb-1 line-clamp-1">${entry.title}</h4>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-6 h-6 rounded-lg overflow-hidden border border-white/20">
+                                        <img src="${entry.author?.avatar || 'img/artedigital.png'}" class="w-full h-full object-cover">
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-300 uppercase tracking-widest">${entry.author?.username}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interaction Footer -->
+                        <div class="p-6 mt-auto border-t border-white/5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button onclick="toggleLike('${entry._id}', this)" class="group/like flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all ${entry.likes?.includes(getUserId()) ? 'text-red-500 border-red-500/30 bg-red-500/10' : 'text-gray-400'}">
+                                    <i class="${entry.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart group-hover/like:scale-125 transition-transform"></i>
+                                    <span class="text-sm font-black tracking-tight">${entry.likes?.length || 0}</span>
+                                </button>
+                                <a href="post.html?id=${entry._id}" class="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-cyan-400 hover:border-cyan-500/50 transition-all">
+                                    <i class="fas fa-comment-alt text-sm"></i>
+                                </a>
+                            </div>
+                            <a href="post.html?id=${entry._id}" class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] hover:text-yellow-500 transition-colors">
+                                Detalles <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupUpload() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const previewContainer = document.getElementById('preview-container');
+            const previewImg = document.getElementById('preview-img');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const removeFileBtn = document.getElementById('remove-file');
+            const form = document.getElementById('contest-form');
+
+            const handleFile = (file) => {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        previewContainer.classList.remove('hidden');
+                        uploadPrompt.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Por favor, selecciona un archivo de imagen válido.');
+                }
+            };
+
+            fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-yellow-500', 'bg-yellow-500/5');
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, () => {
+                    dropZone.classList.remove('border-yellow-500', 'bg-yellow-500/5');
+                });
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                handleFile(e.dataTransfer.files[0]);
+            });
+
+            removeFileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput.value = '';
+                previewContainer.classList.add('hidden');
+                uploadPrompt.classList.remove('hidden');
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('title').value;
+                const description = document.getElementById('description').value;
+                const file = fileInput.files[0];
+                
+                if (!file && !previewImg.src) return alert('Por favor selecciona una imagen');
+
+                const btn = document.getElementById('submit-btn');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>SUBIENDO A LA RED...';
+
+                try {
+                    // 1. Subir imagen
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const uploadRes = await apiRequest('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!uploadRes || !uploadRes.ok) throw new Error('Error al conectar con el servidor de archivos.');
+                    const uploadData = await uploadRes.json();
+
+                    // 2. Crear Post del Concurso
+                    const postRes = await apiRequest('/posts', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            imageUrl: uploadData.url,
+                            isContest: true,
+                            contestMonth: currentMonth,
+                            tags: ['concurso', currentMonth]
+                        })
+                    });
+
+                    if (!postRes || !postRes.ok) throw new Error('Error al registrar tu participación.');
+
+                    // Success
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>¡OBRA PUBLICADA!';
+                    btn.classList.remove('from-yellow-500', 'to-yellow-600');
+                    btn.classList.add('from-green-500', 'to-emerald-600');
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+
+                } catch (err) {
+                    console.error(err);
+                    alert(err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+        }
+
+        async function toggleLike(id, btn) {
+            if (!isLoggedIn()) {
+                showLogin();
+                return;
+            }
+            
+            // Animación inmediata local
+            const icon = btn.querySelector('i');
+            const count = btn.querySelector('span');
+            const wasLiked = icon.classList.contains('fas');
+            
+            icon.classList.toggle('fas');
+            icon.classList.toggle('far');
+            count.innerText = parseInt(count.innerText) + (wasLiked ? -1 : 1);
+            btn.classList.toggle('text-red-500');
+            btn.classList.toggle('bg-red-500/10');
+            btn.classList.toggle('border-red-500/30');
+
+            try {
+                const res = await apiRequest(`/posts/${id}/like`, { method: 'POST' });
+                if (res && res.ok) {
+                    const data = await res.json();
+                    count.innerText = data.likes.length;
+                    // Sincronizar estado final
+                    const isLiked = data.likes.includes(getUserId());
+                    if (isLiked) {
+                        icon.className = 'fas fa-heart group-hover/like:scale-125 transition-transform';
+                        btn.className = 'group/like flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 transition-all';
+                    } else {
+                        icon.className = 'far fa-heart group-hover/like:scale-125 transition-transform';
+                        btn.className = 'group/like flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-gray-400 transition-all';
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
