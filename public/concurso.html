@@ -299,8 +299,11 @@
             const removeFileBtn = document.getElementById('remove-file');
             const form = document.getElementById('contest-form');
 
+            let selectedFile = null;
+
             const handleFile = (file) => {
                 if (file && file.type.startsWith('image/')) {
+                    selectedFile = file;
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         previewImg.src = e.target.result;
@@ -335,6 +338,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 fileInput.value = '';
+                selectedFile = null;
                 previewContainer.classList.add('hidden');
                 uploadPrompt.classList.remove('hidden');
             });
@@ -343,9 +347,9 @@
                 e.preventDefault();
                 const title = document.getElementById('title').value;
                 const description = document.getElementById('description').value;
-                const file = fileInput.files[0];
+                const file = selectedFile;
                 
-                if (!file && !previewImg.src) return alert('Por favor selecciona una imagen');
+                if (!file) return alert('Por favor selecciona una imagen');
 
                 const btn = document.getElementById('submit-btn');
                 const originalText = btn.innerHTML;
