@@ -61,8 +61,23 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
     
     return res.json({ url: absoluteUrl, public_id: req.file.filename });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    console.error('[Upload Error]', err);
+    return res.status(500).json({ error: 'Error interno en el servidor de carga: ' + err.message });
   }
+});
+
+// Middleware para capturar errores de Multer (como tamaño de archivo)
+router.use((err: any, req: any, res: any, next: any) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'La imagen es demasiado grande. Máximo 10MB.' });
+    }
+    return res.status(400).json({ error: 'Error de Multer: ' + err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
 });
 
 export default router;

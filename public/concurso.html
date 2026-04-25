@@ -200,6 +200,9 @@
 
             loadContestEntries();
             setupUpload();
+            if (typeof enableTagging === 'function') {
+                enableTagging('description');
+            }
         });
 
         async function loadContestEntries() {
@@ -358,7 +361,10 @@
                         body: formData
                     });
                     
-                    if (!uploadRes || !uploadRes.ok) throw new Error('Error al conectar con el servidor de archivos.');
+                    if (!uploadRes || !uploadRes.ok) {
+                        const errData = await uploadRes.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Error al conectar con el servidor de archivos.');
+                    }
                     const uploadData = await uploadRes.json();
 
                     // 2. Crear Post del Concurso
