@@ -15,6 +15,8 @@ export interface IPost extends Document {
   likes: Types.ObjectId[];
   comments: IComment[];
   tags: string[];
+  isContest: boolean;
+  contestMonth: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +39,8 @@ const PostSchema: Schema = new Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
     tags: [{ type: String, trim: true }],
+    isContest: { type: Boolean, default: false },
+    contestMonth: { type: String, default: '' },
   },
   { timestamps: true }
 );

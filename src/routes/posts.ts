@@ -32,7 +32,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, imageUrl, youtube_video, tags } = req.body;
+    const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth } = req.body;
     const post = await Post.create({
       author: req.user!.id,
       title,
@@ -40,9 +40,34 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       imageUrl,
       youtube_video: youtube_video || '',
       tags: tags || [],
+      isContest: isContest || false,
+      contestMonth: contestMonth || '',
     });
     const [populated] = await hydrate([post]);
     return res.status(201).json(populated);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/contest/:month', async (req: Request, res: Response) => {
+  try {
+    const posts = await Post.find({ 
+      isContest: true, 
+      contestMonth: req.params.month 
+    }).sort({ createdAt: -1 });
+    const hydratedPosts = await hydrate(posts);
+    return res.json(hydratedPosts);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/user/:userId', async (req: Request, res: Response) => {
+  try {
+    const posts = await Post.find({ author: req.params.userId }).sort({ createdAt: -1 });
+    const hydratedPosts = await hydrate(posts);
+    return res.json(hydratedPosts);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
