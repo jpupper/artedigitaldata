@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>`;
   }
   await Promise.all([loadPinnedEvents(), loadFeed()]);
+  renderContestPin();
 });
 
 async function loadPinnedEvents() {
@@ -23,6 +24,52 @@ async function loadPinnedEvents() {
   } catch (err) {
     console.error('Error loading pinned events:', err);
   }
+}
+
+function renderContestPin() {
+  const container = document.getElementById('pinned-container');
+  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const now = new Date();
+  const currentMonthDisplay = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+  const pinHTML = `
+    <div class="group rounded-2xl overflow-hidden border-2 border-yellow-500/30 bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-yellow-500/60 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)] flex flex-col h-full card-cyber relative">
+      <div class="absolute top-3 right-3 z-20">
+        <span class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-500 text-[10px] font-black uppercase tracking-wider border border-yellow-500/30">
+          <i class="fas fa-trophy mr-1"></i>CONCURSO ACTIVO
+        </span>
+      </div>
+      <div class="relative aspect-video overflow-hidden">
+        <a href="concurso.html" class="block w-full h-full relative">
+          <img src="img/artedigital.png" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-50">
+          <div class="absolute inset-0 flex items-center justify-center">
+             <i class="fas fa-trophy text-6xl text-yellow-500 animate-pulse"></i>
+          </div>
+        </a>
+      </div>
+      <div class="p-5 flex-1 flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-3 py-1 bg-yellow-500/20 text-yellow-500 rounded-lg text-xs font-bold uppercase tracking-wider">
+            ${currentMonthDisplay}
+          </span>
+        </div>
+        <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-yellow-500 transition-colors">
+          Concurso Mensual de Arte Digital
+        </h3>
+        <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+          ¡Participá con tu mejor obra y convertite en el artista del mes! Subí tu imagen y sumá votos de la comunidad.
+        </p>
+        <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+           <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Organizado por Arte Digital Data</span>
+           <a href="concurso.html" class="px-5 py-2 rounded-lg bg-yellow-500 text-black text-xs font-black hover:scale-105 transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+              PARTICIPAR <i class="fas fa-chevron-right ml-1"></i>
+           </a>
+        </div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('afterbegin', pinHTML);
+  document.getElementById('pinned-section').classList.remove('hidden');
 }
 
 function renderPinnedEvents(events) {
