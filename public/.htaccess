@@ -12,3 +12,6 @@ RewriteRule ^(.*)$ $1.html [L]
 # Forzar HTTPS
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Página 404 personalizada para Apache
+ErrorDocument 404 /404.html
