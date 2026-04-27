@@ -46,11 +46,23 @@ window.CONFIG = {
         return VPS_ORIGIN + '/fscauth';
     },
 
-    // Enlaces de colaboración/donación
-    DONATIONS: {
-        CAFECITO: 'https://cafecito.app/artedigitaldata',
-        MERCADOPAGO: 'https://www.mercadopago.com.ar/payment-link/v1/redirect?preference-id=71459997-344a34fe-540b-4e3e-bdfe-c09efea35f18',
-        PAYPAL: 'https://paypal.me/artedigitaldata'
+    get DONATIONS() {
+        return {
+            CAFECITO: 'https://cafecito.app/artedigitaldata',
+            MERCADOPAGO: 'https://www.mercadopago.com.ar/payment-link/v1/redirect?preference-id=71459997-344a34fe-540b-4e3e-bdfe-c09efea35f18',
+            PAYPAL: 'https://paypal.me/artedigitaldata'
+        };
+    },
+
+    resolveImage(url) {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        // Si la URL es relativa y estamos en un espejo estático (como Ferozo),
+        // debemos apuntar al VPS para obtener la imagen.
+        if (url.startsWith('/artedigitaldata')) {
+            return VPS_ORIGIN + url;
+        }
+        return url;
     }
 };
 
@@ -69,10 +81,14 @@ function escapeHTML(str) {
 
 function sanitizeUrl(url) {
     if (!url) return '';
+    const resolved = CONFIG.resolveImage(url);
     try {
-        const parsed = new URL(url);
-        return ['http:', 'https:'].includes(parsed.protocol) ? url : '';
+        const parsed = new URL(resolved);
+        return ['http:', 'https:'].includes(parsed.protocol) ? resolved : '';
     } catch {
-        return '';
+        // Si no es una URL válida (ej: ruta relativa que resolveImage no cambió), 
+        // pero empieza con /, la dejamos pasar para que el navegador la maneje localmente
+        // si resolveImage no la convirtió a absoluta.
+        return resolved.startsWith('/') ? resolved : '';
     }
 }

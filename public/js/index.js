@@ -95,7 +95,7 @@ function renderPinnedEvents(events) {
         <div class="relative aspect-video overflow-hidden">
           <div class="block w-full h-full relative cursor-pointer"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-               onclick="window.location.href='evento?id=${ev._id}'"
+               onclick="window.location.href='evento.html?id=${ev._id}'"
             ${ev.imageUrl ? `
               <img src="${sanitizeUrl(ev.imageUrl)}" alt="${escapeHTML(ev.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `
@@ -147,7 +147,7 @@ function renderPinnedEvents(events) {
                 ${ev.ticketConfig.price === 0 ? 'RESERVAR' : 'COMPRAR'}
               </a>
             ` : `
-              <a href="evento?id=${ev._id}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
+              <a href="evento.html?id=${ev._id}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
                 Ver Evento <i class="fas fa-arrow-right ml-1"></i>
               </a>
             `}
@@ -269,8 +269,8 @@ function renderFeed() {
     const isRecurso = type === 'recurso';
     const isEvento = type === 'evento';
 
-    const link = isPost ? `post?id=${item._id}` :
-                 (isRecurso ? `recurso?id=${item._id}` : `evento?id=${item._id}`);
+    const link = isPost ? `post.html?id=${item._id}` :
+                 (isRecurso ? `recurso.html?id=${item._id}` : `evento.html?id=${item._id}`);
 
     const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : 'fuchsia');
     const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : 'EVENTO');
