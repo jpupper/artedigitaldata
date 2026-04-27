@@ -20,7 +20,10 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const recurso = await Recurso.findById(req.params.id);
-    if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
+    if (!recurso) {
+      console.warn(`[Recursos API] Recurso no encontrado. ID: ${req.params.id}`);
+      return res.status(404).json({ error: 'Recurso no encontrado', id: req.params.id });
+    }
     
     const hydrated = await hydrate([recurso]);
     const final = await hydrateComments(hydrated[0]);
