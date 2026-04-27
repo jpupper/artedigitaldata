@@ -20,7 +20,10 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const evento = await Evento.findById(req.params.id);
-    if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (!evento) {
+      console.warn(`[Eventos API] Evento no encontrado en base de datos. ID: ${req.params.id}`);
+      return res.status(404).json({ error: 'Evento no encontrado', id: req.params.id });
+    }
     
     // Hydrate creator first
     const [withCreator] = await hydrate([evento], 'creator');

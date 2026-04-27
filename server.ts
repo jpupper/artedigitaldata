@@ -105,9 +105,9 @@ app.use('/api', apiRouter);
 app.use(`${BASE_PATH}/api`, apiRouter);
 
 // Static files - Servir tanto en raíz como en /artedigitaldata para máxima compatibilidad
-app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public')));
+app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public'), { extensions: ['html'] }));
 app.use(`${BASE_PATH}/img`, express.static(path.join(ROOT_DIR, 'img')));
-app.use('/', express.static(path.join(ROOT_DIR, 'public')));
+app.use('/', express.static(path.join(ROOT_DIR, 'public'), { extensions: ['html'] }));
 app.use('/img', express.static(path.join(ROOT_DIR, 'img')));
 
 // Route handling:
@@ -127,7 +127,7 @@ app.use((req, res, next) => {
   // Ignorar peticiones que ya tienen respuesta
   if (res.headersSent) return;
 
-  const fullPath = req.originalUrl || req.url;
+  const fullPath = (req.originalUrl || req.url).split('?')[0]; // Ignoramos query params para la lógica de archivos
   
   // Normalizamos para detectar /api regardless de la base
   const isApi = fullPath.includes('/api/');
@@ -136,24 +136,28 @@ app.use((req, res, next) => {
                        !fullPath.includes('.php')) || 
                        fullPath.includes('/img/');
 
+  // Verificamos si es una ruta que debería ser un .html (SPA clean URL)
+  // Si llegamos aquí es porque express.static no encontró el archivo .html
+  // Pero queremos asegurarnos de no servir index.html para rutas que parecen archivos
+  
   if (isApi) {
-    console.warn(`[SPA Interceptor] 404 for API route: ${req.method} ${fullPath}. Returning JSON 404.`);
+    console.warn(`[SPA Interceptor] 404 for API route: ${req.method} ${req.originalUrl}. Returning JSON 404.`);
     return res.status(404).json({ 
-      error: `API route not found: ${fullPath}`,
+      error: `API route not found: ${req.originalUrl}`,
       method: req.method,
-      requestPath: req.path,
-      suggestion: 'The API router did not match this path. Check server.ts for correct mount points.'
+      requestPath: req.path
     });
   }
 
   if (isStaticFile) {
-    // Si es un archivo que no existía (static no lo pescó), 404 real
-    console.warn(`[SPA Interceptor] 404 for static file/image: ${fullPath}. Returning plain 404.`);
     return res.status(404).send('Not Found');
   }
 
-  // Si no es API ni archivo, es una ruta de SPA (como /obras, /profile, etc)
-  console.log(`[SPA Interceptor] Serving index.html for route: ${fullPath}`);
+  // Rutas conocidas que NO son index.html pero son SPA (si se usan)
+  // En este proyecto, la mayoría son archivos .html físicos, así que si llegamos aquí 
+  // para /recurso y no existe recurso.html en public, entonces sí servimos index.html
+  
+  console.log(`[SPA Interceptor] Serving index.html as fallback for: ${req.originalUrl}`);
   serveIndex(req, res);
 });
 
