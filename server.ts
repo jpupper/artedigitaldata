@@ -119,8 +119,16 @@ const serveIndex = (_req: express.Request, res: express.Response) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 };
 
+// 404 fallback — serve 404.html
+const serve404 = (_req: express.Request, res: express.Response) => {
+  res.status(404).sendFile(path.join(ROOT_DIR, 'public', '404.html'));
+};
+
 // 1. Manejo específico de la raíz del subpath
 app.get([BASE_PATH, `${BASE_PATH}/`], serveIndex);
+app.get([`${BASE_PATH}/404`, '/404'], (req, res) => {
+  res.sendFile(path.join(ROOT_DIR, 'public', '404.html'));
+});
 
 // 2. Interceptor global para SPA y API 404s
 app.use((req, res, next) => {
@@ -155,10 +163,10 @@ app.use((req, res, next) => {
 
   // Rutas conocidas que NO son index.html pero son SPA (si se usan)
   // En este proyecto, la mayoría son archivos .html físicos, así que si llegamos aquí 
-  // para /recurso y no existe recurso.html en public, entonces sí servimos index.html
+  // para /recurso y no existe recurso.html en public, entonces servimos la página 404
   
-  console.log(`[SPA Interceptor] Serving index.html as fallback for: ${req.originalUrl}`);
-  serveIndex(req, res);
+  console.log(`[404 Interceptor] Serving 404.html for: ${req.originalUrl}`);
+  serve404(req, res);
 });
 
 // ========== SOCKET.IO ==========
