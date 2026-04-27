@@ -11,10 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #ff3e00;
-            --bg: #0a0a0c;
-            --text: #ffffff;
-            --accent: #4f46e5;
+            --bg-base: #0D0D12;
+            --bg-surface: #1A1A2E;
+            --color-cyan: #00F5FF;
+            --color-magenta: #FF00E0;
+            --color-text: #E5E5E5;
+            --color-text-dim: #94A3B8;
+            --gradient-neon: linear-gradient(135deg, var(--color-cyan), var(--color-magenta));
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
@@ -26,9 +29,9 @@
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--color-text);
+            font-family: 'Inter', system-ui, sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -42,13 +45,12 @@
             position: relative;
             z-index: 10;
             padding: 2rem;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
+            background: var(--bg-surface);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             max-width: 600px;
-            width: 90%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 95%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
             animation: fadeIn 1s ease-out;
         }
 
@@ -59,79 +61,68 @@
 
         h1 {
             font-size: 5rem;
-            font-weight: 700;
+            font-weight: 900;
             margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #fff 0%, #666 100%);
+            background: var(--gradient-neon);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -2px;
+            filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.3));
         }
 
         p {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 300;
             margin-bottom: 2rem;
-            color: #ccc;
+            color: var(--color-text-dim);
         }
 
         #game-container {
             width: 100%;
-            height: 300px;
+            height: 320px;
             background: #000;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--color-cyan);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
             position: relative;
         }
 
         .btn-home {
             display: inline-block;
-            padding: 1rem 2rem;
-            background: var(--primary);
-            color: white;
+            padding: 1rem 2.5rem;
+            background: var(--gradient-neon);
+            color: var(--bg-base) !important;
             text-decoration: none;
             border-radius: 50px;
-            font-weight: 600;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 20px -5px rgba(255, 62, 0, 0.4);
+            box-shadow: 0 10px 20px -5px rgba(0, 245, 255, 0.4);
         }
 
         .btn-home:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px -5px rgba(255, 62, 0, 0.6);
-            background: #ff5722;
-        }
-
-        /* Ambient background */
-        .ambient {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 15px 30px -5px rgba(255, 0, 224, 0.5);
+            filter: brightness(1.2);
         }
 
         .instructions {
             font-size: 0.8rem;
-            color: #666;
-            margin-top: 1rem;
+            color: var(--color-text-dim);
+            margin-top: 1.5rem;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
-    <div class="ambient"></div>
-    
     <div class="container">
         <h1>404</h1>
         <p>"Llegaste a un acantilado, no hay nada acá"</p>
         
-        <div id="game-container">
-            <!-- p5.js canvas will be here -->
-        </div>
+        <div id="game-container"></div>
 
         <a href="/" class="btn-home">Volver al Inicio</a>
         <div class="instructions">Usa las flechas ← → para manejar el cuatriciclo</div>
@@ -139,13 +130,13 @@
 
     <script>
         let road = [];
-        let carX = 0;
-        let speed = 8;
+        let playerX = 0; // -1 to 1 (offset from center)
+        let speed = 10;
         let score = 0;
         let gameActive = true;
         let horizon = 0;
-        let roadWidth = 220;
-        let totalSegments = 45;
+        let roadWidth = 240;
+        let totalSegments = 50;
         let curve = 0;
         let targetCurve = 0;
         let curveTimer = 0;
@@ -153,9 +144,7 @@
 
         function setup() {
             let container = document.getElementById('game-container');
-            let w = container.offsetWidth;
-            let h = container.offsetHeight;
-            let canvas = createCanvas(w, h);
+            let canvas = createCanvas(container.offsetWidth, container.offsetHeight);
             canvas.parent('game-container');
             
             horizon = height * 0.45;
@@ -164,63 +153,61 @@
                 road.push({
                     x: 0,
                     w: roadWidth,
-                    color: i % 2 === 0 ? '#1f1f1f' : '#2a2a2a',
-                    rumble: i % 2 === 0 ? '#ff3e00' : '#fff'
+                    color: i % 2 === 0 ? '#111' : '#1a1a1a',
+                    rumble: i % 2 === 0 ? '#ff00e0' : '#00f5ff'
                 });
             }
         }
 
         function draw() {
             if (!gameActive) {
-                background(0, 200);
+                background(13, 13, 18, 220);
                 fill(255);
                 noStroke();
                 textSize(32);
                 textAlign(CENTER, CENTER);
                 text("¡TE CAÍSTE!", width / 2, height / 2 - 20);
                 textSize(16);
-                fill(200);
+                fill(148, 163, 184);
                 text("Presiona R para reintentar", width / 2, height / 2 + 30);
-                
-                // Update and draw particles
                 updateParticles();
                 return;
             }
 
-            // Sky Gradient
+            // Background / Sky
+            background(13, 13, 18);
             for(let i=0; i<horizon; i++) {
                 let inter = map(i, 0, horizon, 0, 1);
-                let c = lerpColor(color(10, 10, 30), color(40, 20, 60), inter);
+                let c = lerpColor(color(10, 10, 20), color(26, 26, 46), inter);
                 stroke(c);
                 line(0, i, width, i);
             }
             
-            // Cliff / Abyss background
+            // Abyss
             noStroke();
-            fill(5, 5, 10);
+            fill(5, 5, 8);
             rect(0, horizon, width, height - horizon);
 
-            // Procedural Curve Logic
+            // Procedural Curve
             curveTimer--;
             if (curveTimer <= 0) {
-                targetCurve = random(-5, 5);
-                curveTimer = random(40, 120);
+                targetCurve = random(-6, 6);
+                curveTimer = random(40, 100);
             }
-            curve = lerp(curve, targetCurve, 0.04);
+            curve = lerp(curve, targetCurve, 0.03);
 
             // Update Road
             let first = road.shift();
             first.x = road[road.length-1].x + curve;
             road.push(first);
 
-            // Render Road (Back to front)
+            // Render Road
             for (let i = road.length - 1; i >= 0; i--) {
                 let segment = road[i];
-                let z = i;
-                let perspective = 1 / (z * 0.15 + 1);
+                let perspective = 1 / (i * 0.12 + 1);
                 
                 let y = horizon + (height - horizon) * (1 - perspective);
-                let nextPerspective = 1 / ((z-1) * 0.15 + 1);
+                let nextPerspective = 1 / ((i-1) * 0.12 + 1);
                 let nextY = horizon + (height - horizon) * (1 - nextPerspective);
                 
                 let w = roadWidth * perspective;
@@ -229,23 +216,23 @@
                 let nextW = roadWidth * nextPerspective;
                 let nextX = width/2 + (road[i-1] ? road[i-1].x : segment.x) * nextPerspective;
 
-                // Draw Cliff Depth
-                fill(15, 10, 20);
+                // Cliff walls
+                fill(20, 15, 30);
                 beginShape();
                 vertex(x - w, y);
-                vertex(x - w, y + 100);
-                vertex(nextX - nextW, nextY + 100);
+                vertex(x - w, y + 150);
+                vertex(nextX - nextW, nextY + 150);
                 vertex(nextX - nextW, nextY);
                 endShape(CLOSE);
                 
                 beginShape();
                 vertex(x + w, y);
-                vertex(x + w, y + 100);
-                vertex(nextX + nextW, nextY + 100);
+                vertex(x + w, y + 150);
+                vertex(nextX + nextW, nextY + 150);
                 vertex(nextX + nextW, nextY);
                 endShape(CLOSE);
 
-                // Draw road segment
+                // Road surface
                 fill(segment.color);
                 beginShape();
                 vertex(x - w, y);
@@ -254,89 +241,102 @@
                 vertex(nextX - nextW, nextY);
                 endShape(CLOSE);
 
-                // Rumble strips (red/white)
+                // Neon Rumble
                 fill(segment.rumble);
-                rect(x - w - 5 * perspective, y, 5 * perspective, nextY - y);
-                rect(x + w, y, 5 * perspective, nextY - y);
+                rect(x - w - 4 * perspective, y, 4 * perspective, nextY - y);
+                rect(x + w, y, 4 * perspective, nextY - y);
 
-                // Center lines
-                if (i % 4 < 2) {
-                    fill(255, 100);
+                // Lines
+                if (i % 6 < 3) {
+                    fill(255, 50);
                     rect(x - 1, y, 2, nextY - y);
                 }
             }
 
-            // ATV Control
-            let moveSpeed = 7;
-            if (keyIsDown(LEFT_ARROW)) carX -= moveSpeed;
-            if (keyIsDown(RIGHT_ARROW)) carX += moveSpeed;
+            // Controls
+            if (keyIsDown(LEFT_ARROW)) playerX -= 0.05;
+            if (keyIsDown(RIGHT_ARROW)) playerX += 0.05;
             
-            // Smoothly move road towards player offset
-            // We want the road to curve relative to player
-            // But here we keep player relative to road
+            // Limit player
+            playerX = constrain(playerX, -1.5, 1.5);
+
+            // Player position relative to the road's center at the bottom
+            let currentRoad = road[0];
+            let carScreenX = width/2 + currentRoad.x + (playerX * roadWidth);
             
             // Player ATV
             push();
-            let playerY = height - 60;
-            translate(width/2 + carX, playerY);
+            translate(carScreenX, height - 70);
             
-            // Sway animation
-            let sway = sin(frameCount * 0.2) * 2;
-            translate(0, sway);
+            // Vibration
+            translate(random(-1, 1), random(-1, 1));
 
             // Shadow
-            fill(0, 150);
+            fill(0, 120);
             noStroke();
-            ellipse(0, 15, 70, 25);
+            ellipse(0, 15, 80, 25);
             
-            // ATV Wheels (Chunky)
-            fill(10);
-            rect(-30, 0, 18, 28, 6); // RL
-            rect(12, 0, 18, 28, 6);  // RR
-            rect(-28, -35, 16, 22, 6); // FL
-            rect(12, -35, 16, 22, 6);  // FR
+            // ATV Rendering (Revised for correct "Forward" look)
+            // Rear Wheels (Closer, larger)
+            fill(15);
+            rect(-35, 0, 20, 30, 5); // Rear Left
+            rect(15, 0, 20, 30, 5);  // Rear Right
+            
+            // Front Wheels (Further, smaller)
+            rect(-32, -40, 16, 24, 5); // Front Left
+            rect(16, -40, 16, 24, 5);  // Front Right
+            
+            // Suspension / Axles
+            stroke(40);
+            strokeWeight(4);
+            line(-30, 10, 30, 10);
+            line(-30, -30, 30, -30);
             
             // Body
-            fill(255, 62, 0); // Primary color
-            rect(-18, -25, 36, 40, 10);
-            fill(30);
-            rect(-12, -10, 24, 20, 5); // Seat
-            
-            // Engine/Details
-            fill(60);
-            rect(-8, 5, 16, 8, 2);
-            
-            // Handlebars
-            stroke(100);
-            strokeWeight(4);
-            line(-22, -22, 22, -22);
             noStroke();
-            fill(10);
-            rect(-25, -25, 8, 6, 2); // Left grip
-            rect(17, -25, 8, 6, 2);  // Right grip
+            fill(0, 245, 255); // Cyan
+            beginShape();
+            vertex(-20, 10);
+            vertex(20, 10);
+            vertex(15, -35);
+            vertex(-15, -35);
+            endShape(CLOSE);
+            
+            // Seat
+            fill(30);
+            rect(-12, -15, 24, 25, 8);
+            
+            // Handlebars (At the FRONT, i.e., further away)
+            stroke(255, 0, 224); // Magenta
+            strokeWeight(5);
+            line(-25, -32, 25, -32);
+            // Grips
+            stroke(0);
+            line(-25, -32, -18, -32);
+            line(18, -32, 25, -32);
             
             pop();
 
-            // Collision Detection
-            let currentRoadX = road[0].x;
-            if (abs(carX - currentRoadX) > roadWidth + 5) {
+            // Collision
+            if (abs(playerX) > 1.1) {
                 gameOver();
             }
 
             score += speed;
-            fill(255);
+            fill(0, 245, 255);
             noStroke();
             textSize(18);
             textAlign(LEFT);
-            text("Distancia: " + floor(score/10) + "m", 25, 40);
+            text("Distancia: " + floor(score/10) + "m", 25, 45);
             
-            // Speed effect particles
-            if (frameCount % 2 === 0) {
+            // Particles
+            if (frameCount % 3 === 0) {
                 particles.push({
                     x: random(width),
                     y: horizon,
-                    vy: random(2, 5),
-                    life: 255
+                    vy: random(3, 7),
+                    life: 255,
+                    c: color(0, 245, 255, 50)
                 });
             }
             updateParticles();
@@ -344,15 +344,14 @@
 
         function gameOver() {
             gameActive = false;
-            // Create explosion particles
-            for(let i=0; i<30; i++) {
+            for(let i=0; i<40; i++) {
                 particles.push({
-                    x: width/2 + carX,
-                    y: height - 60,
-                    vx: random(-5, 5),
-                    vy: random(-10, 2),
+                    x: width/2 + road[0].x + (playerX * roadWidth),
+                    y: height - 70,
+                    vx: random(-6, 6),
+                    vy: random(-12, 0),
                     life: 255,
-                    c: color(255, random(100, 200), 0)
+                    c: random(1) > 0.5 ? color(255, 0, 224) : color(0, 245, 255)
                 });
             }
         }
@@ -361,40 +360,36 @@
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 if (gameActive) {
-                    // Speed lines
-                    stroke(255, p.life * 0.2);
-                    line(p.x, p.y, p.x, p.y + p.vy * 5);
+                    stroke(p.c);
+                    line(p.x, p.y, p.x, p.y + p.vy * 4);
                     p.y += p.vy * 2;
                 } else {
-                    // Explosion
                     noStroke();
                     fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life);
-                    circle(p.x, p.y, 5);
+                    circle(p.x, p.y, 6);
                     p.x += p.vx;
                     p.y += p.vy;
-                    p.vy += 0.2; // Gravity
+                    p.vy += 0.25;
                 }
-                p.life -= 5;
+                p.life -= 4;
                 if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
         function keyPressed() {
-            if (key === 'r' || key === 'R') {
-                if (!gameActive) {
-                    gameActive = true;
-                    carX = 0;
-                    score = 0;
-                    road = [];
-                    particles = [];
-                    for (let i = 0; i < totalSegments; i++) {
-                        road.push({
-                            x: 0,
-                            w: roadWidth,
-                            color: i % 2 === 0 ? '#1f1f1f' : '#2a2a2a',
-                            rumble: i % 2 === 0 ? '#ff3e00' : '#fff'
-                        });
-                    }
+            if ((key === 'r' || key === 'R') && !gameActive) {
+                gameActive = true;
+                playerX = 0;
+                score = 0;
+                road = [];
+                particles = [];
+                for (let i = 0; i < totalSegments; i++) {
+                    road.push({
+                        x: 0,
+                        w: roadWidth,
+                        color: i % 2 === 0 ? '#111' : '#1a1a1a',
+                        rumble: i % 2 === 0 ? '#ff00e0' : '#00f5ff'
+                    });
                 }
             }
         }
