@@ -1,0 +1,14 @@
+# Habilitar Clean URLs en Ferozo/Apache
+RewriteEngine On
+
+# Si el archivo existe físicamente (ej: .png, .css, .js), servirlo directamente
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Si existe un archivo .html con ese nombre, servirlo sin mostrar la extensión en la URL
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Forzar HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

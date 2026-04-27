@@ -80,7 +80,7 @@ window.renderResource = function(r) {
     if (r.imageUrl) {
       imgContainer.classList.remove('hidden');
       imgContainer.className = "mb-8 rounded-2xl overflow-hidden border border-white/5 aspect-video relative";
-      imgContainer.innerHTML = `<img src="${r.imageUrl}" class="w-full h-full object-cover">`;
+      imgContainer.innerHTML = `<img src="${sanitizeUrl(r.imageUrl)}" class="w-full h-full object-cover">`;
       if (youtubeId) {
         imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
         imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');

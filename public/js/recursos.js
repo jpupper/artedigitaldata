@@ -56,7 +56,7 @@ window.renderRecursos = function(recursos) {
              ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
              onclick="window.location.href='recurso.html?id=${r._id}'">
             ${r.imageUrl ? `
-              <img src="${r.imageUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${r.title}">
+              <img src="${sanitizeUrl(r.imageUrl)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${r.title}">
             ` : `
               <div class="w-full h-full bg-white/5 flex items-center justify-center">
                 <i class="${typeIcons[r.type] || typeIcons.other} text-4xl text-gray-700 opacity-30"></i>

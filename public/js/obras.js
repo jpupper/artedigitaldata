@@ -36,7 +36,7 @@ window.renderObras = function(posts) {
              ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
              onclick="window.location.href='post.html?id=${p._id}'">
             ${p.imageUrl ? `
-              <img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+              <img src="${sanitizeUrl(p.imageUrl)}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
             ` : `
               <div class="w-full h-full bg-white/5 flex items-center justify-center">
                 <i class="fas fa-palette text-3xl text-gray-700"></i>
