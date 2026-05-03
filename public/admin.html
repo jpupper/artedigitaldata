@@ -393,8 +393,10 @@
         document.getElementById('edit-location').value = item.location || '';
         if (item.date) {
           const d = new Date(item.date);
-          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-          document.getElementById('edit-date').value = d.toISOString().slice(0, 16);
+          // Use the same helper logic if available, or just the local adjustment
+          const offset = d.getTimezoneOffset() * 60000;
+          const localISOTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+          document.getElementById('edit-date').value = localISOTime;
         }
       }
 
@@ -452,7 +454,8 @@
         body.url = document.getElementById('edit-url').value;
         body.type = document.getElementById('edit-rec-type').value;
       } else if (type === 'eventos') {
-        body.date = document.getElementById('edit-date').value;
+        const dateVal = document.getElementById('edit-date').value;
+        body.date = dateVal ? new Date(dateVal).toISOString() : null;
         body.location = document.getElementById('edit-location').value;
       }
 
