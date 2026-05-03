@@ -3,6 +3,16 @@
  * Ensures Create and Edit forms always stay synchronized
  */
 
+window.formatDateForInput = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  // Adjust for local timezone to get the correct YYYY-MM-DDTHH:mm format
+  const offset = d.getTimezoneOffset() * 60000;
+  const localISOTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+  return localISOTime;
+};
+
 const FORM_TEMPLATES = {
   post: (prefix, item = {}) => `
     <div class="space-y-4">
@@ -113,7 +123,7 @@ const FORM_TEMPLATES = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
-          <input type="datetime-local" id="${prefix}-date" name="date" value="${item.date ? new Date(item.date).toISOString().slice(0, 16) : ''}" required
+          <input type="datetime-local" id="${prefix}-date" name="date" value="${formatDateForInput(item.date)}" required
             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
         </div>
         <div>

@@ -272,7 +272,8 @@ if (editForm) {
       body.url = document.getElementById('edit-url').value;
       body.type = document.getElementById('edit-rec-type').value;
     } else if (type === 'eventos') {
-      body.date = document.getElementById('edit-date').value;
+      const dateVal = document.getElementById('edit-date').value;
+      body.date = dateVal ? new Date(dateVal).toISOString() : null;
       body.location = document.getElementById('edit-location').value;
     }
 
