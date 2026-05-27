@@ -24,6 +24,7 @@
     "multer-storage-cloudinary": "^2.2.1",
     "nodemailer": "^8.0.2",
     "qrcode": "^1.5.4",
+    "sharp": "^0.34.5",
     "socket.io": "^4.7.2",
     "uuid": "^13.0.0"
   },

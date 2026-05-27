@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-base: #0D0D12;
@@ -129,14 +129,14 @@
     </div>
 
     <script>
-        let road = [];
-        let playerX = 0; // -1 to 1 (offset from center)
-        let speed = 10;
+        let segments = [];
+        let playerX = 0; 
+        let roadWidth = 220;
+        let speed = 8;
         let score = 0;
         let gameActive = true;
         let horizon = 0;
-        let roadWidth = 240;
-        let totalSegments = 50;
+        let totalSegments = 60;
         let curve = 0;
         let targetCurve = 0;
         let curveTimer = 0;
@@ -148,13 +148,14 @@
             canvas.parent('game-container');
             
             horizon = height * 0.45;
+            playerX = width / 2;
             
             for (let i = 0; i < totalSegments; i++) {
-                road.push({
-                    x: 0,
+                segments.push({
+                    x: width / 2, 
                     w: roadWidth,
-                    color: i % 2 === 0 ? '#111' : '#1a1a1a',
-                    rumble: i % 2 === 0 ? '#ff00e0' : '#00f5ff'
+                    color: i % 4 < 2 ? '#111' : '#1a1a1a',
+                    rumble: i % 4 < 2 ? '#ff00e0' : '#00f5ff'
                 });
             }
         }
@@ -174,8 +175,9 @@
                 return;
             }
 
-            // Background / Sky
+            // Sky
             background(13, 13, 18);
+            noStroke();
             for(let i=0; i<horizon; i++) {
                 let inter = map(i, 0, horizon, 0, 1);
                 let c = lerpColor(color(10, 10, 20), color(26, 26, 46), inter);
@@ -188,22 +190,29 @@
             fill(5, 5, 8);
             rect(0, horizon, width, height - horizon);
 
-            // Procedural Curve
+            // Road Logic
             curveTimer--;
             if (curveTimer <= 0) {
-                targetCurve = random(-6, 6);
+                targetCurve = random(-5, 5);
                 curveTimer = random(40, 100);
             }
-            curve = lerp(curve, targetCurve, 0.03);
+            curve = lerp(curve, targetCurve, 0.04);
 
-            // Update Road
-            let first = road.shift();
-            first.x = road[road.length-1].x + curve;
-            road.push(first);
+            let lastX = segments[segments.length - 1].x;
+            let newX = lastX + curve;
+            newX = constrain(newX, width * 0.1, width * 0.9);
+            
+            segments.shift();
+            segments.push({
+                x: newX,
+                w: roadWidth,
+                color: frameCount % 8 < 4 ? '#111' : '#1a1a1a',
+                rumble: frameCount % 8 < 4 ? '#ff00e0' : '#00f5ff'
+            });
 
             // Render Road
-            for (let i = road.length - 1; i >= 0; i--) {
-                let segment = road[i];
+            for (let i = segments.length - 1; i >= 0; i--) {
+                let segment = segments[i];
                 let perspective = 1 / (i * 0.12 + 1);
                 
                 let y = horizon + (height - horizon) * (1 - perspective);
@@ -211,114 +220,100 @@
                 let nextY = horizon + (height - horizon) * (1 - nextPerspective);
                 
                 let w = roadWidth * perspective;
-                let x = width/2 + segment.x * perspective;
+                let x = segment.x; 
                 
+                let nextSegment = segments[i-1] || segment;
                 let nextW = roadWidth * nextPerspective;
-                let nextX = width/2 + (road[i-1] ? road[i-1].x : segment.x) * nextPerspective;
+                let nextX = nextSegment.x;
 
-                // Cliff walls
+                let screenX = width/2 + (x - width/2) * perspective;
+                let nextScreenX = width/2 + (nextX - width/2) * nextPerspective;
+
+                // Cliff
                 fill(20, 15, 30);
                 beginShape();
-                vertex(x - w, y);
-                vertex(x - w, y + 150);
-                vertex(nextX - nextW, nextY + 150);
-                vertex(nextX - nextW, nextY);
+                vertex(screenX - w, y);
+                vertex(screenX - w, y + 100);
+                vertex(nextScreenX - nextW, nextY + 100);
+                vertex(nextScreenX - nextW, nextY);
                 endShape(CLOSE);
                 
                 beginShape();
-                vertex(x + w, y);
-                vertex(x + w, y + 150);
-                vertex(nextX + nextW, nextY + 150);
-                vertex(nextX + nextW, nextY);
+                vertex(screenX + w, y);
+                vertex(screenX + w, y + 100);
+                vertex(nextScreenX + nextW, nextY + 100);
+                vertex(nextScreenX + nextW, nextY);
                 endShape(CLOSE);
 
-                // Road surface
+                // Road
                 fill(segment.color);
                 beginShape();
-                vertex(x - w, y);
-                vertex(x + w, y);
-                vertex(nextX + nextW, nextY);
-                vertex(nextX - nextW, nextY);
+                vertex(screenX - w, y);
+                vertex(screenX + w, y);
+                vertex(nextScreenX + nextW, nextY);
+                vertex(nextScreenX - nextW, nextY);
                 endShape(CLOSE);
 
-                // Neon Rumble
+                // Rumble
                 fill(segment.rumble);
-                rect(x - w - 4 * perspective, y, 4 * perspective, nextY - y);
-                rect(x + w, y, 4 * perspective, nextY - y);
-
-                // Lines
-                if (i % 6 < 3) {
-                    fill(255, 50);
-                    rect(x - 1, y, 2, nextY - y);
-                }
+                rect(screenX - w - 2, y, 4 * perspective, nextY - y);
+                rect(screenX + w - 2, y, 4 * perspective, nextY - y);
             }
 
             // Controls
-            if (keyIsDown(LEFT_ARROW)) playerX -= 0.05;
-            if (keyIsDown(RIGHT_ARROW)) playerX += 0.05;
-            
-            // Limit player
-            playerX = constrain(playerX, -1.5, 1.5);
+            if (keyIsDown(LEFT_ARROW)) playerX -= 7;
+            if (keyIsDown(RIGHT_ARROW)) playerX += 7;
+            playerX = constrain(playerX, 10, width - 10);
 
-            // Player position relative to the road's center at the bottom
-            let currentRoad = road[0];
-            let carScreenX = width/2 + currentRoad.x + (playerX * roadWidth);
-            
-            // Player ATV
+            // Draw ATV (Fixed perspective)
             push();
-            translate(carScreenX, height - 70);
+            translate(playerX, height - 70);
             
-            // Vibration
-            translate(random(-1, 1), random(-1, 1));
+            // Subtle tilt
+            if (keyIsDown(LEFT_ARROW)) rotate(-0.06);
+            if (keyIsDown(RIGHT_ARROW)) rotate(0.06);
 
             // Shadow
             fill(0, 120);
             noStroke();
-            ellipse(0, 15, 80, 25);
-            
-            // ATV Rendering (Revised for correct "Forward" look)
-            // Rear Wheels (Closer, larger)
+            ellipse(0, 15, 75, 22);
+
+            // Wheels (Driving away)
             fill(15);
-            rect(-35, 0, 20, 30, 5); // Rear Left
-            rect(15, 0, 20, 30, 5);  // Rear Right
-            
-            // Front Wheels (Further, smaller)
-            rect(-32, -40, 16, 24, 5); // Front Left
-            rect(16, -40, 16, 24, 5);  // Front Right
-            
-            // Suspension / Axles
-            stroke(40);
-            strokeWeight(4);
-            line(-30, 10, 30, 10);
-            line(-30, -30, 30, -30);
-            
+            // Rear Wheels
+            rect(-32, 0, 18, 28, 5); 
+            rect(14, 0, 18, 28, 5);  
+            // Front Wheels
+            rect(-28, -38, 14, 22, 5); 
+            rect(14, -38, 14, 22, 5);  
+
             // Body
-            noStroke();
-            fill(0, 245, 255); // Cyan
+            fill(0, 245, 255); 
             beginShape();
-            vertex(-20, 10);
-            vertex(20, 10);
-            vertex(15, -35);
-            vertex(-15, -35);
+            vertex(-20, 10); 
+            vertex(20, 10);  
+            vertex(14, -36); 
+            vertex(-14, -36);
             endShape(CLOSE);
-            
+
             // Seat
             fill(30);
-            rect(-12, -15, 24, 25, 8);
-            
-            // Handlebars (At the FRONT, i.e., further away)
-            stroke(255, 0, 224); // Magenta
+            rect(-12, -12, 24, 24, 6);
+
+            // Handlebars (At the top = front)
+            stroke(255, 0, 224); 
             strokeWeight(5);
-            line(-25, -32, 25, -32);
+            line(-22, -34, 22, -34);
             // Grips
             stroke(0);
-            line(-25, -32, -18, -32);
-            line(18, -32, 25, -32);
-            
+            line(-22, -34, -16, -34);
+            line(16, -34, 22, -34);
+
             pop();
 
             // Collision
-            if (abs(playerX) > 1.1) {
+            let bottomRoadX = segments[0].x;
+            if (abs(playerX - bottomRoadX) > roadWidth / 2 + 10) {
                 gameOver();
             }
 
@@ -327,16 +322,15 @@
             noStroke();
             textSize(18);
             textAlign(LEFT);
-            text("Distancia: " + floor(score/10) + "m", 25, 45);
+            text("Distancia: " + floor(score/10) + "m", 25, 40);
             
-            // Particles
-            if (frameCount % 3 === 0) {
+            if (frameCount % 4 === 0) {
                 particles.push({
                     x: random(width),
                     y: horizon,
-                    vy: random(3, 7),
+                    vy: random(2, 6),
                     life: 255,
-                    c: color(0, 245, 255, 50)
+                    c: color(0, 245, 255, 100)
                 });
             }
             updateParticles();
@@ -344,9 +338,9 @@
 
         function gameOver() {
             gameActive = false;
-            for(let i=0; i<40; i++) {
+            for(let i=0; i<30; i++) {
                 particles.push({
-                    x: width/2 + road[0].x + (playerX * roadWidth),
+                    x: playerX,
                     y: height - 70,
                     vx: random(-6, 6),
                     vy: random(-12, 0),
@@ -361,7 +355,7 @@
                 let p = particles[i];
                 if (gameActive) {
                     stroke(p.c);
-                    line(p.x, p.y, p.x, p.y + p.vy * 4);
+                    line(p.x, p.y, p.x, p.y + p.vy * 3);
                     p.y += p.vy * 2;
                 } else {
                     noStroke();
@@ -379,16 +373,16 @@
         function keyPressed() {
             if ((key === 'r' || key === 'R') && !gameActive) {
                 gameActive = true;
-                playerX = 0;
+                playerX = width / 2;
                 score = 0;
-                road = [];
+                segments = [];
                 particles = [];
                 for (let i = 0; i < totalSegments; i++) {
-                    road.push({
-                        x: 0,
+                    segments.push({
+                        x: width / 2,
                         w: roadWidth,
-                        color: i % 2 === 0 ? '#111' : '#1a1a1a',
-                        rumble: i % 2 === 0 ? '#ff00e0' : '#00f5ff'
+                        color: i % 4 < 2 ? '#111' : '#1a1a1a',
+                        rumble: i % 4 < 2 ? '#ff00e0' : '#00f5ff'
                     });
                 }
             }
