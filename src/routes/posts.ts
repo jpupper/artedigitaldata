@@ -7,9 +7,12 @@ import User from '../models/User';
 
 const router = Router();
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const posts = await Post.find({ isContest: { $ne: true } }).sort({ createdAt: -1 });
+    const filter: any = { isContest: { $ne: true } };
+    if (req.query.source === 'ia') filter.source = 'ia';
+    else if (req.query.source === 'human') filter.source = 'human';
+    const posts = await Post.find(filter).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
     return res.json(hydratedPosts);
   } catch (err: any) {
