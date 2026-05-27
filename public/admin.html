@@ -31,6 +31,7 @@
           <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Posteos</button>
           <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Recursos</button>
           <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Eventos</button>
+          <button onclick="switchTab('autobot')" id="tab-autobot" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white flex items-center gap-1"><i class="fas fa-robot text-xs"></i>Autobot</button>
           <a href="admin-tickets.html" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-magenta-400 hover:text-white hover:bg-magenta-500/20 flex items-center gap-2">
             <i class="fas fa-ticket-alt"></i>Entradas
           </a>
@@ -200,6 +201,64 @@
           <button type="submit" class="flex-1 px-6 py-3 rounded-xl bg-cyan-500 text-black font-black transition-all hover:scale-[1.02]">GUARDAR CAMBIOS</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- AutoBot Section -->
+  <div id="section-autobot" class="admin-section hidden">
+    <div class="rounded-2xl border border-green-500/20 card-cyber p-8">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-black text-white flex items-center gap-3">
+            <i class="fas fa-robot text-green-400"></i>
+            AutoBot <span class="text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-xl uppercase tracking-widest">Automático</span>
+          </h2>
+          <p class="text-gray-500 text-sm mt-2">Scraper automático que busca contenido de arte digital 1 vez al día y lo publica.</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="runAutobotNow()" id="btn-run-autobot" class="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-black text-sm uppercase tracking-wider transition-all flex items-center gap-2">
+            <i class="fas fa-play"></i> Ejecutar Ahora
+          </button>
+          <button onclick="refreshAutobotStatus()" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] uppercase tracking-widest font-black text-gray-500 mb-2">🤖 Bot User</p>
+          <p id="autobot-user-status" class="text-lg font-bold text-white">Verificando...</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] uppercase tracking-widest font-black text-gray-500 mb-2">📝 Posts Automáticos</p>
+          <p id="autobot-posts-count" class="text-lg font-bold text-cyan-400">-</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <p class="text-[10px] uppercase tracking-widest font-black text-gray-500 mb-2">📦 Recursos Automáticos</p>
+          <p id="autobot-recursos-count" class="text-lg font-bold text-orange-400">-</p>
+        </div>
+      </div>
+
+      <!-- Last Activity -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Últimos Posts Automáticos</h3>
+          <div id="autobot-last-posts" class="space-y-2">
+            <p class="text-gray-600 italic text-sm">Cargando...</p>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Últimos Recursos Automáticos</h3>
+          <div id="autobot-last-recursos" class="space-y-2">
+            <p class="text-gray-600 italic text-sm">Cargando...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Run Result -->
+      <div id="autobot-run-result" class="hidden mt-8 p-6 rounded-2xl border border-green-500/30 bg-green-500/5"></div>
     </div>
   </div>
 
@@ -473,6 +532,91 @@
         alert('Error al guardar: ' + (errorData.error || 'Error desconocido'));
       }
     });
+
+    // AutoBot Functions
+    async function refreshAutobotStatus() {
+      try {
+        const res = await apiRequest('/admin/autobot/status');
+        if (!res?.ok) throw new Error();
+        const data = await res.json();
+        
+        document.getElementById('autobot-user-status').innerHTML = data.botUserExists 
+          ? '<span class="text-green-400">✅ Activo (@' + data.botUser.username + ')</span>'
+          : '<span class="text-red-400">❌ No creado — Creá un usuario "artedigitalbot"</span>';
+        document.getElementById('autobot-posts-count').textContent = data.totalAutobotPosts || '0';
+        document.getElementById('autobot-recursos-count').textContent = data.totalAutobotRecursos || '0';
+
+        const postsContainer = document.getElementById('autobot-last-posts');
+        if (data.lastPosts?.length) {
+          postsContainer.innerHTML = data.lastPosts.map(p => 
+            '<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">'
+            + '<span class="text-sm text-white truncate mr-2">' + p.title + '</span>'
+            + '<span class="text-[10px] text-gray-500 shrink-0">' + new Date(p.createdAt).toLocaleDateString() + '</span>'
+            + '</div>'
+          ).join('');
+        } else {
+          postsContainer.innerHTML = '<p class="text-gray-600 italic text-sm">Aún no hay posts automáticos.</p>';
+        }
+
+        const recursosContainer = document.getElementById('autobot-last-recursos');
+        if (data.lastRecursos?.length) {
+          recursosContainer.innerHTML = data.lastRecursos.map(r => 
+            '<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">'
+            + '<span class="text-sm text-white truncate mr-2">' + r.title + '</span>'
+            + '<span class="text-[10px] text-gray-500 shrink-0">' + new Date(r.createdAt).toLocaleDateString() + '</span>'
+            + '</div>'
+          ).join('');
+        } else {
+          recursosContainer.innerHTML = '<p class="text-gray-600 italic text-sm">Aún no hay recursos automáticos.</p>';
+        }
+      } catch (err) {
+        console.error('Error al cargar estado del autobot:', err);
+      }
+    }
+
+    async function runAutobotNow() {
+      const btn = document.getElementById('btn-run-autobot');
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ejecutando...';
+
+      const resultDiv = document.getElementById('autobot-run-result');
+      resultDiv.classList.remove('hidden');
+      resultDiv.innerHTML = '<p class="text-white"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando contenido fresco...</p>';
+
+      try {
+        const res = await apiRequest('/admin/autobot/run', { method: 'POST' });
+        if (!res?.ok) throw new Error('Error en el servidor');
+        const data = await res.json();
+        
+        resultDiv.innerHTML = `
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-500 text-xl">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+              <p class="text-white font-bold text-lg">Autobot completado</p>
+              <p class="text-gray-400 text-sm">Publicados ${data.published}/${data.found} items</p>
+            </div>
+          </div>
+          ${data.errors?.length ? '<div class="text-red-400 text-sm mt-2">Errores: ' + data.errors.join(', ') + '</div>' : ''}
+        `;
+        
+        await refreshAutobotStatus();
+      } catch (err) {
+        resultDiv.innerHTML = '<div class="text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Error: ' + err.message + '</div>';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    }
+
+    // Call refresh on tab switch
+    const originalSwitchTab = switchTab;
+    window.switchTab = function(tab) {
+      originalSwitchTab(tab);
+      if (tab === 'autobot') refreshAutobotStatus();
+    };
   </script>
 </body>
 </html>

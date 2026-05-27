@@ -1,6 +1,10 @@
 import { Router, Response } from 'express';
 import User from '../models/User';
+import Post from '../models/Post';
+import Recurso from '../models/Recurso';
+import Evento from '../models/Evento';
 import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/auth';
+import { runAutobot } from '../scripts/cronbot';
 
 const router = Router();
 
@@ -32,7 +36,6 @@ router.patch('/users/:id/role', authMiddleware, adminMiddleware, async (req: Aut
       return res.status(400).json({ error: 'Rol inválido' });
     }
 
-    // Actualizar en permissions.artedigital.role
     const user = await User.findByIdAndUpdate(
       req.params.id, 
       { $set: { 'permissions.artedigital.role': role } }, 
@@ -47,6 +50,47 @@ router.patch('/users/:id/role', authMiddleware, adminMiddleware, async (req: Aut
     };
 
     return res.json(responseUser);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /admin/autobot/run — ejecutar el autobot manualmente
+router.post('/autobot/run', authMiddleware, adminMiddleware, async (_req: AuthRequest, res: Response) => {
+  try {
+    console.log('[Admin] Autobot ejecutado manualmente por admin');
+    const result = await runAutobot();
+    return res.json({
+      message: `Autobot completado. Publicados: ${result.published}/${result.found}`,
+      ...result
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /admin/autobot/status — estado del autobot
+router.get('/autobot/status', authMiddleware, adminMiddleware, async (_req: AuthRequest, res: Response) => {
+  try {
+    const botUser = await User.findOne({ username: 'ADDBOT' });
+    const lastPosts = await Post.find({ tags: 'addbot' })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('title createdAt imageUrl');
+    const lastRecursos = await Recurso.find({ tags: 'addbot' })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('title createdAt url');
+
+    return res.json({
+      botUserExists: !!botUser,
+      botUser: botUser ? { username: botUser.username, _id: botUser._id } : null,
+      totalAutobotPosts: await Post.countDocuments({ tags: 'addbot' }),
+      totalAutobotRecursos: await Recurso.countDocuments({ tags: 'addbot' }),
+      lastPosts,
+      lastRecursos,
+      serverTime: new Date().toISOString(),
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

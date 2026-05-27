@@ -8,6 +8,10 @@ Bienvenido a **Arte Digital Data**, una plataforma integral diseñada como una r
 
 *   **Sistema de Usuarios**: Registro, inicio de sesión y gestión de perfiles personalizados con avatares.
 *   **Gestión de Contenido**: Creación de publicaciones (posts), recursos artísticos y eventos.
+*   **Sistema de Concurso Mensual**: Participación, votación y visualización de concursos anteriores con navegación por meses.
+*   **Edición con Ajuste de Imágenes**: Al editar obras, recursos o eventos, podés reemplazar, recortar y rotar imágenes con CropperJS.
+*   **AutoBot 🦾**: Scraper automático que busca contenido fresco de arte digital 1 vez al día (GitHub, Hacker News, Reddit, DEV.to).
+*   **API Pública**: Endpoints REST paginados para consultar posts, recursos y eventos sin autenticación.
 *   **Comunicación en Tiempo Real**: Chat integrado mediante WebSockets (Socket.io) para salas de chat dinámicas.
 *   **Buscador Inteligente**: Localización global de usuarios, eventos, recursos y publicaciones.
 *   **Sistema de Administración**: Panel de control para gestionar usuarios y roles del sistema.

@@ -85,8 +85,13 @@ GET    /upload               POST   /upload
 GET    /tickets/my           POST   /tickets
 GET    /notifications        PATCH  /notifications/:id/read
 
-GET    /search?q=...
-GET    /admin/users          PATCH  /admin/users/:id/role
+| GET    /search?q=...
+| GET    /admin/users          PATCH  /admin/users/:id/role
+| GET    /admin/autobot/status  POST   /admin/autobot/run
+| GET    /public/posts          GET    /public/recursos
+| GET    /public/eventos        GET    /public/stats
+| GET    /public/contest
+| GET    /posts/contest/months
 ```
 
 ---

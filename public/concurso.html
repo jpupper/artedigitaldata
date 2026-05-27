@@ -6,6 +6,7 @@
     <title>Concurso Mensual - Arte Digital Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         .contest-card:hover .contest-overlay {
@@ -20,6 +21,19 @@
         .gradient-border-inner {
             background: #0d0d12;
             border-radius: calc(2rem - 1px);
+        }
+        .img-container {
+            max-width: 100%;
+            max-height: 400px; /* Ajusta esto según sea necesario */
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .img-container img {
+            max-width: 100%;
+            display: block;
         }
     </style>
 </head>
@@ -40,6 +54,19 @@
                 <div id="current-month-badge" class="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 font-black text-lg uppercase tracking-widest shadow-[0_0_30px_rgba(234,179,8,0.1)]">
                     <i class="fas fa-calendar-star"></i>
                     <span id="month-display">Cargando...</span>
+                </div>
+
+                <!-- Month Navigator -->
+                <div class="mt-6 flex items-center justify-center gap-4">
+                    <button id="prev-month-btn" onclick="navigateMonth(-1)" class="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-yellow-500/30 transition-all font-black text-sm uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-2"></i>Anterior
+                    </button>
+                    <select id="month-selector" onchange="jumpToMonth(this.value)" class="bg-[#0d0d12] border border-white/10 rounded-xl px-5 py-3 text-white font-bold text-sm uppercase tracking-wider focus:border-yellow-500/50 focus:outline-none cursor-pointer min-w-[200px] text-center">
+                        <option value="">Seleccioná un mes...</option>
+                    </select>
+                    <button id="next-month-btn" onclick="navigateMonth(1)" class="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-yellow-500/30 transition-all font-black text-sm uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed">
+                        Siguiente <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
                 </div>
             </div>
         </section>
@@ -76,10 +103,15 @@
                                         <input type="file" id="file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
                                         
                                         <div id="preview-container" class="hidden w-full h-full">
-                                            <img id="preview-img" class="w-full h-full object-contain rounded-xl shadow-2xl">
-                                            <button type="button" id="remove-file" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center backdrop-blur-md">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+                                            <div class="img-container">
+                                                <img id="preview-img" class="w-full h-full object-contain rounded-xl shadow-2xl">
+                                            </div>
+                                            <div class="flex justify-center gap-4 mt-4">
+                                                <button type="button" id="rotate-left" class="btn-icon"><i class="fas fa-undo"></i></button>
+                                                <button type="button" id="rotate-right" class="btn-icon"><i class="fas fa-redo"></i></button>
+                                                <button type="button" id="crop-button" class="btn-icon"><i class="fas fa-crop"></i></button>
+                                                <button type="button" id="remove-file" class="btn-icon text-red-400"><i class="fas fa-times"></i></button>
+                                            </div>
                                         </div>
 
                                         <div id="upload-prompt" class="space-y-4">
@@ -184,11 +216,15 @@
     <script src="js/auth.js"></script>
     <script src="js/header.js"></script>
     <script src="js/tagging.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         const currentMonthDisplay = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+        let selectedMonth = currentMonth;
+        let availableMonths = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('month-display').innerText = currentMonthDisplay;
@@ -198,17 +234,79 @@
                 document.getElementById('login-prompt').classList.add('hidden');
             }
 
-            loadContestEntries();
+            loadAvailableMonths();
+            loadContestEntries(currentMonth);
             setupUpload();
             if (typeof enableTagging === 'function') {
                 enableTagging('description');
             }
         });
 
-        async function loadContestEntries() {
+        async function loadAvailableMonths() {
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/posts/contest/months`);
+                if (!res.ok) throw new Error();
+                availableMonths = await res.json();
+                
+                // Poblar selector
+                const selector = document.getElementById('month-selector');
+                selector.innerHTML = '<option value="">Seleccioná un mes...</option>';
+                availableMonths.forEach(m => {
+                    const [y, mo] = m.split('-');
+                    const label = `${monthNames[parseInt(mo)-1]} ${y}`;
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = label;
+                    if (m === currentMonth) opt.selected = true;
+                    selector.appendChild(opt);
+                });
+                
+                updateNavButtons();
+            } catch (e) {
+                console.warn('No se pudieron cargar los meses disponibles:', e);
+            }
+        }
+
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prev-month-btn');
+            const nextBtn = document.getElementById('next-month-btn');
+            const idx = availableMonths.indexOf(selectedMonth);
+            prevBtn.disabled = idx >= availableMonths.length - 1;
+            nextBtn.disabled = idx <= 0;
+        }
+
+        function navigateMonth(direction) {
+            const idx = availableMonths.indexOf(selectedMonth);
+            const target = idx + direction;
+            if (target < 0 || target >= availableMonths.length) return;
+            jumpToMonth(availableMonths[target]);
+        }
+
+        function jumpToMonth(month) {
+            if (!month) return;
+            selectedMonth = month;
+            const [y, mo] = month.split('-');
+            const label = `${monthNames[parseInt(mo)-1]} ${y}`;
+            document.getElementById('month-display').innerText = label;
+            document.getElementById('month-selector').value = month;
+            
+            // Ocultar upload section si no es el mes actual
+            const isCurrent = month === currentMonth;
+            document.getElementById('upload-section').classList.toggle('hidden', !isCurrent || !isLoggedIn());
+            if (!isCurrent) {
+                document.getElementById('login-prompt').classList.add('hidden');
+            } else if (!isLoggedIn()) {
+                document.getElementById('login-prompt').classList.remove('hidden');
+            }
+            
+            updateNavButtons();
+            loadContestEntries(month);
+        }
+
+        async function loadContestEntries(month) {
             const container = document.getElementById('contest-container');
             try {
-                const res = await fetch(`${CONFIG.API_URL}/posts/contest/${currentMonth}`);
+                const res = await fetch(`${CONFIG.API_URL}/posts/contest/${month}`);
                 if (!res.ok) throw new Error();
                 const entries = await res.json();
                 renderEntries(entries);
@@ -290,6 +388,10 @@
             }).join('');
         }
 
+        let cropper;
+        let currentFile;
+        let rotation = 0;
+
         function setupUpload() {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('file-input');
@@ -297,18 +399,33 @@
             const previewImg = document.getElementById('preview-img');
             const uploadPrompt = document.getElementById('upload-prompt');
             const removeFileBtn = document.getElementById('remove-file');
+            const rotateLeftBtn = document.getElementById('rotate-left');
+            const rotateRightBtn = document.getElementById('rotate-right');
+            const cropButton = document.getElementById('crop-button');
             const form = document.getElementById('contest-form');
-
-            let selectedFile = null;
 
             const handleFile = (file) => {
                 if (file && file.type.startsWith('image/')) {
-                    selectedFile = file;
+                    currentFile = file;
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         previewImg.src = e.target.result;
                         previewContainer.classList.remove('hidden');
                         uploadPrompt.classList.add('hidden');
+
+                        if (cropper) {
+                            cropper.destroy();
+                        }
+                        cropper = new Cropper(previewImg, {
+                            aspectRatio: 1, // Puedes ajustar esto según tus necesidades
+                            viewMode: 1,
+                            autoCropArea: 0.8,
+                            background: false,
+                            responsive: true,
+                            ready() {
+                                // Puedes hacer algo cuando Cropper.js esté listo
+                            },
+                        });
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -338,18 +455,45 @@
                 e.preventDefault();
                 e.stopPropagation();
                 fileInput.value = '';
-                selectedFile = null;
+                currentFile = null;
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+                rotation = 0;
                 previewContainer.classList.add('hidden');
                 uploadPrompt.classList.remove('hidden');
+            });
+
+            rotateLeftBtn.addEventListener('click', () => {
+                if (cropper) {
+                    cropper.rotate(-90);
+                    rotation = (rotation - 90) % 360;
+                }
+            });
+
+            rotateRightBtn.addEventListener('click', () => {
+                if (cropper) {
+                    cropper.rotate(90);
+                    rotation = (rotation + 90) % 360;
+                }
+            });
+
+            cropButton.addEventListener('click', () => {
+                if (cropper) {
+                    // Aquí puedes decidir si quieres aplicar el recorte inmediatamente
+                    // o si quieres que el usuario confirme.
+                    // Por ahora, simplemente lo aplicaremos al enviar.
+                    alert('El recorte se aplicará al subir la imagen.');
+                }
             });
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const title = document.getElementById('title').value;
                 const description = document.getElementById('description').value;
-                const file = selectedFile;
                 
-                if (!file) return alert('Por favor selecciona una imagen');
+                if (!currentFile) return alert('Por favor selecciona una imagen');
 
                 const btn = document.getElementById('submit-btn');
                 const originalText = btn.innerHTML;
@@ -357,9 +501,18 @@
                 btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>SUBIENDO A LA RED...';
 
                 try {
+                    // Obtener la imagen recortada y rotada del Cropper
+                    const croppedCanvas = cropper.getCroppedCanvas();
+                    const processedBlob = await new Promise(resolve => {
+                        croppedCanvas.toBlob(resolve, currentFile.type);
+                    });
+
                     // 1. Subir imagen
                     const formData = new FormData();
-                    formData.append('file', file);
+                    formData.append('file', processedBlob, currentFile.name);
+                    formData.append('rotate', rotation.toString());
+                    formData.append('crop', JSON.stringify(cropper.getData())); // Enviar datos de recorte
+
                     const uploadRes = await apiRequest('/upload', {
                         method: 'POST',
                         body: formData
