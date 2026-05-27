@@ -7,9 +7,12 @@ import User from '../models/User';
 
 const router = Router();
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const recursos = await Recurso.find().sort({ createdAt: -1 });
+    const filter: any = {};
+    if (req.query.source === 'ia') filter.source = 'ia';
+    else if (req.query.source === 'human') filter.source = 'human';
+    const recursos = await Recurso.find(filter).sort({ createdAt: -1 });
     const final = await hydrate(recursos);
     return res.json(final);
   } catch (err: any) {

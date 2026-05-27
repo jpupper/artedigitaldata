@@ -191,6 +191,20 @@ async function pinEventFromFeed(eventId) {
 
 let allFeedItems = [];
 let activeFilters = { post: true, recurso: true, evento: true };
+let showBotsOnly = false;
+
+function toggleHumanAI() {
+  showBotsOnly = !showBotsOnly;
+  const btn = document.getElementById('filter-human-ai');
+  if (showBotsOnly) {
+    btn.innerHTML = '<i class=\"fas fa-robot text-xs\"></i> IA';
+    btn.className = 'px-6 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 font-black text-xs uppercase tracking-widest transition-all hover:border-purple-500/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] flex items-center gap-2';
+  } else {
+    btn.innerHTML = '<i class=\"fas fa-user text-xs\"></i> HUMAN';
+    btn.className = 'px-6 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] flex items-center gap-2';
+  }
+  renderFeed();
+}
 
 function updateFilterStyles() {
   const colors = { post: 'cyan', recurso: 'orange', evento: 'fuchsia' };
@@ -253,7 +267,12 @@ async function loadFeed() {
 
 function renderFeed() {
   const container = document.getElementById('feed-container');
-  const filtered = allFeedItems.filter(item => activeFilters[item.feedType]);
+  const filtered = allFeedItems.filter(item => activeFilters[item.feedType])
+    .filter(item => {
+      if (!showBotsOnly) return true;
+      const author = item.author || item.creator || {};
+      return author.username === 'ADDBOT' || (item.tags || []).includes('addbot');
+    });
 
   if (!filtered.length) {
     container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20 px-8 bg-white/5 rounded-3xl border border-dashed border-white/10">

@@ -17,6 +17,7 @@ export interface IPost extends Document {
   tags: string[];
   isContest: boolean;
   contestMonth: string;
+  source: 'human' | 'ia';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,7 @@ const PostSchema: Schema = new Schema(
     tags: [{ type: String, trim: true }],
     isContest: { type: Boolean, default: false },
     contestMonth: { type: String, default: '' },
+    source: { type: String, enum: ['human', 'ia'], default: 'human' },
   },
   { timestamps: true }
 );
