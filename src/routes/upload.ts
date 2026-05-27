@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import sharp from 'sharp';
 
 const router = Router();
 
@@ -42,16 +43,48 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
   try {
     if (!req.file) return res.status(400).json({ error: 'No se envió ningún archivo' });
 
+    const { rotate, crop } = req.body;
+    let image = sharp(req.file.path);
+
+    if (rotate) {
+      const angle = parseInt(rotate, 10);
+      if (!isNaN(angle)) {
+        image = image.rotate(angle);
+      }
+    }
+
+    if (crop) {
+      try {
+        const cropOptions = JSON.parse(crop);
+        if (cropOptions.left !== undefined && cropOptions.top !== undefined && cropOptions.width !== undefined && cropOptions.height !== undefined) {
+          image = image.extract({ 
+            left: parseInt(cropOptions.left, 10), 
+            top: parseInt(cropOptions.top, 10), 
+            width: parseInt(cropOptions.width, 10), 
+            height: parseInt(cropOptions.height, 10) 
+          });
+        }
+      } catch (e) {
+        console.warn('Invalid crop JSON:', e);
+      }
+    }
+
+    // Sobrescribir el archivo original con la imagen procesada
+    await image.toFile(req.file.path);
+
     // Determinar la subcarpeta
     const subfolder = getSubfolder(req);
 
     // Usar protocol dinámico y el host verdadero del servidor NodeJS / VPS
-    let host = req.get('host') || 'vps-4455523-x.dattaweb.com';
+    let host = req.get('host') || ''; // Asignar una cadena vacía si es undefined
     let protocol = req.headers['x-forwarded-proto'] || req.protocol;
     
-    // Forzar que si se ejecuta desde local test, se devuelva la IP/URL del VPS
-    // para cumplir con el requisito de "siempre se tienen que tomar desde el VPS"
+    // Si se ejecuta desde local test, usar el host y protocolo local
     if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      host = `${host}`; // Mantener el host local
+      protocol = req.protocol; // Usar el protocolo local (http)
+    } else {
+      // Para producción o entornos no locales, usar el VPS
       host = 'vps-4455523-x.dattaweb.com';
       protocol = 'https';
     }

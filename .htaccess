@@ -1,0 +1,18 @@
+# Enable CORS for all origins
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header set Access-Control-Max-Age "3600"
+</IfModule>
+
+# Handle preflight OPTIONS requests
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+
+    # Rewrite artedigitaldata.com to serve content from /artedigitaldata/ internally
+    RewriteCond %{HTTP_HOST} ^(www\.)?artedigitaldata\.com$ [NC]
+    RewriteRule ^(.*)$ /artedigitaldata/$1 [L]
+</IfModule>
