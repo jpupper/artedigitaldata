@@ -50,6 +50,17 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /contest/months — devuelve todos los meses con concursos
+router.get('/contest/months', async (_req: Request, res: Response) => {
+  try {
+    const months = await Post.distinct('contestMonth', { isContest: true, contestMonth: { $ne: '' } });
+    const sorted = months.sort().reverse(); // más reciente primero
+    return res.json(sorted);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/contest/:month', async (req: Request, res: Response) => {
   try {
     const posts = await Post.find({ 

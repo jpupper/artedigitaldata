@@ -24,6 +24,8 @@ import profileRoutes from './src/routes/profile';
 import searchRoutes from './src/routes/search';
 import ticketRoutes from './src/routes/tickets';
 import notificationRoutes from './src/routes/notifications';
+import publicRoutes from './src/routes/public';
+import { runAutobot } from './src/scripts/cronbot';
 import { hydrate } from './src/utils/userHydration';
 
 const PORT = process.env.PORT || 2495;
@@ -98,6 +100,7 @@ apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/profile', profileRoutes);
 apiRouter.use('/tickets', ticketRoutes);
 apiRouter.use('/notifications', notificationRoutes);
+apiRouter.use('/public', publicRoutes);
 
 // Registrar API en ambos paths (con y sin prefijo) para máxima compatibilidad
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
@@ -244,6 +247,40 @@ async function start(): Promise<void> {
       console.log(`[Server] Arte Digital Data corriendo en http://localhost:${PORT}/`);
       console.log(`[Server] También disponible en http://localhost:${PORT}${BASE_PATH}/`);
     });
+
+    // ========== AUTO-BOT SCHEDULER ==========
+    // Programar autobot 1 vez al día (8:00 AM hora del server)
+    const scheduleAutobot = () => {
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
+      if (now > target) target.setDate(target.getDate() + 1); // si ya pasaron las 8, mañana
+      const msUntilRun = target.getTime() - now.getTime();
+      
+      console.log(`[Autobot] ⏰ Programado para las 08:00 (en ${Math.round(msUntilRun / 3600000)}h ${Math.round((msUntilRun % 3600000) / 60000)}m)`);
+      
+      setTimeout(async () => {
+        try {
+          console.log(`[Autobot] 🤖 Ejecución programada de las 08:00`);
+          await runAutobot();
+          console.log(`[Autobot] ✅ Ejecución completada`);
+        } catch (err) {
+          console.error('[Autobot] ❌ Error en ejecución programada:', err);
+        }
+        // Reprogramar para el día siguiente
+        scheduleAutobot();
+      }, msUntilRun);
+    };
+
+    scheduleAutobot();
+    
+    // También correr una vez al iniciar el servidor (si tiene +1h de uptime)
+    setTimeout(() => {
+      // Sonda inicial: correr autobot 30 segundos después del arranque
+      // para que el servidor esté estable
+      console.log(`[Autobot] 🤖 Sonda inicial (arranque del servidor)`);
+      runAutobot().catch(err => console.error('[Autobot] Error en sonda:', err));
+    }, 30000);
+
   } catch (err) {
     console.error('[Server] Error al iniciar:', err);
     process.exit(1);
