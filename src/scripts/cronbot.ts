@@ -173,7 +173,8 @@ async function publishItem(item: ScrapedItem): Promise<boolean> {
         url: item.url,
         imageUrl: item.imageUrl || '',
         author: botUser._id,
-        tags: ['autobot', item.source.toLowerCase().replace(/[^a-z0-9]/g, ''), 'digital-art'],
+        tags: ['autobotadd', item.source.toLowerCase().replace(/[^a-z0-9]/g, ''), 'digital-art'],
+        source: 'ia',
       });
       console.log(`[CronBot] ✅ Recurso: ${item.title}`);
       return true;
@@ -184,7 +185,8 @@ async function publishItem(item: ScrapedItem): Promise<boolean> {
       description: `${item.description}\n\nFuente: ${item.source}\n🔗 ${item.url}`,
       imageUrl: item.imageUrl || '',
       author: botUser._id,
-      tags: ['autobot', 'noticia', item.source.toLowerCase().replace(/[^a-z0-9]/g, '')],
+      tags: ['autobotadd', 'noticia', item.source.toLowerCase().replace(/[^a-z0-9]/g, '')],
+      source: 'ia',
       isContest: false,
       contestMonth: '',
     });
@@ -213,7 +215,7 @@ export async function runAutobot(): Promise<{ published: number; found: number; 
     return { published: 0, found: 0, errors: [] };
   }
 
-  const toPublish = items.slice(0, 3);
+  const toPublish = items.slice(0, 1);
   let published = 0;
 
   for (const item of toPublish) {
