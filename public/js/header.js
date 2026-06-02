@@ -17,9 +17,14 @@ function renderHeader() {
         </a>
 
         <!-- Colaborar Button -->
-        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase ml-2">
+        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase mr-1">
           <i class="fas fa-heart text-yellow-500"></i> COLABORAR
         </button>
+
+        <!-- Trophy Button -->
+        <a href="${CONFIG.BASE}/concurso.html" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all mr-2" title="Concurso Mensual de Arte">
+          <i class="fas fa-trophy text-xs"></i>
+        </a>
 
         <!-- Desktop Nav -->
         <nav class="hidden lg:flex items-center gap-0.5">
