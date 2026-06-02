@@ -73,11 +73,11 @@ router.post('/autobot/run', authMiddleware, adminMiddleware, async (_req: AuthRe
 router.get('/autobot/status', authMiddleware, adminMiddleware, async (_req: AuthRequest, res: Response) => {
   try {
     const botUser = await User.findOne({ username: 'ADDBOT' });
-    const lastPosts = await Post.find({ tags: 'addbot' })
+    const lastPosts = await Post.find({ tags: 'autobotadd' })
       .sort({ createdAt: -1 })
       .limit(5)
       .select('title createdAt imageUrl');
-    const lastRecursos = await Recurso.find({ tags: 'addbot' })
+    const lastRecursos = await Recurso.find({ tags: 'autobotadd' })
       .sort({ createdAt: -1 })
       .limit(5)
       .select('title createdAt url');
@@ -85,8 +85,8 @@ router.get('/autobot/status', authMiddleware, adminMiddleware, async (_req: Auth
     return res.json({
       botUserExists: !!botUser,
       botUser: botUser ? { username: botUser.username, _id: botUser._id } : null,
-      totalAutobotPosts: await Post.countDocuments({ tags: 'addbot' }),
-      totalAutobotRecursos: await Recurso.countDocuments({ tags: 'addbot' }),
+      totalAutobotPosts: await Post.countDocuments({ tags: 'autobotadd' }),
+      totalAutobotRecursos: await Recurso.countDocuments({ tags: 'autobotadd' }),
       lastPosts,
       lastRecursos,
       serverTime: new Date().toISOString(),
