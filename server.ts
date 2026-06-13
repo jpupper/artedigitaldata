@@ -248,38 +248,39 @@ async function start(): Promise<void> {
       console.log(`[Server] También disponible en http://localhost:${PORT}${BASE_PATH}/`);
     });
 
-    // ========== AUTO-BOT SCHEDULER ==========
-    // Programar autobot 1 vez al día (8:00 AM hora del server)
-    const scheduleAutobot = () => {
-      const now = new Date();
-      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
-      if (now > target) target.setDate(target.getDate() + 1); // si ya pasaron las 8, mañana
-      const msUntilRun = target.getTime() - now.getTime();
+    // ========== AUTO-BOT SCHEDULER (solo en local) ==========
+    if (process.env.AUTOBOT_ENABLED === 'true') {
+      console.log('[Autobot] ✅ Autobot HABILITADO — solo disponible en local');
       
-      console.log(`[Autobot] ⏰ Programado para las 08:00 (en ${Math.round(msUntilRun / 3600000)}h ${Math.round((msUntilRun % 3600000) / 60000)}m)`);
+      const scheduleAutobot = () => {
+        const now = new Date();
+        const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
+        if (now > target) target.setDate(target.getDate() + 1);
+        const msUntilRun = target.getTime() - now.getTime();
+        
+        console.log(`[Autobot] ⏰ Programado para las 08:00 (en ${Math.round(msUntilRun / 3600000)}h ${Math.round((msUntilRun % 3600000) / 60000)}m)`);
+        
+        setTimeout(async () => {
+          try {
+            console.log(`[Autobot] 🤖 Ejecución programada de las 08:00`);
+            await runAutobot();
+            console.log(`[Autobot] ✅ Ejecución completada`);
+          } catch (err) {
+            console.error('[Autobot] ❌ Error en ejecución programada:', err);
+          }
+          scheduleAutobot();
+        }, msUntilRun);
+      };
+      scheduleAutobot();
       
-      setTimeout(async () => {
-        try {
-          console.log(`[Autobot] 🤖 Ejecución programada de las 08:00`);
-          await runAutobot();
-          console.log(`[Autobot] ✅ Ejecución completada`);
-        } catch (err) {
-          console.error('[Autobot] ❌ Error en ejecución programada:', err);
-        }
-        // Reprogramar para el día siguiente
-        scheduleAutobot();
-      }, msUntilRun);
-    };
-
-    scheduleAutobot();
-    
-    // También correr una vez al iniciar el servidor (si tiene +1h de uptime)
-    setTimeout(() => {
-      // Sonda inicial: correr autobot 30 segundos después del arranque
-      // para que el servidor esté estable
-      console.log(`[Autobot] 🤖 Sonda inicial (arranque del servidor)`);
-      runAutobot().catch(err => console.error('[Autobot] Error en sonda:', err));
-    }, 30000);
+      // Sonda inicial 30s después del arranque
+      setTimeout(() => {
+        console.log(`[Autobot] 🤖 Sonda inicial (arranque del servidor)`);
+        runAutobot().catch(err => console.error('[Autobot] Error en sonda:', err));
+      }, 30000);
+    } else {
+      console.log('[Autobot] ⛔ Autobot DESHABILITADO — solo funciona en entorno local (seteá AUTOBOT_ENABLED=true en .env)');
+    }
 
   } catch (err) {
     console.error('[Server] Error al iniciar:', err);

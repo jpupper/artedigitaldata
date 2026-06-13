@@ -31,7 +31,7 @@
           <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Posteos</button>
           <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Recursos</button>
           <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Eventos</button>
-          <button onclick="switchTab('autobot')" id="tab-autobot" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white flex items-center gap-1"><i class="fas fa-robot text-xs"></i>Autobot</button>
+          <button onclick="switchTab('autobot')" id="tab-autobot" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white flex items-center gap-1"><i class="fas fa-robot text-xs"></i><span id="tab-autobot-label">Autobot</span></button>
           <a href="admin-tickets.html" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-magenta-400 hover:text-white hover:bg-magenta-500/20 flex items-center gap-2">
             <i class="fas fa-ticket-alt"></i>Entradas
           </a>
@@ -206,7 +206,25 @@
 
   <!-- AutoBot Section -->
   <div id="section-autobot" class="admin-section hidden">
-    <div class="rounded-2xl border border-green-500/20 card-cyber p-8">
+    <!-- Local-only overlay (visible cuando NO es local) -->
+    <div id="autobot-local-overlay" class="hidden rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-12 text-center">
+      <div class="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto mb-6">
+        <i class="fas fa-robot text-4xl text-yellow-500/50"></i>
+      </div>
+      <h2 class="text-2xl font-black text-yellow-400 mb-3">🤖 Solo en versión local</h2>
+      <p class="text-gray-400 max-w-lg mx-auto mb-6">
+        El AutoBot solo funciona cuando ejecutás el proyecto en tu máquina local 
+        con <code class="text-yellow-300 bg-yellow-500/10 px-2 py-0.5 rounded">npm run dev</code> 
+        y la variable <code class="text-yellow-300 bg-yellow-500/10 px-2 py-0.5 rounded">AUTOBOT_ENABLED=true</code> en tu <code class="text-yellow-300 bg-yellow-500/10 px-2 py-0.5 rounded">.env</code>.
+      </p>
+      <div class="flex justify-center gap-4 text-sm text-gray-500">
+        <span>🔧 <span class="text-gray-400">Ollama + Qwen/Gemma</span></span>
+        <span>🌐 <span class="text-gray-400">Scrapers GitHub/HN/Reddit</span></span>
+      </div>
+    </div>
+
+    <!-- Autobot real (visible solo en local) -->
+    <div id="autobot-real-content" class="rounded-2xl border border-green-500/20 card-cyber p-8">
       <div class="flex items-center justify-between mb-8">
         <div>
           <h2 class="text-2xl font-black text-white flex items-center gap-3">
@@ -611,12 +629,45 @@
       }
     }
 
-    // Call refresh on tab switch
+    // ===== AutoBot local-only guard =====
+    const isLocal = window.CONFIG && window.CONFIG.isLocal;
+
+    // Mostrar/ocultar contenido según entorno
+    function updateAutobotVisibility() {
+      const overlay = document.getElementById('autobot-local-overlay');
+      const realContent = document.getElementById('autobot-real-content');
+      const tabBtn = document.getElementById('tab-autobot');
+      const tabLabel = document.getElementById('tab-autobot-label');
+
+      if (!isLocal) {
+        overlay.classList.remove('hidden');
+        realContent.classList.add('hidden');
+        // Tab en gris fijo (sin hover brillante)
+        tabBtn.classList.remove('hover:text-white');
+        tabBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        if (tabLabel) tabLabel.textContent = 'Autobot 🔒';
+      } else {
+        overlay.classList.add('hidden');
+        realContent.classList.remove('hidden');
+        tabBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        tabBtn.classList.add('hover:text-white');
+        if (tabLabel) tabLabel.textContent = 'Autobot';
+      }
+    }
+
+    // Call refresh on tab switch — con guard local
     const originalSwitchTab = switchTab;
     window.switchTab = function(tab) {
       originalSwitchTab(tab);
-      if (tab === 'autobot') refreshAutobotStatus();
+      if (tab === 'autobot') {
+        if (isLocal) {
+          refreshAutobotStatus();
+        }
+      }
     };
+
+    // Aplicar visibilidad al cargar
+    updateAutobotVisibility();
   </script>
 </body>
 </html>
