@@ -4,7 +4,7 @@ import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/auth';
-import { runAutobot } from '../scripts/cronbot';
+import { runAutobot, generateContent } from '../scripts/cronbot';
 
 const router = Router();
 
@@ -57,6 +57,9 @@ router.patch('/users/:id/role', authMiddleware, adminMiddleware, async (req: Aut
 
 // POST /admin/autobot/run — ejecutar el autobot manualmente
 router.post('/autobot/run', authMiddleware, adminMiddleware, async (_req: AuthRequest, res: Response) => {
+  if (process.env.AUTOBOT_ENABLED !== 'true') {
+    return res.status(403).json({ error: 'Autobot deshabilitado. Solo funciona en entorno local con AUTOBOT_ENABLED=true' });
+  }
   try {
     console.log('[Admin] Autobot ejecutado manualmente por admin');
     const result = await runAutobot();
@@ -69,8 +72,39 @@ router.post('/autobot/run', authMiddleware, adminMiddleware, async (_req: AuthRe
   }
 });
 
+// POST /admin/autobot/generate — generar contenido con IA (Ollama + búsqueda web real)
+router.post('/autobot/generate', authMiddleware, adminMiddleware, async (req: AuthRequest, res: Response) => {
+  if (process.env.AUTOBOT_ENABLED !== 'true') {
+    return res.status(403).json({ error: 'Autobot deshabilitado. Solo funciona en entorno local con AUTOBOT_ENABLED=true' });
+  }
+  try {
+    const { topic, maxItems, publish } = req.body || {};
+    console.log('[Admin] 🎯 generateContent llamado por admin' + (topic ? ` — topic: "${topic}"` : ''));
+    
+    const result = await generateContent({
+      topic: topic || '',
+      maxItems: maxItems || 3,
+      publish: publish !== false,
+    });
+
+    const statusCode = result.success ? 200 : 500;
+    return res.status(statusCode).json({
+      message: result.success
+        ? `✅ Generación completada. Publicados: ${result.published}/${result.generated.length}`
+        : '⚠️ No se pudo generar contenido',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[Admin] Error en generateContent:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /admin/autobot/status — estado del autobot
 router.get('/autobot/status', authMiddleware, adminMiddleware, async (_req: AuthRequest, res: Response) => {
+  if (process.env.AUTOBOT_ENABLED !== 'true') {
+    return res.status(403).json({ error: 'Autobot deshabilitado', enabled: false });
+  }
   try {
     const botUser = await User.findOne({ username: 'ADDBOT' });
     const lastPosts = await Post.find({ tags: 'autobotadd' })
