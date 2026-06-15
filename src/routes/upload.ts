@@ -69,8 +69,12 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
       }
     }
 
-    // Sobrescribir el archivo original con la imagen procesada
-    await image.toFile(req.file.path);
+    // Sharp no permite leer y escribir el mismo archivo. Escribimos a temp luego renombramos.
+    const tempPath = req.file.path + '.tmp';
+    await image.toFile(tempPath);
+    // Reemplazar el original con el procesado
+    fs.unlinkSync(req.file.path);
+    fs.renameSync(tempPath, req.file.path);
 
     // Determinar la subcarpeta
     const subfolder = getSubfolder(req);
