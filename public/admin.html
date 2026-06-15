@@ -234,6 +234,12 @@
           <p class="text-gray-500 text-sm mt-2">Scraper automático que busca contenido de arte digital 1 vez al día y lo publica.</p>
         </div>
         <div class="flex gap-3">
+          <!-- Toggle Switch -->
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="autobot-toggle" class="sr-only peer" onchange="toggleAutobot()">
+            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+            <span id="autobot-toggle-label" class="ms-3 text-sm font-bold text-gray-400">Desactivado</span>
+          </label>
           <button onclick="runAutobotNow()" id="btn-run-autobot" class="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-black text-sm uppercase tracking-wider transition-all flex items-center gap-2">
             <i class="fas fa-play"></i> Ejecutar Ahora
           </button>
@@ -629,40 +635,74 @@
       }
     }
 
+    // ===== AutoBot Toggle (persistente en DB) =====
+    let autobotEnabled = false;
+
+    async function loadAutobotConfig() {
+      try {
+        const res = await apiRequest('/admin/autobot/config');
+        if (!res?.ok) throw new Error();
+        const data = await res.json();
+        autobotEnabled = data.enabled;
+        updateToggleUI();
+      } catch (err) {
+        console.error('Error loading autobot config:', err);
+      }
+    }
+
+    async function toggleAutobot() {
+      const newState = !autobotEnabled;
+      try {
+        const res = await apiRequest('/admin/autobot/config', {
+          method: 'POST',
+          body: JSON.stringify({ enabled: newState })
+        });
+        if (!res?.ok) throw new Error();
+        const data = await res.json();
+        autobotEnabled = data.enabled;
+        updateToggleUI();
+      } catch (err) {
+        console.error('Error toggling autobot:', err);
+        // Revertir el toggle visual
+        updateToggleUI();
+      }
+    }
+
+    function updateToggleUI() {
+      const toggle = document.getElementById('autobot-toggle');
+      const label = document.getElementById('autobot-toggle-label');
+      if (toggle) toggle.checked = autobotEnabled;
+      if (label) {
+        label.textContent = autobotEnabled ? 'Activado' : 'Desactivado';
+        label.className = 'ms-3 text-sm font-bold ' + (autobotEnabled ? 'text-green-400' : 'text-gray-400');
+      }
+    }
+
     // ===== AutoBot local-only guard =====
     const isLocal = window.CONFIG && window.CONFIG.isLocal;
 
-    // Mostrar/ocultar contenido según entorno
+    // Mostrar/ocultar contenido según entorno + estado toggle
     function updateAutobotVisibility() {
       const overlay = document.getElementById('autobot-local-overlay');
       const realContent = document.getElementById('autobot-real-content');
       const tabBtn = document.getElementById('tab-autobot');
       const tabLabel = document.getElementById('tab-autobot-label');
 
-      if (!isLocal) {
-        overlay.classList.remove('hidden');
-        realContent.classList.add('hidden');
-        // Tab en gris fijo (sin hover brillante)
-        tabBtn.classList.remove('hover:text-white');
-        tabBtn.classList.add('opacity-60', 'cursor-not-allowed');
-        if (tabLabel) tabLabel.textContent = 'Autobot 🔒';
-      } else {
-        overlay.classList.add('hidden');
-        realContent.classList.remove('hidden');
-        tabBtn.classList.remove('opacity-60', 'cursor-not-allowed');
-        tabBtn.classList.add('hover:text-white');
-        if (tabLabel) tabLabel.textContent = 'Autobot';
-      }
+      // Ahora el autobot se puede activar desde cualquier lado via DB toggle
+      overlay.classList.add('hidden');
+      realContent.classList.remove('hidden');
+      tabBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      tabBtn.classList.add('hover:text-white');
+      if (tabLabel) tabLabel.textContent = 'Autobot';
     }
 
-    // Call refresh on tab switch — con guard local
+    // Call refresh on tab switch
     const originalSwitchTab = switchTab;
     window.switchTab = function(tab) {
       originalSwitchTab(tab);
       if (tab === 'autobot') {
-        if (isLocal) {
-          refreshAutobotStatus();
-        }
+        loadAutobotConfig();
+        refreshAutobotStatus();
       }
     };
 

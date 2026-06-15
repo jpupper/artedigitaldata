@@ -27,6 +27,7 @@ import notificationRoutes from './src/routes/notifications';
 import publicRoutes from './src/routes/public';
 import { runAutobot } from './src/scripts/cronbot';
 import { hydrate } from './src/utils/userHydration';
+import { getBotConfig } from './src/models/BotConfig';
 
 const PORT = process.env.PORT || 2495;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/artedigital';
@@ -248,9 +249,11 @@ async function start(): Promise<void> {
       console.log(`[Server] También disponible en http://localhost:${PORT}${BASE_PATH}/`);
     });
 
-    // ========== AUTO-BOT SCHEDULER (solo en local) ==========
-    if (process.env.AUTOBOT_ENABLED === 'true') {
-      console.log('[Autobot] ✅ Autobot HABILITADO — solo disponible en local');
+    // ========== AUTO-BOT SCHEDULER ==========
+    // Verificar autobot habilitado (DB > env)
+    const autobotEnabled = await getBotConfig('autobot_enabled', process.env.AUTOBOT_ENABLED === 'true');
+    if (autobotEnabled) {
+      console.log('[Autobot] Autobot HABILITADO');
       
       const scheduleAutobot = () => {
         const now = new Date();
@@ -258,15 +261,22 @@ async function start(): Promise<void> {
         if (now > target) target.setDate(target.getDate() + 1);
         const msUntilRun = target.getTime() - now.getTime();
         
-        console.log(`[Autobot] ⏰ Programado para las 08:00 (en ${Math.round(msUntilRun / 3600000)}h ${Math.round((msUntilRun % 3600000) / 60000)}m)`);
+        console.log(`[Autobot] Programado para las 08:00 (en ${Math.round(msUntilRun / 3600000)}h ${Math.round((msUntilRun % 3600000) / 60000)}m)`);
         
         setTimeout(async () => {
           try {
-            console.log(`[Autobot] 🤖 Ejecución programada de las 08:00`);
+            // Re-verificar al momento de ejecutar (por si se deshabilitó)
+            const stillEnabled = await getBotConfig('autobot_enabled', process.env.AUTOBOT_ENABLED === 'true');
+            if (!stillEnabled) {
+              console.log('[Autobot] Deshabilitado antes de la ejecución. Saltando.');
+              scheduleAutobot();
+              return;
+            }
+            console.log(`[Autobot] Ejecución programada de las 08:00`);
             await runAutobot();
-            console.log(`[Autobot] ✅ Ejecución completada`);
+            console.log(`[Autobot] Ejecución completada`);
           } catch (err) {
-            console.error('[Autobot] ❌ Error en ejecución programada:', err);
+            console.error('[Autobot] Error en ejecución programada:', err);
           }
           scheduleAutobot();
         }, msUntilRun);
@@ -274,12 +284,15 @@ async function start(): Promise<void> {
       scheduleAutobot();
       
       // Sonda inicial 30s después del arranque
-      setTimeout(() => {
-        console.log(`[Autobot] 🤖 Sonda inicial (arranque del servidor)`);
-        runAutobot().catch(err => console.error('[Autobot] Error en sonda:', err));
+      setTimeout(async () => {
+        const stillEnabled = await getBotConfig('autobot_enabled', process.env.AUTOBOT_ENABLED === 'true');
+        if (stillEnabled) {
+          console.log(`[Autobot] Sonda inicial (arranque del servidor)`);
+          runAutobot().catch(err => console.error('[Autobot] Error en sonda:', err));
+        }
       }, 30000);
     } else {
-      console.log('[Autobot] ⛔ Autobot DESHABILITADO — solo funciona en entorno local (seteá AUTOBOT_ENABLED=true en .env)');
+      console.log('[Autobot] Autobot DESHABILITADO — activá el toggle desde el panel de admin');
     }
 
   } catch (err) {
