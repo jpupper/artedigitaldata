@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guía de Entrada - Comunidad Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .section-card {
+      background: var(--bg-surface);
+      border: 1px solid rgba(0, 245, 255, 0.08);
+      border-radius: 1rem;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+    .section-card:hover {
+      border-color: rgba(0, 245, 255, 0.25);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.08);
+    }
+    .icon-glow {
+      filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
+    }
+    .btn-glow {
+      background: linear-gradient(135deg, #00F5FF, #FF00E0);
+      color: #0D0D12;
+      font-weight: 800;
+      padding: 0.875rem 2.5rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      font-size: 1.05rem;
+    }
+    .btn-glow:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.4);
+      transform: translateY(-2px);
+    }
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #00F5FF, #FF00E0);
+      color: #0D0D12;
+      font-weight: 900;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen scrollbar-hide">
+
+  <div class="max-w-4xl mx-auto px-4 py-12 md:py-20">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface mb-4 border border-cyan-500/20">
+        <i class="fas fa-users text-2xl text-cyan icon-glow"></i>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black gradient-text mb-3">
+        Guía de Entrada
+      </h1>
+      <p class="text-gray-400 text-lg max-w-xl mx-auto">
+        Todo lo que necesitás saber para formar parte de la comunidad de arte digital más activa.
+      </p>
+    </div>
+
+    <!-- Qué es la comunidad -->
+    <div class="section-card mb-6">
+      <div class="flex items-start gap-4">
+        <div class="text-3xl mt-1"><i class="fas fa-palette text-magenta icon-glow" style="filter:drop-shadow(0 0 8px rgba(255,0,224,0.4))"></i></div>
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-3">¿Qué es Arte Digital Data?</h2>
+          <p class="text-gray-400 leading-relaxed mb-4">
+            Arte Digital Data es una comunidad y plataforma creada por y para artistas digitales. 
+            Nuestro objetivo es conectar a creadores de todo tipo — ilustradores, diseñadores 3D, 
+            animadores, artistas de IA, pixel artists, VJ's, fotógrafos y más — en un espacio 
+            donde puedan mostrar su trabajo, compartir recursos, colaborar en proyectos y 
+            crecer juntos.
+          </p>
+          <p class="text-gray-400 leading-relaxed">
+            Organizamos eventos, concursos, charlas y sesiones de feedback colectivo. 
+            Creemos en el poder de la comunidad para impulsar el arte digital y la 
+            cultura visual.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Para quién es -->
+    <div class="section-card mb-6">
+      <div class="flex items-start gap-4">
+        <div class="text-3xl mt-1"><i class="fas fa-question-circle text-cyan icon-glow"></i></div>
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-3">¿Para quién es esta comunidad?</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>Artistas digitales de todos los niveles</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>Diseñadores gráficos e ilustradores</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>Artistas 3D y animadores</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>Creadores de arte generativo e IA</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>VJ's, motion designers, pixel artists</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-400">
+              <i class="fas fa-check-circle text-cyan text-sm"></i>
+              <span>Cualquier persona apasionada por el arte digital</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Qué ofrecemos -->
+    <div class="section-card mb-6">
+      <div class="flex items-start gap-4">
+        <div class="text-3xl mt-1"><i class="fas fa-gift text-magenta icon-glow" style="filter:drop-shadow(0 0 8px rgba(255,0,224,0.4))"></i></div>
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-3">¿Qué vas a encontrar?</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-black/20 rounded-lg p-4 border border-white/5">
+              <i class="fas fa-rss text-cyan text-xl mb-2"></i>
+              <h3 class="text-white font-bold text-sm mb-1">Feed de Arte</h3>
+              <p class="text-gray-500 text-sm">Publicá tus obras, recibí feedback y descubrí el trabajo de otros artistas.</p>
+            </div>
+            <div class="bg-black/20 rounded-lg p-4 border border-white/5">
+              <i class="fas fa-box-open text-magenta text-xl mb-2"></i>
+              <h3 class="text-white font-bold text-sm mb-1">Recursos</h3>
+              <p class="text-gray-500 text-sm">Compartí y encontrá recursos: brushes, textures, modelos 3D, paletas y más.</p>
+            </div>
+            <div class="bg-black/20 rounded-lg p-4 border border-white/5">
+              <i class="fas fa-calendar-alt text-cyan text-xl mb-2"></i>
+              <h3 class="text-white font-bold text-sm mb-1">Eventos</h3>
+              <p class="text-gray-500 text-sm">Participá en concursos, jam sessions, talleres y eventos en vivo.</p>
+            </div>
+            <div class="bg-black/20 rounded-lg p-4 border border-white/5">
+              <i class="fas fa-comments text-magenta text-xl mb-2"></i>
+              <h3 class="text-white font-bold text-sm mb-1">Grupo WhatsApp</h3>
+              <p class="text-gray-500 text-sm">El chat activo de la comunidad para conversar, colaborar y coordinar.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cómo ingresar -->
+    <div class="section-card mb-8" style="border-color: rgba(0, 245, 255, 0.15);">
+      <div class="flex items-start gap-4">
+        <div class="text-3xl mt-1"><i class="fas fa-sign-in-alt text-cyan icon-glow"></i></div>
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-4">¿Cómo ingresar a la comunidad?</h2>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Para mantener un espacio de calidad y conocer a quienes se suman, 
+            pedimos completar un breve formulario de ingreso. Es rápido, 
+            solo te tomará un par de minutos.
+          </p>
+          <div class="space-y-4 mb-6">
+            <div class="flex items-center gap-4">
+              <span class="step-number">1</span>
+              <div>
+                <p class="text-white font-semibold">Completá el formulario de ingreso</p>
+                <p class="text-gray-500 text-sm">Contanos quién sos y qué tipo de arte hacés.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="step-number">2</span>
+              <div>
+                <p class="text-white font-semibold">Recibí el link al grupo de WhatsApp</p>
+                <p class="text-gray-500 text-sm">Al enviar el formulario, te aparecerá el enlace directo.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="step-number">3</span>
+              <div>
+                <p class="text-white font-semibold">¡Ya sos parte!</p>
+                <p class="text-gray-500 text-sm">Presentate, compartí tu arte y empezá a conectar.</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-center">
+            <a href="formularioingreso.html" class="btn-glow">
+              <i class="fas fa-edit"></i>
+              Quiero ingresar a la comunidad
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-600 text-sm pt-4 border-t border-white/5">
+      <p><i class="fas fa-paint-brush text-cyan mr-1"></i> Arte Digital Data — Comunidad de artistas digitales</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
