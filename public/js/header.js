@@ -43,6 +43,9 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-calendar-alt text-[10px]"></i> CALENDARIO
           </a>
+          <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
+            <i class="fas fa-users text-[10px]"></i> ARTISTAS
+          </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
             <i class="fas fa-comments text-[10px]"></i> CHAT
@@ -114,6 +117,9 @@ function renderHeader() {
           </a>
           <a href="${CONFIG.BASE}/calendario.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-calendar-alt mr-2"></i> CALENDARIO
+          </a>
+          <a href="${CONFIG.BASE}/artistas.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
+            <i class="fas fa-users mr-2"></i> ARTISTAS
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/chat.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Ingreso - Comunidad Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <style>
+    .section-card {
+      background: var(--bg-surface);
+      border: 1px solid rgba(0, 245, 255, 0.08);
+      border-radius: 1rem;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+    .input-field {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 245, 255, 0.12);
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+      color: white;
+      width: 100%;
+      transition: all 0.3s ease;
+      outline: none;
+      font-size: 0.95rem;
+    }
+    .input-field:focus {
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.12);
+    }
+    .input-field::placeholder {
+      color: #6B7280;
+    }
+    textarea.input-field {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .btn-glow {
+      background: linear-gradient(135deg, #00F5FF, #FF00E0);
+      color: #0D0D12;
+      font-weight: 800;
+      padding: 0.875rem 2.5rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-size: 1.05rem;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-glow:hover:not(:disabled) {
+      filter: brightness(1.2);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-glow:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .icon-glow {
+      filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
+    }
+    .icon-glow-magenta {
+      filter: drop-shadow(0 0 8px rgba(255, 0, 224, 0.4));
+    }
+    #success-message {
+      display: none;
+    }
+    .avatar-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(0, 245, 255, 0.3);
+      display: none;
+    }
+    .avatar-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px dashed rgba(0, 245, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6B7280;
+      font-size: 0.8rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .avatar-placeholder:hover {
+      border-color: var(--color-cyan);
+      color: var(--color-cyan);
+    }
+    .file-input-hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen scrollbar-hide">
+
+  <div class="max-w-2xl mx-auto px-4 py-12 md:py-20">
+
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface mb-4 border border-magenta-500/20">
+        <i class="fas fa-edit text-2xl text-magenta icon-glow-magenta"></i>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black gradient-text mb-3">
+        Formulario de Ingreso
+      </h1>
+      <p class="text-gray-400 text-lg max-w-lg mx-auto">
+        Completá tus datos para crear tu cuenta y sumarte a la comunidad.
+      </p>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-surface mb-4 border border-cyan-500/20">
+          <i class="fas fa-spinner fa-spin text-3xl text-cyan icon-glow"></i>
+        </div>
+        <p class="text-gray-300 text-lg font-semibold">Creando tu cuenta...</p>
+        <p class="text-gray-500 text-sm mt-1">Un momento por favor</p>
+      </div>
+    </div>
+
+    <!-- Main Form Section -->
+    <div id="form-section">
+      <div class="section-card">
+        <form id="entry-form" class="space-y-5" onsubmit="return handleSubmit(event)">
+
+          <!-- Avatar / Foto -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-3 block">
+              <i class="fas fa-camera text-cyan mr-1"></i> Foto de perfil (opcional)
+            </label>
+            <div class="flex items-center gap-4">
+              <div id="avatar-preview" class="avatar-preview"></div>
+              <div id="avatar-placeholder" class="avatar-placeholder" onclick="document.getElementById('avatar-input').click()">
+                <div>
+                  <i class="fas fa-camera text-xl mb-1 block"></i>
+                  <span>Subir foto</span>
+                </div>
+              </div>
+              <input type="file" id="avatar-input" class="file-input-hidden" accept="image/*" onchange="previewAvatar(event)">
+              <button type="button" id="clear-avatar" class="hidden text-red-400 hover:text-red-300 text-sm transition-colors" onclick="clearAvatar()">
+                <i class="fas fa-times"></i> Quitar
+              </button>
+            </div>
+          </div>
+
+          <!-- Nombre de usuario -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fas fa-user text-cyan mr-1"></i> Nombre de usuario <span class="text-red-400">*</span>
+            </label>
+            <input type="text" id="username" class="input-field" placeholder="tu_nombre_artistico" required>
+          </div>
+
+          <!-- Nombre a mostrar -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fas fa-tag text-cyan mr-1"></i> Nombre a mostrar (opcional)
+            </label>
+            <input type="text" id="displayName" class="input-field" placeholder="Cómo querés que te vean en la comunidad">
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fas fa-envelope text-cyan mr-1"></i> Email <span class="text-red-400">*</span>
+            </label>
+            <input type="email" id="email" class="input-field" placeholder="tu@email.com" required>
+          </div>
+
+          <!-- Contraseña -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fas fa-lock text-cyan mr-1"></i> Contraseña <span class="text-red-400">*</span>
+            </label>
+            <input type="password" id="password" class="input-field" placeholder="Mínimo 6 caracteres" minlength="6" required>
+          </div>
+
+          <!-- WhatsApp -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fab fa-whatsapp text-green-400 mr-1"></i> WhatsApp (opcional)
+            </label>
+            <input type="tel" id="social-whatsapp" class="input-field" placeholder="Ej: +54 11 1234 5678">
+          </div>
+
+          <!-- Bio -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-2 block">
+              <i class="fas fa-quote-right text-cyan mr-1"></i> Pequeña bio (opcional)
+            </label>
+            <textarea id="bio" class="input-field" placeholder="Contanos brevemente quién sos, qué arte hacés, qué te gusta..."></textarea>
+          </div>
+
+          <!-- Redes sociales -->
+          <div>
+            <label class="text-gray-300 text-sm font-semibold mb-3 block">
+              <i class="fas fa-share-alt text-cyan mr-1"></i> Redes sociales (opcionales)
+            </label>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-instagram text-white text-lg"></i>
+                </div>
+                <input type="text" id="social-instagram" class="input-field" placeholder="Usuario de Instagram (ej: @tuarte)">
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-facebook-f text-white text-lg"></i>
+                </div>
+                <input type="text" id="social-facebook" class="input-field" placeholder="Usuario o link de Facebook">
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-black border border-gray-600 flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-x-twitter text-white text-lg"></i>
+                </div>
+                <input type="text" id="social-x" class="input-field" placeholder="Usuario de X / Twitter">
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-behance text-white text-lg"></i>
+                </div>
+                <input type="url" id="social-behance" class="input-field" placeholder="Link de Behance">
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center flex-shrink-0">
+                  <i class="fab fa-github text-white text-lg"></i>
+                </div>
+                <input type="url" id="social-github" class="input-field" placeholder="Link de GitHub">
+              </div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div id="form-error" class="hidden text-red-400 text-sm text-center bg-red-500/10 rounded-lg p-3"></div>
+
+          <!-- Submit -->
+          <div class="pt-2">
+            <button type="submit" id="submit-btn" class="btn-glow">
+              <i class="fas fa-paper-plane"></i>
+              Crear cuenta y unirme a la comunidad
+            </button>
+          </div>
+
+          <p class="text-gray-600 text-xs text-center mt-3">
+            Tus datos se usan solo para tu perfil en la plataforma. No compartimos información con terceros.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Message (shown after submission) -->
+    <div id="success-message" class="section-card text-center" style="border-color: rgba(0, 245, 255, 0.2);">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-surface mb-6 border border-cyan-500/20 mx-auto">
+        <i class="fas fa-check-circle text-5xl text-cyan icon-glow"></i>
+      </div>
+      <h2 class="text-3xl font-black gradient-text mb-3">¡Cuenta creada con éxito!</h2>
+      <p class="text-gray-400 text-lg mb-2 max-w-md mx-auto">
+        Ya estás registrado en Arte Digital Data. Hacé clic abajo para unirte al grupo de WhatsApp y empezar a conectar con la comunidad.
+      </p>
+      <p class="text-gray-500 text-sm mb-6">
+        También podés empezar a publicar tu arte iniciando sesión en la plataforma.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://chat.whatsapp.com/" target="_blank" class="btn-glow" style="display:inline-flex; width:auto;">
+          <i class="fab fa-whatsapp text-xl"></i>
+          Unirse al grupo de WhatsApp
+        </a>
+        <a href="login.html" class="text-cyan hover:text-magenta transition-colors font-medium text-sm">
+          <i class="fas fa-sign-in-alt mr-1"></i> Iniciar sesión
+        </a>
+      </div>
+      <p class="text-gray-600 text-sm mt-4">
+        Si el enlace no funciona, copiá y pegá esta URL en tu navegador:
+      </p>
+      <p class="text-cyan text-xs mt-1 break-all select-all" style="word-break: break-all;">
+        https://chat.whatsapp.com/
+      </p>
+      <div class="mt-8 pt-4 border-t border-white/5">
+        <a href="guiaingreso.html" class="text-gray-500 hover:text-cyan text-sm transition-colors">
+          <i class="fas fa-arrow-left mr-1"></i> Volver a la Guía de Entrada
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-600 text-sm pt-4 mt-8 border-t border-white/5">
+      <p><i class="fas fa-paint-brush text-cyan mr-1"></i> Arte Digital Data — Comunidad de artistas digitales</p>
+    </div>
+
+  </div>
+
+  <script>
+    function previewAvatar(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const preview = document.getElementById('avatar-preview');
+        preview.style.backgroundImage = 'url(' + ev.target.result + ')';
+        preview.style.display = 'block';
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+        document.getElementById('avatar-placeholder').style.display = 'none';
+        document.getElementById('clear-avatar').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearAvatar() {
+      document.getElementById('avatar-input').value = '';
+      document.getElementById('avatar-preview').style.display = 'none';
+      document.getElementById('avatar-preview').style.backgroundImage = '';
+      document.getElementById('avatar-placeholder').style.display = 'flex';
+      document.getElementById('clear-avatar').classList.add('hidden');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('form-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('form-error').classList.add('hidden');
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      hideError();
+
+      const username = document.getElementById('username').value.trim();
+      const displayName = document.getElementById('displayName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const bio = document.getElementById('bio').value.trim();
+      const socialWhatsapp = document.getElementById('social-whatsapp').value.trim();
+      const socialInstagram = document.getElementById('social-instagram').value.trim();
+      const socialFacebook = document.getElementById('social-facebook').value.trim();
+      const socialX = document.getElementById('social-x').value.trim();
+      const socialBehance = document.getElementById('social-behance').value.trim();
+      const socialGithub = document.getElementById('social-github').value.trim();
+      const avatarFile = document.getElementById('avatar-input').files[0];
+
+      if (!username || !email || !password) {
+        showError('Completá los campos obligatorios: nombre de usuario, email y contraseña.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError('La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando cuenta...';
+
+      // Show loading overlay
+      document.getElementById('loading-overlay').classList.remove('hidden');
+
+      try {
+        // 1. Register the user
+        const registerRes = await fetch(CONFIG.API_URL + '/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const registerData = await registerRes.json();
+        if (!registerRes.ok) {
+          document.getElementById('loading-overlay').classList.add('hidden');
+          showError(registerData.error || 'Error al registrarse');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> Crear cuenta y unirme a la comunidad';
+          return;
+        }
+
+        // Save auth token globally
+        const token = registerData.token;
+
+        // 2. Upload avatar if provided
+        let avatarUrl = '';
+        if (avatarFile) {
+          try {
+            const formData = new FormData();
+            formData.append('file', avatarFile);
+            const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token },
+              body: formData
+            });
+            if (uploadRes.ok) {
+              const uploadData = await uploadRes.json();
+              avatarUrl = uploadData.url || '';
+            }
+          } catch (uploadErr) {
+            console.warn('Avatar upload failed, continuing without it', uploadErr);
+          }
+        }
+
+        // 3. Update profile with bio, displayName, socials, avatar
+        const socials = {};
+        if (socialWhatsapp) socials.whatsapp = socialWhatsapp;
+        if (socialInstagram) socials.instagram = socialInstagram;
+        if (socialFacebook) socials.facebook = socialFacebook;
+        if (socialX) socials.x = socialX;
+        if (socialBehance) socials.behance = socialBehance;
+        if (socialGithub) socials.github = socialGithub;
+
+        const profileUpdate = {};
+        if (bio) profileUpdate.bio = bio;
+        if (displayName) profileUpdate.displayName = displayName;
+        if (avatarUrl) profileUpdate.avatar = avatarUrl;
+        if (Object.keys(socials).length > 0) profileUpdate.socials = socials;
+
+        if (Object.keys(profileUpdate).length > 0) {
+          try {
+            await fetch(CONFIG.API_URL + '/profile/me', {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify(profileUpdate)
+            });
+          } catch (profileErr) {
+            console.warn('Profile update failed, continuing', profileErr);
+          }
+        }
+
+        // 4. Show success
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('success-message').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      } catch (err) {
+        document.getElementById('loading-overlay').classList.add('hidden');
+        showError('Error de conexión con el servidor. Verificá tu conexión e intentá de nuevo.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Crear cuenta y unirme a la comunidad';
+      }
+
+      return false;
+    }
+  </script>
+
+</body>
+</html>

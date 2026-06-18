@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artistas - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .artist-card {
+      transition: all 0.3s ease;
+      background: var(--bg-surface);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      cursor: pointer;
+    }
+    .artist-card:hover {
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.15);
+      transform: translateY(-4px);
+    }
+    .artist-avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(0, 245, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+    .artist-card:hover .artist-avatar {
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.35);
+    }
+    .avatar-placeholder {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: rgba(0, 245, 255, 0.1);
+      border: 3px solid rgba(0, 245, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--color-cyan);
+      transition: all 0.3s ease;
+    }
+    .artist-card:hover .avatar-placeholder {
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.35);
+    }
+    .count-badge {
+      background: rgba(0, 245, 255, 0.1);
+      border: 1px solid rgba(0, 245, 255, 0.2);
+      color: var(--color-cyan);
+    }
+    .bio-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .skeleton-box {
+      animation: shimmer 1.5s ease-in-out infinite;
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+      background-size: 200% 100%;
+      border-radius: 1rem;
+      height: 380px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .social-link {
+      transition: all 0.2s ease;
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .social-link:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen scrollbar-hide">
+  <div id="app-header"></div>
+
+  <main class="pt-24 pb-10 max-w-7xl mx-auto px-4">
+    <!-- Hero -->
+    <section class="mb-10 text-center">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mb-4">
+        <i class="fas fa-users text-2xl text-[var(--color-cyan)]"></i>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black gradient-text mb-2">Galeria de Artistas</h1>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        Descubri los artistas de la comunidad de Arte Digital Data.
+      </p>
+      <div id="stats-summary" class="flex flex-wrap justify-center gap-4 mt-6"></div>
+    </section>
+
+    <!-- Search / Sort -->
+    <section class="mb-8">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4 max-w-2xl mx-auto">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+          <input type="text" id="search-input" placeholder="Buscar artista por nombre o bio..."
+            class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_15px_rgba(0,245,255,0.1)] transition-all">
+        </div>
+        <select id="sort-select" class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer">
+          <option value="contributions">Mas activos</option>
+          <option value="recent">Mas recientes</option>
+          <option value="alpha">A-Z</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Artists Grid -->
+    <section>
+      <div id="artists-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="skeleton-box"></div>
+        <div class="skeleton-box"></div>
+        <div class="skeleton-box"></div>
+      </div>
+      <div id="empty-state" class="hidden text-center py-20">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gray-500/10 border border-gray-500/20 mb-4">
+          <i class="fas fa-paint-brush text-3xl text-gray-500"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-400 mb-2">No se encontraron artistas</h3>
+        <p class="text-gray-600">Proba con otros terminos de busqueda.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let allArtists = [];
+
+    async function loadArtists() {
+      try {
+        const url = CONFIG.API_URL + '/public/artistas';
+        const res = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        allArtists = json.data || [];
+        renderStats();
+        renderArtists(allArtists);
+      } catch (err) {
+        console.error('[Artistas] Error:', err);
+        document.getElementById('artists-container').innerHTML = `
+          <div class="col-span-full text-center py-20">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 mb-4">
+              <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">Error al cargar artistas</h3>
+            <p class="text-gray-600">No se pudo conectar con el servidor. Intenta de nuevo mas tarde.</p>
+            <button onclick="loadArtists()" class="mt-6 px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-bold transition-all">
+              <i class="fas fa-sync-alt mr-2"></i>Reintentar
+            </button>
+          </div>`;
+      }
+    }
+
+    function renderStats() {
+      const container = document.getElementById('stats-summary');
+      if (!allArtists.length) { container.innerHTML = ''; return; }
+      const totalArtists = allArtists.length;
+      const totalContributions = allArtists.reduce((sum, a) => sum + (a.totalContributions || 0), 0);
+      container.innerHTML = `
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-sm text-[var(--color-cyan)] font-bold">
+          <i class="fas fa-user-astronaut"></i> ${totalArtists} ${totalArtists === 1 ? 'Artista' : 'Artistas'}
+        </div>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full border border-magenta-500/20 text-sm text-[var(--color-magenta)] font-bold"
+             style="background: rgba(255,0,224,0.1)">
+          <i class="fas fa-rocket"></i> ${totalContributions} Contribuciones
+        </div>`;
+    }
+
+    function goToProfile(username) {
+      window.location.href = CONFIG.BASE + '/profile.html?user=' + encodeURIComponent(username);
+    }
+
+    function getSocialIcon(type) {
+      return { instagram: 'fab fa-instagram', whatsapp: 'fab fa-whatsapp', facebook: 'fab fa-facebook' }[type] || 'fas fa-link';
+    }
+
+    function getSocialColor(type) {
+      return { instagram: '#E4405F', whatsapp: '#25D366', facebook: '#1877F2' }[type] || '#94A3B8';
+    }
+
+    function getSocialUrl(type, value) {
+      if (!value) return '#';
+      if (value.startsWith('http')) return value;
+      const prefixes = { instagram: 'https://instagram.com/', whatsapp: 'https://wa.me/', facebook: 'https://facebook.com/' };
+      return (prefixes[type] || '') + value;
+    }
+
+    function renderArtistCard(artist) {
+      const displayName = escapeHTML(artist.displayName || artist.username);
+      const username = escapeHTML(artist.username);
+      const bio = escapeHTML(artist.bio || '');
+      const avatarUrl = CONFIG.resolveImage(artist.avatar);
+      const profileUrl = CONFIG.BASE + '/profile.html?user=' + encodeURIComponent(artist.username);
+
+      // Build social links (STANDALONE <a> tags — NOT nested inside any other <a>)
+      let socialsHTML = '';
+      if (artist.socials) {
+        const entries = Object.entries(artist.socials).filter(([_, v]) => v);
+        if (entries.length) {
+          socialsHTML = '<div class="flex flex-wrap justify-center gap-2">';
+          for (const [platform, value] of entries) {
+            socialsHTML += `
+              <a href="${escapeHTML(getSocialUrl(platform, value))}" target="_blank" rel="noopener"
+                 class="social-link"
+                 style="color:${getSocialColor(platform)}; background:${getSocialColor(platform)}15; border:1px solid ${getSocialColor(platform)}30;"
+                 title="${platform}"
+                 onclick="event.stopPropagation()">
+                <i class="${getSocialIcon(platform)}"></i>
+              </a>`;
+          }
+          socialsHTML += '</div>';
+        }
+      }
+
+      // Contribution badges
+      let badgesHTML = '';
+      const { posts, recursos, eventos } = artist.counts || {};
+      if (posts) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-palette text-[9px]"></i> ${posts} ${posts === 1 ? 'OBRA' : 'OBRAS'}</span>`;
+      if (recursos) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-box-open text-[9px]"></i> ${recursos} ${recursos === 1 ? 'RECURSO' : 'RECURSOS'}</span>`;
+      if (eventos) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-calendar-alt text-[9px]"></i> ${eventos} ${eventos === 1 ? 'EVENTO' : 'EVENTOS'}</span>`;
+
+      // Avatar
+      let avatarHTML;
+      if (artist.avatar) {
+        avatarHTML = `<img src="${sanitizeUrl(avatarUrl)}" alt="${displayName}" class="artist-avatar" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="avatar-placeholder hidden"><i class="fas fa-user-astronaut"></i></div>`;
+      } else {
+        avatarHTML = `<div class="avatar-placeholder"><i class="fas fa-user-astronaut"></i></div>`;
+      }
+
+      const dateStr = new Date(artist.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long' });
+
+      // NOTE: Card is a <div> (NOT an <a>) to avoid nested anchor violations.
+      // Click on card navigates via onclick. Social <a> tags inside are valid HTML.
+      return `
+        <div class="artist-card rounded-2xl p-6 flex flex-col items-center text-center" onclick="goToProfile('${encodeURIComponent(artist.username)}')">
+          <div class="relative mb-4">
+            ${avatarHTML}
+          </div>
+          <h3 class="text-lg font-black text-white hover:text-[var(--color-cyan)] transition-colors">${displayName}</h3>
+          <p class="text-sm text-gray-500 mt-0.5">@${username}</p>
+          ${bio ? `<p class="text-sm text-gray-400 mt-3 bio-text leading-relaxed">${bio}</p>` : ''}
+          ${badgesHTML ? `<div class="flex flex-wrap justify-center gap-1.5 mt-4">${badgesHTML}</div>` : ''}
+          ${socialsHTML ? `<div class="mt-4">${socialsHTML}</div>` : ''}
+          <div class="mt-auto pt-4 text-[11px] text-gray-600">
+            <i class="fas fa-calendar-plus mr-1"></i> ${dateStr}
+          </div>
+        </div>`;
+    }
+
+    function renderArtists(artists) {
+      const container = document.getElementById('artists-container');
+      const emptyState = document.getElementById('empty-state');
+      if (!artists.length) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      container.innerHTML = artists.map(renderArtistCard).join('');
+    }
+
+    function filterAndSort() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const sort = document.getElementById('sort-select').value;
+      let filtered = allArtists;
+      if (query) {
+        filtered = allArtists.filter(a => {
+          const name = (a.displayName || a.username).toLowerCase();
+          return name.includes(query) || (a.bio || '').toLowerCase().includes(query) || a.username.toLowerCase().includes(query);
+        });
+      }
+      if (sort === 'alpha') {
+        filtered.sort((a, b) => (a.displayName || a.username).localeCompare(b.displayName || b.username));
+      } else if (sort === 'recent') {
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      } else {
+        filtered.sort((a, b) => (b.totalContributions || 0) - (a.totalContributions || 0));
+      }
+      renderArtists(filtered);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadArtists();
+      document.getElementById('search-input').addEventListener('input', filterAndSort);
+      document.getElementById('sort-select').addEventListener('change', filterAndSort);
+    });
+  </script>
+</body>
+</html>
