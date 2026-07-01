@@ -48,7 +48,7 @@ async function uploadToFtp() {
             host: ftpHost,
             user: ftpUser,
             password: ftpPassword,
-            secure: false
+            secure: true
         });
 
         const remoteDir = '/artedigitaldata';

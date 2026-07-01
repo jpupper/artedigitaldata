@@ -32,6 +32,7 @@ export interface IEvento extends Document {
   ticketConfig: ITicketConfig;
   doorUsers: Types.ObjectId[];
   pinned: boolean;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +72,7 @@ const EventoSchema: Schema = new Schema(
     ticketConfig: { type: TicketConfigSchema, default: () => ({ enabled: false }) },
     doorUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     pinned: { type: Boolean, default: false },
+    tags: { type: [String], default: [] },
   },
   { timestamps: true }
 );

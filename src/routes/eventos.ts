@@ -62,7 +62,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, tags } = req.body;
     if (!title || !date) return res.status(400).json({ error: 'Título y fecha son obligatorios' });
 
     // Parse @usernames from description
@@ -90,7 +90,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       youtube_video: youtube_video || '',
       creator: req.user!.id,
       participants,
-      ticketConfig: ticketConfig || { enabled: false }
+      ticketConfig: ticketConfig || { enabled: false },
+      tags: tags || []
     });
     const [final] = await hydrate([evento], 'creator');
     return res.status(201).json(final);
@@ -101,7 +102,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl, youtube_video, ticketConfig } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, tags } = req.body;
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
@@ -136,6 +137,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (imageUrl !== undefined) evento.imageUrl = imageUrl;
     if (youtube_video !== undefined) evento.youtube_video = youtube_video;
     if (ticketConfig !== undefined) evento.ticketConfig = ticketConfig;
+    if (tags !== undefined) evento.tags = tags;
 
     await evento.save();
     

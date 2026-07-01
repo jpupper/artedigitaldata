@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateVal = document.getElementById('event-date').value;
     const date = dateVal ? new Date(dateVal).toISOString() : '';
     const location = document.getElementById('event-location').value.trim();
+    const tags = document.getElementById('event-tags')?.value?.trim() || '';
     const file = document.getElementById('event-file').files[0];
     let imageUrl = document.getElementById('event-img-url').value.trim(); // Corregido el ID
 
@@ -176,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const res = await apiRequest('/eventos', {
       method: 'POST',
-      body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video })
+      body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, tags: tags.split(',').map(t => t.trim()).filter(Boolean) })
     });
 
     if (res?.ok) {
