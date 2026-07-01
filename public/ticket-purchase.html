@@ -223,6 +223,57 @@
         </div>
       </div>
     </div>
+
+    <!-- Login Required Modal -->
+    <div id="login-required-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md items-center justify-center z-[10002] p-4">
+      <div class="w-full max-w-md rounded-3xl border border-white/10 bg-[#0d0d12] p-8 text-center relative overflow-hidden">
+        <button onclick="closeLoginRequiredModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-all">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="mb-6 flex justify-center">
+          <div class="w-20 h-20 rounded-full bg-magenta-500/20 flex items-center justify-center">
+            <i class="fas fa-user-lock text-4xl text-magenta-400"></i>
+          </div>
+        </div>
+        <h3 class="text-xl font-black text-white mb-4">
+          <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+          Inicio de sesión requerido
+        </h3>
+        <p class="text-gray-300 mb-6 leading-relaxed">
+          Para comprar la entrada tenés que estar logueado.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="showLogin()" class="flex-1 px-6 py-3 rounded-xl bg-magenta-500 text-white font-bold hover:bg-magenta-400 transition-all shadow-lg shadow-magenta-500/25">
+            <i class="fas fa-sign-in-alt mr-2"></i>
+            Iniciar sesión
+          </button>
+          <button onclick="closeLoginRequiredModal()" class="flex-1 px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-gray-300 font-bold hover:bg-white/20 transition-all">
+            <i class="fas fa-times mr-2"></i>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal (reemplaza los alert) -->
+    <div id="error-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md items-center justify-center z-[10002] p-4">
+      <div class="w-full max-w-md rounded-3xl border border-white/10 bg-[#0d0d12] p-8 text-center relative overflow-hidden">
+        <button onclick="closeErrorModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-all">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="mb-6 flex justify-center">
+          <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center">
+            <i class="fas fa-exclamation-circle text-4xl text-red-400"></i>
+          </div>
+        </div>
+        <h3 class="text-xl font-black text-white mb-4">Error</h3>
+        <p id="error-modal-msg" class="text-gray-300 mb-6 leading-relaxed"></p>
+        <button onclick="closeErrorModal()" class="w-full px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold hover:bg-white/20 transition-all">
+          <i class="fas fa-check mr-2"></i>
+          Aceptar
+        </button>
+      </div>
+    </div>
   </main>
 
   <script src="js/config.js"></script>
@@ -360,7 +411,14 @@
 
     async function handlePurchase(e) {
       e.preventDefault();
+
+      // FIRST: check if user is logged in
       const user = getUser();
+      if (!user) {
+        showLoginRequiredModal();
+        return;
+      }
+
       const nameInput = document.getElementById('buyer-name')?.value.trim() || '';
       const emailInput = document.getElementById('buyer-email')?.value.trim() || '';
       const phoneInput = document.getElementById('buyer-phone')?.value.trim() || '';
@@ -445,7 +503,7 @@
 
       } catch (err) {
         hideStatus();
-        alert('Error: ' + err.message);
+        showErrorModal(err.message);
       }
     }
 
@@ -554,7 +612,7 @@
           await createFreeTicket(pendingTicketData.name, pendingTicketData.email, pendingTicketData.phone);
         } catch (err) {
           hideStatus();
-          alert('Error: ' + err.message);
+          showErrorModal(err.message);
         }
       } else {
         // User chose to contribute - focus on the amount input
@@ -568,6 +626,33 @@
         }
       }
       pendingTicketData = null;
+    }
+
+    // Login required modal functions
+    function showLoginRequiredModal() {
+      const modal = document.getElementById('login-required-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeLoginRequiredModal() {
+      const modal = document.getElementById('login-required-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Error modal functions (replaces alert)
+    function showErrorModal(msg) {
+      document.getElementById('error-modal-msg').innerText = msg;
+      const modal = document.getElementById('error-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeErrorModal() {
+      const modal = document.getElementById('error-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
   </script>
 </body>

@@ -139,6 +139,12 @@ const FORM_TEMPLATES = {
         <div id="${prefix}-desc-preview" class="px-2 text-[10px] text-gray-600 min-h-[1.5em] italic"></div>
       </div>
       <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Etiquetas / Hashtags</label>
+        <input type="text" id="${prefix}-tags" name="tags" value="${(item.tags || []).join(', ')}" placeholder="vjing, shaders, livecoding, IA..."
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none transition-colors">
+        <p class="text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Separadas por coma. Se mostrarán como hashtags del evento.</p>
+      </div>
+      <div>
         <label class="block text-xs font-bold text-gray-500 uppercase mb-2 text-red-400">Video de YouTube (Flyer animado)</label>
         <input type="url" id="${prefix}-youtube" name="youtube_video" value="${item.youtube_video || ''}" placeholder="https://www.youtube.com/watch?v=..."
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 focus:outline-none transition-colors">

@@ -48,7 +48,7 @@ function renderPinnedEvents(events) {
         <div class="relative aspect-video overflow-hidden">
           <div class="block w-full h-full relative cursor-pointer"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-               onclick="window.location.href='evento.html?id=${ev._id}'"
+               onclick="window.location.href='evento.html?id=${ev._id}'">
             ${ev.imageUrl ? `
               <img src="${sanitizeUrl(ev.imageUrl)}" alt="${escapeHTML(ev.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `

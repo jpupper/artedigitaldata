@@ -235,6 +235,7 @@ async function saveEdit() {
     const dateVal = document.getElementById('edit-date').value;
     body.date = dateVal ? new Date(dateVal).toISOString() : null;
     body.location = document.getElementById('edit-location').value.trim();
+    body.tags = document.getElementById('edit-tags')?.value.split(',').map(t => t.trim()).filter(Boolean) || [];
     body.ticketConfig = window.getTicketConfig('edit');
     if (typeof getParticipantIds === 'function') {
       body.manualParticipants = getParticipantIds('edit');

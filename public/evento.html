@@ -70,6 +70,10 @@
             <p id="event-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
           </div>
 
+          <div id="event-tags-container" class="hidden mb-10 flex flex-wrap gap-2">
+            <!-- Tags will be injected here -->
+          </div>
+
           <div id="participants-section" class="pt-8 border-t border-white/5 mb-10">
             <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
               <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Participantes Etiquetados</h4>
@@ -301,6 +305,19 @@
         `).join('');
       } else {
         participantsSection.classList.add('hidden');
+      }
+
+      // Tags
+      const tagsContainer = document.getElementById('event-tags-container');
+      if (ev.tags?.length) {
+        tagsContainer.classList.remove('hidden');
+        tagsContainer.innerHTML = ev.tags.map(t => `
+          <span class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/15 to-fuchsia-500/15 border border-cyan-500/20 text-cyan-400 text-xs font-bold tracking-wide">
+            #${t.trim()}
+          </span>
+        `).join('');
+      } else {
+        tagsContainer.classList.add('hidden');
       }
 
       // Comments
