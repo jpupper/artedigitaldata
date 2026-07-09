@@ -45,8 +45,7 @@ function getUserUsername() {
 function logout() {
   removeToken();
   removeUser();
-  // Limpiar también en el centralizador
-  window.location.href = `${CONFIG.FSCAUTH_URL}/api/auth/logout?redirect=${encodeURIComponent(window.location.origin + CONFIG.BASE + '/')}`;
+  window.location.href = CONFIG.BASE + '/';
 }
 
 // Centralized Redirection logic
