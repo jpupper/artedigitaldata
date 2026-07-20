@@ -367,8 +367,8 @@
         const tbody = document.getElementById('users-tbody');
         tbody.innerHTML = filteredData.users.map(u => `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-bold text-white">${u.username}</td>
-            <td class="px-6 py-4 text-gray-400">${u.email}</td>
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(u.username)}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(u.email)}</td>
             <td class="px-6 py-4">
               <select onchange="changeRole('${u._id}', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs">
                 <option value="USUARIO" ${u.role === 'USUARIO' ? 'selected' : ''}>USUARIO</option>
@@ -377,7 +377,7 @@
             </td>
             <td class="px-6 py-4 text-xs text-gray-500">${new Date(u.createdAt).toLocaleDateString()}</td>
             <td class="px-6 py-4">
-              <a href="${CONFIG.BASE}/profile.html?user=${u.username}" class="text-cyan-400 hover:underline">Ver Perfil</a>
+              <a href="${CONFIG.BASE}/profile.html?user=${escapeHTML(u.username)}" class="text-cyan-400 hover:underline">Ver Perfil</a>
             </td>
           </tr>
         `).join('');
@@ -385,8 +385,8 @@
         const tbody = document.getElementById('posts-tbody');
         tbody.innerHTML = filteredData.posts.map(p => `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-bold text-white">${p.title}</td>
-            <td class="px-6 py-4 text-gray-400">${p.author?.username || 'Anónimo'}</td>
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(p.title)}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(p.author?.username || 'Anónimo')}</td>
             <td class="px-6 py-4 text-xs text-gray-500">${new Date(p.createdAt).toLocaleDateString()}</td>
             <td class="px-6 py-4 text-gray-500">${p.likes?.length || 0} / ${p.comments?.length || 0}</td>
             <td class="px-6 py-4 flex gap-3">
@@ -400,10 +400,10 @@
         const tbody = document.getElementById('recursos-tbody');
         tbody.innerHTML = filteredData.recursos.map(r => `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-bold text-white">${r.title}</td>
-            <td class="px-6 py-4 uppercase text-xs text-orange-400">${r.type}</td>
-            <td class="px-6 py-4 text-gray-400">${r.author?.username || 'Anónimo'}</td>
-            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${r.url}" target="_blank" class="text-gray-500 hover:text-cyan-400">${r.url}</a></td>
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(r.title)}</td>
+            <td class="px-6 py-4 uppercase text-xs text-orange-400">${escapeHTML(r.type)}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(r.author?.username || 'Anónimo')}</td>
+            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${sanitizeUrl(r.url)}" target="_blank" class="text-gray-500 hover:text-cyan-400">${escapeHTML(r.url)}</a></td>
             <td class="px-6 py-4 flex gap-3">
               <a href="${CONFIG.BASE}/recurso.html?id=${r._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
               <button onclick="openEdit('recursos', '${r._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
@@ -415,10 +415,10 @@
         const tbody = document.getElementById('eventos-tbody');
         tbody.innerHTML = filteredData.eventos.map(e => `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-bold text-white">${e.title}</td>
-            <td class="px-6 py-4 text-gray-400">${e.creator?.username || 'Anónimo'}</td>
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(e.title)}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(e.creator?.username || 'Anónimo')}</td>
             <td class="px-6 py-4 text-xs text-magenta-400">${new Date(e.date).toLocaleString()}</td>
-            <td class="px-6 py-4 text-gray-500">${e.location || 'Virtual'}</td>
+            <td class="px-6 py-4 text-gray-500">${escapeHTML(e.location || 'Virtual')}</td>
             <td class="px-6 py-4 flex gap-3">
               <a href="${CONFIG.BASE}/evento.html?id=${e._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
               ${e.ticketConfig?.enabled ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${e._id}" target="_blank" class="text-green-400 hover:text-green-300" title="Administrar entradas"><i class="fas fa-ticket-alt"></i></a>` : ''}
@@ -564,8 +564,8 @@
         if (!res?.ok) throw new Error();
         const data = await res.json();
         
-        document.getElementById('autobot-user-status').innerHTML = data.botUserExists 
-          ? '<span class="text-green-400">✅ Activo (@' + data.botUser.username + ')</span>'
+        document.getElementById('autobot-user-status').innerHTML = data.botUserExists
+          ? '<span class="text-green-400">✅ Activo (@' + escapeHTML(data.botUser.username) + ')</span>'
           : '<span class="text-red-400">❌ No creado — Creá un usuario "artedigitalbot"</span>';
         document.getElementById('autobot-posts-count').textContent = data.totalAutobotPosts || '0';
         document.getElementById('autobot-recursos-count').textContent = data.totalAutobotRecursos || '0';
@@ -574,7 +574,7 @@
         if (data.lastPosts?.length) {
           postsContainer.innerHTML = data.lastPosts.map(p => 
             '<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">'
-            + '<span class="text-sm text-white truncate mr-2">' + p.title + '</span>'
+            + '<span class="text-sm text-white truncate mr-2">' + escapeHTML(p.title) + '</span>'
             + '<span class="text-[10px] text-gray-500 shrink-0">' + new Date(p.createdAt).toLocaleDateString() + '</span>'
             + '</div>'
           ).join('');
@@ -586,7 +586,7 @@
         if (data.lastRecursos?.length) {
           recursosContainer.innerHTML = data.lastRecursos.map(r => 
             '<div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">'
-            + '<span class="text-sm text-white truncate mr-2">' + r.title + '</span>'
+            + '<span class="text-sm text-white truncate mr-2">' + escapeHTML(r.title) + '</span>'
             + '<span class="text-[10px] text-gray-500 shrink-0">' + new Date(r.createdAt).toLocaleDateString() + '</span>'
             + '</div>'
           ).join('');
@@ -623,7 +623,7 @@
               <p class="text-gray-400 text-sm">Publicados ${data.published}/${data.found} items</p>
             </div>
           </div>
-          ${data.errors?.length ? '<div class="text-red-400 text-sm mt-2">Errores: ' + data.errors.join(', ') + '</div>' : ''}
+          ${data.errors?.length ? '<div class="text-red-400 text-sm mt-2">Errores: ' + escapeHTML(data.errors.join(', ')) + '</div>' : ''}
         `;
         
         await refreshAutobotStatus();

@@ -137,6 +137,10 @@
     let socket;
     let currentRoomId = null;
     let currentTab = 'rooms'; // 'rooms' or 'private'
+    let userSearchCache = {};
+    let privateChatsCache = {};
+    let roomsCache = {};
+    let allUsersCache = {};
     const user = getUser();
 
     // Redirección si no está logueado (sin usar return en top-level)
@@ -231,10 +235,12 @@
         if (!users.length) {
           results.innerHTML = '<div class="p-4 text-center text-xs text-gray-400">No se encontraron usuarios</div>';
         } else {
+          userSearchCache = {};
+          users.forEach(u => { userSearchCache[u._id] = u; });
           results.innerHTML = users.map(u => `
-            <button onclick="startPrivateChat('${u._id}', '${u.username}')" class="w-full flex items-center gap-3 p-3 hover:bg-white/10 transition-all text-left border-b border-white/5 last:border-0">
-              <img src="${u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" class="w-8 h-8 rounded-full border border-cyan-500/30">
-              <span class="text-sm text-white font-medium">${u.username}</span>
+            <button onclick="startPrivateChatById('${u._id}')" class="w-full flex items-center gap-3 p-3 hover:bg-white/10 transition-all text-left border-b border-white/5 last:border-0">
+              <img src="${sanitizeUrl(u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username)}" class="w-8 h-8 rounded-full border border-cyan-500/30">
+              <span class="text-sm text-white font-medium">${escapeHTML(u.username)}</span>
             </button>
           `).join('');
         }
@@ -242,6 +248,11 @@
       } catch (err) {
         console.error('Error searching users:', err);
       }
+    }
+
+    function startPrivateChatById(id) {
+      const u = userSearchCache[id];
+      if (u) startPrivateChat(u._id, u.username);
     }
 
     async function startPrivateChat(recipientId, username) {
@@ -276,16 +287,18 @@
           return;
         }
 
+        privateChatsCache = {};
         list.innerHTML = chats.map(c => {
           const otherUser = c.participants.find(p => p._id !== user.id);
           const name = otherUser?.username || 'Usuario';
           const avatar = otherUser?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + name;
+          privateChatsCache[c._id] = { name };
           return `
-            <button onclick="joinRoom('${c._id}', '${name}', 'Chat Privado')"
+            <button onclick="joinPrivateRoom('${c._id}')"
               class="room-btn w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 transition-all flex items-center gap-3 ${currentRoomId === c._id ? 'border border-cyan-500/30 bg-cyan-500/10' : ''}">
-              <img src="${avatar}" class="w-10 h-10 rounded-full border border-white/10">
+              <img src="${sanitizeUrl(avatar)}" class="w-10 h-10 rounded-full border border-white/10">
               <div class="flex-1 min-w-0">
-                <div class="font-medium text-white text-sm truncate">${name}</div>
+                <div class="font-medium text-white text-sm truncate">${escapeHTML(name)}</div>
                 <div class="text-xs text-gray-500 truncate mt-0.5">Mensaje privado</div>
               </div>
             </button>
@@ -294,6 +307,11 @@
       } catch (err) {
         list.innerHTML = '<div class="text-center text-red-400 py-4 text-sm">Error cargando mensajes</div>';
       }
+    }
+
+    function joinPrivateRoom(id) {
+      const c = privateChatsCache[id];
+      joinRoom(id, c ? c.name : 'Usuario', 'Chat Privado');
     }
 
     async function loadRooms() {
@@ -308,18 +326,27 @@
           return;
         }
 
-        list.innerHTML = rooms.map(r => `
-          <button onclick="joinRoom('${r._id}', '${r.name}', '${r.description || ''}')"
+        roomsCache = {};
+        list.innerHTML = rooms.map(r => {
+          roomsCache[r._id] = { name: r.name, description: r.description || '' };
+          return `
+          <button onclick="joinRoomById('${r._id}')"
             class="room-btn w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 transition-all ${currentRoomId === r._id ? 'border border-cyan-500/30 bg-cyan-500/10' : ''}">
             <div class="flex-1 min-w-0">
-              <div class="font-bold text-white text-sm truncate">${r.name}</div>
-              <div class="text-[10px] text-gray-500 truncate mt-0.5 uppercase tracking-wider">${r.creator?.username || 'Anónimo'}</div>
+              <div class="font-bold text-white text-sm truncate">${escapeHTML(r.name)}</div>
+              <div class="text-[10px] text-gray-500 truncate mt-0.5 uppercase tracking-wider">${escapeHTML(r.creator?.username || 'Anónimo')}</div>
             </div>
           </button>
-        `).join('');
+        `;
+        }).join('');
       } catch {
         list.innerHTML = '<div class="text-center text-red-400 py-4 text-sm">Error cargando salas</div>';
       }
+    }
+
+    function joinRoomById(id) {
+      const r = roomsCache[id];
+      joinRoom(id, r ? r.name : '', r ? r.description : '');
     }
 
     async function joinRoom(roomId, name, desc) {
@@ -372,12 +399,12 @@
       div.innerHTML = `
         <div class="flex-1 w-full max-w-[98%] rounded-[2rem] px-6 py-4 shadow-2xl transition-all hover:scale-[1.01] ${isMe ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-[#1a1a2e] border border-white/5'}">
           <div class="flex items-center gap-3 mb-3 border-b border-white/5 pb-2 ${isMe ? 'flex-row-reverse' : ''}">
-            <img src="${senderAvatar}" class="w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover">
+            <img src="${sanitizeUrl(senderAvatar)}" class="w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover">
             <span class="text-sm font-black uppercase tracking-tighter ${isMe ? 'text-cyan-400' : 'text-magenta-400'}">
-              ${isMe ? 'Tú' : senderName}
+              ${isMe ? 'Tú' : escapeHTML(senderName)}
             </span>
           </div>
-          <div class="text-sm sm:text-base text-white break-words whitespace-pre-wrap leading-relaxed opacity-90">${msg.content}</div>
+          <div class="text-sm sm:text-base text-white break-words whitespace-pre-wrap leading-relaxed opacity-90">${escapeHTML(msg.content)}</div>
           <div class="mt-3 flex items-center ${isMe ? 'justify-start' : 'justify-end'}">
             <span class="text-[10px] text-gray-500 font-mono opacity-40 uppercase tracking-widest">${time}</span>
           </div>
@@ -408,25 +435,29 @@
         if (!res) return;
         const users = await res.json();
         
-        list.innerHTML = users.map(u => `
+        allUsersCache = {};
+        list.innerHTML = users.map(u => {
+          allUsersCache[u._id] = u;
+          return `
           <div class="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-cyan-500/30 transition-all group">
-            <img src="${u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" 
+            <img src="${sanitizeUrl(u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username)}"
                  class="w-12 h-12 rounded-xl object-cover border border-white/10 group-hover:border-cyan-500/50 transition-all">
             <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-white truncate">${u.displayName || u.username}</h4>
-              <p class="text-[10px] text-gray-500 truncate">@${u.username}</p>
+              <h4 class="font-bold text-white truncate">${escapeHTML(u.displayName || u.username)}</h4>
+              <p class="text-[10px] text-gray-500 truncate">@${escapeHTML(u.username)}</p>
             </div>
             <div class="flex gap-2">
-              <a href="profile.html?user=${u.username}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-cyan-400 transition-all" title="Ver Perfil">
+              <a href="profile.html?user=${encodeURIComponent(u.username)}" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-cyan-400 transition-all" title="Ver Perfil">
                 <i class="fas fa-user text-xs"></i>
               </a>
-              <button onclick="startDFromDirectory('${u._id}', '${u.username}')" 
+              <button onclick="startDFromDirectoryById('${u._id}')"
                       class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all" title="Enviar Mensaje">
                 <i class="fas fa-comment-dots text-xs"></i>
               </button>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       } catch (err) {
         list.innerHTML = '<div class="col-span-full text-center text-red-500">Error al cargar artistas</div>';
       }
@@ -438,10 +469,12 @@
       modal.classList.remove('flex');
     }
 
-    async function startDFromDirectory(userId, username) {
+    async function startDFromDirectoryById(id) {
+      const u = allUsersCache[id];
+      if (!u) return;
       hideUsersModal();
       setTab('private');
-      await startPrivateChat(userId, username);
+      await startPrivateChat(u._id, u.username);
     }
   </script>
 </body>

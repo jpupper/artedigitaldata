@@ -60,12 +60,12 @@
               <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-lg font-bold bg-cyan-500 text-black shrink-0">
                   ${post.author?.avatar ? `
-                    <img src="${post.author.avatar}" alt="${post.author.username}" class="w-full h-full object-cover">
+                    <img src="${sanitizeUrl(post.author.avatar)}" alt="${escapeHTML(post.author.username)}" class="w-full h-full object-cover">
                   ` : (post.author?.username || '?')[0].toUpperCase()}
                 </div>
                 <div>
-                  <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
-                    ${post.author?.username || 'Anónimo'}
+                  <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(post.author?.username || '')}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
+                    ${escapeHTML(post.author?.username || 'Anónimo')}
                   </a>
                   <p class="text-sm text-gray-500">${new Date(post.createdAt).toLocaleString()}</p>
                 </div>
@@ -87,7 +87,7 @@
               ${post.imageUrl ? `
                 <div class="w-full bg-black flex justify-center border-b border-white/5 relative aspect-video overflow-hidden" 
                      ${extractYouTubeId(post) ? `onmouseenter="playVideo(this, '${extractYouTubeId(post)}')" onmouseleave="stopVideo(this)"` : ''}>
-                  <img src="${post.imageUrl}" alt="${post.title}" class="max-w-full max-h-[70vh] object-contain transition-transform duration-700">
+                  <img src="${sanitizeUrl(post.imageUrl)}" alt="${escapeHTML(post.title)}" class="max-w-full max-h-[70vh] object-contain transition-transform duration-700">
                   ${extractYouTubeId(post) ? `
                     <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
                       <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -98,10 +98,10 @@
               <div class="p-8">
                 <div class="flex items-center justify-between gap-4 mb-4">
                   <h1 class="text-3xl font-black text-white">
-                    ${post.title}
+                    ${escapeHTML(post.title)}
                   </h1>
                   ${post.youtube_video ? `
-                    <a href="${post.youtube_video}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+                    <a href="${sanitizeUrl(post.youtube_video)}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
                       <i class="fab fa-youtube text-lg"></i> Ver Video
                     </a>
                   ` : ''}
@@ -109,7 +109,7 @@
                 <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
                 ${post.tags?.length ? `
                   <div class="flex flex-wrap gap-2 mb-8">
-                    ${post.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs">#${t}</span>`).join('')}
+                    ${post.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs">#${escapeHTML(t)}</span>`).join('')}
                   </div>
                 ` : ''}
 
@@ -148,7 +148,7 @@
                       return `
                       <div class="flex gap-4">
                         <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-                          ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+                          ${c.user?.avatar ? `<img src="${sanitizeUrl(c.user.avatar)}" class="w-full h-full object-cover">` : `
                             <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
                               <i class="fas fa-user text-xs"></i>
                             </div>
@@ -157,7 +157,7 @@
                         <div class="flex-1">
                           <div class="bg-white/5 rounded-2xl px-4 py-3">
                             <div class="flex justify-between items-center mb-1">
-                              <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                              <a href="profile.html?user=${encodeURIComponent(c.user?.username || '')}" class="font-bold text-cyan-400 text-sm hover:underline">@${escapeHTML(c.user?.username || 'Anónimo')}</a>
                               <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
                                 ${isCommentOwner ? `

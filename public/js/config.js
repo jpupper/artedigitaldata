@@ -84,11 +84,15 @@ function sanitizeUrl(url) {
     const resolved = CONFIG.resolveImage(url);
     try {
         const parsed = new URL(resolved);
-        return ['http:', 'https:'].includes(parsed.protocol) ? resolved : '';
+        // Devolvemos parsed.href (normalizado y percent-encoded) en vez del string
+        // crudo: así una URL válida no puede romper el atributo con comillas embebidas.
+        return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
     } catch {
-        // Si no es una URL válida (ej: ruta relativa que resolveImage no cambió), 
-        // pero empieza con /, la dejamos pasar para que el navegador la maneje localmente
-        // si resolveImage no la convirtió a absoluta.
-        return resolved.startsWith('/') ? resolved : '';
+        // Si no es una URL válida (ej: ruta relativa que resolveImage no cambió),
+        // solo permitimos rutas internas de un único slash. Rechazamos las
+        // protocol-relative (//evil.com) y cualquier ruta con caracteres que puedan
+        // romper un atributo HTML (comillas, <, >, espacios).
+        const isInternalPath = resolved.startsWith('/') && !resolved.startsWith('//');
+        return (isInternalPath && !/["'<>\s]/.test(resolved)) ? resolved : '';
     }
 }

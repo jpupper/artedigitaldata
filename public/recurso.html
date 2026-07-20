@@ -141,10 +141,10 @@
       // Icon and Author
       const authorLink = document.getElementById('resource-author');
       authorLink.innerText = `@${r.author?.username || 'anónimo'}`;
-      authorLink.href = `profile.html?user=${r.author?.username}`;
+      authorLink.href = `profile.html?user=${encodeURIComponent(r.author?.username || '')}`;
 
       const avatarCont = document.getElementById('author-avatar');
-      avatarCont.innerHTML = r.author?.avatar ? `<img src="${r.author.avatar}" class="w-full h-full object-cover">` : (r.author?.username || '?')[0].toUpperCase();
+      avatarCont.innerHTML = r.author?.avatar ? `<img src="${sanitizeUrl(r.author.avatar)}" class="w-full h-full object-cover">` : escapeHTML((r.author?.username || '?')[0].toUpperCase());
 
       // Edit Button
       if (isAuthor) {
@@ -167,12 +167,12 @@
       const youtubeId = extractYouTubeId(r);
       const imgContainer = document.getElementById('resource-image-container');
       const link = document.getElementById('resource-link');
-      link.href = r.url;
+      link.href = sanitizeUrl(r.url);
 
       if (r.imageUrl) {
         imgContainer.classList.remove('hidden');
         imgContainer.className = "mb-8 rounded-2xl overflow-hidden border border-white/5 aspect-video relative";
-        imgContainer.innerHTML = `<img src="${r.imageUrl}" class="w-full h-full object-cover">`;
+        imgContainer.innerHTML = `<img src="${sanitizeUrl(r.imageUrl)}" class="w-full h-full object-cover">`;
         if (youtubeId) {
           imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
           imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
@@ -192,7 +192,7 @@
             document.getElementById('resource-description').after(badge);
         }
         badge.innerHTML = `
-          <a href="${r.youtube_video}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+          <a href="${sanitizeUrl(r.youtube_video)}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
             <i class="fab fa-youtube text-lg"></i> Ver Tutorial / Video
           </a>
         `;
@@ -206,7 +206,7 @@
       iconContainer.innerHTML = `<i class="${typeIcons[r.type] || typeIcons.other}"></i>`;
 
       const tagsContainer = document.getElementById('resource-tags');
-      tagsContainer.innerHTML = (r.tags || []).map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${t}</span>`).join('');
+      tagsContainer.innerHTML = (r.tags || []).map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-bold">#${escapeHTML(t)}</span>`).join('');
 
       // Likes
       const btn = document.getElementById('like-btn');
@@ -249,7 +249,7 @@
         return `
         <div class="flex gap-4">
           <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-            ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+            ${c.user?.avatar ? `<img src="${sanitizeUrl(c.user.avatar)}" class="w-full h-full object-cover">` : `
               <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
                 <i class="fas fa-user text-xs"></i>
               </div>
@@ -258,7 +258,7 @@
           <div class="flex-1">
             <div class="bg-white/5 rounded-2xl px-4 py-3">
               <div class="flex justify-between items-center mb-1">
-                <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                <a href="profile.html?user=${encodeURIComponent(c.user?.username || '')}" class="font-bold text-cyan-400 text-sm hover:underline">@${escapeHTML(c.user?.username || 'Anónimo')}</a>
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
                   ${isCommentOwner ? `

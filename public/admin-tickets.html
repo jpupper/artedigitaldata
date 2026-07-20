@@ -272,21 +272,21 @@
 
         return `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-mono font-bold text-white">${t.code}</td>
+            <td class="px-6 py-4 font-mono font-bold text-white">${escapeHTML(t.code)}</td>
             <td class="px-6 py-4">
               <a href="evento.html?id=${t.event?._id || t.event}" class="text-white hover:text-magenta-400 transition-colors font-medium">
-                ${t.event?.title || 'Evento desconocido'}
+                ${escapeHTML(t.event?.title || 'Evento desconocido')}
               </a>
             </td>
             <td class="px-6 py-4 text-gray-400">${eventDate}</td>
             <td class="px-6 py-4">
-              <div class="text-white font-medium">${t.ownerName || 'Sin nombre'}</div>
-              <div class="text-xs text-gray-500">${t.ownerEmail || ''}</div>
+              <div class="text-white font-medium">${escapeHTML(t.ownerName || 'Sin nombre')}</div>
+              <div class="text-xs text-gray-500">${escapeHTML(t.ownerEmail || '')}</div>
               ${t.owner ? `
                 <div class="mt-1 flex items-center gap-1">
                   <i class="fas fa-user-check text-fuchsia-500 text-xs"></i>
-                  <a href="profile.html?user=${t.owner.username || t.owner}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
-                    @${t.owner.username || 'usuario'}
+                  <a href="profile.html?user=${escapeHTML(t.owner.username || t.owner)}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
+                    @${escapeHTML(t.owner.username || 'usuario')}
                   </a>
                 </div>
               ` : '<div class="mt-1 text-xs text-gray-600"><i class="fas fa-user-slash mr-1"></i>Sin usuario vinculado</div>'}
@@ -313,7 +313,7 @@
             </td>
             <td class="px-6 py-4">
               <div class="flex gap-2">
-                <a href="ticket-success.html?ticket=${t.code}" target="_blank" class="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-all text-xs">
+                <a href="ticket-success.html?ticket=${escapeHTML(t.code)}" target="_blank" class="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 transition-all text-xs">
                   <i class="fas fa-eye"></i>
                 </a>
                 <button onclick="deleteTicket('${t._id}')" class="px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-xs">

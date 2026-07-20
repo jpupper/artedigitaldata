@@ -146,12 +146,19 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     }
 });
 
-// Get all users (requires auth - for admin/creator to issue tickets)
+// Get all users (requires auth - for admin/creator to issue tickets).
+// El email es dato sensible: solo se expone a administradores. El picker de
+// entradas linkea usuarios por _id, así que los creadores no necesitan el email.
 router.get('/users', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    // Only admin or event creators should access this
+    const requester = req.user ? await User.findById(req.user.id).select('permissions') : null;
+    const isAdmin = requester?.permissions?.artedigital?.role === 'ADMINISTRADOR';
+    const fields = isAdmin
+      ? '_id username email displayName avatar'
+      : '_id username displayName avatar';
+
     const users = await User.find()
-      .select('_id username email displayName avatar')
+      .select(fields)
       .sort({ username: 1 });
 
     return res.json(users);

@@ -177,7 +177,7 @@
       if (isUrl) {
         const isGoogleMaps = /google\.com\/maps|maps\.google|maps\.app\.goo\.gl/i.test(loc);
         locationEl.innerHTML = `
-          <a href="${loc}" target="_blank" rel="noopener"
+          <a href="${sanitizeUrl(loc)}" target="_blank" rel="noopener"
             class="inline-flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 transition-all font-bold text-sm">
             <i class="fas ${isGoogleMaps ? 'fa-map-marker-alt' : 'fa-external-link-alt'}"></i>
             ${isGoogleMaps ? 'Ver en Google Maps' : 'Ver ubicación'}
@@ -195,7 +195,7 @@
       creator.href = `profile.html?user=${ev.creator?.username}`;
 
       const avatarCont = document.getElementById('creator-avatar');
-      avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase();
+      avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${sanitizeUrl(ev.creator.avatar)}" class="w-full h-full object-cover">` : escapeHTML((ev.creator?.username || '?')[0].toUpperCase());
 
       // Edit Button and Ticket Management
       if (isCreator) {
@@ -245,7 +245,7 @@
       imgContainer.className = "aspect-video w-full overflow-hidden bg-magenta-500/5 flex items-center justify-center relative";
       
       if (ev.imageUrl) {
-        imgContainer.innerHTML = `<img src="${ev.imageUrl}" class="w-full h-full object-cover" alt="${ev.title}">`;
+        imgContainer.innerHTML = `<img src="${sanitizeUrl(ev.imageUrl)}" class="w-full h-full object-cover" alt="${escapeHTML(ev.title)}">`;
         if (youtubeId) {
           imgContainer.setAttribute('onmouseenter', `playVideo(this, '${youtubeId}')`);
           imgContainer.setAttribute('onmouseleave', 'stopVideo(this)');
@@ -270,7 +270,7 @@
             document.getElementById('event-description').after(badge);
         }
         badge.innerHTML = `
-          <a href="${ev.youtube_video}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+          <a href="${sanitizeUrl(ev.youtube_video)}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-sm font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
             <i class="fab fa-youtube text-lg"></i> Ver Streaming / Video
           </a>
         `;
@@ -296,11 +296,11 @@
       if (ev.participants?.length) {
         participantsSection.classList.remove('hidden');
         participantsList.innerHTML = ev.participants.map(p => `
-          <a href="profile.html?user=${p.username}" class="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500 transition-all group">
+          <a href="profile.html?user=${encodeURIComponent(p.username)}" class="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500 transition-all group">
             <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-black group-hover:bg-cyan-500 group-hover:text-black transition-all">
-              ${(p.username || '?')[0].toUpperCase()}
+              ${escapeHTML((p.username || '?')[0].toUpperCase())}
             </div>
-            <span class="text-sm font-bold text-gray-300 group-hover:text-white">${p.username}</span>
+            <span class="text-sm font-bold text-gray-300 group-hover:text-white">${escapeHTML(p.username)}</span>
           </a>
         `).join('');
       } else {
@@ -313,7 +313,7 @@
         tagsContainer.classList.remove('hidden');
         tagsContainer.innerHTML = ev.tags.map(t => `
           <span class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/15 to-fuchsia-500/15 border border-cyan-500/20 text-cyan-400 text-xs font-bold tracking-wide">
-            #${t.trim()}
+            #${escapeHTML(t.trim())}
           </span>
         `).join('');
       } else {
@@ -355,7 +355,7 @@
         return `
         <div class="flex gap-4 scroll-mt-24">
           <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-            ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
+            ${c.user?.avatar ? `<img src="${sanitizeUrl(c.user.avatar)}" class="w-full h-full object-cover">` : `
               <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
                 <i class="fas fa-user-astronaut text-xs"></i>
               </div>
@@ -364,7 +364,7 @@
           <div class="flex-1">
             <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">
               <div class="flex justify-between items-center mb-1">
-                <a href="profile.html?user=${c.user?.username}" class="font-bold text-cyan-400 text-sm hover:underline">@${c.user?.username || 'Anónimo'}</a>
+                <a href="profile.html?user=${encodeURIComponent(c.user?.username || '')}" class="font-bold text-cyan-400 text-sm hover:underline">@${escapeHTML(c.user?.username || 'Anónimo')}</a>
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
                   ${isCommentOwner ? `
