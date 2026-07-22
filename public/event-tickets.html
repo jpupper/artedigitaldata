@@ -413,8 +413,6 @@
         const userIsAdmin = isAdmin();
         const isDoorUser = ev.doorUsers?.some(u => (u._id || u).toString() === userId);
 
-        console.log('Debug - User ID:', userId, 'Creator ID:', creatorId, 'Is Creator:', isEventCreator, 'Is Admin:', userIsAdmin, 'Is Door User:', isDoorUser);
-
         if (!isEventCreator && !userIsAdmin && !isDoorUser) {
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('access-denied').classList.remove('hidden');
@@ -474,7 +472,7 @@
       const matches = allUsers.filter(user =>
         user.username.toLowerCase().includes(lowerQuery) ||
         (user.displayName && user.displayName.toLowerCase().includes(lowerQuery)) ||
-        user.email.toLowerCase().includes(lowerQuery)
+        (user.email && user.email.toLowerCase().includes(lowerQuery))
       ).slice(0, 10); // Limit to 10 results
 
       if (matches.length === 0) {
@@ -485,17 +483,20 @@
         `;
       } else {
         resultsDiv.innerHTML = matches.map(user => {
-          const displayName = user.displayName || user.username;
-          const avatarHtml = user.avatar
-            ? `<img src="${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
-            : `<div class="w-8 h-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
+          const displayName = escapeHTML(user.displayName || user.username);
+          const initial = escapeHTML((user.displayName || user.username || '?')[0].toUpperCase());
+          const avatar = sanitizeUrl(user.avatar);
+          const avatarHtml = avatar
+            ? `<img src="${avatar}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
+            : `<div class="w-8 h-8 rounded-full bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xs font-bold">${initial}</div>`;
+          const emailPart = user.email ? ` · ${escapeHTML(user.email)}` : '';
           return `
-            <button type="button" onclick="selectUser('${user._id}', '${displayName.replace(/'/g, "\\'")}', '@${user.username}')"
+            <button type="button" onclick="selectUser('${user._id}')"
               class="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-0">
               ${avatarHtml}
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-white font-medium truncate">${displayName}</p>
-                <p class="text-xs text-gray-500 truncate">@${user.username} · ${user.email}</p>
+                <p class="text-xs text-gray-500 truncate">@${escapeHTML(user.username)}${emailPart}</p>
               </div>
               <i class="fas fa-plus text-fuchsia-500 text-xs"></i>
             </button>
@@ -507,11 +508,15 @@
     }
 
     // Select a user
-    function selectUser(userId, displayName, username) {
+    function selectUser(userId) {
+      const picked = allUsers.find(u => u._id === userId);
+      if (!picked) return;
+      const displayName = picked.displayName || picked.username;
+      const username = `@${picked.username}`;
       selectedUser = { _id: userId, displayName, username };
       document.getElementById('manual-owner-id').value = userId;
 
-      // Show badge
+      // Show badge (textContent — no HTML injection)
       document.getElementById('selected-user-name').textContent = `${displayName} (${username})`;
       document.getElementById('selected-user-badge').classList.remove('hidden');
       document.getElementById('clear-user-btn').classList.remove('hidden');
@@ -651,15 +656,15 @@
 
         return `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-mono font-bold text-white">${t.code}</td>
+            <td class="px-6 py-4 font-mono font-bold text-white">${escapeHTML(t.code)}</td>
             <td class="px-6 py-4">
-              <div class="text-white font-medium">${t.ownerName || 'Sin nombre'}</div>
-              <div class="text-xs text-gray-500">${t.ownerEmail || ''}</div>
+              <div class="text-white font-medium">${escapeHTML(t.ownerName || 'Sin nombre')}</div>
+              <div class="text-xs text-gray-500">${escapeHTML(t.ownerEmail || '')}</div>
               ${t.owner ? `
                 <div class="mt-1 flex items-center gap-1">
                   <i class="fas fa-user-check text-fuchsia-500 text-xs"></i>
-                  <a href="profile.html?user=${t.owner.username || t.owner}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
-                    @${t.owner.username || 'usuario'}
+                  <a href="${sanitizeUrl('profile.html?user=' + (t.owner.username || t.owner))}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-medium">
+                    @${escapeHTML(t.owner.username || 'usuario')}
                   </a>
                 </div>
               ` : '<div class="mt-1 text-xs text-gray-600"><i class="fas fa-user-slash mr-1"></i>Sin usuario vinculado</div>'}
@@ -852,8 +857,8 @@
           
           detailsEl.classList.remove('hidden');
           detailsEl.innerHTML = `
-            <p class="text-sm"><strong>Código:</strong> ${data.ticket.code}</p>
-            <p class="text-sm"><strong>Nombre:</strong> ${data.ticket.ownerName || 'Sin nombre'}</p>
+            <p class="text-sm"><strong>Código:</strong> ${escapeHTML(data.ticket.code)}</p>
+            <p class="text-sm"><strong>Nombre:</strong> ${escapeHTML(data.ticket.ownerName || 'Sin nombre')}</p>
             ${data.ticket.redeemedAt ? `<p class="text-sm"><strong>Canjeada:</strong> ${new Date(data.ticket.redeemedAt).toLocaleString('es-AR')}</p>` : ''}
           `;
 
@@ -995,7 +1000,7 @@
             detailsEl.classList.remove('hidden');
             detailsEl.innerHTML = `
               <p class="text-yellow-400 font-bold mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> ${data.failed} email(s) fallaron:</p>
-              ${(data.errors || []).map(e => `<p class="text-gray-500 text-xs">${e}</p>`).join('')}
+              ${(data.errors || []).map(e => `<p class="text-gray-500 text-xs">${escapeHTML(e)}</p>`).join('')}
             `;
           } else {
             detailsEl.classList.add('hidden');
@@ -1031,10 +1036,13 @@
       }
 
       container.innerHTML = doorUsers.map(user => {
-        const displayName = user.displayName || user.username || '?';
+        const rawName = user.displayName || user.username || '?';
+        const displayName = escapeHTML(rawName);
+        const initial = escapeHTML(rawName[0].toUpperCase());
+        const avatarUrl = sanitizeUrl(user.avatar);
         const avatar = user.avatar
-          ? `<img src="${user.avatar}" class="w-6 h-6 rounded-full object-cover" alt="${displayName}">`
-          : `<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
+          ? `<img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover" alt="${displayName}">`
+          : `<div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${initial}</div>`;
 
         return `
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
@@ -1071,10 +1079,15 @@
         `;
       } else {
         resultsDiv.innerHTML = matches.map(user => {
-          const displayName = user.displayName || user.username;
+          const rawName = user.displayName || user.username;
+          const displayName = escapeHTML(rawName);
+          const initial = escapeHTML((rawName || '?')[0].toUpperCase());
+          const username = escapeHTML(user.username);
+          const email = escapeHTML(user.email);
+          const avatarUrl = sanitizeUrl(user.avatar);
           const avatar = user.avatar
-            ? `<img src="${user.avatar}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
-            : `<div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${displayName[0].toUpperCase()}</div>`;
+            ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover" alt="${displayName}">`
+            : `<div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">${initial}</div>`;
 
           // Check if user is already a door user
           const currentDoorUsers = currentEvent?.doorUsers || [];
@@ -1086,7 +1099,7 @@
                 ${avatar}
                 <div class="flex-1 min-w-0">
                   <p class="text-sm text-white font-medium truncate">${displayName}</p>
-                  <p class="text-xs text-gray-500 truncate">@${user.username} · Ya es puerta</p>
+                  <p class="text-xs text-gray-500 truncate">@${username} · Ya es puerta</p>
                 </div>
                 <i class="fas fa-check text-green-500 text-xs"></i>
               </div>
@@ -1099,7 +1112,7 @@
               ${avatar}
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-white font-medium truncate">${displayName}</p>
-                <p class="text-xs text-gray-500 truncate">@${user.username} · ${user.email}</p>
+                <p class="text-xs text-gray-500 truncate">@${username} · ${email}</p>
               </div>
               <i class="fas fa-plus text-cyan-500 text-xs"></i>
             </button>
