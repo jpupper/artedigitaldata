@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manifiesto - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Smooth scroll for TOC links */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Table of Contents - sticky sidebar */
+    .toc-container {
+      position: sticky;
+      top: 6rem;
+    }
+
+    .toc-link {
+      transition: all 0.2s ease;
+      border-left: 2px solid transparent;
+      padding-left: 1rem;
+    }
+
+    .toc-link:hover,
+    .toc-link.active {
+      border-left-color: var(--color-cyan);
+      color: var(--color-cyan);
+    }
+
+    .toc-link.sub {
+      padding-left: 1.75rem;
+      font-size: 0.8rem;
+    }
+
+    .toc-link.sub-sub {
+      padding-left: 2.5rem;
+      font-size: 0.75rem;
+    }
+
+    /* Section styling */
+    .manifesto-section {
+      scroll-margin-top: 6rem;
+    }
+
+    .manifesto-section h2 {
+      position: relative;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .manifesto-section h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 80px;
+      height: 2px;
+      background: var(--gradient-neon);
+      border-radius: 2px;
+    }
+
+    .manifesto-section h3 {
+      color: #e5e5e5;
+      font-weight: 800;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      padding-left: 0.75rem;
+      border-left: 3px solid var(--color-magenta);
+    }
+
+    .manifesto-section h4 {
+      color: #c0c0c0;
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      padding-left: 0.75rem;
+      border-left: 2px solid rgba(0, 245, 255, 0.3);
+    }
+
+    .manifesto-section p,
+    .manifesto-section li {
+      color: #a0a0a8;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .manifesto-section .highlight-box {
+      border-left: 3px solid var(--color-cyan);
+      background: rgba(0, 245, 255, 0.03);
+      padding: 1.5rem;
+      border-radius: 0 1rem 1rem 0;
+      margin: 1.5rem 0;
+    }
+
+    .manifesto-section .highlight-box p {
+      margin-bottom: 0.5rem;
+    }
+
+    .manifesto-section .case-text {
+      background: rgba(255, 0, 224, 0.03);
+      border-left: 3px solid var(--color-magenta);
+      padding: 1.25rem;
+      border-radius: 0 1rem 1rem 0;
+      margin: 1.5rem 0;
+    }
+
+    .manifesto-section .case-text p {
+      margin-bottom: 0.75rem;
+    }
+
+    /* Policy list styling */
+    .policy-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .policy-list li {
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.2s;
+    }
+
+    .policy-list li:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(0, 245, 255, 0.1);
+    }
+
+    .policy-list li strong {
+      color: var(--color-cyan);
+      font-weight: 800;
+    }
+
+    .policy-tag {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-right: 0.5rem;
+    }
+
+    .tag-individuo { background: rgba(0, 245, 255, 0.15); color: var(--color-cyan); }
+    .tag-institucion { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+    .tag-universidad { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .tag-partido { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .tag-marca { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .tag-corpo { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+
+    /* Responsive TOC toggle for mobile */
+    #toc-toggle {
+      display: none;
+    }
+
+    @media (max-width: 1023px) {
+      .toc-sidebar {
+        display: none;
+      }
+      .toc-sidebar.open {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: rgba(13, 13, 18, 0.97);
+        padding: 2rem;
+        overflow-y: auto;
+      }
+      #toc-toggle {
+        display: inline-flex;
+      }
+    }
+
+    /* Part badges */
+    .part-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1.5rem;
+    }
+
+    .part-badge.part-i {
+      background: rgba(0, 245, 255, 0.1);
+      color: var(--color-cyan);
+      border: 1px solid rgba(0, 245, 255, 0.2);
+    }
+
+    .part-badge.part-ii {
+      background: rgba(255, 0, 224, 0.1);
+      color: var(--color-magenta);
+      border: 1px solid rgba(255, 0, 224, 0.2);
+    }
+
+    /* Back to top */
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: var(--color-cyan);
+      color: var(--bg-base);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+      transition: all 0.3s;
+      z-index: 40;
+      border: none;
+    }
+
+    .back-to-top.visible {
+      display: flex;
+    }
+
+    .back-to-top:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <main class="pt-20 pb-16 max-w-7xl mx-auto px-4">
+    <!-- Hero -->
+    <section class="mb-12 text-center pt-8 pb-4">
+      <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-xs font-black uppercase tracking-widest mb-4">
+        <i class="fas fa-scroll"></i>
+        Fundacional
+      </div>
+      <h1 class="text-4xl md:text-6xl font-black gradient-text mb-3">
+        Manifiesto
+      </h1>
+      <p class="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+        Los principios filosóficos, ideológicos y políticos que guían a la comunidad ArteDigitalData.
+      </p>
+    </section>
+
+    <div class="section-divider mb-10"></div>
+
+    <div class="flex flex-col lg:flex-row gap-10">
+      <!-- TOC Sidebar -->
+      <aside class="lg:w-72 flex-shrink-0 toc-sidebar" id="toc-sidebar">
+        <div class="toc-container">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest">
+              <i class="fas fa-list mr-2 text-cyan-400"></i>Índice
+            </h3>
+            <button onclick="closeToc()" class="lg:hidden text-gray-500 hover:text-white transition-colors">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <nav class="flex flex-col gap-1.5 text-sm">
+            <a href="#parte-i" class="toc-link text-gray-400 font-bold hover:text-cyan-400 transition-colors py-1">
+              <i class="fas fa-circle text-[6px] text-cyan-400 mr-2"></i>Parte I: Fundamentación Filosófica
+            </a>
+            <a href="#introduccion" class="toc-link sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              Introducción y propósito
+            </a>
+            <a href="#individuo-sociedad" class="toc-link sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              Relación individuo-sociedad
+            </a>
+            <a href="#caso-concreto" class="toc-link sub-sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              Caso concreto: compartir tutoriales
+            </a>
+            <a href="#postura-ideologica" class="toc-link sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              Postura ideológica y especulación
+            </a>
+            <a href="#nfts-blockchain" class="toc-link sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              NFTs, blockchain y cripto
+            </a>
+            <a href="#relacion-comunidades" class="toc-link sub text-gray-500 hover:text-cyan-400 transition-colors py-0.5">
+              Relación con otras comunidades
+            </a>
+
+            <div class="my-3 border-t border-white/5"></div>
+
+            <a href="#parte-ii" class="toc-link text-gray-400 font-bold hover:text-magenta-400 transition-colors py-1">
+              <i class="fas fa-circle text-[6px] text-magenta-400 mr-2"></i>Parte II: Definición de Políticas
+            </a>
+            <a href="#politica-personas" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Personas que ingresan
+            </a>
+            <a href="#reglas-whatsapp" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Reglas básicas (WhatsApp)
+            </a>
+            <a href="#politica-instituciones" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Instituciones
+            </a>
+            <a href="#politica-universidades" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Universidades
+            </a>
+            <a href="#politica-partidos" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Partidos políticos
+            </a>
+            <a href="#politica-marcas" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Marcas
+            </a>
+            <a href="#politica-trabajo-corpo" class="toc-link sub text-gray-500 hover:text-magenta-400 transition-colors py-0.5">
+              Trabajo corpo
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <div class="flex-1 min-w-0 manifesto-section max-w-3xl">
+
+        <!-- Mobile TOC toggle -->
+        <button id="toc-toggle" onclick="openToc()" class="items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm font-bold mb-8 hover:bg-white/10 transition-all lg:hidden">
+          <i class="fas fa-list mr-1"></i> Ver Índice
+        </button>
+
+        <!-- ============ PARTE I ============ -->
+        <section id="parte-i" class="manifesto-section mb-16">
+          <div class="part-badge part-i">
+            <i class="fas fa-book-open"></i> Parte I
+          </div>
+          <h2 class="text-3xl md:text-4xl font-black text-white">
+            Fundamentación <span class="gradient-text">Filosófica</span>
+          </h2>
+
+          <div id="introduccion">
+            <h3>Introducción y propósito</h3>
+            <p>
+              El colectivo "ArteDigitalData" busca hacer disponible a toda la comunidad la información digital relacionada al arte y la tecnología. La idea es fomentar un núcleo donde compartir procesos productivos, solucionar inquietudes de compañerxs, encontrar inspiración y conseguir proveedores específicos. Creemos que el motor del progreso radica en la colectivización de las actividades y en crear redes de contención amorosas que faciliten la creación y exposición del arte digital.
+            </p>
+          </div>
+
+          <div id="individuo-sociedad">
+            <h3>La relación entre el individuo y la sociedad</h3>
+            <p>
+              Existe una batalla conceptual en las sociedades de Latinoamérica —y en especial en la Argentina— entre privilegiar el desarrollo del individuo o el bien común. Esta discusión suele ubicarnos en polos opuestos.
+            </p>
+            <p>
+              Desde ArteDigitalData proponemos una síntesis: el beneficio colectivo y el individual no son opuestos, sino la misma cosa. Entendemos la colaboración no desde un altruismo ingenuo o un sacrificio personal, sino como una estrategia inteligente y pragmática. Ayudar al colectivo no es beneficencia o sacrificio: es crear el entorno donde vos mejor podés crecer. Dicho de forma simple: <strong class="text-cyan-400">ser buena persona y compartir conviene.</strong> El progreso individual es una consecuencia directa de haber hecho crecer a la comunidad.
+            </p>
+          </div>
+
+          <div id="caso-concreto">
+            <h3>Yendo a un caso concreto</h3>
+
+            <div class="case-text">
+              <p class="text-white font-bold mb-2">
+                <i class="fas fa-question-circle text-magenta-400 mr-2"></i>
+                ¿Cómo podría beneficiarme compartir un tutorial sabiendo que podría haberlo vendido?
+              </p>
+              <p>
+                Si desarrollaste una práctica específica (un parche de Touch, una configuración de luces, una página) y la socializas, la comunidad se beneficia. El reconocimiento de esa comunidad termina llevando al beneficio individual: te da más seguidores, pedidos de cursos privados o contrataciones para eventos utilizando una tecnología que, a pesar de haber liberado, seguís manejando mejor que nadie.
+              </p>
+            </div>
+
+            <div class="case-text">
+              <p class="text-white font-bold mb-2">
+                <i class="fas fa-question-circle text-cyan-400 mr-2"></i>
+                ¿Pero no sería mucho más el beneficio si esa creación la vendiera?
+              </p>
+              <p>
+                Habría que analizar la factibilidad de venderla. En Argentina y Latinoamérica la monetización de un producto digital hacia afuera requiere una burocracia infernal (las vías cripto o "en negro" tienen alcance limitado y las plataformas cobran comisiones altísimas). Si el plan apunta al mercado local, la práctica cultural más común es no pagar por software y crackear todo.
+              </p>
+              <p>
+                Independientemente de si la creación es opensource o monetizada, su mera existencia facilita los procesos y multiplica la producción (como hacer un parche pago tan bueno que la gente lo paga con placer). La contribución no depende de socializar porque sí, sino de facilitar la producción; si eso logra una remuneración con beneficio individual, bienvenido sea.
+              </p>
+            </div>
+
+            <div class="highlight-box">
+              <p class="text-white font-bold">Conclusión</p>
+              <p>
+                No es relevante la naturaleza de la monetización en torno a tu creación; lo importante es que ayude, facilite y reproduzca la producción de arte digital. Cada individuo elegirá su distribución según sus valores, siempre que cumpla ese objetivo común.
+              </p>
+            </div>
+          </div>
+
+          <div id="postura-ideologica">
+            <h3>Postura ideológica, modelo de producción y especulación</h3>
+            <p>
+              ArteDigitalData no es una organización con fines de lucro; su fin no es acumular capital sino reproducir la producción y colectivizar la información.
+            </p>
+            <p>
+              Somos una comunidad <strong class="text-red-400">antifascista</strong> y <strong class="text-yellow-400">antineoliberal</strong>. Antifascista por oponernos a construcciones de identidad basadas en la destrucción de un grupo particular; antineoliberal por oponernos al "self-made man", al exitismo capitalista extremo y a entender el éxito solo como comodidad material individual. Creemos en el crecimiento del individuo gracias a que ayuda a la comunidad: el individuo exitoso es aquel que logró mejorar la calidad de vida y producción de los demás. Promovemos actividades comerciales donde ambas partes ganen (WIN-WIN).
+            </p>
+            <p>
+              Desalentamos el exitismo basado en especulación financiera (acciones, monedas cripto falopa o inversiones sin producción concreta). Privilegiamos la producción; el éxito especulativo es dudosamente moral y queda prohibido su fomento como caso de éxito.
+            </p>
+          </div>
+
+          <div id="nfts-blockchain">
+            <h3>NFTs, blockchain, cripto y su ambigüedad especulativa</h3>
+            <p>
+              Las tecnologías blockchain prometen autonomía, infraestructuras financieras emancipadoras, smart contracts y trazabilidad incorruptible. Muchos techbros ven en ellas la liberación, pero esa tesis se cuestiona cuando el universo cripto es asediado por la especulación y por inversores ballena que manipulan el mercado. Por otro lado, sus críticos la acusan de ser una tecnología ultracapitalista, obviando que replica los mismos vicios del sistema financiero tradicional (especulación, inflación, falta de transparencia).
+            </p>
+            <p>
+              Desde ArteDigitalData promovemos un uso crítico de las tecnologías: nos posicionamos a favor de acciones que promuevan ideales de comunidad y socialización. Aceptamos fondos, concursos y propuestas financiadas desde comunidades cripto o cualquier otro origen, priorizando siempre reproducir la producción, difundir obra y generar red.
+            </p>
+            <p>
+              Se permite la difusión de obras en mercados NFT siempre que la lógica se mantenga en la difusión del arte digital y no en su especulación financiera. La discusión no debe ser si se vendió o no, sino la naturaleza misma de la obra y lo que busca expresar.
+            </p>
+          </div>
+
+          <div id="relacion-comunidades">
+            <h3>Relación con otras comunidades</h3>
+            <p>
+              ArteDigitalData nace del rejunte de personas provenientes de comunidades de VJing, programación, IA, 360, livecoding y más. Es una comunidad multidisciplinaria que busca reforzar lazos entre individuos y colectivos (como AIAIAI, vuelapelucas3000, Click, VJs a domicilio, VJs colegas, etc.).
+            </p>
+            <p>
+              Jamás competiremos por atención sobre otro colectivo. Nos proponemos como un foro central que nuclee a otras comunidades permitiendo que mantengan su idiosincrasia e impulsando la multipolaridad. Las comunidades con sus logos, reglas y eventos no son más que una excusa para unir a las personas, estrechar lazos sociales y generar oportunidades.
+            </p>
+          </div>
+        </section>
+
+        <div class="section-divider mb-16"></div>
+
+        <!-- ============ PARTE II ============ -->
+        <section id="parte-ii" class="manifesto-section mb-16">
+          <div class="part-badge part-ii">
+            <i class="fas fa-gavel"></i> Parte II
+          </div>
+          <h2 class="text-3xl md:text-4xl font-black text-white">
+            Definición de <span class="gradient-text">Políticas</span>
+            <span class="block text-2xl text-gray-400 font-bold mt-1">en torno a las diferentes entidades</span>
+          </h2>
+
+          <div id="politica-personas">
+            <h3>Política frente a las personas que ingresan</h3>
+            <ul class="policy-list">
+              <li>
+                <span class="policy-tag tag-individuo">Ingreso</span>
+                <strong>Acreditación:</strong> Participarán personas acreditadas con identidad conocida por la administración o recomendadas por un integrante. Quien no se identifique podrá ser removido sin previo aviso.
+              </li>
+              <li>
+                <span class="policy-tag tag-individuo">Inclusión</span>
+                <strong>Acompañamiento:</strong> A los nuevos ingresantes se les debe incitar a participar, brindándoles información, apoyo logístico y soluciones concretas para transmitir el espíritu de la comunidad.
+              </li>
+              <li>
+                <span class="policy-tag tag-individuo">Respeto</span>
+                <strong>No al gatekeeping:</strong> Jamás se criticará a alguien por su falta de experiencia o por ser novato; se abrirán canales para que pueda aprender.
+              </li>
+            </ul>
+          </div>
+
+          <div id="reglas-whatsapp">
+            <h3>Políticas anunciadas en el grupo de WhatsApp <span class="text-sm text-gray-500 font-normal">(Reglas básicas)</span></h3>
+            <ul class="policy-list">
+              <li>
+                <strong>Inclusividad:</strong> No se toleran expresiones ni símbolos discriminatorios de ningún tipo (stickers, palabras, imágenes, videos). Mantener las publicaciones en tema.
+              </li>
+              <li>
+                <strong>Autoría:</strong> Estrictamente prohibido publicar contenido de compañerxs sin reconocer su trabajo y sin su expresa autorización.
+              </li>
+              <li>
+                <strong>Presentación:</strong> Al ingresar, es necesario presentarse contando quién sos, tu relación con el arte digital y qué buscás en el grupo.
+              </li>
+              <li>
+                <strong>Contenido:</strong> Permitidos compraventa o memes offtopic solo si van acompañados por un link a una producción propia de arte digital.
+              </li>
+              <li>
+                <strong>Reposteo:</strong> Recursos, obras o eventos podrán ser reposteados en la red social de ArteDigitalData dando crédito al autor original. Si la persona prefiere que no se comparta, se eliminará a pedido.
+              </li>
+              <li>
+                <strong>Sanciones:</strong> No cumplir con las reglas del grupo implica expulsión inmediata.
+              </li>
+            </ul>
+          </div>
+
+          <div id="politica-instituciones">
+            <h3>Política frente a las instituciones</h3>
+            <p>El diálogo con instituciones busca:</p>
+            <ul class="policy-list">
+              <li>
+                <span class="policy-tag tag-institucion">Visibilidad</span>
+                Dar renombre a lxs artistas compartiendo sus redes, trabajo y producción.
+              </li>
+              <li>
+                <span class="policy-tag tag-institucion">Equidad</span>
+                Compartir ganancias de forma equitativa y justa según el trabajo realizado, comprometiéndose a no sacar provecho de lxs compañerxs.
+              </li>
+              <li>
+                <span class="policy-tag tag-institucion">Compromiso</span>
+                Asociarse con instituciones comprometidas con los objetivos de ArteDigitalData.
+              </li>
+            </ul>
+          </div>
+
+          <div id="politica-universidades">
+            <h3>Política frente a las universidades</h3>
+            <p>
+              Estamos comprometidos con la promoción de la universidad pública, gratuita y de calidad como el órgano más importante del Estado para asegurar la inclusión y el ascenso social. Se le da un lugar prioritario a la construcción de alianzas con ellas.
+            </p>
+          </div>
+
+          <div id="politica-partidos">
+            <h3>Política frente a partidos políticos</h3>
+            <p>
+              ArteDigitalData no depende de ningún partido político ni espacio electoral. En caso de recibir apoyo logístico o colaborar en un evento partidario, se hará con el fin exclusivo de reforzar y defender la comunidad, sin dejarse obnubilar por banderas o candidatos. La identidad de los partidos jamás superará la identidad simbólica de ArteDigitalData.
+            </p>
+          </div>
+
+          <div id="politica-marcas">
+            <h3>Política frente a marcas</h3>
+            <p>
+              Apoyos o sponsors de marcas para eventos o productos son bienvenidos siempre que no comprometan los ideales e intereses de la comunidad.
+            </p>
+          </div>
+
+          <div id="politica-trabajo-corpo">
+            <h3>Política frente al trabajo corpo</h3>
+            <p>
+              Se promueve generar grupos de trabajo para proyectos particulares entre miembros para hacer crecer la producción, sin necesidad de que lleven la marca de ArteDigitalData.
+            </p>
+          </div>
+
+        </section>
+
+        <div class="section-divider mb-12"></div>
+
+        <!-- Footer CTA -->
+        <section class="text-center mb-8">
+          <p class="text-gray-500 text-sm mb-4">Este manifiesto es un documento vivo, sujeto a revisión por la comunidad.</p>
+          <a href="/quienessomos.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-cyan-500/20 text-cyan-400 font-bold text-sm uppercase tracking-wider hover:bg-cyan-500/10 transition-all">
+            <i class="fas fa-arrow-left"></i> Volver a Quienes Somos
+          </a>
+        </section>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+
+  <script>
+    // TOC mobile toggle
+    function openToc() {
+      document.getElementById('toc-sidebar').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeToc() {
+      document.getElementById('toc-sidebar').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Back to top button
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('back-to-top');
+      if (window.scrollY > 400) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+    });
+
+    // Active TOC link highlight on scroll
+    const sections = document.querySelectorAll('.manifesto-section[id], #individuo-sociedad, #caso-concreto, #postura-ideologica, #nfts-blockchain, #relacion-comunidades, #introduccion, #politica-personas, #reglas-whatsapp, #politica-instituciones, #politica-universidades, #politica-partidos, #politica-marcas, #politica-trabajo-corpo');
+    // Actually just use the section elements and the sub-divs that have IDs
+    const allAnchorTargets = document.querySelectorAll('[id]');
+    const tocLinks = document.querySelectorAll('.toc-link');
+
+    function updateActiveToc() {
+      let current = '';
+      allAnchorTargets.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 200) {
+          current = el.getAttribute('id');
+        }
+      });
+
+      tocLinks.forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        if (href === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    updateActiveToc();
+  </script>
+</body>
+
+</html>

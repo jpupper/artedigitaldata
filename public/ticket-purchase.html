@@ -402,7 +402,19 @@
           avatarEl.innerText = (user.displayName || user.username || '?')[0].toUpperCase();
         }
         document.getElementById('buyer-display-name').innerText = user.displayName || user.username || '';
-        document.getElementById('buyer-display-email').innerText = user.email || '';
+        const emailDisplay = document.getElementById('buyer-display-email');
+        emailDisplay.innerText = user.email || '';
+
+        // Always show buyer-info-section so the user can see/edit their email
+        // This is critical when SSO login happens and user.email is not yet loaded
+        const buyerInfoSection = document.getElementById('buyer-info-section');
+        buyerInfoSection.classList.remove('hidden');
+        if (user.email) {
+          document.getElementById('buyer-email').value = user.email;
+        }
+        if (user.displayName || user.username) {
+          document.getElementById('buyer-name').value = user.displayName || user.username;
+        }
       }
 
       // Form submission

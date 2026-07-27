@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quienes Somos - Arte Digital Data</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Slideshow */
+    .slideshow-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      aspect-ratio: 16/9;
+      background: var(--bg-surface);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+    }
+    .slideshow-track {
+      display: flex;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      height: 100%;
+    }
+    .slideshow-slide {
+      min-width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+    }
+    .slideshow-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .slide-dots {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+    .slide-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .slide-dot.active {
+      background: var(--color-cyan);
+      box-shadow: 0 0 10px rgba(0,245,255,0.6);
+    }
+    .slide-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      z-index: 10;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide-arrow:hover {
+      background: var(--color-cyan);
+      color: var(--bg-base);
+    }
+    .slide-arrow.prev { left: 1rem; }
+    .slide-arrow.next { right: 1rem; }
+
+    /* YouTube iframe responsive */
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid rgba(0,245,255,0.15);
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 1rem;
+    }
+
+    /* Section dividers */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-cyan), var(--color-magenta), transparent);
+      opacity: 0.3;
+    }
+
+    /* Pulse animation for icon */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(0,245,255,0.3); }
+      50% { box-shadow: 0 0 20px rgba(0,245,255,0.6); }
+    }
+    .glow-card {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+
+    <!-- Hero -->
+    <section class="mb-12 text-center pt-8 pb-4">
+      <h1 class="text-4xl md:text-6xl font-black gradient-text mb-3">
+        Quienes Somos
+      </h1>
+      <p class="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+        Somos una comunidad multidisciplinaria de artistas digitales, programadores, VJs, livecoders y creadores que creen en el poder de compartir el conocimiento para hacer crecer el arte digital en Argentina y Latinoamerica.
+      </p>
+    </section>
+
+    <div class="section-divider mb-12"></div>
+
+    <!-- Casos de Exito -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 mb-8">
+        <i class="fas fa-trophy text-3xl text-yellow-400"></i>
+        <h2 class="text-3xl md:text-4xl font-black text-white">
+          Casos de <span class="gradient-text">Exito</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Evento 1 -->
+        <div class="card-cyber rounded-2xl p-1">
+          <div class="bg-[var(--bg-base)] rounded-2xl p-6 h-full">
+            <div class="video-wrapper mb-4">
+              <iframe src="https://www.youtube.com/embed/Li1sK7N2cBQ"
+                      title="Primer Evento Arte Digital Data"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen></iframe>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-star text-yellow-400"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Primer Evento ADD</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  Nuestro evento inaugural donde la comunidad se encontro por primera vez. Sets de VJing en vivo, mapping sobre estructuras y la energia de mas de 200 personas que vivieron una experiencia unica de arte digital colaborativo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evento 2 -->
+        <div class="card-cyber rounded-2xl p-1">
+          <div class="bg-[var(--bg-base)] rounded-2xl p-6 h-full">
+            <div class="video-wrapper mb-4">
+              <iframe src="https://www.youtube.com/embed/jtzEQ58FfHQ"
+                      title="Segundo Evento Arte Digital Data"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen></iframe>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-star text-yellow-400"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-1">Segundo Evento ADD</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  Consolidando la comunidad con una segunda edicion que duplico la participacion. Instalaciones interactivas, talleres de livecoding y performances audiovisuales que marcaron un antes y despues en la escena del arte digital local.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider mb-12"></div>
+
+    <!-- Mision -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 mb-8">
+        <i class="fas fa-bullseye text-3xl text-[var(--color-magenta)]"></i>
+        <h2 class="text-3xl md:text-4xl font-black text-white">
+          Nuestra <span class="gradient-text">Mision</span>
+        </h2>
+      </div>
+
+      <div class="card-cyber rounded-2xl p-1 glow-card">
+        <div class="bg-[var(--bg-base)] rounded-2xl p-8 md:p-10">
+          <div class="flex gap-4">
+            <div class="hidden sm:block">
+              <i class="fas fa-quote-left text-4xl text-[var(--color-cyan)] opacity-30"></i>
+            </div>
+            <div>
+              <p class="text-gray-300 text-base md:text-lg leading-relaxed mb-4">
+                ArteDigitalData es un colectivo que nace con el objetivo de hacer disponible a toda la comunidad la informacion digital relacionada al arte y la tecnologia. Fomentamos un nucleo donde compartir procesos productivos, resolver inquietudes, encontrar inspiracion y conseguir proveedores de servicios especificos. Creemos firmemente que el motor del progreso radica en la posibilidad de la colectivizacion de las actividades y en crear redes de contencion amorosas que faciliten todas las acciones relacionadas a la produccion del arte digital, tanto desde la creacion como desde la exposicion.
+              </p>
+              <!-- Manifiesto CTA -->
+              <div class="mb-6">
+                <a href="manifiesto.html" class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-magenta-500/20 border border-cyan-500/30 text-cyan-400 font-black text-xs uppercase tracking-widest hover:from-cyan-500/30 hover:to-magenta-500/30 hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(0,245,255,0.2)] transition-all group">
+                  <i class="fas fa-scroll text-sm"></i>
+                  Leer Manifiesto
+                  <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                </a>
+                <p class="text-gray-500 text-xs mt-2">Conocé los principios filosóficos y políticos de nuestra comunidad</p>
+              </div>
+              <p class="text-gray-300 text-base md:text-lg leading-relaxed mb-4">
+                Proponemos una sintesis superadora entre el beneficio individual y el beneficio colectivo: en nuestra vision, el beneficio colectivo ES el beneficio individual y viceversa, porque ambas dimensiones no son necesariamente excluyentes. Cuando compartis un conocimiento con la comunidad, es el reconocimiento de esa comunidad lo que termina generando oportunidades concretas: mas visibilidad, cursos, contrataciones y colaboraciones. Lo importante no es la naturaleza de la monetizacion que hagas en torno a tu creacion digital, sino que esa creacion ayude, facilite y multiplique la produccion de arte digital.
+              </p>
+              <p class="text-gray-300 text-base md:text-lg leading-relaxed mb-4">
+                Nucleamos personas del VJing, la programacion, la inteligencia artificial, el livecoding, las tecnologias 360 y mucho mas. Nos proponemos como un foro central multidisciplinario que une comunidades amigas —AIAIAI, vuelapelucas3000, Click, VJs a Domicilio, VJs Colegas— respetando la idiosincrasia de cada una.
+              </p>
+              <p class="text-gray-300 text-base md:text-lg leading-relaxed">
+                En definitiva, las comunidades con sus logos, reglas, eventos y discusiones no son mas que una excusa para unir a la humanidad, permitiendo la estrechez de los lazos sociales, fomentando la empatia y generando oportunidades. ArteDigitalData no es mas que una excusa para lograr ese objetivo.
+              </p>
+            </div>
+            <div class="hidden sm:block">
+              <i class="fas fa-quote-right text-4xl text-[var(--color-magenta)] opacity-30"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider mb-12"></div>
+
+    <!-- Obras de la Comunidad (Slideshow) -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 mb-8">
+        <i class="fas fa-palette text-3xl text-[var(--color-cyan)]"></i>
+        <h2 class="text-3xl md:text-4xl font-black text-white">
+          Obras de la <span class="gradient-text">Comunidad</span>
+        </h2>
+      </div>
+
+      <div id="obras-slideshow" class="slideshow-container max-w-4xl mx-auto">
+        <!-- Placeholder -->
+        <div class="w-full h-full flex items-center justify-center">
+          <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-cyan-400 mb-3"></i>
+            <p class="text-gray-400">Cargando obras...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider mb-12"></div>
+
+    <!-- Propuestas para Eventos -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 mb-8">
+        <i class="fas fa-calendar-check text-3xl text-green-400"></i>
+        <h2 class="text-3xl md:text-4xl font-black text-white">
+          Propuestas para <span class="gradient-text">Eventos</span>
+        </h2>
+      </div>
+
+      <p class="text-gray-400 text-lg mb-8 max-w-3xl">
+        Llevamos el arte digital a tu evento. Estas son las experiencias que ofrecemos:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Sets AV -->
+        <div class="card-cyber rounded-2xl p-1 group">
+          <div class="bg-[var(--bg-base)] rounded-2xl p-6 h-full flex flex-col">
+            <div class="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-5 group-hover:bg-cyan-500/20 transition-all">
+              <i class="fas fa-play-circle text-2xl text-[var(--color-cyan)]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Sets AV</h3>
+            <p class="text-gray-400 text-sm leading-relaxed flex-1">
+              Performances audiovisuales en vivo con VJs de la comunidad. Sincronizacion de visuales generativos, mapping en tiempo real y musica electronica para crear experiencias inmersivas que transforman cualquier espacio.
+            </p>
+            <div class="mt-4 pt-4 border-t border-white/5">
+              <span class="text-xs text-cyan-400 font-black uppercase tracking-wider">
+                <i class="fas fa-clock mr-1"></i> 30 min - 2 hs
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workshops -->
+        <div class="card-cyber rounded-2xl p-1 group">
+          <div class="bg-[var(--bg-base)] rounded-2xl p-6 h-full flex flex-col">
+            <div class="w-14 h-14 rounded-xl bg-magenta-500/10 flex items-center justify-center mb-5 group-hover:bg-magenta-500/20 transition-all">
+              <i class="fas fa-chalkboard-teacher text-2xl text-[var(--color-magenta)]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Workshops</h3>
+            <p class="text-gray-400 text-sm leading-relaxed flex-1">
+              Talleres practicos de TouchDesigner, livecoding, inteligencia artificial aplicada al arte, modelado 3D, mapping y produccion audiovisual. Para todos los niveles, desde principiantes hasta avanzados.
+            </p>
+            <div class="mt-4 pt-4 border-t border-white/5">
+              <span class="text-xs text-[var(--color-magenta)] font-black uppercase tracking-wider">
+                <i class="fas fa-clock mr-1"></i> 2 - 6 hs
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instalaciones Interactivas -->
+        <div class="card-cyber rounded-2xl p-1 group">
+          <div class="bg-[var(--bg-base)] rounded-2xl p-6 h-full flex flex-col">
+            <div class="w-14 h-14 rounded-xl bg-yellow-500/10 flex items-center justify-center mb-5 group-hover:bg-yellow-500/20 transition-all">
+              <i class="fas fa-hand-pointer text-2xl text-yellow-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">Instalaciones Interactivas</h3>
+            <p class="text-gray-400 text-sm leading-relaxed flex-1">
+              Experiencias donde el publico es parte de la obra. Sensores de movimiento, camaras, luces LED, proyecciones reactivas y entornos generativos que responden en tiempo real a la presencia de las personas.
+            </p>
+            <div class="mt-4 pt-4 border-t border-white/5">
+              <span class="text-xs text-yellow-400 font-black uppercase tracking-wider">
+                <i class="fas fa-clock mr-1"></i> Permanente / A medida
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center mt-10">
+        <p class="text-gray-400 mb-4">¿Queres llevar arte digital a tu evento?</p>
+        <a href="mailto:contacto@artedigitaldata.com" class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-white/5 border border-cyan-500/30 text-cyan-400 font-black text-sm uppercase tracking-wider hover:bg-cyan-500/10 hover:border-cyan-400 transition-all">
+          <i class="fas fa-paper-plane"></i> Contactanos
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+
+  <script>
+    // --- Obras Slideshow ---
+    let slideshowInterval;
+    let currentSlide = 0;
+    let obrasSlides = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadObrasSlideshow();
+    });
+
+    async function loadObrasSlideshow() {
+      const container = document.getElementById('obras-slideshow');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/posts');
+        const posts = await res.json();
+        // Solo posts con imagen para el slideshow
+        const obras = posts.filter(p => p.imageUrl);
+
+        if (!obras.length) {
+          container.innerHTML = `
+            <div class="w-full h-full flex items-center justify-center">
+              <div class="text-center text-gray-500">
+                <i class="fas fa-image text-5xl text-cyan-400/20 mb-3"></i>
+                <p>Aun no hay obras en la comunidad. ¡Se la primera en publicar!</p>
+                <a href="/create.html" class="inline-block mt-3 text-cyan-400 hover:underline text-sm font-bold">
+                  <i class="fas fa-plus-circle mr-1"></i>Publicar obra
+                </a>
+              </div>
+            </div>`;
+          return;
+        }
+
+        obrasSlides = obras;
+        buildSlideshow(container, obras);
+        startAutoSlide();
+      } catch (err) {
+        console.error('Error loading obras:', err);
+        container.innerHTML = `
+          <div class="w-full h-full flex items-center justify-center">
+            <div class="text-center text-red-400">
+              <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+              <p>Error cargando obras</p>
+            </div>
+          </div>`;
+      }
+    }
+
+    function buildSlideshow(container, obras) {
+      const slidesHTML = obras.map((obra, i) => `
+        <div class="slideshow-slide">
+          <a href="/post.html?id=${obra._id}" class="block w-full h-full relative">
+            <img src="${sanitizeUrl(obra.imageUrl)}" alt="${escapeAttr(obra.title)}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6">
+              <h3 class="text-white font-bold text-lg md:text-xl">${escapeHTML(obra.title)}</h3>
+              <p class="text-gray-300 text-sm">por ${escapeHTML(obra.author?.username || 'Anonimo')}</p>
+            </div>
+          </a>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="slideshow-track" id="slideshow-track">
+          ${slidesHTML}
+        </div>
+        <button class="slide-arrow prev" onclick="prevSlide()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="slide-arrow next" onclick="nextSlide()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="slide-dots" id="slide-dots">
+          ${obras.map((_, i) => `<div class="slide-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`).join('')}
+        </div>
+      `;
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      const track = document.getElementById('slideshow-track');
+      if (track) track.style.transform = `translateX(-${index * 100}%)`;
+
+      const dots = document.querySelectorAll('.slide-dot');
+      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+
+      resetAutoSlide();
+    }
+
+    function nextSlide() {
+      const next = (currentSlide + 1) % obrasSlides.length;
+      goToSlide(next);
+    }
+
+    function prevSlide() {
+      const prev = (currentSlide - 1 + obrasSlides.length) % obrasSlides.length;
+      goToSlide(prev);
+    }
+
+    function startAutoSlide() {
+      slideshowInterval = setInterval(nextSlide, 4000);
+    }
+
+    function resetAutoSlide() {
+      clearInterval(slideshowInterval);
+      startAutoSlide();
+    }
+
+    // Helpers
+    function escapeHTML(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+      if (!str) return '';
+      return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+
+</html>
