@@ -31,6 +31,9 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-home text-[10px]"></i> INICIO
           </a>
+          <a href="${CONFIG.BASE}/quienessomos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+            <i class="fas fa-info-circle text-[10px]"></i> QUIENES SOMOS
+          </a>
           <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-palette text-[10px]"></i> OBRAS
           </a>
@@ -100,6 +103,9 @@ function renderHeader() {
         <div class="flex flex-col gap-1">
           <a href="${CONFIG.BASE}/" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-home mr-2"></i> INICIO
+          </a>
+          <a href="${CONFIG.BASE}/quienessomos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
+            <i class="fas fa-info-circle mr-2"></i> QUIENES SOMOS
           </a>
           <a href="${CONFIG.BASE}/obras.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-palette mr-2"></i> OBRAS
