@@ -34,21 +34,41 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 router.get('/:username', async (req: Request, res: Response) => {
   try {
-    const user = await User.findOne({ username: req.params.username }).select('-password');
-    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    // El username NO es único entre apps (la DB users es global: fullscreen_global).
+    // Un mismo username puede existir con origin distintos (pizarraia, jpshadeditor,
+    // fscauth, artedigitaldata...). findOne solo devuelve el primero y puede apuntar
+    // a la cuenta vacía de OTRA app. Por eso elegimos el match correcto de esta app.
+    const matches = await User.find({ username: req.params.username }).select('-password');
+    if (!matches.length) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    // Determine if the requester is the owner (to expose email)
-    const userObj = user.toObject() as any;
+    // Si el pedido viene autenticado y coincide con uno de los candidatos, ese gana.
     const authHeader = req.headers['authorization'];
-    let isOwnerRequest = false;
+    let sesionId: string | null = null;
     if (authHeader) {
       try {
         const secret = process.env.JWT_SECRET;
-        if (!secret) throw new Error('no secret');
-        const decoded: any = jwt.verify(authHeader.replace('Bearer ', ''), secret);
-        isOwnerRequest = decoded.id === user._id.toString() || decoded.userId === user._id.toString();
-      } catch { /* invalid token — treat as guest */ }
+        if (secret) {
+          const decoded: any = jwt.verify(authHeader.replace('Bearer ', ''), secret);
+          sesionId = String(decoded.id || decoded.userId || '');
+        }
+      } catch { /* token inválido → tratar como invitado */ }
     }
+
+    const puntajes = matches.map(u => {
+      const o = u.toObject() as any;
+      let score = 0;
+      if (sesionId && String(u._id) === sesionId) score += 100;      // es el propio usuario logueado
+      if (['artedigitaldata', 'fscauth'].includes(o.origin)) score += 10; // pertenece a este ecosistema
+      if (o.permissions?.artedigital) score += 5;
+      if (o.displayName || o.bio || o.avatar) score += 3;            // tiene perfil completo
+      return { user: u, score, o };
+    }).sort((a, b) => b.score - a.score);
+
+    const ganador = puntajes[0];
+    let user = ganador.user;
+    let userObj = ganador.o;
+
+    const isOwnerRequest = !!sesionId && sesionId === String(user._id);
     if (!isOwnerRequest) delete userObj.email;
 
     // Favorites (items liked by this user)
