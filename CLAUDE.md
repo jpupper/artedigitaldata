@@ -32,7 +32,8 @@ artedigitaldata/
 │   └── utils/             # userHydration.ts, mailer.ts
 ├── public/                # Todo el frontend (servido estático)
 │   ├── *.html             # Una página por feature
-│   ├── css/style.css      # Estilos custom (gradient-text, card-cyber, etc.)
+│   ├── css/style.css      # Estilos compartidos (gradient-text, card-cyber, etc.)
+│   ├── css/<pagina>.css   # Estilos propios de una página (manifiesto, artistas…)
 │   ├── css/tailwind.css   # Build de Tailwind (generado — no editar a mano)
 │   ├── js/                # Lógica frontend
 │   └── img/               # Imágenes estáticas (artedigital.png, etc.)
@@ -177,6 +178,21 @@ y de cualquier `<style>` en línea. El CDN inyectaba su hoja al final del head,
 así que ese es el orden que gana los empates de especificidad. Moverlo antes
 cambia el render: por ejemplo `.card-cyber` (en `style.css`) le ganaría a
 `bg-[#0d0d12]/60` en las tarjetas del feed.
+
+**Nada de `<style>` en las páginas.** Los estilos propios de una página van en
+`public/css/<pagina>.css`, y el `<link>` se pone **entre `style.css` y
+`tailwind.css`**, que es donde estaba el `<style>` que reemplazó. Cambiarlo de
+lugar altera qué regla gana los empates de especificidad.
+
+Sólo va a `style.css` lo que usen varias páginas. Hoy casi no hay repetición
+entre páginas (4 selectores compartidos sobre 105), así que ante la duda:
+archivo propio.
+
+Ojo: el scanner de Tailwind lee los archivos como texto plano, sin entender
+HTML. Mientras el CSS vivía en `<style>`, cosas como `filter: drop-shadow(...)`
+o `resize: vertical` le hacían generar utilidades fantasma (`.drop-shadow`,
+`.resize`) que ningún elemento usaba. Al mover ese CSS a archivos `.css` —que
+no están en `content`— esas reglas dejaron de generarse.
 
 **Clases armadas por interpolación → `safelist`.** Tailwind escanea el código
 como texto plano, así que no puede ver `` `text-${accentColor}-400` ``. Si

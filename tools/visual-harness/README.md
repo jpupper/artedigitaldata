@@ -58,3 +58,25 @@ node tools/visual-harness/check-coverage.js
 Si aparecen clases faltantes suelen venir de interpolación en JS
 (`text-${color}-400`), que el scanner de Tailwind no puede ver: hay que
 agregarlas al `safelist` de `tailwind.config.js`.
+
+## Páginas que el diff de píxeles no puede juzgar
+
+`404.html` dibuja un canvas generativo con p5.js: cada carga es distinta, así
+que comparar píxeles no sirve. Para esos casos se comparan los estilos
+computados de cada elemento, que sí son deterministas.
+
+```bash
+node tools/visual-harness/computed-styles.js /404 /tmp/antes.json
+# ... hacer el cambio ...
+node tools/visual-harness/computed-styles.js /404 /tmp/despues.json
+node tools/visual-harness/compare-styles.js /tmp/antes.json /tmp/despues.json
+```
+
+## Requisito
+
+El harness usa Playwright. `npm install` no baja los navegadores, hay que
+pedirlos una vez:
+
+```bash
+npx playwright install chromium
+```

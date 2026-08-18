@@ -1,0 +1,105 @@
+:root {
+    --bg-base: #0D0D12;
+    --bg-surface: #1A1A2E;
+    --color-cyan: #00F5FF;
+    --color-magenta: #FF00E0;
+    --color-text: #E5E5E5;
+    --color-text-dim: #94A3B8;
+    --gradient-neon: linear-gradient(135deg, var(--color-cyan), var(--color-magenta));
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--color-text);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.container {
+    position: relative;
+    z-index: 10;
+    padding: 2rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    max-width: 600px;
+    width: 95%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    font-size: 5rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    background: var(--gradient-neon);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -2px;
+    filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.3));
+}
+
+p {
+    font-size: 1.2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: var(--color-text-dim);
+}
+
+#game-container {
+    width: 100%;
+    height: 320px;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid var(--color-cyan);
+    box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
+    position: relative;
+}
+
+.btn-home {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--gradient-neon);
+    color: var(--bg-base) !important;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px -5px rgba(0, 245, 255, 0.4);
+}
+
+.btn-home:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 15px 30px -5px rgba(255, 0, 224, 0.5);
+    filter: brightness(1.2);
+}
+
+.instructions {
+    font-size: 0.8rem;
+    color: var(--color-text-dim);
+    margin-top: 1.5rem;
+    opacity: 0.7;
+}

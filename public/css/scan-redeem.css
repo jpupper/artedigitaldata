@@ -1,0 +1,33 @@
+/* Scanner container fixes - high specificity */
+#scanner-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 300px !important;
+  max-height: 50vh !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border-radius: 1rem !important;
+  background: #000 !important;
+}
+#scanner-container * {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+#scanner-container video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 1rem !important;
+}
+#scanner-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+/* Target the library's injected elements */
+#scanner-container > div,
+#scanner-container > div > div,
+#scanner-container > div > div > div {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}

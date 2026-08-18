@@ -1,0 +1,227 @@
+/* Smooth scroll for TOC links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Table of Contents - sticky sidebar */
+.toc-container {
+  position: sticky;
+  top: 6rem;
+}
+
+.toc-link {
+  transition: all 0.2s ease;
+  border-left: 2px solid transparent;
+  padding-left: 1rem;
+}
+
+.toc-link:hover,
+.toc-link.active {
+  border-left-color: var(--color-cyan);
+  color: var(--color-cyan);
+}
+
+.toc-link.sub {
+  padding-left: 1.75rem;
+  font-size: 0.8rem;
+}
+
+.toc-link.sub-sub {
+  padding-left: 2.5rem;
+  font-size: 0.75rem;
+}
+
+/* Section styling */
+.manifesto-section {
+  scroll-margin-top: 6rem;
+}
+
+.manifesto-section h2 {
+  position: relative;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.manifesto-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 2px;
+  background: var(--gradient-neon);
+  border-radius: 2px;
+}
+
+.manifesto-section h3 {
+  color: #e5e5e5;
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--color-magenta);
+}
+
+.manifesto-section h4 {
+  color: #c0c0c0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid rgba(0, 245, 255, 0.3);
+}
+
+.manifesto-section p,
+.manifesto-section li {
+  color: #a0a0a8;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.manifesto-section .highlight-box {
+  border-left: 3px solid var(--color-cyan);
+  background: rgba(0, 245, 255, 0.03);
+  padding: 1.5rem;
+  border-radius: 0 1rem 1rem 0;
+  margin: 1.5rem 0;
+}
+
+.manifesto-section .highlight-box p {
+  margin-bottom: 0.5rem;
+}
+
+.manifesto-section .case-text {
+  background: rgba(255, 0, 224, 0.03);
+  border-left: 3px solid var(--color-magenta);
+  padding: 1.25rem;
+  border-radius: 0 1rem 1rem 0;
+  margin: 1.5rem 0;
+}
+
+.manifesto-section .case-text p {
+  margin-bottom: 0.75rem;
+}
+
+/* Policy list styling */
+.policy-list {
+  list-style: none;
+  padding: 0;
+}
+
+.policy-list li {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s;
+}
+
+.policy-list li:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 245, 255, 0.1);
+}
+
+.policy-list li strong {
+  color: var(--color-cyan);
+  font-weight: 800;
+}
+
+.policy-tag {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 0.5rem;
+}
+
+.tag-individuo { background: rgba(0, 245, 255, 0.15); color: var(--color-cyan); }
+.tag-institucion { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+.tag-universidad { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.tag-partido { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.tag-marca { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+.tag-corpo { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+
+/* Responsive TOC toggle for mobile */
+#toc-toggle {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .toc-sidebar {
+    display: none;
+  }
+  .toc-sidebar.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(13, 13, 18, 0.97);
+    padding: 2rem;
+    overflow-y: auto;
+  }
+  #toc-toggle {
+    display: inline-flex;
+  }
+}
+
+/* Part badges */
+.part-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.5rem;
+}
+
+.part-badge.part-i {
+  background: rgba(0, 245, 255, 0.1);
+  color: var(--color-cyan);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.part-badge.part-ii {
+  background: rgba(255, 0, 224, 0.1);
+  color: var(--color-magenta);
+  border: 1px solid rgba(255, 0, 224, 0.2);
+}
+
+/* Back to top */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--color-cyan);
+  color: var(--bg-base);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+  transition: all 0.3s;
+  z-index: 40;
+  border: none;
+}
+
+.back-to-top.visible {
+  display: flex;
+}
+
+.back-to-top:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+}

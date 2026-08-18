@@ -1,0 +1,93 @@
+.section-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(0, 245, 255, 0.08);
+  border-radius: 1rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+.input-field {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 245, 255, 0.12);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  color: white;
+  width: 100%;
+  transition: all 0.3s ease;
+  outline: none;
+  font-size: 0.95rem;
+}
+.input-field:focus {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.12);
+}
+.input-field::placeholder {
+  color: #6B7280;
+}
+textarea.input-field {
+  resize: vertical;
+  min-height: 80px;
+}
+.btn-glow {
+  background: linear-gradient(135deg, #00F5FF, #FF00E0);
+  color: #0D0D12;
+  font-weight: 800;
+  padding: 0.875rem 2.5rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  width: 100%;
+  justify-content: center;
+}
+.btn-glow:hover:not(:disabled) {
+  filter: brightness(1.2);
+  box-shadow: 0 0 25px rgba(0, 245, 255, 0.4);
+  transform: translateY(-2px);
+}
+.btn-glow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.icon-glow {
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
+}
+.icon-glow-magenta {
+  filter: drop-shadow(0 0 8px rgba(255, 0, 224, 0.4));
+}
+#success-message {
+  display: none;
+}
+.avatar-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(0, 245, 255, 0.3);
+  display: none;
+}
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px dashed rgba(0, 245, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.avatar-placeholder:hover {
+  border-color: var(--color-cyan);
+  color: var(--color-cyan);
+}
+.file-input-hidden {
+  display: none;
+}

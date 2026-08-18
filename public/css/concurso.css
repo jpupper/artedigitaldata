@@ -1,0 +1,26 @@
+.contest-card:hover .contest-overlay {
+    opacity: 1;
+}
+.gradient-border {
+    position: relative;
+    background: linear-gradient(to right, #eab308, #f97316);
+    padding: 1px;
+    border-radius: 2rem;
+}
+.gradient-border-inner {
+    background: #0d0d12;
+    border-radius: calc(2rem - 1px);
+}
+.img-container {
+    max-width: 100%;
+    max-height: 400px; /* Ajusta esto según sea necesario */
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.img-container img {
+    max-width: 100%;
+    display: block;
+}
