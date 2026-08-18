@@ -3,5 +3,10 @@ dist/
 .env
 *.js.map
 *.d.ts
-server.js
+/server.js
 src/**/*.js
+
+# Harness visual (artefactos locales, no versionados)
+tools/visual-harness/snapshots/
+tools/visual-harness/netcache/
+tools/visual-harness/cdn-selectors.json

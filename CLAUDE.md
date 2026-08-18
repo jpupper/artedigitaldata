@@ -14,7 +14,7 @@ Red social para artistas digitales. Backend Node/TypeScript + frontend vanilla J
 | Auth | JWT + SSO externo (FSCAuth) |
 | Pagos | MercadoPago SDK |
 | Upload | multer + disco local (NO Cloudinary activo) |
-| Frontend | HTML + JS vanilla + TailwindCSS v3 (CDN) |
+| Frontend | HTML + JS vanilla + TailwindCSS v3 (compilado, NO CDN) |
 | Deploy | PM2 + Nginx en VPS |
 | Dev local | `npx serve public -p 3000` (NO servidor Node) |
 
@@ -33,6 +33,7 @@ artedigitaldata/
 ├── public/                # Todo el frontend (servido estático)
 │   ├── *.html             # Una página por feature
 │   ├── css/style.css      # Estilos custom (gradient-text, card-cyber, etc.)
+│   ├── css/tailwind.css   # Build de Tailwind (generado — no editar a mano)
 │   ├── js/                # Lógica frontend
 │   └── img/               # Imágenes estáticas (artedigital.png, etc.)
 ├── deploy_scripts/        # Scripts de deploy a VPS y FTP
@@ -148,6 +149,53 @@ window.location.href = `recurso.html?id=${item._id}`;
 ### Hidratación de usuarios (backend)
 `src/utils/userHydration.ts` resuelve refs de User en lotes antes de devolver respuestas. Posts, Recursos y Eventos pasan por hidratación — `_id` se serializa como string hex de 24 chars.
 
+### Sistema de estilos — Tailwind compilado
+
+Tailwind se compila a `public/css/tailwind.css`. Ya NO se usa el Play CDN
+(`cdn.tailwindcss.com`): compilaba el CSS en el navegador en cada visita.
+
+```bash
+npm run build:css     # compila una vez
+npm run watch:css     # recompila al vuelo mientras desarrollás
+```
+
+- **`npm run build` NO compila el CSS** (sigue siendo sólo `tsc`). El VPS corre
+  ese script y `tailwindcss` es devDependency: si allá hubiera
+  `NODE_ENV=production`, `npm install` la omitiría y el deploy del backend se
+  caería. El VPS no necesita compilarlo porque recibe el archivo ya generado
+  desde git.
+- El archivo generado **se versiona**: el VPS lo toma de git y el deploy por FTP
+  sincroniza `public/` tal cual está en local. `run_deploy.bat` lo recompila
+  solo y **cancela el deploy si el resultado no está commiteado**, porque si no
+  el VPS y el mirror de FTP quedarían con estilos distintos.
+- La configuración vive en `tailwind.config.js` y NO tiene `theme.extend`: el
+  CDN corría con el tema por defecto y cualquier extensión cambiaría el render.
+- El input es `src/styles/tailwind.css` (las tres directivas `@tailwind`).
+
+**El `<link>` de Tailwind va ÚLTIMO en el `<head>`**, después de `css/style.css`
+y de cualquier `<style>` en línea. El CDN inyectaba su hoja al final del head,
+así que ese es el orden que gana los empates de especificidad. Moverlo antes
+cambia el render: por ejemplo `.card-cyber` (en `style.css`) le ganaría a
+`bg-[#0d0d12]/60` en las tarjetas del feed.
+
+**Clases armadas por interpolación → `safelist`.** Tailwind escanea el código
+como texto plano, así que no puede ver `` `text-${accentColor}-400` ``. Si
+agregás una clase dinámica de ese tipo, sumala al `safelist` de
+`tailwind.config.js` o no se va a generar.
+
+### Harness visual — cambios que no deben alterar el front
+
+`tools/visual-harness/` compara el render de todas las páginas pixel a pixel
+entre dos estados del código. Usarlo en cualquier refactor de CSS o markup que
+deba ser visualmente idéntico. Ver `tools/visual-harness/README.md`.
+
+```bash
+node tools/visual-harness/capture.js antes --record
+# ... hacer el cambio ...
+node tools/visual-harness/capture.js despues
+node tools/visual-harness/compare.js antes despues
+```
+
 ### Roles
 - `user.role` (global): `USER`, `ADMIN`, `SYSTEM`
 - `user.permissions.artedigital.role` (app-specific): `USUARIO`, `ADMINISTRADOR`
@@ -213,6 +261,7 @@ GITHUB_TOKEN, GITHUB_REPO
 
 ### Solo frontend (más rápido, datos del VPS)
 ```bash
+npm run build:css      # sólo si cambiaste clases de Tailwind
 npx serve public -p 3000
 # Abrir http://localhost:3000
 ```

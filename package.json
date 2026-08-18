@@ -7,7 +7,11 @@
     "start": "ts-node server.ts",
     "dev": "npx nodemon --exec ts-node server.ts --ext ts",
     "build": "tsc",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "build:css": "tailwindcss -c tailwind.config.js -i src/styles/tailwind.css -o public/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i src/styles/tailwind.css -o public/css/tailwind.css --watch",
+    "snap": "node tools/visual-harness/capture.js",
+    "snap:diff": "node tools/visual-harness/compare.js"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.11",
@@ -38,6 +42,11 @@
     "@types/qrcode": "^1.5.6",
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.0.1",
+    "pixelmatch": "^5.3.0",
+    "playwright": "^1.62.1",
+    "pngjs": "^7.0.0",
+    "serve-handler": "^6.1.7",
+    "tailwindcss": "^3.4.19",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }
