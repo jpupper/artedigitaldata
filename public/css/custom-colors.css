@@ -1,0 +1,20 @@
+/* Custom Colors for Arte Digital Data */
+.text-gold-400 { color: #facc15; }
+.text-gold-500 { color: #eab308; }
+.bg-gold-500\/10 { background-color: rgba(234, 179, 8, 0.1); }
+.border-gold-500\/40 { border-color: rgba(234, 179, 8, 0.4); }
+.border-gold-500\/30 { border-color: rgba(234, 179, 8, 0.3); }
+.hover\:text-gold-400:hover { color: #facc15; }
+.hover\:border-gold-500\/50:hover { border-color: rgba(234, 179, 8, 0.5); }
+.hover\:bg-gold-500:hover { background-color: #eab308; }
+.group-hover\:text-gold-400:hover { color: #facc15; }
+
+.text-lime-400 { color: #a3e635; }
+.text-lime-500 { color: #84cc16; }
+.bg-lime-500\/10 { background-color: rgba(132, 204, 22, 0.1); }
+.border-lime-500\/40 { border-color: rgba(132, 204, 22, 0.4); }
+.border-lime-500\/30 { border-color: rgba(132, 204, 22, 0.3); }
+.hover\:text-lime-400:hover { color: #a3e635; }
+.hover\:border-lime-500\/50:hover { border-color: rgba(132, 204, 22, 0.5); }
+.hover\:bg-lime-500:hover { background-color: #84cc16; }
+.group-hover\:text-lime-400:hover { color: #a3e635; }

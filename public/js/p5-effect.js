@@ -60,10 +60,10 @@ function setup() {
 function draw() {
   background(10, BG_ALPHA);
 
-  if (mouseIsPressed) {
-    let mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY);
-    let speed = mouseVel.mag();
-    
+  let mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY);
+  let speed = mouseVel.mag();
+  
+  if (speed > 0.5) {
     let spawnCount = floor(map(constrain(speed, 0, 50), 0, 50, SPAWN_COUNT_MIN, SPAWN_COUNT_MAX));
     if (speed === 0) spawnCount = SPAWN_COUNT_MIN;
 

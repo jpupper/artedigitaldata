@@ -1,0 +1,20 @@
+/* Custom Colors - Inline Critical Styles */
+.text-gold-400 { color: #facc15 !important; }
+.text-gold-500 { color: #eab308 !important; }
+.bg-gold-500\/10 { background-color: rgba(234, 179, 8, 0.1) !important; }
+.border-gold-500\/40 { border-color: rgba(234, 179, 8, 0.4) !important; }
+.border-gold-500\/30 { border-color: rgba(234, 179, 8, 0.3) !important; }
+.hover\:text-gold-400:hover { color: #facc15 !important; }
+.hover\:border-gold-500\/50:hover { border-color: rgba(234, 179, 8, 0.5) !important; }
+.hover\:bg-gold-500:hover { background-color: #eab308 !important; }
+.group-hover\:text-gold-400:hover { color: #facc15 !important; }
+
+.text-lime-400 { color: #a3e635 !important; }
+.text-lime-500 { color: #84cc16 !important; }
+.bg-lime-500\/10 { background-color: rgba(132, 204, 22, 0.1) !important; }
+.border-lime-500\/40 { border-color: rgba(132, 204, 22, 0.4) !important; }
+.border-lime-500\/30 { border-color: rgba(132, 204, 22, 0.3) !important; }
+.hover\:text-lime-400:hover { color: #a3e635 !important; }
+.hover\:border-lime-500\/50:hover { border-color: rgba(132, 204, 22, 0.5) !important; }
+.hover\:bg-lime-500:hover { background-color: #84cc16 !important; }
+.group-hover\:text-lime-400:hover { color: #a3e635 !important; }
