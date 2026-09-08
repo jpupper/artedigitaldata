@@ -9,9 +9,10 @@
   <link rel="stylesheet" href="css/tailwind.css">
 </head>
 <body class="min-h-screen">
+  <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
   <div id="app-header"></div>
 
-  <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
+  <main class="relative z-10 pt-24 pb-12 max-w-4xl mx-auto px-4">
     <div id="event-content" class="hidden">
       <div class="rounded-3xl overflow-hidden border border-white/10 card-cyber bg-black/40">
         <div id="event-image-container" class="aspect-video w-full overflow-hidden bg-magenta-500/5 flex items-center justify-center">
@@ -586,5 +587,8 @@
       <div id="edit-modal-content" class="max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide"></div>
     </div>
   </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/p5-effect.js"></script>
 </body>
 </html>

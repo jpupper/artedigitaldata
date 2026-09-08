@@ -4,6 +4,8 @@ import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import User from '../models/User';
 import { hydrate } from '../utils/userHydration';
+import { getBotConfig, setBotConfig } from '../models/BotConfig';
+import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -221,6 +223,69 @@ router.get('/contest', async (_req: Request, res: Response) => {
       months: months.sort().reverse(),
       pagination: { page, limit, total, pages: Math.ceil(total / limit) }
     });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /public/particles-config — Obtener configuración de partículas de p5
+router.get('/particles-config', async (_req: Request, res: Response) => {
+  try {
+    const config = await getBotConfig('particles_p5_config', null);
+    return res.json({ config });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /public/particles-config — Guardar configuración de partículas de p5
+router.post('/particles-config', async (req: Request, res: Response) => {
+  try {
+    const config = req.body;
+    if (!config || typeof config !== 'object') {
+      return res.status(400).json({ error: 'Configuración inválida' });
+    }
+
+    // Verificar autorización por Bearer token
+    const token = req.headers.authorization?.split(' ')[1];
+    let authorized = false;
+
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const secret = process.env.JWT_SECRET;
+        if (secret) {
+          const decoded: any = jwt.verify(token, secret);
+          if (
+            decoded.username === 'jpupper' ||
+            decoded.role === 'ADMIN' ||
+            decoded.role === 'ADMINISTRADOR'
+          ) {
+            authorized = true;
+          } else {
+            // Verificar en DB
+            const user = await User.findById(decoded.id);
+            if (
+              user?.username === 'jpupper' ||
+              user?.role === 'ADMIN' ||
+              user?.permissions?.artedigital?.role === 'ADMINISTRADOR'
+            ) {
+              authorized = true;
+            }
+          }
+        }
+      } catch (tokenErr) {
+        console.warn('[Particles Config] Token verification failed:', tokenErr);
+      }
+    }
+
+    // Si no está autenticado como admin
+    if (!authorized) {
+      return res.status(403).json({ error: 'Se requiere cuenta de Administrador para guardar globalmente' });
+    }
+
+    await setBotConfig('particles_p5_config', config);
+    return res.json({ success: true, config });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

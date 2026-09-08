@@ -3,47 +3,1045 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Efecto de Partículas - Arte Digital Data</title>
+  <title>Editor de Partículas - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #090a0f;
+      --panel-bg: rgba(14, 17, 26, 0.90);
+      --panel-border: rgba(0, 242, 254, 0.25);
+      --accent-cyan: #00f2fe;
+      --accent-magenta: #e040fb;
+      --accent-orange: #ff9100;
+      --accent-green: #00e676;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+
     body, html {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #0d0d12;
+      background-color: var(--bg);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
     }
+
     #p5-canvas {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
+      z-index: 0;
+      cursor: crosshair;
     }
-    .info {
+
+    /* Floating top bar */
+    .top-bar {
       position: fixed;
-      bottom: 20px;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+      text-decoration: none;
+      background: rgba(9, 10, 15, 0.75);
+      backdrop-filter: blur(12px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    .brand:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+    .brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+    .brand span {
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+    .brand .badge {
+      font-size: 10px;
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--accent-cyan);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+      align-items: center;
+    }
+
+    .admin-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: var(--accent-green);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .btn-toggle-ui {
+      background: rgba(9, 10, 15, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-toggle-ui:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Control Panel */
+    .control-panel {
+      position: fixed;
+      top: 76px;
+      right: 20px;
+      width: 410px;
+      max-height: calc(100vh - 96px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 242, 254, 0.1);
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .control-panel.hidden-panel {
+      transform: translateX(450px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+    .panel-title i {
+      color: var(--accent-cyan);
+    }
+
+    .panel-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .panel-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+
+    .group-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .control-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-label-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .slider-text-combo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-text-combo input[type="range"] {
+      flex: 1;
+    }
+
+    .val-input {
+      width: 76px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 8px;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .val-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+      border: 2px solid #090a0f;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .color-picker-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+    .color-picker-box label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .color-input-wrap {
+      position: relative;
+      width: 100%;
+      height: 36px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .color-input-wrap:hover {
+      transform: scale(1.05);
+      border-color: #fff;
+    }
+    .color-input-wrap input[type="color"] {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: calc(100% + 20px);
+      height: calc(100% + 20px);
+      border: none;
+      cursor: pointer;
+      background: none;
+    }
+
+    .text-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .text-input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Tag pills for words */
+    .words-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .word-pill {
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: default;
+      transition: all 0.2s;
+    }
+    .word-pill:hover {
+      background: rgba(0, 242, 254, 0.2);
+    }
+    .word-pill .remove-word-btn {
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      font-size: 11px;
+      transition: color 0.15s;
+    }
+    .word-pill .remove-word-btn:hover {
+      color: #ff5252;
+    }
+
+    .add-word-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .btn-add-word {
+      background: rgba(0, 242, 254, 0.2);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 0 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-add-word:hover {
+      background: var(--accent-cyan);
+      color: #050b14;
+    }
+
+    /* Panel Footer & Save Button */
+    .panel-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .buttons-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-save {
+      flex: 2;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      color: #050b14;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(0, 242, 254, 0.6);
+    }
+    .btn-save:active {
+      transform: translateY(1px);
+    }
+
+    .btn-reset {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-reset:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .admin-note {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .admin-note a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    /* Floating helper tooltip */
+    .hint-bar {
+      position: fixed;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 10;
-      color: rgba(255, 255, 255, 0.4);
-      font-family: monospace;
-      font-size: 13px;
-      letter-spacing: 1px;
-      pointer-events: none;
+      z-index: 40;
+      background: rgba(9, 10, 15, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 24px;
+      border-radius: 9999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.75);
       text-transform: uppercase;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #00e676;
+      color: #032b13;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 230, 118, 0.4);
+      z-index: 100;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 640px) {
+      .control-panel {
+        width: calc(100vw - 32px);
+        right: 16px;
+        left: 16px;
+        max-height: 75vh;
+      }
+      .brand span {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Canvas p5 -->
   <div id="p5-canvas"></div>
-  <div class="info">Mové el mouse o tocá la pantalla para interactuar</div>
 
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <a href="index.html" class="brand" title="Volver al inicio">
+      <img src="img/artedigital.png" alt="Logo ADD">
+      <span>Arte Digital Data</span>
+      <span class="badge">Partículas</span>
+    </a>
+
+    <div class="top-actions">
+      <div id="admin-badge" class="admin-indicator">
+        <i class="fas fa-shield-alt"></i>
+        <span>Admin</span>
+      </div>
+
+      <button id="toggle-panel-btn" class="btn-toggle-ui">
+        <i class="fas fa-sliders-h"></i>
+        <span>Ajustes</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Panel de Control -->
+  <aside id="control-panel" class="control-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-magic"></i> Parámetros de Partículas
+      </div>
+      <button id="close-panel-btn" style="background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Palabras Atractoras (NUEVO) -->
+      <div>
+        <div class="group-title"><i class="fas fa-bullseye"></i> Palabras de Click (Atractor)</div>
+        <p style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
+          Hacé click en la pantalla para que las partículas formen una de estas palabras mediante un atractor.
+        </p>
+        <div class="add-word-row">
+          <input type="text" id="new-word-input" class="text-input" placeholder="Escribí una palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 12px;">
+          <button id="add-word-btn" class="btn-add-word">
+            <i class="fas fa-plus"></i> Agregar
+          </button>
+        </div>
+        <div id="words-list" class="words-container">
+          <!-- Inyectado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Tipografía y Letras -->
+      <div>
+        <div class="group-title"><i class="fas fa-font"></i> Tipografía y Caracteres</div>
+        
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Tamaño de Letra (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-TEXT_SIZE" min="12" max="72" step="1" value="30">
+            <input type="number" id="num-TEXT_SIZE" class="val-input" min="12" max="72" step="1" value="30">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Caracteres ambientales</span>
+          </div>
+          <input type="text" id="param-CHARACTERS" class="text-input" spellcheck="false" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&*+-/;:,. ">
+        </div>
+      </div>
+
+      <!-- Paleta de Colores -->
+      <div>
+        <div class="group-title"><i class="fas fa-palette"></i> Paleta Cromática</div>
+        <div class="palette-grid">
+          <div class="color-picker-box">
+            <label>Color 1</label>
+            <div class="color-input-wrap">
+              <input type="color" id="param-COLOR_1" value="#40c4ff">
+            </div>
+          </div>
+          <div class="color-picker-box">
+            <label>Color 2</label>
+            <div class="color-input-wrap">
+              <input type="color" id="param-COLOR_2" value="#ff9100">
+            </div>
+          </div>
+          <div class="color-picker-box">
+            <label>Color 3</label>
+            <div class="color-input-wrap">
+              <input type="color" id="param-COLOR_3" value="#e040fb">
+            </div>
+          </div>
+          <div class="color-picker-box">
+            <label>Color 4</label>
+            <div class="color-input-wrap">
+              <input type="color" id="param-COLOR_4" value="#00e676">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Físicas y Movimiento -->
+      <div>
+        <div class="group-title"><i class="fas fa-wind"></i> Dinámica y Físicas</div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Velocidad Máxima</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MAX_SPEED" min="0.5" max="15.0" step="0.5" value="4">
+            <input type="number" id="num-MAX_SPEED" class="val-input" min="0.5" max="15.0" step="0.5" value="4">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Fuerza de Impulso</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MAX_FORCE" min="0.1" max="2.0" step="0.05" value="0.6">
+            <input type="number" id="num-MAX_FORCE" class="val-input" min="0.1" max="2.0" step="0.05" value="0.6">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Fuerza del Mouse (Multiplicador)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MOUSE_FORCE_MULT" min="0.2" max="3.0" step="0.05" value="1.1">
+            <input type="number" id="num-MOUSE_FORCE_MULT" class="val-input" min="0.2" max="3.0" step="0.05" value="1.1">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Radio de Repulsión mutua (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-REPULSION_RADIUS" min="0" max="40" step="1" value="5">
+            <input type="number" id="num-REPULSION_RADIUS" class="val-input" min="0" max="40" step="1" value="5">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Dispersión Angular</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-DISPERSION_MAX" min="0.0" max="2.0" step="0.05" value="0.5">
+            <input type="number" id="num-DISPERSION_MAX" class="val-input" min="0.0" max="2.0" step="0.05" value="0.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Generación y Vida -->
+      <div>
+        <div class="group-title"><i class="fas fa-hourglass-half"></i> Generación y Vida</div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Radio Máx. Aparición (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-SPAWN_RADIUS_MAX" min="20" max="250" step="5" value="100">
+            <input type="number" id="num-SPAWN_RADIUS_MAX" class="val-input" min="20" max="250" step="5" value="100">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Desvanecimiento (Decay)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-LIFESPAN_DECAY_MAX" min="0.2" max="6.0" step="0.1" value="2.5">
+            <input type="number" id="num-LIFESPAN_DECAY_MAX" class="val-input" min="0.2" max="6.0" step="0.1" value="2.5">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Cantidad por Movimiento</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-SPAWN_COUNT_MAX" min="1" max="10" step="1" value="2">
+            <input type="number" id="num-SPAWN_COUNT_MAX" class="val-input" min="1" max="10" step="1" value="2">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botonera de Guardado -->
+    <div class="panel-footer">
+      <div class="buttons-row">
+        <button id="reset-defaults-btn" class="btn-reset" title="Restablecer a valores iniciales">
+          <i class="fas fa-undo"></i> Reset
+        </button>
+        <button id="save-all-btn" class="btn-save" style="display: none;">
+          <i class="fas fa-save"></i> Guardar Efecto
+        </button>
+      </div>
+
+      <div id="admin-notice" class="admin-note">
+        Iniciá sesión como Administrador para guardar los cambios en toda la web.
+        <br><a href="login.html">Iniciar Sesión</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Indicador inferior -->
+  <div class="hint-bar">
+    <i class="fas fa-hand-pointer" style="color: var(--accent-cyan);"></i>
+    Hacé click en la pantalla para formar palabras • Mové el cursor para generar letras
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <i class="fas fa-check-circle"></i>
+    <span>¡Efecto guardado y sincronizado en todo el sitio!</span>
+  </div>
+
+  <!-- Scripts Base, Auth y p5 -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="js/p5-effect.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('control-panel');
+      const toggleBtn = document.getElementById('toggle-panel-btn');
+      const closeBtn = document.getElementById('close-panel-btn');
+      const saveBtn = document.getElementById('save-all-btn');
+      const resetBtn = document.getElementById('reset-defaults-btn');
+      const adminNotice = document.getElementById('admin-notice');
+      const adminBadge = document.getElementById('admin-badge');
+      const toast = document.getElementById('toast');
+
+      const newWordInput = document.getElementById('new-word-input');
+      const addWordBtn = document.getElementById('add-word-btn');
+      const wordsListEl = document.getElementById('words-list');
+
+      // 1) Verificar si es Administrador (rol o username jpupper)
+      function checkAdminStatus() {
+        const user = getUser();
+        const userIsAdmin = isAdmin() || (user && user.username === 'jpupper');
+
+        if (userIsAdmin) {
+          saveBtn.style.display = 'flex';
+          adminBadge.style.display = 'inline-flex';
+          adminNotice.innerHTML = `<span style="color: var(--accent-green); font-weight:700;"><i class="fas fa-check-circle"></i> Modo Administrador activo (@${user.username})</span>`;
+        } else {
+          saveBtn.style.display = 'none';
+          adminBadge.style.display = 'none';
+          adminNotice.innerHTML = `Solo administradores pueden guardar globalmente.<br><a href="login.html" style="color: var(--accent-cyan); text-decoration: underline;">Iniciar sesión como admin</a>`;
+        }
+      }
+      checkAdminStatus();
+
+      // Toggle UI
+      toggleBtn.addEventListener('click', () => panel.classList.toggle('hidden-panel'));
+      closeBtn.addEventListener('click', () => panel.classList.add('hidden-panel'));
+
+      // Mapeo bidireccional Slider <-> Textfield numérico
+      const numericFields = [
+        'TEXT_SIZE',
+        'MAX_SPEED',
+        'MAX_FORCE',
+        'MOUSE_FORCE_MULT',
+        'REPULSION_RADIUS',
+        'DISPERSION_MAX',
+        'SPAWN_RADIUS_MAX',
+        'LIFESPAN_DECAY_MAX',
+        'SPAWN_COUNT_MAX'
+      ];
+
+      const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'];
+
+      // Aplicar cambio reactivo a p5
+      function applyConfigChange(key, val) {
+        const patch = {};
+        patch[key] = val;
+
+        if (key === 'LIFESPAN_DECAY_MAX') {
+          patch['LIFESPAN_DECAY_MIN'] = Math.max(0.2, +(val * 0.4).toFixed(1));
+        }
+        if (key === 'SPAWN_RADIUS_MAX') {
+          patch['SPAWN_RADIUS_MIN'] = Math.max(10, Math.round(val * 0.25));
+        }
+        if (key === 'SPAWN_COUNT_MAX') {
+          patch['SPAWN_COUNT_MIN'] = Math.max(1, Math.round(val * 0.5));
+        }
+
+        if (window.ParticlesConfig) {
+          window.ParticlesConfig.set(patch);
+        }
+      }
+
+      // Conectar sliders con textfields bidireccionalmente
+      numericFields.forEach(key => {
+        const slider = document.getElementById(`param-${key}`);
+        const textInput = document.getElementById(`num-${key}`);
+        if (!slider || !textInput) return;
+
+        // Slider -> Textbox
+        slider.addEventListener('input', () => {
+          const val = parseFloat(slider.value);
+          textInput.value = val;
+          applyConfigChange(key, val);
+        });
+
+        // Textbox -> Slider
+        textInput.addEventListener('input', () => {
+          let val = parseFloat(textInput.value);
+          if (isNaN(val)) return;
+
+          const min = parseFloat(slider.min);
+          const max = parseFloat(slider.max);
+          if (val < min) val = min;
+          if (val > max) val = max;
+
+          slider.value = val;
+          applyConfigChange(key, val);
+        });
+      });
+
+      // Color pickers
+      colorFields.forEach(key => {
+        const el = document.getElementById(`param-${key}`);
+        if (!el) return;
+        el.addEventListener('input', () => {
+          applyConfigChange(key, el.value);
+        });
+      });
+
+      // Characters input
+      const charInput = document.getElementById('param-CHARACTERS');
+      if (charInput) {
+        charInput.addEventListener('input', () => {
+          applyConfigChange('CHARACTERS', charInput.value);
+        });
+      }
+
+      // --- Gestión de Palabras (Atractor) ---
+      let words = ["ARTE", "DIGITAL", "DATA", "CREATIVIDAD", "CODIGO", "VIRTUAL"];
+
+      function renderWordsList() {
+        wordsListEl.innerHTML = '';
+        words.forEach((w, idx) => {
+          const pill = document.createElement('div');
+          pill.className = 'word-pill';
+          pill.innerHTML = `
+            <span>${w}</span>
+            <i class="fas fa-times remove-word-btn" title="Eliminar palabra"></i>
+          `;
+          pill.querySelector('.remove-word-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeWord(idx);
+          });
+          // Si hace click en la pastilla, probar esa palabra en el centro
+          pill.addEventListener('click', () => {
+            if (window.ParticlesConfig && window.ParticlesConfig.spawnWordAt) {
+              window.ParticlesConfig.spawnWordAt(w, window.innerWidth / 2, window.innerHeight / 2);
+            }
+          });
+          wordsListEl.appendChild(pill);
+        });
+      }
+
+      function addWord(word) {
+        const cleaned = word.trim().toUpperCase();
+        if (!cleaned || words.includes(cleaned)) return;
+        words.push(cleaned);
+        renderWordsList();
+        if (window.ParticlesConfig) {
+          window.ParticlesConfig.set({ WORDS: [...words] });
+        }
+      }
+
+      function removeWord(idx) {
+        if (words.length <= 1) {
+          alert('Debe quedar al menos una palabra.');
+          return;
+        }
+        words.splice(idx, 1);
+        renderWordsList();
+        if (window.ParticlesConfig) {
+          window.ParticlesConfig.set({ WORDS: [...words] });
+        }
+      }
+
+      addWordBtn.addEventListener('click', () => {
+        if (newWordInput.value) {
+          addWord(newWordInput.value);
+          newWordInput.value = '';
+        }
+      });
+
+      newWordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (newWordInput.value) {
+            addWord(newWordInput.value);
+            newWordInput.value = '';
+          }
+        }
+      });
+
+      // Cargar valores activos de ParticlesConfig en los inputs
+      function syncInputsFromConfig() {
+        if (!window.ParticlesConfig) return;
+        const cfg = window.ParticlesConfig.get();
+
+        numericFields.forEach(key => {
+          if (cfg[key] !== undefined) {
+            const slider = document.getElementById(`param-${key}`);
+            const textInput = document.getElementById(`num-${key}`);
+            if (slider) slider.value = cfg[key];
+            if (textInput) textInput.value = cfg[key];
+          }
+        });
+
+        colorFields.forEach(key => {
+          if (cfg[key]) {
+            const el = document.getElementById(`param-${key}`);
+            if (el) el.value = cfg[key];
+          }
+        });
+
+        if (cfg.CHARACTERS && charInput) {
+          charInput.value = cfg.CHARACTERS;
+        }
+
+        if (Array.isArray(cfg.WORDS) && cfg.WORDS.length) {
+          words = [...cfg.WORDS];
+          renderWordsList();
+        } else {
+          renderWordsList();
+        }
+      }
+
+      // Sincronizar tras carga inicial
+      setTimeout(syncInputsFromConfig, 300);
+      setTimeout(syncInputsFromConfig, 800);
+
+      // Guardar (Solo para Admin)
+      saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        const currentCfg = window.ParticlesConfig ? window.ParticlesConfig.get() : {};
+        currentCfg.WORDS = [...words];
+
+        const result = await window.ParticlesConfig.save(currentCfg);
+        const isOk = result === true || (result && result.ok);
+
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Efecto';
+
+        if (isOk) {
+          toast.querySelector('span').textContent = '¡Efecto guardado y sincronizado en todo el sitio!';
+          toast.style.background = '#00e676';
+          toast.style.color = '#032b13';
+        } else {
+          const errMsg = (result && result.data && result.data.error) || 'Error al guardar en el servidor';
+          toast.querySelector('span').textContent = errMsg;
+          toast.style.background = '#ff5252';
+          toast.style.color = '#fff';
+        }
+
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      });
+
+      // Reset
+      resetBtn.addEventListener('click', async () => {
+        if (!confirm('¿Restablecer el efecto a los valores por defecto de fábrica?')) return;
+        if (window.ParticlesConfig) {
+          await window.ParticlesConfig.reset();
+          syncInputsFromConfig();
+          toast.querySelector('span').textContent = 'Valores por defecto restablecidos';
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

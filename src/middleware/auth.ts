@@ -61,13 +61,25 @@ export async function adminMiddleware(req: AuthRequest, res: Response, next: Nex
   }
 
   try {
+    // Permitir si es jpupper o si el token ya trae rol de admin
+    if (req.user.username === 'jpupper' || req.user.role === 'ADMIN' || req.user.role === 'ADMINISTRADOR') {
+      return next();
+    }
+
     // Buscar los permisos específicos en la DB central
     const user = await User.findById(req.user.id);
-    if (!user || user.permissions?.artedigital?.role !== 'ADMINISTRADOR') {
-      res.status(403).json({ error: 'Acceso denegado. Se requiere rol ADMINISTRADOR en Arte Digital.' });
-      return;
+    const globalRole = user?.role;
+    const adRole = user?.permissions?.artedigital?.role;
+
+    if (
+      user?.username === 'jpupper' ||
+      globalRole === 'ADMIN' ||
+      adRole === 'ADMINISTRADOR'
+    ) {
+      return next();
     }
-    next();
+
+    res.status(403).json({ error: 'Acceso denegado. Se requiere rol ADMINISTRADOR en Arte Digital.' });
   } catch (err) {
     res.status(500).json({ error: 'Error verificando permisos de administrador' });
   }
