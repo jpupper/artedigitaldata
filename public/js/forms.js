@@ -113,6 +113,9 @@ const FORM_TEMPLATES = {
         + '<button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>'
         + '</div>';
     }).join('');
+    
+    const dateValue = item.date ? formatDateForInput(item.date) : '';
+    
     return `
     <div class="space-y-4">
       <div>
@@ -123,8 +126,11 @@ const FORM_TEMPLATES = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fecha y Hora</label>
-          <input type="datetime-local" id="${prefix}-date" name="date" value="${formatDateForInput(item.date)}" required
+          <input type="date" id="${prefix}-date" name="date" value="${dateValue.split('T')[0] || ''}" required
             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none">
+          <input type="time" id="${prefix}-time" name="time" value="${dateValue.split('T')[1] || '20:00'}"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-magenta-500 focus:outline-none mt-2">
+          <input type="hidden" id="${prefix}-date-combined" name="date-combined" value="${dateValue}">
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Lugar / Enlace</label>

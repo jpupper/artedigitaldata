@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oportunidad - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-5xl mx-auto px-4">
+    <!-- Loading -->
+    <div id="loading" class="text-center py-20">
+      <i class="fas fa-spinner fa-spin text-4xl text-emerald-400 mb-4"></i>
+      <p class="text-gray-400">Cargando oportunidad...</p>
+    </div>
+
+    <!-- Contenido -->
+    <div id="oportunidad-content" class="hidden">
+      <!-- Header -->
+      <section class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+          <a href="oportunidades.html" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-emerald-500/50 transition-all">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+        </div>
+        <h1 id="opo-titulo" class="text-3xl md:text-4xl font-black text-white mb-4"></h1>
+        <div class="flex items-center gap-4 text-sm text-gray-400">
+          <div class="flex items-center gap-2">
+            <div id="opo-creador-avatar" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold"></div>
+            <span id="opo-creador-nombre"></span>
+          </div>
+          <span id="opo-fecha"></span>
+        </div>
+      </section>
+
+      <!-- Imagen -->
+      <section id="opo-imagen-section" class="hidden mb-8">
+        <img id="opo-imagen" src="" alt="" class="w-full max-h-96 object-cover rounded-2xl border border-white/10">
+      </section>
+
+      <!-- Descripción -->
+      <section class="mb-8">
+        <h2 class="text-xl font-bold text-white mb-3"><i class="fas fa-align-left text-emerald-400 mr-2"></i>Descripción</h2>
+        <div id="opo-descripcion" class="text-gray-300 leading-relaxed whitespace-pre-wrap"></div>
+      </section>
+
+      <!-- Campos específicos CONVOCATORIA DE OBRA -->
+      <section id="fields-convocatoria_obra" class="hidden space-y-6 mb-8">
+        <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-2xl p-6">
+          <h2 class="text-xl font-bold text-cyan-400 mb-4"><i class="fas fa-palette mr-2"></i>Convocatoria de Obra</h2>
+          
+          <div id="opo-bases-section" class="hidden mb-6">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-file-contract mr-2"></i>Bases y Condiciones</h3>
+            <div id="opo-basesCondiciones" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
+          </div>
+
+          <div id="opo-lugar-section" class="hidden mb-6">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Lugar de Exposición</h3>
+            <p id="opo-lugarExposicion" class="text-gray-400 text-sm"></p>
+          </div>
+
+          <div id="opo-fechas-section" class="hidden mb-6">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-calendar-alt mr-2"></i>Fechas de Exposición</h3>
+            <p id="opo-fechas" class="text-gray-400 text-sm"></p>
+          </div>
+
+          <div id="opo-parametros-section" class="hidden">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-clipboard-list mr-2"></i>Parámetros de Presentación</h3>
+            <div id="opo-parametros" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Campos específicos OPORTUNIDAD LABORAL -->
+      <section id="fields-oportunidad_laboral" class="hidden space-y-6 mb-8">
+        <div class="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-6">
+          <h2 class="text-xl font-bold text-orange-400 mb-4"><i class="fas fa-briefcase mr-2"></i>Oportunidad Laboral</h2>
+          
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-user-tie mr-2"></i>Puesto</h3>
+            <p id="opo-nombrePuesto" class="text-gray-400 text-sm"></p>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-building mr-2"></i>Productora / Empresa</h3>
+            <p id="opo-productoraEmpresa" class="text-gray-400 text-sm"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Campos específicos COLABORACIÓN -->
+      <section id="fields-colaboracion" class="hidden space-y-6 mb-8">
+        <div class="bg-magenta-500/5 border border-magenta-500/20 rounded-2xl p-6">
+          <h2 class="text-xl font-bold text-magenta-400 mb-4"><i class="fas fa-handshake mr-2"></i>Colaboración</h2>
+          
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-project-diagram mr-2"></i>Proyecto</h3>
+            <p id="opo-nombreProyecto" class="text-gray-400 text-sm"></p>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-hands-helping mr-2"></i>Colaboración Pedida</h3>
+            <div id="opo-colaboracionPedida" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tags -->
+      <section id="opo-tags-section" class="hidden mb-8">
+        <div class="flex flex-wrap gap-2" id="opo-tags"></div>
+      </section>
+
+      <!-- Botón Inscribirse -->
+      <section id="inscripcion-section" class="mb-8">
+        <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+          <i class="fas fa-paper-plane mr-2"></i>Inscribirse a esta Oportunidad
+        </button>
+        <p id="ya-inscrito-msg" class="hidden text-center text-emerald-400 text-sm font-bold mt-3">
+          <i class="fas fa-check-circle mr-2"></i>Ya estás inscrito en esta oportunidad
+        </p>
+      </section>
+
+      <!-- Formulario de Inscripción -->
+      <section id="inscripcion-form" class="hidden mb-8 bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-edit text-emerald-400 mr-2"></i>Formulario de Inscripción</h3>
+        
+        <div id="inscripcion-campos-dinamicos" class="space-y-4 mb-6"></div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-bold text-gray-300 mb-2">Mensaje (opcional)</label>
+          <textarea id="insc-mensaje" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Escribí un mensaje para el creador de la oportunidad..."></textarea>
+        </div>
+
+        <div class="flex gap-4">
+          <button onclick="submitInscripcion()" class="flex-1 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all">
+            <i class="fas fa-paper-plane mr-2"></i>Enviar Inscripción
+          </button>
+          <button onclick="toggleInscripcionForm()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
+            Cancelar
+          </button>
+        </div>
+      </section>
+
+      <!-- Mensaje de éxito inscripción -->
+      <section id="inscripcion-success" class="hidden mb-8 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 text-center">
+        <i class="fas fa-check-circle text-4xl text-emerald-400 mb-3"></i>
+        <h3 class="text-lg font-bold text-white mb-1">¡Inscripción enviada!</h3>
+        <p class="text-sm text-gray-400">El creador de la oportunidad recibirá tu postulación.</p>
+      </section>
+
+      <!-- Panel del creador: Inscripciones -->
+      <section id="creador-panel" class="hidden">
+        <div class="border-t border-white/10 pt-8 mt-8">
+          <h2 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-users text-emerald-400 mr-2"></i>Inscripciones Recibidas
+          </h2>
+          <p class="text-sm text-gray-400 mb-6">Gestioná las postulaciones a tu oportunidad.</p>
+          
+          <div id="inscripciones-container" class="space-y-4">
+            <div class="text-center text-gray-500 py-10">
+              <i class="fas fa-spinner fa-spin text-2xl text-emerald-400 mb-3"></i>
+              <p>Cargando inscripciones...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Error -->
+    <div id="error-message" class="hidden text-center py-20">
+      <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+      <p class="text-gray-400">Oportunidad no encontrada.</p>
+      <a href="oportunidades.html" class="inline-block mt-4 px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/20 transition-all">
+        <i class="fas fa-arrow-left mr-2"></i>Volver
+      </a>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    let oportunidadId = null;
+    let oportunidadData = null;
+    let isInscrito = false;
+    let esCreador = false;
+
+    const tipoLabels = {
+      convocatoria_obra: 'Convocatoria de Obra',
+      oportunidad_laboral: 'Oportunidad Laboral',
+      colaboracion: 'Colaboración'
+    };
+
+    const tipoIcons = {
+      convocatoria_obra: 'fas fa-palette',
+      oportunidad_laboral: 'fas fa-briefcase',
+      colaboracion: 'fas fa-handshake'
+    };
+
+    const tipoColors = {
+      convocatoria_obra: 'cyan',
+      oportunidad_laboral: 'orange',
+      colaboracion: 'magenta'
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      oportunidadId = urlParams.get('id');
+      
+      if (!oportunidadId) {
+        showError();
+        return;
+      }
+
+      await loadOportunidad();
+    });
+
+    async function loadOportunidad() {
+      try {
+        const res = await fetch(CONFIG.API_URL + '/oportunidades/' + oportunidadId);
+        if (!res.ok) {
+          showError();
+          return;
+        }
+
+        oportunidadData = await res.json();
+        renderOportunidad(oportunidadData);
+
+        // Check if user is creator
+        if (isLoggedIn() && oportunidadData.creador) {
+          const userId = getUserId();
+          esCreador = oportunidadData.creador._id === userId || oportunidadData.creador === userId;
+          
+          if (esCreador) {
+            document.getElementById('creador-panel').classList.remove('hidden');
+            document.getElementById('inscripcion-section').classList.add('hidden');
+            loadInscripciones();
+          } else {
+            // Check if already inscribed
+            checkInscripcion();
+          }
+        } else {
+          document.getElementById('inscripcion-section').classList.add('hidden');
+        }
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('oportunidad-content').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        showError();
+      }
+    }
+
+    function renderOportunidad(opo) {
+      const color = tipoColors[opo.tipo] || 'emerald';
+      const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
+      const label = tipoLabels[opo.tipo] || 'Oportunidad';
+
+      // Badge
+      const badge = document.getElementById('opo-tipo-badge');
+      badge.className = `px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-${color}-500/20 text-${color}-400 border border-${color}-500/30`;
+      badge.innerHTML = `<i class="${icon} mr-1"></i>${label}`;
+
+      // Title
+      document.getElementById('opo-titulo').textContent = opo.titulo;
+
+      // Creator
+      const creador = opo.creador || {};
+      document.getElementById('opo-creador-nombre').textContent = '@' + (creador.username || 'anónimo');
+      document.getElementById('opo-creador-avatar').textContent = (creador.username || '?')[0].toUpperCase();
+      document.getElementById('opo-fecha').textContent = new Date(opo.createdAt).toLocaleDateString('es-AR');
+
+      // Description
+      document.getElementById('opo-descripcion').textContent = opo.descripcion || 'Sin descripción.';
+
+      // Image
+      if (opo.imagenUrl) {
+        document.getElementById('opo-imagen-section').classList.remove('hidden');
+        document.getElementById('opo-imagen').src = opo.imagenUrl;
+        document.getElementById('opo-imagen').alt = opo.titulo;
+      }
+
+      // Type-specific fields
+      document.getElementById('fields-convocatoria_obra').classList.add('hidden');
+      document.getElementById('fields-oportunidad_laboral').classList.add('hidden');
+      document.getElementById('fields-colaboracion').classList.add('hidden');
+      document.getElementById('fields-' + opo.tipo).classList.remove('hidden');
+
+      if (opo.tipo === 'convocatoria_obra') {
+        if (opo.basesCondiciones) {
+          document.getElementById('opo-bases-section').classList.remove('hidden');
+          document.getElementById('opo-basesCondiciones').textContent = opo.basesCondiciones;
+        }
+        if (opo.lugarExposicion) {
+          document.getElementById('opo-lugar-section').classList.remove('hidden');
+          document.getElementById('opo-lugarExposicion').textContent = opo.lugarExposicion;
+        }
+        if (opo.fechaDesde || opo.fechaHasta) {
+          document.getElementById('opo-fechas-section').classList.remove('hidden');
+          const desde = opo.fechaDesde ? new Date(opo.fechaDesde).toLocaleDateString('es-AR') : '?';
+          const hasta = opo.fechaHasta ? new Date(opo.fechaHasta).toLocaleDateString('es-AR') : '?';
+          document.getElementById('opo-fechas').textContent = `Desde ${desde} hasta ${hasta}`;
+        }
+        if (opo.parametrosPresentacion && opo.parametrosPresentacion.length) {
+          document.getElementById('opo-parametros-section').classList.remove('hidden');
+          document.getElementById('opo-parametros').innerHTML = opo.parametrosPresentacion.map(p => 
+            `<span class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold">${p.label}${p.required ? ' *' : ''}</span>`
+          ).join('');
+        }
+      } else if (opo.tipo === 'oportunidad_laboral') {
+        document.getElementById('opo-nombrePuesto').textContent = opo.nombrePuesto || '-';
+        document.getElementById('opo-productoraEmpresa').textContent = opo.productoraEmpresa || '-';
+      } else if (opo.tipo === 'colaboracion') {
+        document.getElementById('opo-nombreProyecto').textContent = opo.nombreProyecto || '-';
+        document.getElementById('opo-colaboracionPedida').textContent = opo.colaboracionPedida || '-';
+      }
+
+      // Tags
+      if (opo.tags && opo.tags.length) {
+        document.getElementById('opo-tags-section').classList.remove('hidden');
+        document.getElementById('opo-tags').innerHTML = opo.tags.map(t => 
+          `<span class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-xs">#${t}</span>`
+        ).join('');
+      }
+    }
+
+    async function checkInscripcion() {
+      if (!isLoggedIn()) return;
+      
+      try {
+        const res = await apiRequest('/oportunidades/mis-inscripciones/listar');
+        if (res && res.ok) {
+          const inscripciones = await res.json();
+          isInscrito = inscripciones.some(i => i.oportunidad?._id === oportunidadId || i.oportunidad === oportunidadId);
+          
+          if (isInscrito) {
+            document.getElementById('btn-inscribirse').classList.add('hidden');
+            document.getElementById('ya-inscrito-msg').classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function toggleInscripcionForm() {
+      if (!isLoggedIn()) {
+        showLogin();
+        return;
+      }
+      
+      const form = document.getElementById('inscripcion-form');
+      form.classList.toggle('hidden');
+      
+      if (!form.classList.contains('hidden')) {
+        renderCamposDinamicos();
+      }
+    }
+
+    function renderCamposDinamicos() {
+      const container = document.getElementById('inscripcion-campos-dinamicos');
+      container.innerHTML = '';
+
+      if (oportunidadData.tipo === 'convocatoria_obra' && oportunidadData.parametrosPresentacion) {
+        oportunidadData.parametrosPresentacion.forEach(param => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label class="block text-sm font-bold text-gray-300 mb-2">${param.label}${param.required ? ' *' : ''}</label>
+            ${param.type === 'textarea' 
+              ? `<textarea name="${param.key}" data-required="${param.required}" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${param.placeholder || ''}"></textarea>`
+              : `<input type="${param.type === 'url' ? 'url' : 'text'}" name="${param.key}" data-required="${param.required}" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${param.placeholder || ''}">`
+            }
+          `;
+          container.appendChild(div);
+        });
+      } else if (oportunidadData.tipo === 'oportunidad_laboral') {
+        container.innerHTML = `
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Tu nombre completo *</label>
+            <input type="text" name="nombre" data-required="true" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Nombre completo">
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Email *</label>
+            <input type="email" name="email" data-required="true" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="email@ejemplo.com">
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Portfolio / Reel (URL)</label>
+            <input type="url" name="portfolio" data-required="false" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="https://...">
+          </div>
+        `;
+      } else if (oportunidadData.tipo === 'colaboracion') {
+        container.innerHTML = `
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Tu nombre *</label>
+            <input type="text" name="nombre" data-required="true" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Nombre">
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">¿Qué podés aportar? *</label>
+            <textarea name="aporte" data-required="true" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Contanos tus habilidades y qué podés aportar..."></textarea>
+          </div>
+        `;
+      }
+    }
+
+    async function submitInscripcion() {
+      const datos = {};
+      let hasEmptyRequired = false;
+
+      document.querySelectorAll('#inscripcion-campos-dinamicos [name]').forEach(input => {
+        const key = input.name;
+        const required = input.dataset.required === 'true';
+        const value = input.value.trim();
+        
+        if (required && !value) {
+          hasEmptyRequired = true;
+          input.classList.add('border-red-500/50');
+        } else {
+          input.classList.remove('border-red-500/50');
+        }
+        
+        datos[key] = value;
+      });
+
+      if (hasEmptyRequired) {
+        alert('Por favor, completá todos los campos obligatorios.');
+        return;
+      }
+
+      const mensaje = document.getElementById('insc-mensaje').value;
+
+      try {
+        const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripcion`, {
+          method: 'POST',
+          body: JSON.stringify({ datos, mensaje }),
+        });
+
+        if (res && res.ok) {
+          document.getElementById('inscripcion-form').classList.add('hidden');
+          document.getElementById('inscripcion-success').classList.remove('hidden');
+          document.getElementById('btn-inscribirse').classList.add('hidden');
+          document.getElementById('ya-inscrito-msg').classList.remove('hidden');
+        } else if (res && res.status === 400) {
+          const data = await res.json();
+          alert(data.error || 'Error al inscribirse.');
+        } else {
+          alert('Error al inscribirse. Intentá de nuevo.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al inscribirse. Intentá de nuevo.');
+      }
+    }
+
+    async function loadInscripciones() {
+      const container = document.getElementById('inscripciones-container');
+      
+      try {
+        const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripciones`);
+        if (!res || !res.ok) {
+          container.innerHTML = '<p class="text-center text-gray-500">Error cargando inscripciones.</p>';
+          return;
+        }
+
+        const inscripciones = await res.json();
+        
+        if (!inscripciones.length) {
+          container.innerHTML = `
+            <div class="text-center text-gray-500 py-10">
+              <i class="fas fa-inbox text-4xl text-gray-600 mb-3"></i>
+              <p>Aún no hay inscripciones.</p>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = inscripciones.map(insc => {
+          const user = insc.usuario || {};
+          const estadoColors = {
+            pendiente: 'yellow',
+            aceptada: 'green',
+            rechazada: 'red'
+          };
+          const estadoColor = estadoColors[insc.estado] || 'gray';
+
+          let datosHtml = '';
+          if (insc.datos && Object.keys(insc.datos).length) {
+            datosHtml = '<div class="mt-3 space-y-2">' + Object.entries(insc.datos).map(([key, val]) => 
+              `<div class="text-xs"><span class="text-gray-500 font-bold">${key}:</span> <span class="text-gray-300">${val}</span></div>`
+            ).join('') + '</div>';
+          }
+
+          return `
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400">
+                    ${(user.username || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <a href="profile.html?user=${user.username}" class="text-sm font-bold text-white hover:text-emerald-400 transition-colors">@${user.username || 'usuario'}</a>
+                    <p class="text-xs text-gray-500">${user.email || ''}</p>
+                  </div>
+                </div>
+                <span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-${estadoColor}-500/20 text-${estadoColor}-400 border border-${estadoColor}-500/30 uppercase">${insc.estado}</span>
+              </div>
+              
+              ${insc.mensaje ? `<p class="mt-3 text-sm text-gray-400 italic">"${insc.mensaje}"</p>` : ''}
+              ${datosHtml}
+              
+              ${insc.estado === 'pendiente' ? `
+                <div class="mt-4 flex gap-2">
+                  <button onclick="actualizarEstado('${insc._id}', 'aceptada')" class="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-all">
+                    <i class="fas fa-check mr-1"></i>Aceptar
+                  </button>
+                  <button onclick="actualizarEstado('${insc._id}', 'rechazada')" class="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-all">
+                    <i class="fas fa-times mr-1"></i>Rechazar
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p class="text-center text-gray-500">Error cargando inscripciones.</p>';
+      }
+    }
+
+    async function actualizarEstado(inscripcionId, estado) {
+      try {
+        const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripciones/${inscripcionId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado }),
+        });
+
+        if (res && res.ok) {
+          loadInscripciones();
+        } else {
+          alert('Error al actualizar el estado.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al actualizar el estado.');
+      }
+    }
+
+    function showError() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error-message').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

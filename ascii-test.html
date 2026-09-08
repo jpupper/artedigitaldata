@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prueba ASCII Cyberpunk</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
+  #ascii-bg {
+    position: fixed; inset: 0; z-index: -1;
+    pointer-events: none;
+  }
+  #ascii-bg canvas { pointer-events: none; }
+  .content {
+    color: #fff;
+    font-family: monospace;
+    position: relative; z-index: 1;
+    padding: 40px;
+    mix-blend-mode: difference;
+    font-size: 18px;
+  }
+  h1 { color: #FF00FF; mix-blend-mode: screen; }
+</style>
+</head>
+<body>
+  <div id="ascii-bg"></div>
+  <div class="content">
+    <h1>ARTE DIGITAL</h1>
+    <p>Mové el mouse / tocá la pantalla para concentrar los caracteres.</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="ascii-cyberpunk.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      createAsciiBackground('#ascii-bg');
+    });
+  </script>
+</body>
+</html>

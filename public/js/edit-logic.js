@@ -233,7 +233,8 @@ async function saveEdit() {
     body.tags = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
   } else if (type === 'evento') {
     const dateVal = document.getElementById('edit-date').value;
-    body.date = dateVal ? new Date(dateVal).toISOString() : null;
+    const timeVal = document.getElementById('edit-time')?.value || '20:00';
+    body.date = dateVal && timeVal ? new Date(`${dateVal}T${timeVal}`).toISOString() : null;
     body.location = document.getElementById('edit-location').value.trim();
     body.tags = document.getElementById('edit-tags')?.value.split(',').map(t => t.trim()).filter(Boolean) || [];
     body.ticketConfig = window.getTicketConfig('edit');

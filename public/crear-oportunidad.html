@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Oportunidad - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-4xl mx-auto px-4">
+    <section class="mb-10 text-center pt-8 pb-4">
+      <h1 class="text-3xl md:text-4xl font-black gradient-text mb-2">Crear Oportunidad</h1>
+      <p class="text-gray-400">Publicá tu convocatoria, búsqueda laboral o colaboración.</p>
+    </section>
+
+    <!-- Paso 1: Seleccionar tipo -->
+    <section id="step-tipo" class="mb-8">
+      <h2 class="text-xl font-bold text-white mb-4">
+        <i class="fas fa-list-ol text-emerald-400 mr-2"></i>Paso 1: Elegí el tipo de oportunidad
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="selectTipo('convocatoria_obra')" id="btn-convocatoria_obra" class="tipo-btn group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-center transition-all hover:border-cyan-500/50 hover:bg-cyan-500/5">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i class="fas fa-palette text-2xl text-cyan-400"></i>
+          </div>
+          <h3 class="text-sm font-black text-white uppercase tracking-tight">Convocatoria de Obra</h3>
+          <p class="text-xs text-gray-500 mt-1">Para eventos y exposiciones</p>
+        </button>
+
+        <button onclick="selectTipo('oportunidad_laboral')" id="btn-oportunidad_laboral" class="tipo-btn group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-center transition-all hover:border-orange-500/50 hover:bg-orange-500/5">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i class="fas fa-briefcase text-2xl text-orange-400"></i>
+          </div>
+          <h3 class="text-sm font-black text-white uppercase tracking-tight">Oportunidad Laboral</h3>
+          <p class="text-xs text-gray-500 mt-1">Trabajos y posiciones</p>
+        </button>
+
+        <button onclick="selectTipo('colaboracion')" id="btn-colaboracion" class="tipo-btn group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-center transition-all hover:border-magenta-500/50 hover:bg-magenta-500/5">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-magenta-500/10 border border-magenta-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i class="fas fa-handshake text-2xl text-magenta-400"></i>
+          </div>
+          <h3 class="text-sm font-black text-white uppercase tracking-tight">Colaboración</h3>
+          <p class="text-xs text-gray-500 mt-1">Proyectos colaborativos</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- Paso 2: Formulario dinámico -->
+    <section id="step-form" class="hidden">
+      <h2 class="text-xl font-bold text-white mb-4">
+        <i class="fas fa-edit text-emerald-400 mr-2"></i>Paso 2: Completá los datos
+      </h2>
+
+      <form id="oportunidad-form" class="space-y-6 bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+        <!-- Campos comunes -->
+        <div>
+          <label class="block text-sm font-bold text-gray-300 mb-2">Título *</label>
+          <input type="text" id="opo-titulo" required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Nombre de la oportunidad">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-300 mb-2">Descripción</label>
+          <textarea id="opo-descripcion" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Descripción general..."></textarea>
+        </div>
+
+        <!-- Campos CONVOCATORIA DE OBRA -->
+        <div id="fields-convocatoria_obra" class="hidden space-y-6">
+          <div class="border-t border-white/10 pt-6">
+            <h3 class="text-lg font-bold text-cyan-400 mb-4"><i class="fas fa-palette mr-2"></i>Convocatoria de Obra</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Bases y Condiciones</label>
+            <textarea id="opo-basesCondiciones" rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors" placeholder="Bases y condiciones de la convocatoria..."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Lugar de Exposición</label>
+            <input type="text" id="opo-lugarExposicion" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors" placeholder="Nombre del lugar o galería">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-300 mb-2">Fecha Desde</label>
+              <input type="date" id="opo-fechaDesde" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-cyan-500/50 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-300 mb-2">Fecha Hasta</label>
+              <input type="date" id="opo-fechaHasta" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-cyan-500/50 focus:outline-none transition-colors">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Imagen de la Convocatoria</label>
+            <div class="relative">
+              <input type="file" id="opo-imagen" accept="image/*" class="hidden" onchange="handleImagePreview(this)">
+              <button type="button" onclick="document.getElementById('opo-imagen').click()" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-dashed border-white/20 text-gray-400 hover:border-cyan-500/50 hover:text-cyan-400 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span id="opo-imagen-label">Subir imagen</span>
+              </button>
+              <div id="opo-imagen-preview" class="hidden mt-3 relative">
+                <img src="" alt="Preview" class="w-full max-h-48 object-cover rounded-xl border border-white/10">
+                <button type="button" onclick="clearImage()" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parámetros de presentación -->
+          <div class="border-t border-white/10 pt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-white"><i class="fas fa-clipboard-list mr-2"></i>Parámetros de Presentación de Obra</h3>
+              <button type="button" onclick="addParametro()" class="px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold hover:bg-cyan-500/20 transition-all">
+                <i class="fas fa-plus mr-1"></i>Agregar Campo
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Definí qué datos deben presentar los artistas para inscribirse.</p>
+            
+            <!-- Parámetros por defecto -->
+            <div id="parametros-container" class="space-y-3">
+              <div class="parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                  <input type="text" value="Concepto" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Concepto">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                  <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+                    <option value="text">Texto</option>
+                    <option value="textarea">Texto largo</option>
+                    <option value="url">URL / Link</option>
+                    <option value="file">Archivo</option>
+                    <option value="reel">Reel / Video</option>
+                  </select>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50" checked>
+                    <span class="text-xs text-gray-400">Obligatorio</span>
+                  </label>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <button type="button" class="remove-param-btn hidden w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                  <input type="text" value="Requerimientos Técnicos" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Requerimientos">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                  <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+                    <option value="text">Texto</option>
+                    <option value="textarea" selected>Texto largo</option>
+                    <option value="url">URL / Link</option>
+                    <option value="file">Archivo</option>
+                    <option value="reel">Reel / Video</option>
+                  </select>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50">
+                    <span class="text-xs text-gray-400">Obligatorio</span>
+                  </label>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <button type="button" onclick="removeParametro(this)" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                  <input type="text" value="Reel" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Reel">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                  <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+                    <option value="text">Texto</option>
+                    <option value="textarea">Texto largo</option>
+                    <option value="url">URL / Link</option>
+                    <option value="file">Archivo</option>
+                    <option value="reel" selected>Reel / Video</option>
+                  </select>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50" checked>
+                    <span class="text-xs text-gray-400">Obligatorio</span>
+                  </label>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <button type="button" onclick="removeParametro(this)" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                  <input type="text" value="Imágenes de la Obra" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Imágenes">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                  <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+                    <option value="text">Texto</option>
+                    <option value="textarea">Texto largo</option>
+                    <option value="url">URL / Link</option>
+                    <option value="file" selected>Archivo</option>
+                    <option value="reel">Reel / Video</option>
+                  </select>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50" checked>
+                    <span class="text-xs text-gray-400">Obligatorio</span>
+                  </label>
+                </div>
+                <div class="flex items-center h-full pb-2">
+                  <button type="button" onclick="removeParametro(this)" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos OPORTUNIDAD LABORAL -->
+        <div id="fields-oportunidad_laboral" class="hidden space-y-6">
+          <div class="border-t border-white/10 pt-6">
+            <h3 class="text-lg font-bold text-orange-400 mb-4"><i class="fas fa-briefcase mr-2"></i>Oportunidad Laboral</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Nombre del Puesto *</label>
+            <input type="text" id="opo-nombrePuesto" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-orange-500/50 focus:outline-none transition-colors" placeholder="Ej: Motion Designer, Art Director...">
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Productora / Empresa *</label>
+            <input type="text" id="opo-productoraEmpresa" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-orange-500/50 focus:outline-none transition-colors" placeholder="Nombre de la productora o empresa">
+          </div>
+        </div>
+
+        <!-- Campos COLABORACIÓN -->
+        <div id="fields-colaboracion" class="hidden space-y-6">
+          <div class="border-t border-white/10 pt-6">
+            <h3 class="text-lg font-bold text-magenta-400 mb-4"><i class="fas fa-handshake mr-2"></i>Colaboración</h3>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Nombre del Proyecto *</label>
+            <input type="text" id="opo-nombreProyecto" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-magenta-500/50 focus:outline-none transition-colors" placeholder="Nombre del proyecto">
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-300 mb-2">Colaboración Pedida</label>
+            <textarea id="opo-colaboracionPedida" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-magenta-500/50 focus:outline-none transition-colors" placeholder="Qué tipo de colaboración estás buscando..."></textarea>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label class="block text-sm font-bold text-gray-300 mb-2">Tags (separados por coma)</label>
+          <input type="text" id="opo-tags" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="motion design, 3d, after effects...">
+        </div>
+
+        <!-- Submit -->
+        <div class="flex flex-col sm:flex-row gap-4 pt-4">
+          <button type="submit" class="flex-1 px-6 py-4 rounded-xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+            <i class="fas fa-rocket mr-2"></i>Publicar Oportunidad
+          </button>
+          <button type="button" onclick="window.location.href='oportunidades.html'" class="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Mensaje de éxito -->
+    <section id="success-message" class="hidden text-center py-20">
+      <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+        <i class="fas fa-check text-4xl text-emerald-400"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white mb-2">¡Oportunidad publicada!</h2>
+      <p class="text-gray-400 mb-6">Tu oportunidad ya está visible para la comunidad.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="oportunidades.html" class="px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/20 transition-all">
+          <i class="fas fa-th mr-2"></i>Ver Oportunidades
+        </a>
+        <button onclick="resetForm()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
+          <i class="fas fa-plus mr-2"></i>Crear Otra
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script>
+    let selectedTipo = null;
+    let uploadedImageUrl = '';
+
+    // Verificar autenticación
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!isLoggedIn()) {
+        showLogin();
+        return;
+      }
+    });
+
+    function selectTipo(tipo) {
+      selectedTipo = tipo;
+      
+      // Update button styles
+      document.querySelectorAll('.tipo-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500/50', 'bg-emerald-500/10', 'ring-2', 'ring-emerald-500/30');
+        btn.classList.add('border-white/10', 'bg-white/5');
+      });
+      
+      const activeBtn = document.getElementById('btn-' + tipo);
+      activeBtn.classList.remove('border-white/10', 'bg-white/5');
+      activeBtn.classList.add('border-emerald-500/50', 'bg-emerald-500/10', 'ring-2', 'ring-emerald-500/30');
+
+      // Show form
+      document.getElementById('step-form').classList.remove('hidden');
+      
+      // Show specific fields
+      document.getElementById('fields-convocatoria_obra').classList.add('hidden');
+      document.getElementById('fields-oportunidad_laboral').classList.add('hidden');
+      document.getElementById('fields-colaboracion').classList.add('hidden');
+      document.getElementById('fields-' + tipo).classList.remove('hidden');
+
+      // Scroll to form
+      document.getElementById('step-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Parámetros de presentación
+    function addParametro() {
+      const container = document.getElementById('parametros-container');
+      const row = document.createElement('div');
+      row.className = 'parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5';
+      row.innerHTML = `
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
+          <input type="text" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Portfolio">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
+          <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+            <option value="text">Texto</option>
+            <option value="textarea">Texto largo</option>
+            <option value="url">URL / Link</option>
+            <option value="file">Archivo</option>
+            <option value="reel">Reel / Video</option>
+          </select>
+        </div>
+        <div class="flex items-center h-full pb-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50">
+            <span class="text-xs text-gray-400">Obligatorio</span>
+          </label>
+        </div>
+        <div class="flex items-center h-full pb-2">
+          <button type="button" onclick="removeParametro(this)" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+            <i class="fas fa-trash text-xs"></i>
+          </button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeParametro(btn) {
+      btn.closest('.parametro-row').remove();
+    }
+
+    // Image handling
+    function handleImagePreview(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('opo-imagen-preview').classList.remove('hidden');
+          document.getElementById('opo-imagen-preview').querySelector('img').src = e.target.result;
+          document.getElementById('opo-imagen-label').textContent = input.files[0].name;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function clearImage() {
+      document.getElementById('opo-imagen').value = '';
+      document.getElementById('opo-imagen-preview').classList.add('hidden');
+      document.getElementById('opo-imagen-label').textContent = 'Subir imagen';
+      uploadedImageUrl = '';
+    }
+
+    // Submit
+    document.getElementById('oportunidad-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!selectedTipo) {
+        alert('Por favor, seleccioná un tipo de oportunidad.');
+        return;
+      }
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Publicando...';
+
+      try {
+        // Upload image if selected
+        const imageInput = document.getElementById('opo-imagen');
+        if (imageInput.files && imageInput.files[0]) {
+          const formData = new FormData();
+          formData.append('file', imageInput.files[0]);
+          
+          const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData
+          });
+          
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            uploadedImageUrl = uploadData.url;
+          }
+        }
+
+        // Build data object
+        const data = {
+          tipo: selectedTipo,
+          titulo: document.getElementById('opo-titulo').value,
+          descripcion: document.getElementById('opo-descripcion').value,
+          tags: document.getElementById('opo-tags').value.split(',').map(t => t.trim()).filter(t => t),
+        };
+
+        // Add type-specific fields
+        if (selectedTipo === 'convocatoria_obra') {
+          data.basesCondiciones = document.getElementById('opo-basesCondiciones').value;
+          data.lugarExposicion = document.getElementById('opo-lugarExposicion').value;
+          data.fechaDesde = document.getElementById('opo-fechaDesde').value || null;
+          data.fechaHasta = document.getElementById('opo-fechaHasta').value || null;
+          data.imagenUrl = uploadedImageUrl;
+          
+          // Get parametros
+          const parametros = [];
+          document.querySelectorAll('.parametro-row').forEach(row => {
+            const label = row.querySelector('.param-label').value;
+            const type = row.querySelector('.param-type').value;
+            const required = row.querySelector('.param-required').checked;
+            if (label) {
+              parametros.push({
+                key: label.toLowerCase().replace(/\s+/g, '_'),
+                label,
+                type,
+                required,
+              });
+            }
+          });
+          data.parametrosPresentacion = parametros;
+        } else if (selectedTipo === 'oportunidad_laboral') {
+          data.nombrePuesto = document.getElementById('opo-nombrePuesto').value;
+          data.productoraEmpresa = document.getElementById('opo-productoraEmpresa').value;
+        } else if (selectedTipo === 'colaboracion') {
+          data.nombreProyecto = document.getElementById('opo-nombreProyecto').value;
+          data.colaboracionPedida = document.getElementById('opo-colaboracionPedida').value;
+        }
+
+        const res = await apiRequest('/oportunidades', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+
+        if (res && res.ok) {
+          document.getElementById('step-tipo').classList.add('hidden');
+          document.getElementById('step-form').classList.add('hidden');
+          document.getElementById('success-message').classList.remove('hidden');
+        } else {
+          alert('Error al publicar. Intentá de nuevo.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al publicar. Intentá de nuevo.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+      }
+    });
+
+    function resetForm() {
+      selectedTipo = null;
+      uploadedImageUrl = '';
+      document.getElementById('oportunidad-form').reset();
+      clearImage();
+      
+      document.querySelectorAll('.tipo-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500/50', 'bg-emerald-500/10', 'ring-2', 'ring-emerald-500/30');
+        btn.classList.add('border-white/10', 'bg-white/5');
+      });
+      
+      document.getElementById('step-tipo').classList.remove('hidden');
+      document.getElementById('step-form').classList.add('hidden');
+      document.getElementById('success-message').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

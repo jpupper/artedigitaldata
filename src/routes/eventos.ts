@@ -64,6 +64,18 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, tags } = req.body;
     if (!title || !date) return res.status(400).json({ error: 'Título y fecha son obligatorios' });
+    
+    // Validar fecha
+    const eventDate = new Date(date);
+    if (isNaN(eventDate.getTime())) {
+      return res.status(400).json({ error: 'Fecha inválida. Formato esperado: YYYY-MM-DDTHH:mm' });
+    }
+    const now = new Date();
+    const minDate = new Date(now.getFullYear() - 1, 0, 1);
+    const maxDate = new Date(now.getFullYear() + 2, 11, 31);
+    if (eventDate < minDate || eventDate > maxDate) {
+      return res.status(400).json({ error: `Fecha fuera del rango permitido (${minDate.getFullYear()}-${maxDate.getFullYear()})` });
+    }
 
     // Parse @usernames from description
     const participantSet = new Set<string>();
@@ -132,7 +144,19 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     }
 
     if (title) evento.title = title;
-    if (date) evento.date = date;
+    if (date) {
+      const newDate = new Date(date);
+      if (isNaN(newDate.getTime())) {
+        return res.status(400).json({ error: 'Fecha inválida' });
+      }
+      const now = new Date();
+      const minDate = new Date(now.getFullYear() - 1, 0, 1);
+      const maxDate = new Date(now.getFullYear() + 2, 11, 31);
+      if (newDate < minDate || newDate > maxDate) {
+        return res.status(400).json({ error: `Fecha fuera del rango permitido (${minDate.getFullYear()}-${maxDate.getFullYear()})` });
+      }
+      evento.date = date;
+    }
     if (location !== undefined) evento.location = location;
     if (imageUrl !== undefined) evento.imageUrl = imageUrl;
     if (youtube_video !== undefined) evento.youtube_video = youtube_video;

@@ -40,6 +40,9 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-box-open text-[10px]"></i> RECURSOS
           </a>
+          <a href="${CONFIG.BASE}/oportunidades.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-emerald)] hover:bg-white/5 transition-all">
+            <i class="fas fa-briefcase text-[10px]"></i> OPORTUNIDADES
+          </a>
           <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
             <i class="fas fa-search text-[10px]"></i> BUSCAR
           </a>
@@ -112,6 +115,9 @@ function renderHeader() {
           </a>
           <a href="${CONFIG.BASE}/recursos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-box-open mr-2"></i> RECURSOS
+          </a>
+          <a href="${CONFIG.BASE}/oportunidades.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-emerald)] hover:bg-white/5">
+            <i class="fas fa-briefcase mr-2"></i> OPORTUNIDADES
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/create.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 border border-white/10">

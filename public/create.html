@@ -248,7 +248,9 @@
         const title = document.getElementById('event-title').value.trim();
         const description = document.getElementById('event-desc').value.trim();
         const youtube_video = document.getElementById('event-youtube').value.trim();
-        const date = document.getElementById('event-date').value;
+        const dateVal = document.getElementById('event-date').value;
+        const timeVal = document.getElementById('event-time').value || '20:00';
+        const date = dateVal && timeVal ? `${dateVal}T${timeVal}` : dateVal;
         const location = document.getElementById('event-location').value.trim();
         const file = document.getElementById('event-file').files[0];
         let imageUrl = document.getElementById('event-img-url').value.trim();

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oportunidades - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+</head>
+<body class="min-h-screen">
+  <div id="app-header"></div>
+
+  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
+    <!-- Hero Section -->
+    <section class="mb-10 text-center pt-8 pb-4">
+      <h1 class="text-4xl md:text-5xl font-black gradient-text mb-2">Oportunidades</h1>
+      <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+        Convocatorias de obra, oportunidades laborales y colaboraciones para artistas digitales.
+      </p>
+    </section>
+
+    <!-- Grid 2x2 de categorías -->
+    <section class="mb-12">
+      <div class="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <!-- Obra Artística -->
+        <a href="obras.html" class="group relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-6 md:p-8 text-center transition-all hover:border-cyan-500/50 hover:bg-cyan-500/10 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]">
+          <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fas fa-palette text-2xl md:text-3xl text-cyan-400"></i>
+            </div>
+            <h3 class="text-sm md:text-lg font-black text-white uppercase tracking-tight">Obra Artística</h3>
+            <p class="text-xs text-gray-500 mt-1">Galería de obras</p>
+          </div>
+        </a>
+
+        <!-- Recurso -->
+        <a href="recursos.html" class="group relative overflow-hidden rounded-2xl border border-orange-500/20 bg-orange-500/5 p-6 md:p-8 text-center transition-all hover:border-orange-500/50 hover:bg-orange-500/10 hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+          <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fas fa-box-open text-2xl md:text-3xl text-orange-400"></i>
+            </div>
+            <h3 class="text-sm md:text-lg font-black text-white uppercase tracking-tight">Recurso</h3>
+            <p class="text-xs text-gray-500 mt-1">Repositorio</p>
+          </div>
+        </a>
+
+        <!-- Evento -->
+        <a href="eventos.html" class="group relative overflow-hidden rounded-2xl border border-magenta-500/20 bg-magenta-500/5 p-6 md:p-8 text-center transition-all hover:border-magenta-500/50 hover:bg-magenta-500/10 hover:shadow-[0_0_30px_rgba(236,72,153,0.15)]">
+          <div class="absolute inset-0 bg-gradient-to-br from-magenta-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-2xl bg-magenta-500/10 border border-magenta-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <i class="fas fa-calendar-alt text-2xl md:text-3xl text-magenta-400"></i>
+            </div>
+            <h3 class="text-sm md:text-lg font-black text-white uppercase tracking-tight">Evento</h3>
+            <p class="text-xs text-gray-500 mt-1">Fechas y encuentros</p>
+          </div>
+        </a>
+
+        <!-- Oportunidad (activo) -->
+        <div class="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 md:p-8 text-center shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+          <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <i class="fas fa-briefcase text-2xl md:text-3xl text-emerald-400"></i>
+            </div>
+            <h3 class="text-sm md:text-lg font-black text-white uppercase tracking-tight">Oportunidad</h3>
+            <p class="text-xs text-emerald-400 mt-1 font-bold">Estás aquí</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Botón Crear Oportunidad -->
+    <section class="mb-8 text-center">
+      <a href="crear-oportunidad.html" class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black text-sm uppercase tracking-widest hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+        <i class="fas fa-plus-circle text-lg"></i>
+        Crear Oportunidad
+      </a>
+    </section>
+
+    <!-- Filtros por tipo -->
+    <section class="mb-8">
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button onclick="filterOportunidades('all')" id="filter-all" class="filter-btn px-5 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60">
+          <i class="fas fa-th mr-2"></i>Todas
+        </button>
+        <button onclick="filterOportunidades('convocatoria_obra')" id="filter-convocatoria_obra" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
+          <i class="fas fa-palette mr-2"></i>Convocatoria de Obra
+        </button>
+        <button onclick="filterOportunidades('oportunidad_laboral')" id="filter-oportunidad_laboral" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-orange-500/50">
+          <i class="fas fa-briefcase mr-2"></i>Oportunidades Laborales
+        </button>
+        <button onclick="filterOportunidades('colaboracion')" id="filter-colaboracion" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
+          <i class="fas fa-handshake mr-2"></i>Colaboración
+        </button>
+      </div>
+    </section>
+
+    <!-- Listado de Oportunidades -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-6">
+        <i class="fas fa-briefcase text-emerald-400 mr-2"></i>Oportunidades Activas
+      </h2>
+      <div id="oportunidades-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-20">
+          <i class="fas fa-spinner fa-spin text-3xl text-emerald-400 mb-4"></i>
+          <p>Cargando oportunidades...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/tagging.js"></script>
+  <script>
+    let allOportunidades = [];
+    let currentFilter = 'all';
+
+    const tipoLabels = {
+      convocatoria_obra: 'Convocatoria de Obra',
+      oportunidad_laboral: 'Oportunidad Laboral',
+      colaboracion: 'Colaboración'
+    };
+
+    const tipoIcons = {
+      convocatoria_obra: 'fas fa-palette',
+      oportunidad_laboral: 'fas fa-briefcase',
+      colaboracion: 'fas fa-handshake'
+    };
+
+    const tipoColors = {
+      convocatoria_obra: 'cyan',
+      oportunidad_laboral: 'orange',
+      colaboracion: 'magenta'
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadOportunidades();
+    });
+
+    async function loadOportunidades() {
+      const container = document.getElementById('oportunidades-container');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/oportunidades');
+        allOportunidades = await res.json();
+        renderOportunidades(allOportunidades);
+      } catch {
+        container.innerHTML = `<div class="col-span-full text-center text-red-400 py-10"><i class="fas fa-exclamation-triangle mr-2"></i>Error cargando oportunidades</div>`;
+      }
+    }
+
+    function filterOportunidades(tipo) {
+      currentFilter = tipo;
+      
+      // Update button styles
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-400');
+        btn.classList.add('border-white/10', 'bg-white/5', 'text-gray-500');
+      });
+      
+      const activeBtn = document.getElementById('filter-' + tipo);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-white/10', 'bg-white/5', 'text-gray-500');
+        activeBtn.classList.add('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-400');
+      }
+
+      const filtered = tipo === 'all' ? allOportunidades : allOportunidades.filter(o => o.tipo === tipo);
+      renderOportunidades(filtered);
+    }
+
+    function renderOportunidades(oportunidades) {
+      const container = document.getElementById('oportunidades-container');
+      if (!oportunidades.length) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-20">
+            <i class="fas fa-briefcase text-5xl text-emerald-400/30 mb-4"></i>
+            <p class="text-xl">Aún no hay oportunidades publicadas</p>
+            <p class="text-sm mt-2">¡Sé el primero en crear una!</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = oportunidades.map(opo => {
+        const color = tipoColors[opo.tipo] || 'emerald';
+        const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
+        const label = tipoLabels[opo.tipo] || 'Oportunidad';
+        
+        let extraInfo = '';
+        if (opo.tipo === 'convocatoria_obra') {
+          if (opo.lugarExposicion) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${opo.lugarExposicion}</span>`;
+          if (opo.fechaHasta) extraInfo += `<span class="text-xs text-gray-500 ml-3"><i class="fas fa-clock mr-1"></i>${new Date(opo.fechaHasta).toLocaleDateString('es-AR')}</span>`;
+        } else if (opo.tipo === 'oportunidad_laboral') {
+          if (opo.nombrePuesto) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-user-tie mr-1"></i>${opo.nombrePuesto}</span>`;
+          if (opo.productoraEmpresa) extraInfo += `<span class="text-xs text-gray-500 ml-3"><i class="fas fa-building mr-1"></i>${opo.productoraEmpresa}</span>`;
+        } else if (opo.tipo === 'colaboracion') {
+          if (opo.nombreProyecto) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-project-diagram mr-1"></i>${opo.nombreProyecto}</span>`;
+        }
+
+        return `
+          <div class="rounded-2xl overflow-hidden border border-${color}-500/10 card-cyber transition-all duration-300 flex flex-col h-full group hover:border-${color}-500/30">
+            ${opo.imagenUrl ? `
+              <div class="relative aspect-video overflow-hidden">
+                <img src="${opo.imagenUrl}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${opo.titulo}">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              </div>
+            ` : `
+              <div class="relative aspect-video overflow-hidden bg-${color}-500/5 flex items-center justify-center">
+                <i class="${icon} text-5xl text-${color}-500/20"></i>
+              </div>
+            `}
+            <div class="p-5 flex-1 flex flex-col">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-${color}-500/20 text-${color}-400 border border-${color}-500/30 uppercase tracking-widest">
+                  <i class="${icon} mr-1"></i>${label}
+                </span>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${opo.titulo}</h3>
+              <p class="text-gray-400 text-sm mb-3 line-clamp-2">${opo.descripcion || ''}</p>
+              
+              ${extraInfo ? `<div class="flex flex-wrap gap-2 mb-4">${extraInfo}</div>` : ''}
+              
+              <div class="mt-auto flex items-center justify-between pt-3 border-t border-white/5">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[9px] font-bold text-gray-500">
+                    ${(opo.creador?.username || '?')[0].toUpperCase()}
+                  </div>
+                  <span class="text-xs text-gray-500 font-medium">@${opo.creador?.username || 'anónimo'}</span>
+                </div>
+                <span class="text-xs text-gray-500">
+                  <i class="fas fa-users mr-1"></i>${opo.inscripciones?.length || 0}
+                </span>
+              </div>
+            </div>
+            <a href="oportunidad.html?id=${opo._id}" class="block p-3 bg-${color}-500/10 text-${color}-400 hover:bg-${color}-500 hover:text-white transition-all text-xs font-bold w-full text-center">
+              VER OPORTUNIDAD <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

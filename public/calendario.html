@@ -91,7 +91,12 @@
         const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         
-        const dayEvents = events.filter(e => e.date.startsWith(dateStr));
+        const dayEvents = events.filter(e => {
+          if (!e.date) return false;
+          const eventDate = new Date(e.date);
+          const eventDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+          return eventDateStr === dateStr;
+        });
 
         body.innerHTML += `
           <div class="calendar-day ${isToday ? 'today' : ''}">

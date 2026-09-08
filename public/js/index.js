@@ -143,7 +143,7 @@ async function pinEventFromFeed(eventId) {
 }
 
 let allFeedItems = [];
-let activeFilters = { post: true, recurso: true, evento: true };
+let activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
 let showBotsOnly = false;
 
 function toggleHumanAI() {
@@ -160,7 +160,7 @@ function toggleHumanAI() {
 }
 
 function updateFilterStyles() {
-  const colors = { post: 'cyan', recurso: 'orange', evento: 'fuchsia' };
+  const colors = { post: 'cyan', recurso: 'orange', evento: 'fuchsia', oportunidad: 'emerald' };
   Object.keys(activeFilters).forEach(type => {
     const btn = document.getElementById(`filter-${type}`);
     if (activeFilters[type]) {
@@ -168,15 +168,15 @@ function updateFilterStyles() {
       btn.classList.add(`text-${colors[type]}-400`, `bg-${colors[type]}-500/10`, `border-${colors[type]}-500/40`, 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
     } else {
       btn.classList.add('text-gray-500', 'bg-white/5', 'border-white/10');
-      btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border-cyan-500/40', 'text-orange-400', 'bg-orange-500/10', 'border-orange-500/40', 'text-fuchsia-400', 'bg-fuchsia-500/10', 'border-fuchsia-500/40', 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
+      btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border-cyan-500/40', 'text-orange-400', 'bg-orange-500/10', 'border-orange-500/40', 'text-fuchsia-400', 'bg-fuchsia-500/10', 'border-fuchsia-500/40', 'text-emerald-400', 'bg-emerald-500/10', 'border-emerald-500/40', 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
     }
   });
 }
 
 function toggleFilter(type) {
   activeFilters[type] = !activeFilters[type];
-  if (!activeFilters.post && !activeFilters.recurso && !activeFilters.evento) {
-    activeFilters = { post: true, recurso: true, evento: true };
+  if (!activeFilters.post && !activeFilters.recurso && !activeFilters.evento && !activeFilters.oportunidad) {
+    activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
   }
   updateFilterStyles();
   renderFeed();
@@ -185,26 +185,29 @@ function toggleFilter(type) {
 async function loadFeed() {
   const container = document.getElementById('feed-container');
   try {
-    const [postsRes, recursosRes, eventosRes] = await Promise.all([
+    const [postsRes, recursosRes, eventosRes, oportunidadesRes] = await Promise.all([
       fetch(CONFIG.API_URL + '/posts'),
       fetch(CONFIG.API_URL + '/recursos'),
-      fetch(CONFIG.API_URL + '/eventos')
+      fetch(CONFIG.API_URL + '/eventos'),
+      fetch(CONFIG.API_URL + '/oportunidades')
     ]);
 
-    if (!postsRes.ok || !recursosRes.ok || !eventosRes.ok) {
+    if (!postsRes.ok || !recursosRes.ok || !eventosRes.ok || !oportunidadesRes.ok) {
       throw new Error('Error al cargar el feed.');
     }
 
-    const [posts, recursos, eventos] = await Promise.all([
+    const [posts, recursos, eventos, oportunidades] = await Promise.all([
       postsRes.json(),
       recursosRes.json(),
-      eventosRes.json()
+      eventosRes.json(),
+      oportunidadesRes.json()
     ]);
 
     allFeedItems = [
       ...posts.map(p => ({ ...p, feedType: 'post' })),
       ...recursos.map(r => ({ ...r, feedType: 'recurso' })),
-      ...eventos.map(e => ({ ...e, feedType: 'evento' }))
+      ...eventos.map(e => ({ ...e, feedType: 'evento' })),
+      ...oportunidades.map(o => ({ ...o, feedType: 'oportunidad' }))
     ].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
     updateFilterStyles();
@@ -240,12 +243,14 @@ function renderFeed() {
     const isPost = type === 'post';
     const isRecurso = type === 'recurso';
     const isEvento = type === 'evento';
+    const isOportunidad = type === 'oportunidad';
 
     const link = isPost ? `post.html?id=${item._id}` :
-                 (isRecurso ? `recurso.html?id=${item._id}` : `evento.html?id=${item._id}`);
+                 (isRecurso ? `recurso.html?id=${item._id}` : 
+                 (isEvento ? `evento.html?id=${item._id}` : `oportunidad.html?id=${item._id}`));
 
-    const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : 'fuchsia');
-    const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : 'EVENTO');
+    const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : (isEvento ? 'fuchsia' : 'emerald'));
+    const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : (isEvento ? 'EVENTO' : 'OPORTUNIDAD'));
     const author = item.author || item.creator || { username: 'Anónimo' };
     const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const youtubeId = extractYouTubeId(item);
@@ -259,7 +264,7 @@ function renderFeed() {
               <img src="${sanitizeUrl(item.imageUrl)}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `
               <div class="w-full h-full bg-white/5 flex items-center justify-center cursor-pointer">
-                <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open'))))} text-3xl text-gray-700"></i>
+                <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (isOportunidad ? 'briefcase' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open')))))} text-3xl text-gray-700"></i>
               </div>
             `}
             ${youtubeId ? `
@@ -340,7 +345,9 @@ async function toggleFeedLike(event, id, type) {
     return;
   }
   const endpoint = type === 'post' ? `/posts/${id}/like` :
-                   (type === 'recurso' ? `/recursos/${id}/like` : `/eventos/${id}/like`);
+                   (type === 'recurso' ? `/recursos/${id}/like` : 
+                   (type === 'evento' ? `/eventos/${id}/like` : null));
+  if (!endpoint) return;
   const btn = event.currentTarget;
   const icon = btn.querySelector('i');
   const countSpan = btn.querySelector('.like-count');
