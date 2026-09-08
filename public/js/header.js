@@ -9,65 +9,62 @@ function renderHeader() {
       <div class="flex items-center justify-between h-16">
         
         <!-- Logo -->
-        <a href="${CONFIG.BASE}/" class="flex items-center gap-2 group">
-          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital" class="w-10 h-10 rounded-lg object-cover">
-          <span class="hidden sm:block text-lg font-bold gradient-text">
-            Arte Digital Data
-          </span>
+        <a href="${CONFIG.BASE}/" class="flex items-center group shrink-0" title="Arte Digital Data">
+          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital Data" class="w-10 h-10 rounded-lg object-cover">
         </a>
 
         <!-- Colaborar Button -->
-        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase mr-1">
+        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase mr-1 shrink-0 whitespace-nowrap">
           <i class="fas fa-heart text-yellow-500"></i> COLABORAR
         </button>
 
         <!-- Trophy Button -->
-        <a href="${CONFIG.BASE}/concurso.html" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all mr-2" title="Concurso Mensual de Arte">
+        <a href="${CONFIG.BASE}/concurso.html" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all mr-2 shrink-0 whitespace-nowrap" title="Concurso Mensual de Arte">
           <i class="fas fa-trophy text-xs"></i>
         </a>
 
         <!-- Desktop Nav -->
-        <nav class="hidden lg:flex items-center gap-0.5">
-          <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+        <nav class="hidden lg:flex items-center gap-0.5 shrink-0 flex-nowrap">
+          <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-home text-[10px]"></i> INICIO
           </a>
-          <a href="${CONFIG.BASE}/quienessomos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/quienessomos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-info-circle text-[10px]"></i> QUIENES SOMOS
           </a>
-          <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-palette text-[10px]"></i> OBRAS
           </a>
-          <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-box-open text-[10px]"></i> RECURSOS
           </a>
-          <a href="${CONFIG.BASE}/oportunidades.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-emerald)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/oportunidades.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-emerald)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-briefcase text-[10px]"></i> OPORTUNIDADES
           </a>
-          <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-search text-[10px]"></i> BUSCAR
           </a>
-          <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-calendar-alt text-[10px]"></i> CALENDARIO
           </a>
-          <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-users text-[10px]"></i> ARTISTAS
           </a>
           ${loggedIn ? `
-          <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all">
+          <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-comments text-[10px]"></i> CHAT
           </a>
           ` : ''}
           ${admin ? `
-          <a href="${CONFIG.BASE}/admin.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30 ml-1">
+          <a href="${CONFIG.BASE}/admin.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30 ml-1 whitespace-nowrap">
             <i class="fas fa-shield-alt text-[9px]"></i> Admin
           </a>
           ` : ''}
         </nav>
 
         <!-- Auth Buttons / User Menu -->
-        <div class="hidden md:flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-3 shrink-0">
           ${loggedIn ? `
-            <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1">
+            <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1 whitespace-nowrap">
               <i class="fas fa-plus-circle text-xs"></i> CREAR
             </a>
             <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
@@ -78,7 +75,7 @@ function renderHeader() {
                   <i class="fas fa-user-astronaut"></i>
                 </div>
               `}
-              <span class="text-sm font-bold text-gray-300 group-hover:text-cyan-400 transition-colors uppercase">
+              <span class="text-sm font-bold text-gray-300 group-hover:text-cyan-400 transition-colors uppercase max-w-[120px] truncate">
                 ${escapeHTML(user?.displayName || user?.username || 'Usuario')}
               </span>
             </a>
@@ -284,7 +281,7 @@ function extractYouTubeId(item) {
     const match = item.match(regex);
     return match ? match[1] : null;
   }
-  const searchStrings = [item.youtube_video, item.title, item.description, item.url, item.location];
+  const searchStrings = [item.youtube_video, item.title, item.titulo, item.description, item.descripcion, item.url, item.location];
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   for (const str of searchStrings) {
     if (str && typeof str === 'string') {

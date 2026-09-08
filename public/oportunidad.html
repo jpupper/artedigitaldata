@@ -11,7 +11,7 @@
 <body class="min-h-screen">
   <div id="app-header"></div>
 
-  <main class="pt-20 pb-10 max-w-5xl mx-auto px-4">
+  <main class="relative z-10 pt-20 pb-10 max-w-5xl mx-auto px-4">
     <!-- Loading -->
     <div id="loading" class="text-center py-20">
       <i class="fas fa-spinner fa-spin text-4xl text-emerald-400 mb-4"></i>
@@ -153,20 +153,15 @@
         <p class="text-sm text-gray-400">El creador de la oportunidad recibirá tu postulación.</p>
       </section>
 
-      <!-- Panel del creador: Inscripciones -->
+      <!-- Panel del creador: Link a la página de postulantes -->
       <section id="creador-panel" class="hidden">
-        <div class="border-t border-white/10 pt-8 mt-8">
-          <h2 class="text-xl font-bold text-white mb-4">
-            <i class="fas fa-users text-emerald-400 mr-2"></i>Inscripciones Recibidas
-          </h2>
-          <p class="text-sm text-gray-400 mb-6">Gestioná las postulaciones a tu oportunidad.</p>
-          
-          <div id="inscripciones-container" class="space-y-4">
-            <div class="text-center text-gray-500 py-10">
-              <i class="fas fa-spinner fa-spin text-2xl text-emerald-400 mb-3"></i>
-              <p>Cargando inscripciones...</p>
-            </div>
-          </div>
+        <div class="border-t border-white/10 pt-8 mt-8 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 text-center">
+          <i class="fas fa-users text-4xl text-emerald-400 mb-3"></i>
+          <h2 class="text-xl font-bold text-white mb-2">Sos el creador de esta oportunidad</h2>
+          <p class="text-sm text-gray-400 mb-6">Podés revisar y gestionar todas las postulaciones en la página dedicada de postulantes.</p>
+          <a id="btn-ver-postulantes" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+            <i class="fas fa-users mr-1"></i> Ver Postulantes
+          </a>
         </div>
       </section>
     </div>
@@ -239,8 +234,8 @@
           
           if (esCreador) {
             document.getElementById('creador-panel').classList.remove('hidden');
+            document.getElementById('btn-ver-postulantes').href = `postulantes.html?id=${oportunidadId}`;
             document.getElementById('inscripcion-section').classList.add('hidden');
-            loadInscripciones();
           } else {
             // Check if already inscribed
             checkInscripcion();

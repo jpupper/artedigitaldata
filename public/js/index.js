@@ -49,8 +49,8 @@ function renderPinnedEvents(events) {
           <div class="block w-full h-full relative cursor-pointer"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
                onclick="window.location.href='evento.html?id=${ev._id}'">
-            ${ev.imageUrl ? `
-              <img src="${sanitizeUrl(ev.imageUrl)}" alt="${escapeHTML(ev.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            ${ev.imageUrl || ev.imagenUrl ? `
+              <img src="${sanitizeUrl(ev.imageUrl || ev.imagenUrl)}" alt="${escapeHTML(ev.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `
               <div class="w-full h-full bg-cyan-500/10 flex items-center justify-center">
                 <i class="fas fa-calendar-alt text-4xl text-cyan-500/30"></i>
@@ -149,37 +149,46 @@ let showBotsOnly = false;
 function toggleHumanAI() {
   showBotsOnly = !showBotsOnly;
   const btn = document.getElementById('filter-human-ai');
-  if (showBotsOnly) {
-    btn.innerHTML = '<i class=\"fas fa-robot text-xs\"></i> IA';
-    btn.className = 'px-6 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 font-black text-xs uppercase tracking-widest transition-all hover:border-purple-500/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] flex items-center gap-2';
-  } else {
-    btn.innerHTML = '<i class=\"fas fa-user text-xs\"></i> HUMAN';
-    btn.className = 'px-6 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] flex items-center gap-2';
+  if (btn) {
+    if (showBotsOnly) {
+      btn.innerHTML = '<i class="fas fa-robot text-sm"></i>';
+      btn.className = 'w-9 h-9 rounded-xl border border-purple-500/40 bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all hover:scale-105 hover:border-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0';
+      btn.title = 'Mostrando contenido IA (Click para cambiar a Humanos)';
+    } else {
+      btn.innerHTML = '<i class="fas fa-user text-sm"></i>';
+      btn.className = 'w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0';
+      btn.title = 'Mostrando contenido Humano (Click para cambiar a IA)';
+    }
   }
   renderFeed();
 }
 
 function updateFilterStyles() {
-  const colors = { post: 'cyan', recurso: 'lime', evento: 'fuchsia', oportunidad: 'gold' };
+  const colorClasses = {
+    post: 'filter-post',
+    recurso: 'filter-recurso',
+    evento: 'filter-evento',
+    oportunidad: 'filter-oportunidad'
+  };
+  
   Object.keys(activeFilters).forEach(type => {
     const btn = document.getElementById(`filter-${type}`);
+    // Remover clase active de todos
+    btn.classList.remove('active');
+    
     if (activeFilters[type]) {
-      btn.classList.remove('text-gray-500', 'bg-white/5', 'border-white/10');
-      btn.classList.add(`text-${colors[type]}-400`, `bg-${colors[type]}-500/10`, `border-${colors[type]}-500/40`, 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
-    } else {
-      btn.classList.add('text-gray-500', 'bg-white/5', 'border-white/10');
-      btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border-cyan-500/40', 'text-lime-400', 'bg-lime-500/10', 'border-lime-500/40', 'text-fuchsia-400', 'bg-fuchsia-500/10', 'border-fuchsia-500/40', 'text-yellow-400', 'bg-yellow-500/10', 'border-yellow-500/40', 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
+      // Agregar la clase active correspondiente
+      btn.classList.add('active');
     }
   });
 }
 
 function toggleFilter(type) {
   activeFilters[type] = !activeFilters[type];
-  // Si todos están desactivados, no hacer nada (permitir ver solo el tipo seleccionado)
+  // Si todos están desactivados, reactivar todos
   const anyActive = Object.values(activeFilters).some(v => v);
   if (!anyActive) {
-    activeFilters[type] = true; // Reactivar el que se acaba de desactivar
-    return;
+    activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
   }
   updateFilterStyles();
   renderFeed();
@@ -255,17 +264,21 @@ function renderFeed() {
     const accentColor = isPost ? 'cyan' : (isRecurso ? 'lime' : (isEvento ? 'fuchsia' : 'gold'));
     const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : (isEvento ? 'EVENTO' : 'OPORTUNIDAD'));
     const subcategoria = isOportunidad ? (item.tipo === 'convocatoria_obra' ? 'Convocatoria de Obra' : item.tipo === 'oportunidad_laboral' ? 'Oportunidad Laboral' : 'Colaboración') : '';
-    const author = item.author || item.creator || { username: 'Anónimo' };
+    const author = item.author || item.creator || item.creador || { username: 'Anónimo' };
+    const title = item.title || item.titulo || 'Sin título';
+    const description = item.description || item.descripcion || '';
     const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const youtubeId = extractYouTubeId(item);
+
+    const imgUrl = item.imageUrl || item.imagenUrl;
 
     return `
       <div class="group rounded-[2rem] overflow-hidden border border-white/5 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/30 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
         <div class="relative aspect-video overflow-hidden">
           <a href="${link}" class="block w-full h-full relative"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
-            ${item.imageUrl ? `
-              <img src="${sanitizeUrl(item.imageUrl)}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            ${imgUrl ? `
+              <img src="${sanitizeUrl(imgUrl)}" alt="${escapeHTML(title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `
               <div class="w-full h-full bg-white/5 flex items-center justify-center cursor-pointer">
                 <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (isOportunidad ? 'briefcase' : (item.type === 'texto' ? 'file-alt' : (item.type === 'software' ? 'desktop' : (item.type === 'tutorial' ? 'graduation-cap' : 'box-open')))))} text-3xl text-gray-700"></i>
@@ -304,7 +317,7 @@ function renderFeed() {
                 `}
               </div>
               <div>
-                <a href="profile?user=${encodeURIComponent(author.username)}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
+                <a href="profile.html?user=${encodeURIComponent(author.username)}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
                   ${escapeHTML(author.username)}
                 </a>
                 <span class="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">${date}</span>
@@ -313,14 +326,14 @@ function renderFeed() {
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-${accentColor}-400 transition-colors line-clamp-1">
-              ${(item.title && (item.title.includes('youtube.com') || item.title.includes('youtu.be'))) ? `
-                <a href="${sanitizeUrl(item.title)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-600/10 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-red-500/20 hover:bg-red-600/20 transition-all cursor-alias">
+              ${(title && (title.includes('youtube.com') || title.includes('youtu.be'))) ? `
+                <a href="${sanitizeUrl(title)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-600/10 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border border-red-500/20 hover:bg-red-600/20 transition-all cursor-alias">
                   <i class="fab fa-youtube text-xs"></i> Ver Video
                 </a>
-              ` : `<a href="${link}" class="hover:text-${accentColor}-400 transition-colors">${escapeHTML(item.title)}</a>`}
+              ` : `<a href="${link}" class="hover:text-${accentColor}-400 transition-colors">${escapeHTML(title)}</a>`}
             </h3>
             <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-              ${formatMentions(item.description)}
+              ${formatMentions(description) || 'Sin descripción'}
             </p>
           </div>
           <div class="flex items-center justify-between pt-4 border-t border-white/5">

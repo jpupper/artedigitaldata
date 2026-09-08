@@ -50,7 +50,7 @@
   }
 
   function draw() {
-    background(10, BG_ALPHA);
+    clear();
 
     let mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY);
     let speed = mouseVel.mag();
