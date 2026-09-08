@@ -43,6 +43,7 @@ const RecursoSchema: Schema = new Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
     source: { type: String, enum: ['human', 'ia'], default: 'human' },
+    visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
   },
   { timestamps: true }
 );

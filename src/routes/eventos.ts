@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const eventos = await Evento.find().sort({ date: 1 });
+    const eventos = await Evento.find({ visibility: 'public' }).sort({ date: 1 });
     const final = await hydrate(eventos, 'creator');
     return res.json(final);
   } catch (err: any) {
@@ -62,7 +62,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, tags } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, tags, visibility } = req.body;
     if (!title || !date) return res.status(400).json({ error: 'Título y fecha son obligatorios' });
     
     // Validar fecha
@@ -103,7 +103,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       creator: req.user!.id,
       participants,
       ticketConfig: ticketConfig || { enabled: false },
-      tags: tags || []
+      tags: tags || [],
+      visibility: visibility || 'public',
     });
     const [final] = await hydrate([evento], 'creator');
     return res.status(201).json(final);

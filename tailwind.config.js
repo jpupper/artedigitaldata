@@ -8,7 +8,7 @@
 //   js/edit-logic.js  colorMap / borderMap  -> cyan | orange | magenta
 // `magenta` no existe en la paleta de Tailwind: esas clases nunca generaron
 // CSS, tampoco con el CDN, así que no se listan.
-const ACCENTS = ['cyan', 'orange', 'fuchsia'];
+const ACCENTS = ['cyan', 'orange', 'fuchsia', 'emerald'];
 
 const dynamicClasses = ACCENTS.flatMap((c) => [
   // js/index.js — tarjetas del feed

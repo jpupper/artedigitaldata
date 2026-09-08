@@ -145,6 +145,9 @@
       <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
       </button>
+      <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+        <i class="fas fa-briefcase mr-2"></i>OPORTUNIDADES
+      </button>
       <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-heart mr-2 text-red-500"></i>TUS FAV
       </button>
@@ -187,6 +190,14 @@
       <div id="user-eventos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center text-gray-500 py-10">
           <p>Cargando eventos...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-oportunidades" class="content-section hidden">
+      <div id="user-oportunidades" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-10">
+          <p>Cargando oportunidades...</p>
         </div>
       </div>
     </div>
@@ -324,7 +335,7 @@
         if (tok) headers['Authorization'] = `Bearer ${tok}`;
         const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`, { headers });
         if (!res.ok) throw new Error('Not found');
-        const { user: profile, posts, recursos, eventos, doorEvents, favorites } = await res.json();
+        const { user: profile, posts, recursos, eventos, oportunidades, doorEvents, favorites } = await res.json();
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
         const bioText = profile.bio || 'Sin bio';
@@ -372,6 +383,7 @@
         renderUserConcursos(posts.filter(p => p.isContest));
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
+        renderUserOportunidades(oportunidades || []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
 
         // XP level bar (shown for everyone)
@@ -704,6 +716,42 @@
       }).join('');
     }
 
+    function renderUserOportunidades(oportunidades) {
+      const container = document.getElementById('user-oportunidades');
+      if (!oportunidades.length) {
+        container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-briefcase text-4xl text-emerald-400/30 mb-3"></i><p>Este usuario aún no tiene oportunidades publicadas</p></div>`;
+        return;
+      }
+      const tipoLabels = { convocatoria_obra: 'Convocatoria de Obra', oportunidad_laboral: 'Oportunidad Laboral', colaboracion: 'Colaboración' };
+      const tipoIcons = { convocatoria_obra: 'fas fa-palette', oportunidad_laboral: 'fas fa-briefcase', colaboracion: 'fas fa-handshake' };
+      container.innerHTML = oportunidades.map(opo => {
+        const label = tipoLabels[opo.tipo] || 'Oportunidad';
+        const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
+        return `
+          <div class="rounded-2xl p-5 border border-emerald-500/10 card-cyber transition-all duration-300 group">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <a href="oportunidad?id=${opo._id}" target="_blank" class="block hover:text-emerald-400 transition-colors flex-1">
+                <h3 class="font-bold text-white line-clamp-1">${opo.titulo}</h3>
+              </a>
+              ${(isLoggedIn() && (isOwner || isAdmin())) ? `
+                <div class="flex gap-1">
+                  <button onclick="deleteOportunidad('${opo._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
+                </div>
+              ` : ''}
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 uppercase font-bold"><i class="${icon} mr-1"></i>${label}</span>
+              <span class="text-[10px] text-gray-500">${opo.inscripciones?.length || 0} inscriptos</span>
+            </div>
+            <p class="text-xs text-gray-400 line-clamp-2 mb-3">${opo.descripcion || ''}</p>
+            <div class="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-white/5">
+              <span>${new Date(opo.createdAt).toLocaleDateString()}</span>
+              <a href="oportunidad?id=${opo._id}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold">Ver postulantes <i class="fas fa-arrow-right ml-1"></i></a>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
     async function deletePost(postId) {
       if (!confirm('¿Estás seguro de que querés eliminar esta obra?')) return;
       const res = await apiRequest(`/posts/${postId}`, { method: 'DELETE' });
@@ -719,6 +767,12 @@
     async function deleteEvento(id) {
       if (!confirm('¿Estás seguro de que querés eliminar este evento?')) return;
       const res = await apiRequest(`/eventos/${id}`, { method: 'DELETE' });
+      if (res?.ok) await loadProfile();
+    }
+
+    async function deleteOportunidad(id) {
+      if (!confirm('¿Estás seguro de que querés eliminar esta oportunidad?')) return;
+      const res = await apiRequest(`/oportunidades/${id}`, { method: 'DELETE' });
       if (res?.ok) await loadProfile();
     }
 

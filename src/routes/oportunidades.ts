@@ -11,7 +11,7 @@ const router = Router();
 // =============================================
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const filter: any = { activa: true };
+    const filter: any = { activa: true, visibility: 'public' };
     if (req.query.tipo) filter.tipo = req.query.tipo;
     
     const oportunidades = await Oportunidad.find(filter)
@@ -60,6 +60,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       nombreProyecto,
       colaboracionPedida,
       tags,
+      visibility,
     } = req.body;
 
     if (!tipo || !titulo) {
@@ -86,6 +87,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       nombreProyecto: nombreProyecto || '',
       colaboracionPedida: colaboracionPedida || '',
       tags: tags || [],
+      visibility: visibility || 'public',
     });
 
     const [final] = await hydrate([oportunidad], 'creador');

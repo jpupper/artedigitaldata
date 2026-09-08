@@ -19,7 +19,7 @@
     </div>
 
     <!-- Type Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
       <button onclick="switchType('post')" id="btn-post" class="type-card active p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
         <div class="w-16 h-16 mx-auto bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
           <i class="fas fa-palette text-2xl text-gray-400"></i>
@@ -43,6 +43,14 @@
         <h3 class="text-lg font-bold text-white mb-1">Evento</h3>
         <p class="text-xs text-gray-500">Fechas, ferias o streamings</p>
       </button>
+
+      <a href="crear-oportunidad.html" id="btn-oportunidad" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group hover:border-emerald-500/50 hover:bg-emerald-500/5">
+        <div class="w-16 h-16 mx-auto bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
+          <i class="fas fa-briefcase text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1">Oportunidad</h3>
+        <p class="text-xs text-gray-500">Convocatorias, trabajos, colaboraciones</p>
+      </a>
     </div>
 
     <!-- Forms Container -->
@@ -51,6 +59,21 @@
       <!-- Post Form -->
       <form id="post-form" class="space-y-6">
         <div id="post-fields-root"></div>
+        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-eye text-gray-400"></i>
+            <div>
+              <p class="text-sm font-bold text-white">Visibilidad</p>
+              <p class="text-xs text-gray-500">¿Cómo se muestra esta publicación?</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="post-visibility" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
+              <option value="public">🌍 Público (aparece en el feed)</option>
+              <option value="unlisted">🔗 No listado (solo por link)</option>
+            </select>
+          </div>
+        </div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-cyan-500/10 hover:scale-[1.01] transition-transform">
           <i class="fas fa-paper-plane mr-2"></i>PUBLICAR OBRA
         </button>
@@ -59,6 +82,21 @@
       <!-- Recurso Form -->
       <form id="recurso-form" class="space-y-6 hidden">
         <div id="recurso-fields-root"></div>
+        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-eye text-gray-400"></i>
+            <div>
+              <p class="text-sm font-bold text-white">Visibilidad</p>
+              <p class="text-xs text-gray-500">¿Cómo se muestra esta publicación?</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="rec-visibility" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-orange-500/50 focus:outline-none">
+              <option value="public">🌍 Público (aparece en el feed)</option>
+              <option value="unlisted">🔗 No listado (solo por link)</option>
+            </select>
+          </div>
+        </div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/10 hover:scale-[1.01] transition-transform" style="background: linear-gradient(135deg, #ff8c00, #ff4500); color: white !important;">
           <i class="fas fa-upload mr-2"></i>SUBIR RECURSO
         </button>
@@ -67,6 +105,21 @@
       <!-- Evento Form -->
       <form id="evento-form" class="space-y-6 hidden">
         <div id="evento-fields-root"></div>
+        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-eye text-gray-400"></i>
+            <div>
+              <p class="text-sm font-bold text-white">Visibilidad</p>
+              <p class="text-xs text-gray-500">¿Cómo se muestra esta publicación?</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="event-visibility" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-fuchsia-500/50 focus:outline-none">
+              <option value="public">🌍 Público (aparece en el feed)</option>
+              <option value="unlisted">🔗 No listado (solo por link)</option>
+            </select>
+          </div>
+        </div>
         <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-magenta-500/10 hover:scale-[1.01] transition-transform">
           <i class="fas fa-calendar-plus mr-2"></i>PUBLICAR EVENTO
         </button>
@@ -156,6 +209,7 @@
         const description = document.getElementById('post-desc').value.trim();
         const youtube_video = document.getElementById('post-youtube').value.trim();
         const tags = document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        const visibility = document.getElementById('post-visibility').value;
         const file = document.getElementById('post-file').files[0];
 
         showStatus('Subiendo Obra', 'Optimizando imagen y procesando datos...');
@@ -181,7 +235,7 @@
 
         const res = await apiRequest('/posts', {
           method: 'POST',
-          body: JSON.stringify({ title, description, imageUrl, youtube_video, tags })
+          body: JSON.stringify({ title, description, imageUrl, youtube_video, tags, visibility })
         });
 
         if (res?.ok) {
@@ -204,6 +258,7 @@
         const youtube_video = document.getElementById('rec-youtube').value.trim();
         const description = document.getElementById('rec-desc').value.trim();
         const tags = document.getElementById('rec-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        const visibility = document.getElementById('rec-visibility').value;
         const file = document.getElementById('rec-file').files[0];
 
         showStatus('Guardando Recurso', 'Vinculando enlace y herramientas...');
@@ -229,7 +284,7 @@
 
         const res = await apiRequest('/recursos', {
           method: 'POST',
-          body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl })
+          body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl, visibility })
         });
 
         if (res?.ok) {
@@ -252,6 +307,7 @@
         const timeVal = document.getElementById('event-time').value || '20:00';
         const date = dateVal && timeVal ? `${dateVal}T${timeVal}` : dateVal;
         const location = document.getElementById('event-location').value.trim();
+        const visibility = document.getElementById('event-visibility').value;
         const file = document.getElementById('event-file').files[0];
         let imageUrl = document.getElementById('event-img-url').value.trim();
         
@@ -282,7 +338,7 @@
 
         const res = await apiRequest('/eventos', {
           method: 'POST',
-          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants })
+          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, visibility })
         });
 
         if (res?.ok) {

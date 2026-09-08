@@ -11,6 +11,7 @@
 </head>
 
 <body class="min-h-screen scrollbar-hide">
+  <div id="p5-canvas"></div>
   <div id="app-header"></div>
 
   <main class="pt-20 pb-10 max-w-7xl mx-auto px-4">
@@ -25,21 +26,23 @@
 
     <!-- Feed Filters -->
     <section class="mb-8">
-      <div class="flex flex-wrap items-center justify-center gap-4">
-        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
           <i class="fas fa-palette mr-2"></i>Obras
         </button>
-        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-orange-500/50">
-          <i class="fas fa-box-open mr-2"></i>Recursos
-        </button>
-        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
-          <i class="fas fa-calendar-alt mr-2"></i>Eventos
-        </button>
-        <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch px-6 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/50">
+        <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-yellow-500/50">
           <i class="fas fa-briefcase mr-2"></i>Oportunidades
         </button>
-        <button onclick="toggleHumanAI()" id="filter-human-ai" class="px-6 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] flex items-center gap-2">
-          <i class="fas fa-user text-xs"></i> HUMAN
+        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
+          <i class="fas fa-calendar-alt mr-2"></i>Eventos
+        </button>
+        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-lime-500/50">
+          <i class="fas fa-box-open mr-2"></i>Recursos
+        </button>
+      </div>
+      <div class="flex justify-center mt-4">
+        <button onclick="toggleHumanAI()" id="filter-human-ai" class="px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-[10px] uppercase tracking-widest transition-all hover:border-emerald-500/60 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] flex items-center gap-2">
+          <i class="fas fa-user text-[10px]"></i> HUMAN
         </button>
       </div>
     </section>
@@ -67,6 +70,8 @@
   </main>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/p5-effect.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/notifications.js"></script>

@@ -73,6 +73,7 @@ const EventoSchema: Schema = new Schema(
     doorUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     pinned: { type: Boolean, default: false },
     tags: { type: [String], default: [] },
+    visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
   },
   { timestamps: true }
 );

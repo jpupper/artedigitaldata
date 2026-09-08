@@ -114,6 +114,7 @@ const OportunidadSchema: Schema = new Schema(
     activa: { type: Boolean, default: true },
     inscripciones: [{ type: Schema.Types.ObjectId, ref: 'Inscripcion' }],
     tags: { type: [String], default: [] },
+    visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
   },
   { timestamps: true }
 );

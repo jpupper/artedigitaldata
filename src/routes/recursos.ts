@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const filter: any = {};
+    const filter: any = { visibility: 'public' };
     if (req.query.source === 'ia') filter.source = 'ia';
     else if (req.query.source === 'human') filter.source = 'human';
     const recursos = await Recurso.find(filter).sort({ createdAt: -1 });
@@ -38,7 +38,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, type, url, tags, imageUrl, youtube_video } = req.body;
+    const { title, description, type, url, tags, imageUrl, youtube_video, visibility } = req.body;
     if (!title || !url) return res.status(400).json({ error: 'Título y URL son obligatorios' });
 
     const recurso = await Recurso.create({
@@ -50,6 +50,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       youtube_video: youtube_video || '',
       author: req.user!.id,
       tags: tags || [],
+      visibility: visibility || 'public',
     });
     const [final] = await hydrate([recurso]);
     return res.status(201).json(final);

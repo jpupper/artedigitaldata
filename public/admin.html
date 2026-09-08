@@ -31,6 +31,7 @@
           <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Posteos</button>
           <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Recursos</button>
           <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Eventos</button>
+          <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">Oportunidades</button>
           <button onclick="switchTab('autobot')" id="tab-autobot" class="tab-btn px-6 py-2 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white flex items-center gap-1"><i class="fas fa-robot text-xs"></i><span id="tab-autobot-label">Autobot</span></button>
           <a href="admin-tickets.html" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-magenta-400 hover:text-white hover:bg-magenta-500/20 flex items-center gap-2">
             <i class="fas fa-ticket-alt"></i>Entradas
@@ -118,6 +119,26 @@
                 </tr>
               </thead>
               <tbody id="eventos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="section-oportunidades" class="admin-section hidden">
+        <div class="rounded-2xl border border-emerald-500/20 card-cyber overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 bg-black/20">
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Oportunidad</th>
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Tipo</th>
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Creador</th>
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Visibilidad</th>
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Inscriptos</th>
+                  <th class="text-left px-6 py-4 text-emerald-400 font-bold uppercase text-xs">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="oportunidades-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -291,8 +312,8 @@
   <script src="js/header.js"></script>
   <script>
     let currentTab = 'users';
-    let data = { users: [], posts: [], recursos: [], eventos: [] };
-    let filteredData = { users: [], posts: [], recursos: [], eventos: [] };
+    let data = { users: [], posts: [], recursos: [], eventos: [], oportunidades: [] };
+    let filteredData = { users: [], posts: [], recursos: [], eventos: [], oportunidades: [] };
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!isLoggedIn() || !isAdmin()) {
@@ -307,17 +328,19 @@
     async function refreshAll() {
       try {
         const t = Date.now();
-        const [usersRes, postsRes, recursosRes, eventosRes] = await Promise.all([
+        const [usersRes, postsRes, recursosRes, eventosRes, oportunidadesRes] = await Promise.all([
           apiRequest('/admin/users?t=' + t),
           apiRequest('/posts?t=' + t),
           apiRequest('/recursos?t=' + t),
-          apiRequest('/eventos?t=' + t)
+          apiRequest('/eventos?t=' + t),
+          apiRequest('/oportunidades?t=' + t)
         ]);
 
         data.users = await usersRes.json();
         data.posts = await postsRes.json();
         data.recursos = await recursosRes.json();
         data.eventos = await eventosRes.json();
+        data.oportunidades = await oportunidadesRes.json();
         
         handleSearch();
       } catch (err) {
@@ -342,6 +365,10 @@
 
       filteredData.eventos = data.eventos.filter(e => 
         e.title.toLowerCase().includes(q) || e.creator?.username?.toLowerCase().includes(q)
+      );
+
+      filteredData.oportunidades = data.oportunidades.filter(o => 
+        o.titulo.toLowerCase().includes(q) || o.creador?.username?.toLowerCase().includes(q)
       );
 
       renderTable();
@@ -427,6 +454,23 @@
             </td>
           </tr>
         `).join('');
+      } else if (currentTab === 'oportunidades') {
+        const tbody = document.getElementById('oportunidades-tbody');
+        tbody.innerHTML = filteredData.oportunidades.map(o => `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(o.titulo)}</td>
+            <td class="px-6 py-4 uppercase text-xs text-emerald-400">${o.tipo?.replace('_', ' ')}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(o.creador?.username || 'Anónimo')}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 rounded text-xs ${o.visibility === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}">${o.visibility === 'public' ? 'Público' : 'No listado'}</span>
+            </td>
+            <td class="px-6 py-4 text-gray-500">${o.inscripciones?.length || 0}</td>
+            <td class="px-6 py-4 flex gap-3">
+              <a href="${CONFIG.BASE}/oportunidad.html?id=${o._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+              <button onclick="deleteItem('oportunidades', '${o._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
       }
     }
 
@@ -439,8 +483,8 @@
     }
 
     async function deleteItem(type, id) {
-      if (!confirm(`¿Estás seguro de que querés eliminar este ${type === 'posts' ? 'posteo' : type === 'eventos' ? 'evento' : 'recurso'}?`)) return;
-      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : `/recursos/${id}`;
+      if (!confirm(`¿Estás seguro de que querés eliminar este ${type === 'posts' ? 'posteo' : type === 'eventos' ? 'evento' : type === 'oportunidades' ? 'oportunidad' : 'recurso'}?`)) return;
+      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : type === 'oportunidades' ? `/oportunidades/${id}` : `/recursos/${id}`;
       const res = await apiRequest(endpoint, { method: 'DELETE' });
       if (res?.ok) refreshAll();
     }

@@ -160,7 +160,7 @@ function toggleHumanAI() {
 }
 
 function updateFilterStyles() {
-  const colors = { post: 'cyan', recurso: 'orange', evento: 'fuchsia', oportunidad: 'emerald' };
+  const colors = { post: 'cyan', recurso: 'lime', evento: 'fuchsia', oportunidad: 'gold' };
   Object.keys(activeFilters).forEach(type => {
     const btn = document.getElementById(`filter-${type}`);
     if (activeFilters[type]) {
@@ -168,15 +168,18 @@ function updateFilterStyles() {
       btn.classList.add(`text-${colors[type]}-400`, `bg-${colors[type]}-500/10`, `border-${colors[type]}-500/40`, 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
     } else {
       btn.classList.add('text-gray-500', 'bg-white/5', 'border-white/10');
-      btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border-cyan-500/40', 'text-orange-400', 'bg-orange-500/10', 'border-orange-500/40', 'text-fuchsia-400', 'bg-fuchsia-500/10', 'border-fuchsia-500/40', 'text-emerald-400', 'bg-emerald-500/10', 'border-emerald-500/40', 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
+      btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border-cyan-500/40', 'text-lime-400', 'bg-lime-500/10', 'border-lime-500/40', 'text-fuchsia-400', 'bg-fuchsia-500/10', 'border-fuchsia-500/40', 'text-yellow-400', 'bg-yellow-500/10', 'border-yellow-500/40', 'shadow-[0_0_15px_rgba(0,0,0,0.3)]');
     }
   });
 }
 
 function toggleFilter(type) {
   activeFilters[type] = !activeFilters[type];
-  if (!activeFilters.post && !activeFilters.recurso && !activeFilters.evento && !activeFilters.oportunidad) {
-    activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
+  // Si todos están desactivados, no hacer nada (permitir ver solo el tipo seleccionado)
+  const anyActive = Object.values(activeFilters).some(v => v);
+  if (!anyActive) {
+    activeFilters[type] = true; // Reactivar el que se acaba de desactivar
+    return;
   }
   updateFilterStyles();
   renderFeed();
@@ -249,8 +252,9 @@ function renderFeed() {
                  (isRecurso ? `recurso.html?id=${item._id}` : 
                  (isEvento ? `evento.html?id=${item._id}` : `oportunidad.html?id=${item._id}`));
 
-    const accentColor = isPost ? 'cyan' : (isRecurso ? 'orange' : (isEvento ? 'fuchsia' : 'emerald'));
+    const accentColor = isPost ? 'cyan' : (isRecurso ? 'lime' : (isEvento ? 'fuchsia' : 'gold'));
     const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : (isEvento ? 'EVENTO' : 'OPORTUNIDAD'));
+    const subcategoria = isOportunidad ? (item.tipo === 'convocatoria_obra' ? 'Convocatoria de Obra' : item.tipo === 'oportunidad_laboral' ? 'Oportunidad Laboral' : 'Colaboración') : '';
     const author = item.author || item.creator || { username: 'Anónimo' };
     const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const youtubeId = extractYouTubeId(item);
@@ -275,10 +279,11 @@ function renderFeed() {
               </div>
             ` : ''}
           </a>
-          <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
+          <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
             <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
               ${badgeText}
             </span>
+            ${isOportunidad ? `<span class="px-2 py-0.5 rounded text-[8px] font-bold bg-${accentColor}-500/20 text-${accentColor}-400 uppercase tracking-wider">${subcategoria}</span>` : ''}
             ${isEvento && isAdmin() && !item.pinned ? `
             <button onclick="event.stopPropagation(); pinEventFromFeed('${item._id}')" class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all flex items-center justify-center" title="Pinnar evento destacado">
               <i class="fas fa-thumbtack text-[10px] transform rotate-45"></i>

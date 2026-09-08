@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const filter: any = { isContest: { $ne: true } };
+    const filter: any = { isContest: { $ne: true }, visibility: 'public' };
     if (req.query.source === 'ia') filter.source = 'ia';
     else if (req.query.source === 'human') filter.source = 'human';
     const posts = await Post.find(filter).sort({ createdAt: -1 });
@@ -35,7 +35,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth } = req.body;
+    const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth, visibility } = req.body;
     const post = await Post.create({
       author: req.user!.id,
       title,
@@ -45,6 +45,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       tags: tags || [],
       isContest: isContest || false,
       contestMonth: contestMonth || '',
+      visibility: visibility || 'public',
     });
     const [populated] = await hydrate([post]);
     return res.status(201).json(populated);

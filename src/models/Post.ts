@@ -43,6 +43,7 @@ const PostSchema: Schema = new Schema(
     isContest: { type: Boolean, default: false },
     contestMonth: { type: String, default: '' },
     source: { type: String, enum: ['human', 'ia'], default: 'human' },
+    visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
   },
   { timestamps: true }
 );
