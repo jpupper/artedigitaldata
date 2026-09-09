@@ -1060,6 +1060,26 @@
 
         <div class="control-row" style="margin-top: 8px;">
           <div class="control-label-wrap">
+            <span>Tamaño Celda Grilla X (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_GRID_X" min="10" max="150" step="2" value="40">
+            <input type="number" id="num-FLOWFIELD_GRID_X" class="val-input" min="10" max="150" step="2" value="40">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Tamaño Celda Grilla Y (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_GRID_Y" min="10" max="150" step="2" value="40">
+            <input type="number" id="num-FLOWFIELD_GRID_Y" class="val-input" min="10" max="150" step="2" value="40">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
             <span>Fuerza del Campo (Empuje)</span>
           </div>
           <div class="slider-text-combo">
@@ -1070,11 +1090,21 @@
 
         <div class="control-row" style="margin-top: 8px;">
           <div class="control-label-wrap">
-            <span>Escala / Frecuencia de Ruido (Zoom)</span>
+            <span>Escala de Ruido X (Frecuencia)</span>
           </div>
           <div class="slider-text-combo">
-            <input type="range" id="param-FLOWFIELD_SCALE" min="0.001" max="0.03" step="0.001" value="0.006">
-            <input type="number" id="num-FLOWFIELD_SCALE" class="val-input" min="0.001" max="0.03" step="0.001" value="0.006">
+            <input type="range" id="param-FLOWFIELD_SCALE_X" min="0.001" max="0.03" step="0.001" value="0.006">
+            <input type="number" id="num-FLOWFIELD_SCALE_X" class="val-input" min="0.001" max="0.03" step="0.001" value="0.006">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Escala de Ruido Y (Frecuencia)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_SCALE_Y" min="0.001" max="0.03" step="0.001" value="0.006">
+            <input type="number" id="num-FLOWFIELD_SCALE_Y" class="val-input" min="0.001" max="0.03" step="0.001" value="0.006">
           </div>
         </div>
 
@@ -1313,8 +1343,11 @@
         'LIFESPAN_DECAY_MAX',
         'SPAWN_COUNT_MAX',
         'AUTO_INTERVAL_SEC',
+        'FLOWFIELD_GRID_X',
+        'FLOWFIELD_GRID_Y',
         'FLOWFIELD_FORCE',
-        'FLOWFIELD_SCALE',
+        'FLOWFIELD_SCALE_X',
+        'FLOWFIELD_SCALE_Y',
         'FLOWFIELD_SPEED'
       ];
 
@@ -1348,6 +1381,9 @@
 
         if (key === 'TEXT_SIZE_MAX') {
           patch['TEXT_SIZE'] = val;
+        }
+        if (key === 'FLOWFIELD_SCALE_X') {
+          patch['FLOWFIELD_SCALE'] = val;
         }
         if (key === 'LIFESPAN_DECAY_MAX') {
           patch['LIFESPAN_DECAY_MIN'] = Math.max(0.2, +(val * 0.4).toFixed(1));
@@ -1753,6 +1789,10 @@
         if (!cfg.TEXT_SIZE_MIN) {
           cfg.TEXT_SIZE_MIN = Math.max(8, Math.round((cfg.TEXT_SIZE_MAX || 36) * 0.45));
         }
+        if (!cfg.FLOWFIELD_GRID_X) cfg.FLOWFIELD_GRID_X = 40;
+        if (!cfg.FLOWFIELD_GRID_Y) cfg.FLOWFIELD_GRID_Y = 40;
+        if (!cfg.FLOWFIELD_SCALE_X) cfg.FLOWFIELD_SCALE_X = cfg.FLOWFIELD_SCALE || 0.006;
+        if (!cfg.FLOWFIELD_SCALE_Y) cfg.FLOWFIELD_SCALE_Y = cfg.FLOWFIELD_SCALE || 0.006;
 
         numericFields.forEach(key => {
           if (cfg[key] !== undefined) {

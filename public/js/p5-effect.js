@@ -26,6 +26,10 @@
     AUTO_INTERVAL_SEC: 2.5,
     FLOWFIELD_ENABLED: false,
     FLOWFIELD_FORCE: 0.4,
+    FLOWFIELD_GRID_X: 40,
+    FLOWFIELD_GRID_Y: 40,
+    FLOWFIELD_SCALE_X: 0.006,
+    FLOWFIELD_SCALE_Y: 0.006,
     FLOWFIELD_SCALE: 0.006,
     FLOWFIELD_SPEED: 0.002,
     FLOWFIELD_SHOW_VECTORS: false,
@@ -309,14 +313,19 @@
 
   function drawFlowfieldGrid(zoff) {
     if (!CFG.FLOWFIELD_SHOW_VECTORS) return;
-    const step = 40;
-    const scale = (CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006;
+    const gridX = Math.max(10, (CFG.FLOWFIELD_GRID_X !== undefined) ? Number(CFG.FLOWFIELD_GRID_X) : 40);
+    const gridY = Math.max(10, (CFG.FLOWFIELD_GRID_Y !== undefined) ? Number(CFG.FLOWFIELD_GRID_Y) : 40);
+    const scaleX = (CFG.FLOWFIELD_SCALE_X !== undefined) ? Number(CFG.FLOWFIELD_SCALE_X) : ((CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006);
+    const scaleY = (CFG.FLOWFIELD_SCALE_Y !== undefined) ? Number(CFG.FLOWFIELD_SCALE_Y) : ((CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006);
+
     stroke(0, 242, 254, 35);
     strokeWeight(1);
-    for (let y = step / 2; y < windowHeight; y += step) {
-      for (let x = step / 2; x < windowWidth; x += step) {
-        const angle = noise(x * scale, y * scale, zoff) * TWO_PI * 4;
-        const v = p5.Vector.fromAngle(angle).mult(12);
+    const vecLen = Math.min(gridX, gridY) * 0.45;
+
+    for (let y = gridY / 2; y < windowHeight; y += gridY) {
+      for (let x = gridX / 2; x < windowWidth; x += gridX) {
+        const angle = noise(x * scaleX, y * scaleY, zoff) * TWO_PI * 4;
+        const v = p5.Vector.fromAngle(angle).mult(vecLen);
         line(x, y, x + v.x, y + v.y);
       }
     }
@@ -631,9 +640,16 @@
 
     applyFlowfield(zoff) {
       if (!CFG.FLOWFIELD_ENABLED) return;
-      const scale = (CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006;
+      const gridX = Math.max(10, (CFG.FLOWFIELD_GRID_X !== undefined) ? Number(CFG.FLOWFIELD_GRID_X) : 40);
+      const gridY = Math.max(10, (CFG.FLOWFIELD_GRID_Y !== undefined) ? Number(CFG.FLOWFIELD_GRID_Y) : 40);
+      const scaleX = (CFG.FLOWFIELD_SCALE_X !== undefined) ? Number(CFG.FLOWFIELD_SCALE_X) : ((CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006);
+      const scaleY = (CFG.FLOWFIELD_SCALE_Y !== undefined) ? Number(CFG.FLOWFIELD_SCALE_Y) : ((CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006);
       const force = (CFG.FLOWFIELD_FORCE !== undefined) ? Number(CFG.FLOWFIELD_FORCE) : 0.4;
-      const angle = noise(this.pos.x * scale, this.pos.y * scale, zoff) * TWO_PI * 4;
+
+      const cellX = floor(this.pos.x / gridX) * gridX + gridX / 2;
+      const cellY = floor(this.pos.y / gridY) * gridY + gridY / 2;
+
+      const angle = noise(cellX * scaleX, cellY * scaleY, zoff) * TWO_PI * 4;
       const flow = p5.Vector.fromAngle(angle).mult(force);
       this.acc.add(flow);
     }
