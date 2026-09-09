@@ -712,6 +712,52 @@
       opacity: 1;
     }
 
+    /* Toggle Switch */
+    .switch-ui {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .switch-ui input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: all 0.25s ease;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #fff;
+      transition: all 0.25s ease;
+      border-radius: 50%;
+    }
+    .switch-ui input:checked + .slider-toggle {
+      background-color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+    }
+    .switch-ui input:checked + .slider-toggle:before {
+      transform: translateX(22px);
+      background-color: #090a0f;
+    }
+
     @media (max-width: 640px) {
       .control-panel {
         width: calc(100vw - 32px);
@@ -931,7 +977,55 @@
             <input type="number" id="num-SPAWN_COUNT_MAX" class="val-input" min="1" max="10" step="1" value="2">
           </div>
         </div>
-      </div> <!-- fin tab-pane-params -->
+      </div>
+
+      <!-- Modo Automático -->
+      <div>
+        <div class="group-title"><i class="fas fa-robot"></i> Modo Automático</div>
+        <div class="control-row">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 12px; font-weight: 700; color: #fff;">Formar Palabras Automáticamente</span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Genera palabras en posiciones aleatorias y mueve las letras sin usar el mouse.
+              </div>
+            </div>
+            <label class="switch-ui" title="Activar / Desactivar Modo Automático">
+              <input type="checkbox" id="param-AUTO_MODE">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Intervalo entre palabras (segundos)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-AUTO_INTERVAL_SEC" min="0.8" max="7.0" step="0.2" value="2.5">
+            <input type="number" id="num-AUTO_INTERVAL_SEC" class="val-input" min="0.8" max="7.0" step="0.2" value="2.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback y Opacidad de Fondo -->
+      <div>
+        <div class="group-title"><i class="fas fa-ghost"></i> Feedback y Estela de Fondo</div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Opacidad del Fondo (0 - 255)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-BG_ALPHA" min="0" max="255" step="1" value="50">
+            <input type="number" id="num-BG_ALPHA" class="val-input" min="0" max="255" step="1" value="50">
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+            0 = estela/feedback infinito permanente. 50 = estela suave. 255 = sin estela (limpieza instantánea).
+          </div>
+        </div>
+      </div>
+    </div> <!-- fin tab-pane-params -->
 
       <!-- Pestaña 2: Palabras por Usuario (Comunidad) -->
       <div id="tab-pane-contributors" class="tab-pane">
@@ -1134,6 +1228,7 @@
 
       // Mapeo bidireccional Slider <-> Textfield numérico
       const numericFields = [
+        'BG_ALPHA',
         'TEXT_SIZE',
         'MAX_SPEED',
         'MAX_FORCE',
@@ -1142,8 +1237,16 @@
         'DISPERSION_MAX',
         'SPAWN_RADIUS_MAX',
         'LIFESPAN_DECAY_MAX',
-        'SPAWN_COUNT_MAX'
+        'SPAWN_COUNT_MAX',
+        'AUTO_INTERVAL_SEC'
       ];
+
+      const autoModeToggle = document.getElementById('param-AUTO_MODE');
+      if (autoModeToggle) {
+        autoModeToggle.addEventListener('change', () => {
+          applyConfigChange('AUTO_MODE', autoModeToggle.checked);
+        });
+      }
 
       const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'];
 
@@ -1358,7 +1461,7 @@
         }
       }
 
-      // Eliminar palabra (SOLO ADMIN)
+      // Eliminar palabra (SOLO ADMIN - eliminación directa sin alert)
       async function removeWord(idx) {
         const userIsAdmin = checkAdminStatus();
         if (!userIsAdmin) {
@@ -1366,11 +1469,10 @@
           return;
         }
         if (words.length <= 1) {
-          alert('Debe quedar al menos una palabra.');
+          showToast('Debe quedar al menos una palabra.', 'error');
           return;
         }
         const wordToRemove = words[idx];
-        if (!confirm(`¿Eliminar la palabra "${wordToRemove}" de toda la web?`)) return;
 
         words.splice(idx, 1);
         renderWordsList();
@@ -1566,6 +1668,10 @@
             if (el) el.value = cfg[key];
           }
         });
+
+        if (autoModeToggle && cfg.AUTO_MODE !== undefined) {
+          autoModeToggle.checked = !!cfg.AUTO_MODE;
+        }
 
         if (cfg.CHARACTERS && charInput) {
           charInput.value = cfg.CHARACTERS;

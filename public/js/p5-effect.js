@@ -20,6 +20,9 @@
     DISPERSION_MAX: 0.5,
     SPAWN_COUNT_MIN: 1,
     SPAWN_COUNT_MAX: 2,
+    BG_ALPHA: 50,
+    AUTO_MODE: false,
+    AUTO_INTERVAL_SEC: 2.5,
     COLOR_1: '#40c4ff', // Cyan
     COLOR_2: '#ff9100', // Naranja
     COLOR_3: '#e040fb', // Magenta
@@ -246,6 +249,9 @@
   window.ParticlesConfig = {
     get: () => ({ ...CFG }),
     set: (newConfig) => {
+      if (newConfig.AUTO_MODE && !CFG.AUTO_MODE) {
+        autoTimer = 999999;
+      }
       CFG = { ...CFG, ...newConfig };
       if (!Array.isArray(CFG.WORDS) || !CFG.WORDS.length) {
         CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
@@ -292,6 +298,7 @@
   let particles = [];
   let palette = [];
   let currentWordIndex = -1;
+  let autoTimer = 0;
 
   function updatePalette() {
     if (typeof color === 'function') {
@@ -367,14 +374,22 @@
   };
 
   window.draw = function() {
-    clear();
+    // Opacidad de fondo para regular el efecto de feedback / estela
+    const bgAlpha = (CFG.BG_ALPHA !== undefined) ? Number(CFG.BG_ALPHA) : 50;
+    if (bgAlpha >= 255) {
+      clear();
+    } else if (bgAlpha > 0) {
+      // Velo semitransparente con el color de fondo para feedback progresivo
+      background(9, 10, 15, bgAlpha);
+    }
+    // Si bgAlpha === 0, no se limpia el fondo (estela / feedback permanente)
 
     if (!palette.length) updatePalette();
 
     const mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY);
     const speed = mouseVel.mag();
     
-    // Si se mueve el mouse con velocidad, generar partículas ambientales normales
+    // Partículas generadas por movimiento de mouse
     if (speed > 0.5) {
       let spawnCount = floor(map(constrain(speed, 0, 50), 0, 50, CFG.SPAWN_COUNT_MIN, CFG.SPAWN_COUNT_MAX));
       if (speed === 0) spawnCount = CFG.SPAWN_COUNT_MIN;
@@ -386,6 +401,43 @@
         const spawnY = mouseY + sin(angle) * r;
         
         particles.push(new Particle(spawnX, spawnY, mouseVel));
+      }
+    }
+
+    // Modo Automático: genera palabras automáticamente en lugares random y mantiene letras en movimiento
+    if (CFG.AUTO_MODE) {
+      autoTimer++;
+      const intervalSec = (CFG.AUTO_INTERVAL_SEC !== undefined) ? Number(CFG.AUTO_INTERVAL_SEC) : 2.5;
+      const targetFrames = Math.max(30, Math.round(intervalSec * 60));
+
+      if (autoTimer >= targetFrames) {
+        autoTimer = 0;
+        const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
+        if (words.length > 0) {
+          let nextIdx = floor(random(words.length));
+          if (words.length > 1 && nextIdx === currentWordIndex) {
+            nextIdx = (nextIdx + 1) % words.length;
+          }
+          currentWordIndex = nextIdx;
+          const chosenWord = words[currentWordIndex];
+
+          // Posición aleatoria dentro de márgenes seguros de pantalla
+          const padX = constrain(windowWidth * 0.2, 80, 260);
+          const padY = constrain(windowHeight * 0.2, 80, 220);
+          const randX = random(padX, windowWidth - padX);
+          const randY = random(padY, windowHeight - padY);
+
+          spawnWordParticles(chosenWord, randX, randY);
+        }
+      }
+
+      // Emisión ambiental orgánica continua para que siempre haya letras en movimiento
+      if (frameCount % 6 === 0) {
+        const wanderAngle = noise(frameCount * 0.015) * TWO_PI * 2;
+        const wanderX = map(noise(frameCount * 0.007, 10), 0, 1, 60, windowWidth - 60);
+        const wanderY = map(noise(frameCount * 0.007, 80), 0, 1, 60, windowHeight - 60);
+        const autoVel = p5.Vector.fromAngle(wanderAngle).mult(random(1.2, 3));
+        particles.push(new Particle(wanderX, wanderY, autoVel));
       }
     }
 
@@ -534,10 +586,11 @@
 
       this.lifespan = 255;
       // Las partículas de palabra se mantienen vivas mientras se forman y un momento más
-      this.holdTime = 70; // frames manteniéndose formadas
+      this.holdTime = 80; // frames manteniéndose formadas
       this.decay = 2.2;
-      this.maxSpeed = Math.max(7, CFG.MAX_SPEED * 1.8);
-      this.maxForce = Math.max(0.4, CFG.MAX_FORCE * 1.2);
+      this.maxSpeed = Math.max(8, CFG.MAX_SPEED * 2.0);
+      this.maxForce = Math.max(0.6, CFG.MAX_FORCE * 1.5);
+      this.noiseSeed = random(1000);
 
       // Color vibrante de la paleta
       let colorPos = random(1);
@@ -552,36 +605,18 @@
     }
 
     applyRepulsion(others) {
-      // Repulsión suave solo si están muy encima
-      let steer = createVector(0, 0);
-      let count = 0;
-      for (let other of others) {
-        if (other !== this && other instanceof WordParticle) {
-          let d = p5.Vector.dist(this.pos, other.pos);
-          if (d > 0 && d < 12) {
-            let diff = p5.Vector.sub(this.pos, other.pos);
-            diff.normalize();
-            diff.div(d);
-            steer.add(diff);
-            count++;
-          }
-        }
-      }
-      if (count > 0) {
-        steer.div(count);
-        steer.mult(0.2);
-        this.acc.add(steer);
-      }
+      // Las letras de las palabras no se repelen entre sí para formarse con total precisión sin rebotar
     }
 
     update() {
-      // Comportamiento de Atractor (Arrive hacia la posición de la letra)
+      // Atractor (Arrive hacia la posición asignada de la letra)
       const desired = p5.Vector.sub(this.target, this.pos);
       const d = desired.mag();
 
-      if (d < 50) {
-        // Frenar al acercarse al atractor (easing/arrive)
-        const speed = map(d, 0, 50, 0, this.maxSpeed);
+      const slowRadius = 60;
+      if (d < slowRadius) {
+        // Frenado progresivo al acercarse (easing suave)
+        const speed = map(d, 0, slowRadius, 0, this.maxSpeed);
         desired.setMag(speed);
       } else {
         desired.setMag(this.maxSpeed);
@@ -592,19 +627,30 @@
       this.acc.add(steer);
 
       this.vel.add(this.acc);
+
+      // Amortiguación progresiva al acercarse para asentar la letra sin sobrepasos ni rebotes
+      if (d < 18) {
+        this.vel.mult(0.85);
+      }
+      if (d < 3) {
+        this.vel.mult(0.35);
+      }
+
       this.pos.add(this.vel);
       this.acc.mult(0);
 
-      // Una vez que llega muy cerca, decrementa holdTime y luego decae
-      if (d < 4) {
+      // Una vez que llega y se forma la palabra
+      if (d < 5) {
         if (this.holdTime > 0) {
           this.holdTime--;
         } else {
           this.lifespan -= this.decay;
+          // Al terminar el tiempo de retención, las letras se dispersan suavemente
+          this.vel.add(p5.Vector.random2D().mult(0.3));
         }
       } else {
-        // En camino decae muy lento
-        this.lifespan -= 0.3;
+        // En camino decae muy lentamente para dar tiempo a que se forme
+        this.lifespan -= 0.15;
       }
     }
 
@@ -612,7 +658,11 @@
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor);
       textSize(CFG.TEXT_SIZE * 1.1); // Ligeramente más destacada
-      text(this.char, this.pos.x, this.pos.y);
+
+      // Ondulación sutil visual mientras la palabra está formada para darle dinamismo sin desarmar la palabra
+      const d = p5.Vector.dist(this.pos, this.target);
+      const floatY = (d < 5 && this.holdTime > 0) ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 : 0;
+      text(this.char, this.pos.x, this.pos.y + floatY);
     }
 
     isDead() {
