@@ -175,10 +175,6 @@
 
   // Función para obtener URL de la API
   function getApiUrl() {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const base = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE : '/artedigitaldata';
-      return window.location.origin + base + '/api';
-    }
     if (window.CONFIG && window.CONFIG.API_URL) return window.CONFIG.API_URL;
     return '/api';
   }

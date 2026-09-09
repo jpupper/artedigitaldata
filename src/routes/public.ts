@@ -295,6 +295,15 @@ router.post('/particles-config', async (req: Request, res: Response) => {
 // Helper de inicialización de palabras de partículas
 async function seedInitialWordsIfNeeded() {
   try {
+    // Eliminar palabras anónimas previas para asegurar que solo usuarios registrados aparezcan
+    await ParticleWord.deleteMany({
+      $or: [
+        { 'addedBy.username': 'Anónimo' },
+        { 'addedBy.username': { $exists: false } },
+        { addedBy: null }
+      ]
+    }).catch(() => {});
+
     const count = await ParticleWord.countDocuments();
     if (count === 0) {
       const config = await getBotConfig('particles_p5_config', null);
@@ -332,7 +341,9 @@ router.get('/particles-words', async (_req: Request, res: Response) => {
     }> = {};
 
     for (const doc of allWords) {
-      const uname = doc.addedBy?.username || 'Anónimo';
+      const uname = doc.addedBy?.username || '';
+      if (!uname || uname === 'Anónimo') continue; // Solo usuarios registrados
+
       if (!byUserMap[uname]) {
         byUserMap[uname] = {
           username: uname,
@@ -350,20 +361,22 @@ router.get('/particles-words', async (_req: Request, res: Response) => {
     }
 
     const byUser = Object.values(byUserMap).sort((a, b) => {
-      // Si uno es jpupper, dejarlo segundo o primero, pero ordenar por cantidad
       return b.count - a.count;
     });
 
-    const recent = allWords.slice(0, 40).map(w => ({
-      word: w.word,
-      username: w.addedBy?.username || 'Anónimo',
-      displayName: w.addedBy?.displayName || 'Anónimo',
-      avatar: w.addedBy?.avatar || '',
-      createdAt: w.createdAt,
-    }));
+    const recent = allWords
+      .filter(w => w.addedBy?.username && w.addedBy.username !== 'Anónimo')
+      .slice(0, 40)
+      .map(w => ({
+        word: w.word,
+        username: w.addedBy?.username || '',
+        displayName: w.addedBy?.displayName || w.addedBy?.username || '',
+        avatar: w.addedBy?.avatar || '',
+        createdAt: w.createdAt,
+      }));
 
     return res.json({
-      totalWords: allWords.length,
+      totalWords: allWords.filter(w => w.addedBy?.username && w.addedBy.username !== 'Anónimo').length,
       totalContributors: byUser.length,
       byUser,
       recent
@@ -373,9 +386,13 @@ router.get('/particles-words', async (_req: Request, res: Response) => {
   }
 });
 
-// POST /public/particles-words — Agregar palabras (disponible para todos los usuarios, con guardado automático)
-router.post('/particles-words', optionalAuth, async (req: AuthRequest, res: Response) => {
+// POST /public/particles-words — Agregar palabras (SOLO USUARIOS REGISTRADOS, con guardado automático)
+router.post('/particles-words', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Debes iniciar sesión para agregar palabras a la comunidad' });
+    }
+
     const rawInput = req.body.words || req.body.word;
     if (!rawInput) {
       return res.status(400).json({ error: 'No se enviaron palabras' });
@@ -402,23 +419,21 @@ router.post('/particles-words', optionalAuth, async (req: AuthRequest, res: Resp
       return res.status(400).json({ error: 'Lista de palabras vacía o inválida' });
     }
 
-    // Identificar usuario contribuidor
-    let username = 'Anónimo';
-    let displayName = 'Anónimo';
+    // Identificar usuario contribuidor (OBLIGATORIO REGISTRADO)
+    let username = req.user.username;
+    let displayName = username;
     let avatar = '';
-    let userId: any = null;
+    const userId = req.user.id;
 
-    if (req.user) {
-      username = req.user.username || 'Anónimo';
-      displayName = username;
-      userId = req.user.id;
-      try {
-        const u = await User.findById(req.user.id);
-        if (u) {
-          displayName = u.displayName || u.username;
-          avatar = u.avatar || '';
-        }
-      } catch {}
+    try {
+      const u = await User.findById(req.user.id);
+      if (u) {
+        username = u.username || username;
+        displayName = u.displayName || u.username || username;
+        avatar = u.avatar || '';
+      }
+    } catch (uErr) {
+      console.warn('[ParticleWord] User lookup error:', uErr);
     }
 
     // Cargar config actual de partículas
