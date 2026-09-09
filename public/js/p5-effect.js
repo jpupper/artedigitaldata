@@ -4,7 +4,9 @@
 (function(window) {
   // Valores por defecto
   const DEFAULT_CONFIG = {
-    TEXT_SIZE: 30,
+    TEXT_SIZE: 36,
+    TEXT_SIZE_MIN: 16,
+    TEXT_SIZE_MAX: 36,
     BG_ALPHA: 50,
     SPAWN_RADIUS_MIN: 20,
     SPAWN_RADIUS_MAX: 100,
@@ -20,9 +22,13 @@
     DISPERSION_MAX: 0.5,
     SPAWN_COUNT_MIN: 1,
     SPAWN_COUNT_MAX: 2,
-    BG_ALPHA: 50,
     AUTO_MODE: false,
     AUTO_INTERVAL_SEC: 2.5,
+    FLOWFIELD_ENABLED: false,
+    FLOWFIELD_FORCE: 0.4,
+    FLOWFIELD_SCALE: 0.006,
+    FLOWFIELD_SPEED: 0.002,
+    FLOWFIELD_SHOW_VECTORS: false,
     COLOR_1: '#40c4ff', // Cyan
     COLOR_2: '#ff9100', // Naranja
     COLOR_3: '#e040fb', // Magenta
@@ -299,6 +305,23 @@
   let palette = [];
   let currentWordIndex = -1;
   let autoTimer = 0;
+  let flowZoff = 0;
+
+  function drawFlowfieldGrid(zoff) {
+    if (!CFG.FLOWFIELD_SHOW_VECTORS) return;
+    const step = 40;
+    const scale = (CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006;
+    stroke(0, 242, 254, 35);
+    strokeWeight(1);
+    for (let y = step / 2; y < windowHeight; y += step) {
+      for (let x = step / 2; x < windowWidth; x += step) {
+        const angle = noise(x * scale, y * scale, zoff) * TWO_PI * 4;
+        const v = p5.Vector.fromAngle(angle).mult(12);
+        line(x, y, x + v.x, y + v.y);
+      }
+    }
+    noStroke();
+  }
 
   function updatePalette() {
     if (typeof color === 'function') {
@@ -317,8 +340,9 @@
     const chars = word.trim().toUpperCase().split('');
     if (!chars.length) return;
 
-    // Calcular espaciado por letra según TEXT_SIZE
-    let spacing = Math.max(12, CFG.TEXT_SIZE * 0.68);
+    // Las letras que forman las palabras siempre usan el tamaño máximo
+    const wordFontSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
+    let spacing = Math.max(12, wordFontSize * 0.68);
     let totalWidth = (chars.length - 1) * spacing;
     
     // Si la palabra/frase excede el ancho de la ventana, reducir espaciado dinámicamente para que entre
@@ -431,18 +455,57 @@
         }
       }
 
-      // Emisión ambiental orgánica continua para que siempre haya letras en movimiento
-      if (frameCount % 6 === 0) {
-        const wanderAngle = noise(frameCount * 0.015) * TWO_PI * 2;
-        const wanderX = map(noise(frameCount * 0.007, 10), 0, 1, 60, windowWidth - 60);
-        const wanderY = map(noise(frameCount * 0.007, 80), 0, 1, 60, windowHeight - 60);
-        const autoVel = p5.Vector.fromAngle(wanderAngle).mult(random(1.2, 3));
-        particles.push(new Particle(wanderX, wanderY, autoVel));
+      // Spawneo de letras distribuidas desde todos lados (no un walker)
+      if (frameCount % 4 === 0) {
+        let spawnX, spawnY, spawnVel;
+        if (random() < 0.5) {
+          // Posición aleatoria en cualquier parte de la pantalla
+          spawnX = random(windowWidth);
+          spawnY = random(windowHeight);
+          spawnVel = p5.Vector.random2D().mult(random(0.5, 2.0));
+        } else {
+          // Entran desde los bordes de la pantalla
+          const side = floor(random(4));
+          if (side === 0) { // Arriba
+            spawnX = random(windowWidth);
+            spawnY = -15;
+            spawnVel = createVector(random(-1.5, 1.5), random(1, 3));
+          } else if (side === 1) { // Derecha
+            spawnX = windowWidth + 15;
+            spawnY = random(windowHeight);
+            spawnVel = createVector(random(-3, -1), random(-1.5, 1.5));
+          } else if (side === 2) { // Abajo
+            spawnX = random(windowWidth);
+            spawnY = windowHeight + 15;
+            spawnVel = createVector(random(-1.5, 1.5), random(-3, -1));
+          } else { // Izquierda
+            spawnX = -15;
+            spawnY = random(windowHeight);
+            spawnVel = createVector(random(1, 3), random(-1.5, 1.5));
+          }
+        }
+        particles.push(new Particle(spawnX, spawnY, spawnVel));
+      }
+    }
+
+    // Actualizar y dibujar Flowfield si está activo
+    if (CFG.FLOWFIELD_ENABLED) {
+      const spd = (CFG.FLOWFIELD_SPEED !== undefined) ? Number(CFG.FLOWFIELD_SPEED) : 0.002;
+      flowZoff += spd;
+
+      if (CFG.FLOWFIELD_SHOW_VECTORS) {
+        drawFlowfieldGrid(flowZoff);
       }
     }
 
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
+
+      // El flowfield afecta a todas las partículas EXCEPTO a las que forman palabras
+      if (CFG.FLOWFIELD_ENABLED && !(p instanceof WordParticle)) {
+        p.applyFlowfield(flowZoff);
+      }
+
       p.applyRepulsion(particles);
       p.update();
       p.display();
@@ -516,6 +579,17 @@
       this.decay = random(CFG.LIFESPAN_DECAY_MIN, CFG.LIFESPAN_DECAY_MAX); 
       this.char = (CFG.CHARACTERS && CFG.CHARACTERS.length) ? CFG.CHARACTERS.charAt(floor(random(CFG.CHARACTERS.length))) : '*';
       
+      // Tamaño aleatorio entre mínimo y máximo para letras sueltas
+      const minSize = (CFG.TEXT_SIZE_MIN !== undefined) ? Number(CFG.TEXT_SIZE_MIN) : 16;
+      const maxSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
+      this.baseSize = random(Math.min(minSize, maxSize), Math.max(minSize, maxSize));
+
+      // Animación de entrada: escala de 0 a 1 durante el primer 15% de su vida
+      this.age = 0;
+      const totalLife = Math.max(1, 255 / this.decay);
+      this.scaleInDuration = Math.max(1, totalLife * 0.15);
+      this.scale = 0;
+
       let colorPos = random(1);
       if (!palette.length) updatePalette();
 
@@ -555,18 +629,44 @@
       }
     }
 
+    applyFlowfield(zoff) {
+      if (!CFG.FLOWFIELD_ENABLED) return;
+      const scale = (CFG.FLOWFIELD_SCALE !== undefined) ? Number(CFG.FLOWFIELD_SCALE) : 0.006;
+      const force = (CFG.FLOWFIELD_FORCE !== undefined) ? Number(CFG.FLOWFIELD_FORCE) : 0.4;
+      const angle = noise(this.pos.x * scale, this.pos.y * scale, zoff) * TWO_PI * 4;
+      const flow = p5.Vector.fromAngle(angle).mult(force);
+      this.acc.add(flow);
+    }
+
     update() {
+      // Progresión de escala (0 -> 1 en el primer 15% de vida)
+      this.age++;
+      if (this.age < this.scaleInDuration) {
+        this.scale = this.age / this.scaleInDuration;
+      } else {
+        this.scale = 1;
+      }
+
       this.vel.add(this.acc);
       this.vel.limit(CFG.MAX_SPEED);
       this.pos.add(this.vel);
       this.acc.mult(0);
       this.lifespan -= this.decay;
+
+      // Si el flowfield está activo, wrap suave en los bordes para flujo continuo
+      if (CFG.FLOWFIELD_ENABLED) {
+        if (this.pos.x < -20) this.pos.x = windowWidth + 10;
+        else if (this.pos.x > windowWidth + 20) this.pos.x = -10;
+        if (this.pos.y < -20) this.pos.y = windowHeight + 10;
+        else if (this.pos.y > windowHeight + 20) this.pos.y = -10;
+      }
     }
 
     display() {
+      if (this.scale <= 0.01) return;
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor); 
-      textSize(CFG.TEXT_SIZE);
+      textSize(this.baseSize * this.scale);
       text(this.char, this.pos.x, this.pos.y);
     }
 
@@ -592,6 +692,17 @@
       this.maxForce = Math.max(0.6, CFG.MAX_FORCE * 1.5);
       this.noiseSeed = random(1000);
 
+      // Las letras que forman palabras SIEMPRE eligen el tamaño MÁXIMO
+      const minSize = (CFG.TEXT_SIZE_MIN !== undefined) ? Number(CFG.TEXT_SIZE_MIN) : 16;
+      const maxSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
+      this.baseSize = Math.max(minSize, maxSize);
+
+      // Animación de entrada: escala de 0 a 1 durante el primer 15% de su vida total
+      this.age = 0;
+      const totalWordLife = 30 + this.holdTime + (255 / this.decay);
+      this.scaleInDuration = Math.max(1, totalWordLife * 0.15);
+      this.scale = 0;
+
       // Color vibrante de la paleta
       let colorPos = random(1);
       if (!palette.length) updatePalette();
@@ -609,6 +720,14 @@
     }
 
     update() {
+      // Progresión de escala (0 -> 1 durante el primer 15% de vida)
+      this.age++;
+      if (this.age < this.scaleInDuration) {
+        this.scale = this.age / this.scaleInDuration;
+      } else {
+        this.scale = 1;
+      }
+
       // Atractor (Arrive hacia la posición asignada de la letra)
       const desired = p5.Vector.sub(this.target, this.pos);
       const d = desired.mag();
@@ -655,9 +774,10 @@
     }
 
     display() {
+      if (this.scale <= 0.01) return;
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor);
-      textSize(CFG.TEXT_SIZE * 1.1); // Ligeramente más destacada
+      textSize(this.baseSize * this.scale);
 
       // Ondulación sutil visual mientras la palabra está formada para darle dinamismo sin desarmar la palabra
       const d = p5.Vector.dist(this.pos, this.target);

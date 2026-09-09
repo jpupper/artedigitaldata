@@ -842,11 +842,24 @@
         
         <div class="control-row">
           <div class="control-label-wrap">
-            <span>Tamaño de Letra (px)</span>
+            <span>Tamaño Mínimo de Letra (px)</span>
           </div>
           <div class="slider-text-combo">
-            <input type="range" id="param-TEXT_SIZE" min="12" max="72" step="1" value="30">
-            <input type="number" id="num-TEXT_SIZE" class="val-input" min="12" max="72" step="1" value="30">
+            <input type="range" id="param-TEXT_SIZE_MIN" min="8" max="72" step="1" value="16">
+            <input type="number" id="num-TEXT_SIZE_MIN" class="val-input" min="8" max="72" step="1" value="16">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Tamaño Máximo de Letra (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-TEXT_SIZE_MAX" min="8" max="72" step="1" value="36">
+            <input type="number" id="num-TEXT_SIZE_MAX" class="val-input" min="8" max="72" step="1" value="36">
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+            Las letras sueltas eligen un tamaño entre el mínimo y máximo. Las palabras siempre usan el tamaño máximo.
           </div>
         </div>
 
@@ -1022,6 +1035,66 @@
           </div>
           <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
             0 = estela/feedback infinito permanente. 50 = estela suave. 255 = sin estela (limpieza instantánea).
+          </div>
+        </div>
+      </div>
+
+      <!-- Flowfield (Campo de Flujo) -->
+      <div>
+        <div class="group-title"><i class="fas fa-wind"></i> Flowfield (Campo de Flujo)</div>
+
+        <div class="control-row">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Flowfield</span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Genera corrientes fluidas que arrastran las letras libres (no afecta a las palabras).
+              </div>
+            </div>
+            <label class="switch-ui" title="Activar / Desactivar Flowfield">
+              <input type="checkbox" id="param-FLOWFIELD_ENABLED">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Fuerza del Campo (Empuje)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_FORCE" min="0.05" max="2.0" step="0.05" value="0.4">
+            <input type="number" id="num-FLOWFIELD_FORCE" class="val-input" min="0.05" max="2.0" step="0.05" value="0.4">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Escala / Frecuencia de Ruido (Zoom)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_SCALE" min="0.001" max="0.03" step="0.001" value="0.006">
+            <input type="number" id="num-FLOWFIELD_SCALE" class="val-input" min="0.001" max="0.03" step="0.001" value="0.006">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Velocidad de Variación Temporal</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_SPEED" min="0.0005" max="0.01" step="0.0005" value="0.002">
+            <input type="number" id="num-FLOWFIELD_SPEED" class="val-input" min="0.0005" max="0.01" step="0.0005" value="0.002">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color: #cbd5e1;">Mostrar Guías / Vectores en Fondo</span>
+            <label class="switch-ui" style="transform: scale(0.85);" title="Visualizar líneas del campo">
+              <input type="checkbox" id="param-FLOWFIELD_SHOW_VECTORS">
+              <span class="slider-toggle"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -1229,7 +1302,8 @@
       // Mapeo bidireccional Slider <-> Textfield numérico
       const numericFields = [
         'BG_ALPHA',
-        'TEXT_SIZE',
+        'TEXT_SIZE_MIN',
+        'TEXT_SIZE_MAX',
         'MAX_SPEED',
         'MAX_FORCE',
         'MOUSE_FORCE_MULT',
@@ -1238,13 +1312,30 @@
         'SPAWN_RADIUS_MAX',
         'LIFESPAN_DECAY_MAX',
         'SPAWN_COUNT_MAX',
-        'AUTO_INTERVAL_SEC'
+        'AUTO_INTERVAL_SEC',
+        'FLOWFIELD_FORCE',
+        'FLOWFIELD_SCALE',
+        'FLOWFIELD_SPEED'
       ];
 
       const autoModeToggle = document.getElementById('param-AUTO_MODE');
       if (autoModeToggle) {
         autoModeToggle.addEventListener('change', () => {
           applyConfigChange('AUTO_MODE', autoModeToggle.checked);
+        });
+      }
+
+      const flowfieldToggle = document.getElementById('param-FLOWFIELD_ENABLED');
+      if (flowfieldToggle) {
+        flowfieldToggle.addEventListener('change', () => {
+          applyConfigChange('FLOWFIELD_ENABLED', flowfieldToggle.checked);
+        });
+      }
+
+      const flowfieldVectorsToggle = document.getElementById('param-FLOWFIELD_SHOW_VECTORS');
+      if (flowfieldVectorsToggle) {
+        flowfieldVectorsToggle.addEventListener('change', () => {
+          applyConfigChange('FLOWFIELD_SHOW_VECTORS', flowfieldVectorsToggle.checked);
         });
       }
 
@@ -1255,6 +1346,9 @@
         const patch = {};
         patch[key] = val;
 
+        if (key === 'TEXT_SIZE_MAX') {
+          patch['TEXT_SIZE'] = val;
+        }
         if (key === 'LIFESPAN_DECAY_MAX') {
           patch['LIFESPAN_DECAY_MIN'] = Math.max(0.2, +(val * 0.4).toFixed(1));
         }
@@ -1653,6 +1747,13 @@
         if (!window.ParticlesConfig) return;
         const cfg = window.ParticlesConfig.get();
 
+        if (cfg.TEXT_SIZE && !cfg.TEXT_SIZE_MAX) {
+          cfg.TEXT_SIZE_MAX = cfg.TEXT_SIZE;
+        }
+        if (!cfg.TEXT_SIZE_MIN) {
+          cfg.TEXT_SIZE_MIN = Math.max(8, Math.round((cfg.TEXT_SIZE_MAX || 36) * 0.45));
+        }
+
         numericFields.forEach(key => {
           if (cfg[key] !== undefined) {
             const slider = document.getElementById(`param-${key}`);
@@ -1671,6 +1772,14 @@
 
         if (autoModeToggle && cfg.AUTO_MODE !== undefined) {
           autoModeToggle.checked = !!cfg.AUTO_MODE;
+        }
+
+        if (flowfieldToggle && cfg.FLOWFIELD_ENABLED !== undefined) {
+          flowfieldToggle.checked = !!cfg.FLOWFIELD_ENABLED;
+        }
+
+        if (flowfieldVectorsToggle && cfg.FLOWFIELD_SHOW_VECTORS !== undefined) {
+          flowfieldVectorsToggle.checked = !!cfg.FLOWFIELD_SHOW_VECTORS;
         }
 
         if (cfg.CHARACTERS && charInput) {
