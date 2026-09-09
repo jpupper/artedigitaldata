@@ -25,7 +25,11 @@ window.CONFIG = {
     },
 
     get API_URL() {
-        // El usuario quiere que en LOCAL se usen siempre los datos del VPS
+        // Si estamos ejecutando en un puerto local activo de Node (ej: 2495)
+        if (this.isLocal && window.location.port) {
+            return window.location.origin + this.BASE + '/api';
+        }
+        // En espejo estático o sin puerto local, usar VPS
         const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
         return origin + '/artedigitaldata/api';
     },

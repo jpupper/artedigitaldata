@@ -5,7 +5,8 @@ import Evento from '../models/Evento';
 import User from '../models/User';
 import { hydrate } from '../utils/userHydration';
 import { getBotConfig, setBotConfig } from '../models/BotConfig';
-import { authMiddleware, adminMiddleware, AuthRequest } from '../middleware/auth';
+import { authMiddleware, adminMiddleware, AuthRequest, optionalAuth } from '../middleware/auth';
+import ParticleWord from '../models/ParticleWord';
 
 const router = Router();
 
@@ -286,6 +287,216 @@ router.post('/particles-config', async (req: Request, res: Response) => {
 
     await setBotConfig('particles_p5_config', config);
     return res.json({ success: true, config });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Helper de inicialización de palabras de partículas
+async function seedInitialWordsIfNeeded() {
+  try {
+    const count = await ParticleWord.countDocuments();
+    if (count === 0) {
+      const config = await getBotConfig('particles_p5_config', null);
+      const words = config && Array.isArray(config.WORDS) ? config.WORDS : [];
+      if (words.length > 0) {
+        const docs = words.map((w: string) => ({
+          word: w.trim().toUpperCase(),
+          addedBy: {
+            username: 'jpupper',
+            displayName: 'jpupper (Admin)',
+            avatar: '',
+          }
+        }));
+        await ParticleWord.insertMany(docs, { ordered: false }).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.warn('[ParticleWord] Seeding error:', err);
+  }
+}
+
+// GET /public/particles-words — Listado de palabras agrupadas por contribuidor
+router.get('/particles-words', async (_req: Request, res: Response) => {
+  try {
+    await seedInitialWordsIfNeeded();
+    const allWords = await ParticleWord.find().sort({ createdAt: -1 });
+
+    const byUserMap: Record<string, {
+      username: string;
+      displayName: string;
+      avatar: string;
+      words: string[];
+      count: number;
+      lastAdded: Date;
+    }> = {};
+
+    for (const doc of allWords) {
+      const uname = doc.addedBy?.username || 'Anónimo';
+      if (!byUserMap[uname]) {
+        byUserMap[uname] = {
+          username: uname,
+          displayName: doc.addedBy?.displayName || uname,
+          avatar: doc.addedBy?.avatar || '',
+          words: [],
+          count: 0,
+          lastAdded: doc.createdAt,
+        };
+      }
+      if (!byUserMap[uname].words.includes(doc.word)) {
+        byUserMap[uname].words.push(doc.word);
+        byUserMap[uname].count++;
+      }
+    }
+
+    const byUser = Object.values(byUserMap).sort((a, b) => {
+      // Si uno es jpupper, dejarlo segundo o primero, pero ordenar por cantidad
+      return b.count - a.count;
+    });
+
+    const recent = allWords.slice(0, 40).map(w => ({
+      word: w.word,
+      username: w.addedBy?.username || 'Anónimo',
+      displayName: w.addedBy?.displayName || 'Anónimo',
+      avatar: w.addedBy?.avatar || '',
+      createdAt: w.createdAt,
+    }));
+
+    return res.json({
+      totalWords: allWords.length,
+      totalContributors: byUser.length,
+      byUser,
+      recent
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /public/particles-words — Agregar palabras (disponible para todos los usuarios, con guardado automático)
+router.post('/particles-words', optionalAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const rawInput = req.body.words || req.body.word;
+    if (!rawInput) {
+      return res.status(400).json({ error: 'No se enviaron palabras' });
+    }
+
+    let rawList: string[] = [];
+    if (typeof rawInput === 'string') {
+      rawList = rawInput.split(',');
+    } else if (Array.isArray(rawInput)) {
+      for (const item of rawInput) {
+        if (typeof item === 'string') {
+          rawList.push(...item.split(','));
+        }
+      }
+    }
+
+    // Limpiar y normalizar palabras
+    const cleaned = rawList
+      .map(w => w.trim().toUpperCase())
+      .filter(w => w.length > 0 && w.length <= 120);
+
+    const uniqueWords = Array.from(new Set(cleaned));
+    if (!uniqueWords.length) {
+      return res.status(400).json({ error: 'Lista de palabras vacía o inválida' });
+    }
+
+    // Identificar usuario contribuidor
+    let username = 'Anónimo';
+    let displayName = 'Anónimo';
+    let avatar = '';
+    let userId: any = null;
+
+    if (req.user) {
+      username = req.user.username || 'Anónimo';
+      displayName = username;
+      userId = req.user.id;
+      try {
+        const u = await User.findById(req.user.id);
+        if (u) {
+          displayName = u.displayName || u.username;
+          avatar = u.avatar || '';
+        }
+      } catch {}
+    }
+
+    // Cargar config actual de partículas
+    const config = await getBotConfig('particles_p5_config', {});
+    if (!Array.isArray(config.WORDS)) {
+      config.WORDS = [];
+    }
+
+    const addedWords: string[] = [];
+
+    for (const w of uniqueWords) {
+      try {
+        await ParticleWord.findOneAndUpdate(
+          { word: w },
+          {
+            $setOnInsert: {
+              word: w,
+              addedBy: {
+                userId,
+                username,
+                displayName,
+                avatar,
+              }
+            }
+          },
+          { upsert: true, new: true }
+        );
+      } catch (saveErr) {
+        console.warn('[ParticleWord] Save error for word:', w, saveErr);
+      }
+
+      if (!config.WORDS.includes(w)) {
+        config.WORDS.push(w);
+        addedWords.push(w);
+      }
+    }
+
+    // Persistir configuración global en BotConfig si hay nuevas palabras
+    if (addedWords.length > 0) {
+      await setBotConfig('particles_p5_config', config);
+    }
+
+    return res.json({
+      success: true,
+      added: addedWords,
+      totalAdded: addedWords.length,
+      totalWords: config.WORDS.length,
+      contributor: { username, displayName }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /public/particles-words/:word — Eliminar palabra (SOLO ADMIN)
+router.delete('/particles-words/:word', authMiddleware, adminMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const rawWord = req.params.word;
+    if (!rawWord) {
+      return res.status(400).json({ error: 'Palabra no especificada' });
+    }
+    const wordToDelete = decodeURIComponent(rawWord).trim().toUpperCase();
+
+    // Eliminar de colección ParticleWord
+    await ParticleWord.deleteOne({ word: wordToDelete });
+
+    // Eliminar de config general
+    const config = await getBotConfig('particles_p5_config', {});
+    if (Array.isArray(config.WORDS)) {
+      config.WORDS = config.WORDS.filter((w: string) => w !== wordToDelete);
+      await setBotConfig('particles_p5_config', config);
+    }
+
+    return res.json({
+      success: true,
+      deletedWord: wordToDelete,
+      remainingWords: config.WORDS?.length || 0
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
