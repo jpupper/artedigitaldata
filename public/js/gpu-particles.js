@@ -3,7 +3,7 @@
 
 (function(window) {
   // Definición integrada de GPUComputationRenderer
-  function GPUComputationRenderer( pxReqWidth, pxReqHeight, renderer ) {
+  function EmbeddedGPUComputationRenderer( pxReqWidth, pxReqHeight, renderer ) {
     this.variables = [];
     this.currentTextureIndex = 0;
 
@@ -16,9 +16,10 @@
     };
 
     var passThruShader = new THREE.ShaderMaterial({
+      glslVersion: THREE.GLSL1,
       uniforms: passThruUniforms,
       vertexShader: "void main() {\n\tgl_Position = vec4( position, 1.0 );\n}\n",
-      fragmentShader: "precision mediump float;\nuniform sampler2D passThruTexture;\nuniform vec2 resolution;\nvoid main() {\n\tvec2 uv = gl_FragCoord.xy / resolution.xy;\n\tgl_FragColor = texture2D( passThruTexture, uv );\n}\n"
+      fragmentShader: "uniform sampler2D passThruTexture;\nvoid main() {\n\tvec2 uv = gl_FragCoord.xy / resolution.xy;\n\tgl_FragColor = texture2D( passThruTexture, uv );\n}\n"
     });
 
     var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), passThruShader );
@@ -26,6 +27,7 @@
 
     this.addVariable = function ( variableName, computeShader, initialTexture ) {
       var material = new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL1,
         uniforms: {
           resolution: { value: new THREE.Vector2( pxReqWidth, pxReqHeight ) }
         },
@@ -157,6 +159,8 @@
   let scene, camera, renderer;
   let gpuCompute, positionVariable, velocityVariable;
   let positionUniforms, velocityUniforms;
+  let targetTexture = null;
+  let attractorTimer = null;
   let particlesMesh;
   let charAtlasTexture;
   let particleCount = 20000;
@@ -201,7 +205,7 @@
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.font = 'bold 48px "JetBrains Mono", monospace';
+    ctx.font = '900 44px "Outfit", "JetBrains Mono", monospace, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
@@ -221,10 +225,8 @@
     return texture;
   }
 
-  // --- Shaders GLSL Corregidos ---
+  // --- Shaders GLSL Corregidos (GLSL1 Compatible) ---
   const positionShader = `
-    precision mediump float;
-    uniform vec2 resolution;
     uniform float u_time;
     uniform float u_delta;
     uniform sampler2D texturePosition;
@@ -242,8 +244,6 @@
   `;
 
   const velocityShader = `
-    precision mediump float;
-    uniform vec2 resolution;
     uniform float u_time;
     uniform float u_delta;
     uniform vec2 u_mouse;
@@ -254,38 +254,16 @@
     uniform float u_flowfieldScale;
     uniform float u_friction;
     uniform float u_maxSpeed;
-    uniform vec3 u_targetPos;
+    uniform sampler2D u_targetTexture;
     uniform float u_attractorActive;
 
     uniform sampler2D texturePosition;
     uniform sampler2D textureVelocity;
 
-    vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
-
-    float snoise(vec2 v){
-      const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-               -0.577350269189626, 0.024390243902439);
-      vec2 i  = floor(v + dot(v, C.yy) );
-      vec2 x0 = v - i + dot(i, C.xx);
-      vec2 i1;
-      i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-      vec4 x12 = x0.xyxy + C.xxzz;
-      x12.xy -= i1;
-      i = mod(i, 289.0);
-      vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-      + i.x + vec3(0.0, i1.x, 1.0 ));
-      vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-      m = m*m ;
-      m = m*m ;
-      vec3 x = 2.0 * fract(p * C.www) - 1.0;
-      vec3 h = abs(x) - 0.5;
-      vec3 ox = floor(x + 0.5);
-      vec3 a0 = x - ox;
-      m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-      vec3 g;
-      g.x  = a0.x  * x0.x  + h.x  * x0.y;
-      g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-      return 130.0 * dot(m, g);
+    vec2 getFlow(vec2 p, float scale, float time) {
+      float angle = sin(p.x * scale * 10.0 + time * 0.5) * 3.14159265 + 
+                    cos(p.y * scale * 10.0 + time * 0.3) * 3.14159265;
+      return vec2(cos(angle), sin(angle));
     }
 
     void main() {
@@ -300,34 +278,41 @@
       float distMouse = length(dMouse);
       if (distMouse < u_mouseRadius && distMouse > 0.001) {
         vec2 forceDir = normalize(dMouse);
-        float forceStr = (1.0 - distMouse / u_mouseRadius) * u_mouseForce * 50.0;
+        float forceStr = (1.0 - distMouse / u_mouseRadius) * u_mouseForce * 80.0;
         acc.xy += forceDir * forceStr;
       }
 
-      // Flowfield (Simplex Noise 2D)
+      // Flowfield
       if (u_flowfieldEnabled > 0.5) {
-        float n = snoise(vec2(pos.x * u_flowfieldScale + u_time * 0.1, pos.y * u_flowfieldScale));
-        float angle = n * 6.2831853;
-        vec2 flowVector = vec2(cos(angle), sin(angle)) * u_flowfieldForce * 5.0;
+        vec2 flowVector = getFlow(pos.xy, u_flowfieldScale, u_time) * u_flowfieldForce * 15.0;
         acc.xy += flowVector;
       }
 
-      // Atractor
-      if (u_attractorActive > 0.5) {
-        vec3 dTarget = u_targetPos - pos;
+      // Atractor de palabra
+      if (u_attractorActive > 0.01) {
+        vec3 targetPos = texture2D(u_targetTexture, uv).xyz;
+        vec3 dTarget = targetPos - pos;
         float distTarget = length(dTarget);
-        if (distTarget > 0.5) {
-          vec3 steer = normalize(dTarget) * min(distTarget * 2.0, u_maxSpeed * 2.0) - vel;
-          acc += steer * 0.15;
+        if (distTarget > 1.0) {
+          vec3 steer = normalize(dTarget) * min(distTarget * 5.0, u_maxSpeed * 15.0) - vel;
+          acc += steer * u_attractorActive * 0.35;
         }
       }
+
+      // Soft boundary rebound
+      float boundX = resolution.x * 0.55;
+      float boundY = resolution.y * 0.55;
+      if (pos.x > boundX) acc.x -= 200.0;
+      if (pos.x < -boundX) acc.x += 200.0;
+      if (pos.y > boundY) acc.y -= 200.0;
+      if (pos.y < -boundY) acc.y += 200.0;
 
       vel += acc * u_delta;
       vel *= u_friction;
 
       float speed = length(vel);
-      if (speed > u_maxSpeed * 10.0) {
-        vel = normalize(vel) * u_maxSpeed * 10.0;
+      if (speed > u_maxSpeed * 20.0) {
+        vel = normalize(vel) * u_maxSpeed * 20.0;
       }
 
       gl_FragColor = vec4( vel, 1.0 );
@@ -347,7 +332,7 @@
     varying vec4 v_color;
 
     void main() {
-      v_charUV = a_charUV;
+      v_charUV = a_charUV + uv * vec2(0.125, 0.125);
       v_color = a_color;
 
       vec3 pos = texture2D(u_posTexture, a_gpuUV).xyz;
@@ -360,8 +345,6 @@
   `;
 
   const renderFragmentShader = `
-    precision mediump float;
-
     uniform sampler2D u_atlasTexture;
     varying vec2 v_charUV;
     varying vec4 v_color;
@@ -369,7 +352,7 @@
     void main() {
       vec4 texColor = texture2D(u_atlasTexture, v_charUV);
       float alpha = texColor.r;
-      if (alpha < 0.1) discard;
+      if (alpha < 0.05) discard;
       gl_FragColor = vec4(v_color.rgb, v_color.a * alpha);
     }
   `;
@@ -396,7 +379,11 @@
     );
     camera.position.z = 500;
 
-    gpuCompute = new GPUComputationRenderer(textureWidth, textureWidth, renderer);
+    const GPUConstructor = (typeof THREE !== 'undefined' && THREE.GPUComputationRenderer) 
+      ? THREE.GPUComputationRenderer 
+      : (window.GPUComputationRenderer || EmbeddedGPUComputationRenderer);
+
+    gpuCompute = new GPUConstructor(textureWidth, textureWidth, renderer);
 
     const dtPos = gpuCompute.createTexture();
     const dtVel = gpuCompute.createTexture();
@@ -415,6 +402,8 @@
     positionUniforms['u_time'] = { value: 0 };
     positionUniforms['u_delta'] = { value: 0.016 };
 
+    targetTexture = gpuCompute.createTexture();
+
     velocityUniforms['u_time'] = { value: 0 };
     velocityUniforms['u_delta'] = { value: 0.016 };
     velocityUniforms['u_mouse'] = { value: new THREE.Vector2(-9999, -9999) };
@@ -425,7 +414,7 @@
     velocityUniforms['u_flowfieldScale'] = { value: config.FLOWFIELD_SCALE };
     velocityUniforms['u_friction'] = { value: config.FRICTION };
     velocityUniforms['u_maxSpeed'] = { value: config.MAX_SPEED };
-    velocityUniforms['u_targetPos'] = { value: new THREE.Vector3(0, 0, 0) };
+    velocityUniforms['u_targetTexture'] = { value: targetTexture };
     velocityUniforms['u_attractorActive'] = { value: 0.0 };
 
     const error = gpuCompute.init();
@@ -447,8 +436,8 @@
       posArr[k + 2] = 0;
       posArr[k + 3] = 1;
 
-      velArr[k] = (Math.random() - 0.5) * 2.0;
-      velArr[k + 1] = (Math.random() - 0.5) * 2.0;
+      velArr[k] = (Math.random() - 0.5) * 30.0;
+      velArr[k + 1] = (Math.random() - 0.5) * 30.0;
       velArr[k + 2] = 0;
       velArr[k + 3] = 1;
     }
@@ -483,12 +472,12 @@
     const tileH = 1.0 / rows;
 
     for (let i = 0; i < count; i++) {
-      const x = (i % textureWidth) / textureWidth;
-      const y = Math.floor(i / textureWidth) / textureWidth;
+      const x = ((i % textureWidth) + 0.5) / textureWidth;
+      const y = (Math.floor(i / textureWidth) + 0.5) / textureWidth;
       gpuUVs[i * 2] = x;
       gpuUVs[i * 2 + 1] = y;
 
-      const charIdx = Math.floor(Math.random() * (CHARS.length - 1));
+      const charIdx = Math.floor(Math.random() * CHARS.length);
       const col = charIdx % cols;
       const row = Math.floor(charIdx / cols);
 
@@ -507,6 +496,7 @@
     geometry.setAttribute('a_color', new THREE.InstancedBufferAttribute(colors, 4));
 
     const material = new THREE.ShaderMaterial({
+      glslVersion: THREE.GLSL1,
       vertexShader: renderVertexShader,
       fragmentShader: renderFragmentShader,
       uniforms: {
@@ -536,7 +526,7 @@
 
     frameCount++;
     if (frameCount % 15 === 0) {
-      fps = Math.round(1 / dt);
+      fps = Math.round(1 / (dt || 0.016));
       const fpsEl = document.getElementById('fps-counter');
       if (fpsEl) fpsEl.textContent = `${fps} FPS (${particleCount.toLocaleString()} Partículas GPU)`;
     }
@@ -574,19 +564,79 @@
     });
 
     window.addEventListener('click', (e) => {
-      if (e.target.closest('.control-panel') || e.target.closest('button') || e.target.closest('input')) return;
-      spawnWordAttractor("GPU PARTICLES", mouse.x, mouse.y);
+      if (e.target.closest('.control-panel') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.top-bar')) return;
+      const words = config.WORDS || DEFAULT_WORDS;
+      const randomWord = words[Math.floor(Math.random() * words.length)];
+      spawnWordAttractor(randomWord, mouse.x, mouse.y);
     });
   }
 
-  function spawnWordAttractor(word, x, y) {
-    if (!velocityUniforms) return;
-    velocityUniforms['u_targetPos'].value.set(x, y, 0);
+  function generateTextPoints(text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = '900 110px "Outfit", "JetBrains Mono", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const validPoints = [];
+
+    const step = text.length > 8 ? 6 : 4;
+    for (let y = 0; y < canvas.height; y += step) {
+      for (let x = 0; x < canvas.width; x += step) {
+        const idx = (y * canvas.width + x) * 4;
+        if (imgData[idx] > 128) {
+          validPoints.push({
+            x: (x - canvas.width / 2) * 1.2,
+            y: -(y - canvas.height / 2) * 1.2
+          });
+        }
+      }
+    }
+    return validPoints;
+  }
+
+  function spawnWordAttractor(word, clickX, clickY) {
+    if (!velocityUniforms || !targetTexture) return;
+    const points = generateTextPoints(word);
+    if (!points.length) return;
+
+    const count = textureWidth * textureWidth;
+    const data = targetTexture.image.data;
+
+    const targetX = clickX !== undefined ? clickX : 0;
+    const targetY = clickY !== undefined ? clickY : 0;
+
+    for (let i = 0; i < count; i++) {
+      const pt = points[i % points.length];
+      data[i * 4] = targetX + pt.x;
+      data[i * 4 + 1] = targetY + pt.y;
+      data[i * 4 + 2] = 0;
+      data[i * 4 + 3] = 1;
+    }
+    targetTexture.needsUpdate = true;
+
+    if (attractorTimer) clearTimeout(attractorTimer);
     velocityUniforms['u_attractorActive'].value = 1.0;
 
-    setTimeout(() => {
-      if (velocityUniforms) velocityUniforms['u_attractorActive'].value = 0.0;
-    }, 3500);
+    attractorTimer = setTimeout(() => {
+      let active = 1.0;
+      const fadeInterval = setInterval(() => {
+        active -= 0.05;
+        if (active <= 0) {
+          active = 0;
+          clearInterval(fadeInterval);
+        }
+        if (velocityUniforms) velocityUniforms['u_attractorActive'].value = active;
+      }, 50);
+    }, 4500);
   }
 
   window.GPUApp = {
@@ -609,8 +659,8 @@
         if (key === 'MAX_SPEED') velocityUniforms['u_maxSpeed'].value = val;
       }
     },
-    spawnWord: (word) => {
-      spawnWordAttractor(word, 0, 0);
+    spawnWord: (word, x, y) => {
+      spawnWordAttractor(word, x !== undefined ? x : 0, y !== undefined ? y : 0);
     },
     getConfig: () => ({ ...config }),
     DEFAULT_WORDS
