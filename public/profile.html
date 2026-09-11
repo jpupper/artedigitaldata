@@ -721,6 +721,7 @@
 
     function renderUserOportunidades(oportunidades) {
       const container = document.getElementById('user-oportunidades');
+      if (!container) return;
       if (!oportunidades.length) {
         container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-briefcase text-4xl text-emerald-400/30 mb-3"></i><p>Este usuario aún no tiene oportunidades publicadas</p></div>`;
         return;
@@ -732,6 +733,11 @@
         const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
         return `
           <div class="rounded-2xl p-5 border border-emerald-500/10 card-cyber transition-all duration-300 group">
+             <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
+               <div class="block w-full h-full relative cursor-pointer" onclick="window.location.href='oportunidad.html?id=${opo._id}'">
+                 ${opo.imagenUrl ? `<img src="${opo.imagenUrl}" alt="${opo.titulo}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-emerald-500/10 flex items-center justify-center"><i class="${icon} text-3xl text-emerald-500/30"></i></div>`}
+               </div>
+             </div>
             <div class="flex items-start justify-between gap-2 mb-2">
               <a href="oportunidad.html?id=${opo._id}" target="_blank" class="block hover:text-emerald-400 transition-colors flex-1">
                 <h3 class="font-bold text-white line-clamp-1">${opo.titulo}</h3>

@@ -76,7 +76,7 @@ window.loadProfile = async function() {
   try {
     const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`);
     if (!res.ok) throw new Error('Not found');
-    const { user: profile, posts, recursos, eventos, doorEvents, favorites } = await res.json();
+    const { user: profile, posts, recursos, eventos, oportunidades, doorEvents, favorites } = await res.json();
 
     const usernameEl = document.getElementById('profile-username');
     if (usernameEl) usernameEl.textContent = profile.displayName || profile.username;
@@ -132,6 +132,7 @@ window.loadProfile = async function() {
     renderUserPosts(posts);
     renderUserRecursos(recursos || []);
     renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
+    renderUserOportunidades(oportunidades || []);
     renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
   } catch (err) {
     console.error("Error loading profile:", err);
@@ -306,6 +307,49 @@ window.renderUserEventos = function(eventos, doorEvents) {
   }
 
   container.innerHTML = html;
+};
+
+window.renderUserOportunidades = function(oportunidades) {
+  const container = document.getElementById('user-oportunidades');
+  if (!container) return;
+  if (!oportunidades.length) {
+    container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10"><i class="fas fa-briefcase text-4xl text-emerald-400/30 mb-3"></i><p>Este usuario aún no tiene oportunidades publicadas</p></div>`;
+    return;
+  }
+  const tipoLabels = { convocatoria_obra: 'Convocatoria de Obra', oportunidad_laboral: 'Oportunidad Laboral', colaboracion: 'Colaboración' };
+  const tipoIcons = { convocatoria_obra: 'fas fa-palette', oportunidad_laboral: 'fas fa-briefcase', colaboracion: 'fas fa-handshake' };
+  container.innerHTML = oportunidades.map(opo => {
+    const label = tipoLabels[opo.tipo] || 'Oportunidad';
+    const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
+    return `
+      <div class="rounded-2xl p-5 border border-emerald-500/10 card-cyber transition-all duration-300 group">
+         <div class="relative aspect-video w-full overflow-hidden rounded-xl mb-4">
+           <div class="block w-full h-full relative cursor-pointer" onclick="window.location.href='${CONFIG.BASE}/oportunidad.html?id=${opo._id}'">
+             ${opo.imagenUrl ? `<img src="${opo.imagenUrl}" alt="${opo.titulo}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">` : `<div class="w-full h-full bg-emerald-500/10 flex items-center justify-center"><i class="${icon} text-3xl text-emerald-500/30"></i></div>`}
+           </div>
+         </div>
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <a href="${CONFIG.BASE}/oportunidad.html?id=${opo._id}" target="_blank" class="block hover:text-emerald-400 transition-colors flex-1">
+            <h3 class="font-bold text-white line-clamp-1">${opo.titulo}</h3>
+          </a>
+          ${(isLoggedIn() && (isOwner || isAdmin())) ? `
+            <div class="flex gap-1">
+              <a href="${CONFIG.BASE}/crear-oportunidad.html?id=${opo._id}" class="text-gray-500 hover:text-emerald-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></a>
+              <button onclick="deleteOportunidad('${opo._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
+            </div>
+          ` : ''}
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 uppercase font-bold"><i class="${icon} mr-1"></i>${label}</span>
+          <span class="text-[10px] text-gray-500">${opo.inscripciones?.length || 0} inscriptos</span>
+        </div>
+        <p class="text-xs text-gray-400 line-clamp-2 mb-3">${opo.descripcion || ''}</p>
+        <div class="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-white/5">
+          <span>${new Date(opo.createdAt).toLocaleDateString()}</span>
+          <a href="${CONFIG.BASE}/postulantes.html?id=${opo._id}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold">Ver postulantes <i class="fas fa-arrow-right ml-1"></i></a>
+        </div>
+      </div>`;
+  }).join('');
 };
 
 window.renderUserFavorites = function(favs) {
