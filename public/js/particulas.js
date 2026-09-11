@@ -119,34 +119,101 @@ document.addEventListener('DOMContentLoaded', () => {
   tabBtnParams.addEventListener('click', () => switchTab('params'));
   tabBtnContributors.addEventListener('click', () => switchTab('contributors'));
 
+  const backdrop = document.getElementById('panel-backdrop');
+
+  function openPanel(tab = 'params') {
+    panel.classList.remove('hidden-panel');
+    if (backdrop) backdrop.classList.add('active');
+    switchTab(tab);
+  }
+
+  function closePanel() {
+    panel.classList.add('hidden-panel');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
   if (toggleCommunityBtn) {
     toggleCommunityBtn.addEventListener('click', () => {
-      panel.classList.remove('hidden-panel');
-      switchTab('contributors');
+      openPanel('contributors');
     });
   }
 
   // Toggle UI
   toggleBtn.addEventListener('click', () => {
-    panel.classList.toggle('hidden-panel');
-    if (!panel.classList.contains('hidden-panel') && !tabBtnParams.classList.contains('active') && !tabBtnContributors.classList.contains('active')) {
-      switchTab('params');
+    if (panel.classList.contains('hidden-panel')) {
+      openPanel('params');
+    } else {
+      closePanel();
     }
   });
-  closeBtn.addEventListener('click', () => panel.classList.add('hidden-panel'));
+  closeBtn.addEventListener('click', closePanel);
+  if (backdrop) {
+    backdrop.addEventListener('click', closePanel);
+  }
 
-  // Atajo de teclado: Tecla 'P' para ocultar/mostrar botones de la barra superior
+  // Atajo de teclado: Tecla 'F' para alternar modo fullscreen/interfaz limpia, 'P' para panel de ajustes
+  const fullscreenBtn = document.getElementById('toggle-fullscreen-btn');
+
+  function updateFullscreenButtonState() {
+    if (!fullscreenBtn) return;
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    const span = fullscreenBtn.querySelector('span');
+    const icon = fullscreenBtn.querySelector('i');
+    if (isFullscreen) {
+      if (icon) icon.className = 'fas fa-compress';
+      if (span) span.textContent = 'Salir Fullscreen';
+      fullscreenBtn.setAttribute('title', 'Salir de Pantalla Completa (F)');
+    } else {
+      if (icon) icon.className = 'fas fa-expand';
+      if (span) span.textContent = 'Fullscreen';
+      fullscreenBtn.setAttribute('title', 'Pantalla Completa (F)');
+    }
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) docEl.requestFullscreen();
+      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+      else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
+      else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+  }
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', () => {
+      toggleFullscreen();
+    });
+  }
+
+  document.addEventListener('fullscreenchange', updateFullscreenButtonState);
+  document.addEventListener('webkitfullscreenchange', updateFullscreenButtonState);
+  document.addEventListener('mozfullscreenchange', updateFullscreenButtonState);
+  document.addEventListener('MSFullscreenChange', updateFullscreenButtonState);
+
   window.addEventListener('keydown', (e) => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
       return;
     }
 
-    if (e.key === 'p' || e.key === 'P') {
+    if (e.key === 'f' || e.key === 'F') {
       e.preventDefault();
-      const isHidden = toggleBtn.classList.toggle('btn-hidden');
-      if (toggleCommunityBtn) toggleCommunityBtn.classList.toggle('btn-hidden', isHidden);
-      if (isHidden && !panel.classList.contains('hidden-panel')) {
-        panel.classList.add('hidden-panel');
+      const isUiHidden = document.body.classList.toggle('ui-hidden');
+      if (isUiHidden && !panel.classList.contains('hidden-panel')) {
+        closePanel();
+      }
+      toggleFullscreen();
+    } else if (e.key === 'p' || e.key === 'P') {
+      e.preventDefault();
+      if (panel.classList.contains('hidden-panel')) {
+        openPanel('params');
+      } else {
+        closePanel();
       }
     }
   });
@@ -163,6 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'DISPERSION_MAX',
     'SPAWN_RADIUS_MAX',
     'LIFESPAN_DECAY_MAX',
+    'SPAWN_INTERVAL_MS',
+    'SPAWN_COUNT_MIN',
     'SPAWN_COUNT_MAX',
     'AUTO_INTERVAL_SEC',
     'FLOWFIELD_GRID_X',
@@ -214,7 +283,16 @@ document.addEventListener('DOMContentLoaded', () => {
       patch['SPAWN_RADIUS_MIN'] = Math.max(10, Math.round(val * 0.25));
     }
     if (key === 'SPAWN_COUNT_MAX') {
-      patch['SPAWN_COUNT_MIN'] = Math.max(1, Math.round(val * 0.5));
+      const currentMin = window.ParticlesConfig ? (window.ParticlesConfig.get().SPAWN_COUNT_MIN || 1) : 1;
+      if (val < currentMin) {
+        patch['SPAWN_COUNT_MIN'] = val;
+      }
+    }
+    if (key === 'SPAWN_COUNT_MIN') {
+      const currentMax = window.ParticlesConfig ? (window.ParticlesConfig.get().SPAWN_COUNT_MAX || 2) : 2;
+      if (val > currentMax) {
+        patch['SPAWN_COUNT_MAX'] = val;
+      }
     }
 
     if (window.ParticlesConfig) {

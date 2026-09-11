@@ -10,6 +10,7 @@
     BG_ALPHA: 50,
     SPAWN_RADIUS_MIN: 20,
     SPAWN_RADIUS_MAX: 100,
+    SPAWN_INTERVAL_MS: 40,
     MAX_SPEED: 4,
     MAX_FORCE: 0.6,
     REPULSION_RADIUS: 5,
@@ -305,6 +306,7 @@
   let palette = [];
   let currentWordIndex = -1;
   let autoTimer = 0;
+  let lastMouseSpawnTime = 0;
   let flowZoff = 0;
 
   function drawFlowfieldGrid(zoff) {
@@ -417,9 +419,12 @@
 
     const mouseVel = createVector(mouseX - pmouseX, mouseY - pmouseY);
     const speed = mouseVel.mag();
+    const spawnIntervalMs = (CFG.SPAWN_INTERVAL_MS !== undefined) ? Number(CFG.SPAWN_INTERVAL_MS) : 40;
+    const now = millis();
     
-    // Partículas generadas por movimiento de mouse
-    if (speed > 0.5) {
+    // Partículas generadas por movimiento de mouse con throttling (cooldown)
+    if (speed > 0.5 && (now - lastMouseSpawnTime >= spawnIntervalMs)) {
+      lastMouseSpawnTime = now;
       let spawnCount = floor(map(constrain(speed, 0, 50), 0, 50, CFG.SPAWN_COUNT_MIN, CFG.SPAWN_COUNT_MAX));
       if (speed === 0) spawnCount = CFG.SPAWN_COUNT_MIN;
 
@@ -521,10 +526,24 @@
     }
   };
 
+  let lastTouchTimestamp = 0;
+
   // Click handler para generar palabras con atractor
   window.mousePressed = function(e) {
-    // Si el click fue sobre un input, botón o panel, no spawnear palabra
-    if (e && e.target && (e.target.closest('#control-panel') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input') || e.target.closest('a'))) {
+    // Si fue precedido inmediatamente por un evento touch (emulación de click móvil), ignorar
+    if (Date.now() - lastTouchTimestamp < 650) {
+      return;
+    }
+
+    // Si el click fue sobre un input, botón, panel o elementos interactivos, no spawnear palabra
+    if (e && e.target && (
+      e.target.closest('#control-panel') || 
+      e.target.closest('header') || 
+      e.target.closest('button') || 
+      e.target.closest('input') || 
+      e.target.closest('a') ||
+      e.target.closest('#panel-backdrop')
+    )) {
       return;
     }
 
@@ -542,13 +561,24 @@
     spawnWordParticles(chosenWord, mouseX, mouseY);
   };
 
-  // Soporte Touch
+  // Soporte Touch para dispositivos móviles
   window.touchStarted = function(e) {
-    if (e && e.target && (e.target.closest('#control-panel') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input') || e.target.closest('a'))) {
-      return;
+    // Si el toque fue sobre elementos interactivos de la interfaz, permitir acción normal
+    if (e && e.target && (
+      e.target.closest('#control-panel') || 
+      e.target.closest('header') || 
+      e.target.closest('button') || 
+      e.target.closest('input') || 
+      e.target.closest('a') ||
+      e.target.closest('#panel-backdrop')
+    )) {
+      return true;
     }
+
+    lastTouchTimestamp = Date.now();
+
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
-    if (!words.length) return;
+    if (!words.length) return false;
 
     let nextIdx = floor(random(words.length));
     if (words.length > 1 && nextIdx === currentWordIndex) {
@@ -556,7 +586,31 @@
     }
     currentWordIndex = nextIdx;
 
-    spawnWordParticles(words[currentWordIndex], touches[0]?.x || mouseX, touches[0]?.y || mouseY);
+    // Obtener coordenadas de toque de forma precisa
+    let tx = mouseX;
+    let ty = mouseY;
+    if (touches && touches.length > 0) {
+      tx = touches[0].x;
+      ty = touches[0].y;
+    } else if (e && e.touches && e.touches.length > 0) {
+      tx = e.touches[0].clientX;
+      ty = e.touches[0].clientY;
+    }
+
+    spawnWordParticles(words[currentWordIndex], tx, ty);
+    return false; // Previene scroll no deseado y emulación sintética del mouse en el canvas
+  };
+
+  window.touchMoved = function(e) {
+    // Permitir scroll normal dentro de paneles o listas
+    if (e && e.target && (
+      e.target.closest('#control-panel') || 
+      e.target.closest('#panel-backdrop')
+    )) {
+      return true;
+    }
+    // En el canvas prevenimos scroll y pull-to-refresh
+    return false;
   };
 
   window.windowResized = function() {

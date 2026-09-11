@@ -23,11 +23,19 @@
     <div id="oportunidad-content" class="hidden">
       <!-- Header -->
       <section class="mb-8">
-        <div class="flex items-center gap-3 mb-4">
-          <a href="oportunidades.html" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-emerald-500/50 transition-all">
-            <i class="fas fa-arrow-left"></i>
-          </a>
-          <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <a href="oportunidades.html" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-emerald-500/50 transition-all">
+              <i class="fas fa-arrow-left"></i>
+            </a>
+            <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+          </div>
+          <div id="opo-edit-btn-container" class="hidden">
+            <a id="btn-edit-opo" href="#" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all font-bold text-sm">
+              <i class="fas fa-edit"></i>
+              <span>Editar</span>
+            </a>
+          </div>
         </div>
         <h1 id="opo-titulo" class="text-3xl md:text-4xl font-black text-white mb-4"></h1>
         <div class="flex items-center gap-4 text-sm text-gray-400">
@@ -154,15 +162,20 @@
         <p class="text-sm text-gray-400">El creador de la oportunidad recibirá tu postulación.</p>
       </section>
 
-      <!-- Panel del creador: Link a la página de postulantes -->
+      <!-- Panel del creador: Link a la página de postulantes y edición -->
       <section id="creador-panel" class="hidden">
         <div class="border-t border-white/10 pt-8 mt-8 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 text-center">
           <i class="fas fa-users text-4xl text-emerald-400 mb-3"></i>
-          <h2 class="text-xl font-bold text-white mb-2">Sos el creador de esta oportunidad</h2>
-          <p class="text-sm text-gray-400 mb-6">Podés revisar y gestionar todas las postulaciones en la página dedicada de postulantes.</p>
-          <a id="btn-ver-postulantes" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-            <i class="fas fa-users mr-1"></i> Ver Postulantes
-          </a>
+          <h2 class="text-xl font-bold text-white mb-2" id="panel-titulo">Sos el creador de esta oportunidad</h2>
+          <p class="text-sm text-gray-400 mb-6">Podés revisar y gestionar las postulaciones o editar la información de esta oportunidad.</p>
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <a id="btn-ver-postulantes" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+              <i class="fas fa-users mr-1"></i> Ver Postulantes
+            </a>
+            <a id="btn-edit-panel-opo" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/10 transition-all">
+              <i class="fas fa-edit mr-1"></i> Editar Oportunidad
+            </a>
+          </div>
         </div>
       </section>
     </div>
@@ -228,17 +241,29 @@
         oportunidadData = await res.json();
         renderOportunidad(oportunidadData);
 
-        // Check if user is creator
+        // Check permissions (creator or admin)
         if (isLoggedIn() && oportunidadData.creador) {
           const userId = getUserId();
-          esCreador = oportunidadData.creador._id === userId || oportunidadData.creador === userId;
+          const creatorId = oportunidadData.creador._id || oportunidadData.creador;
+          esCreador = userId && (creatorId === userId);
+          const userIsAdmin = isAdmin();
           
-          if (esCreador) {
+          if (esCreador || userIsAdmin) {
+            document.getElementById('opo-edit-btn-container').classList.remove('hidden');
+            document.getElementById('btn-edit-opo').href = `crear-oportunidad.html?id=${oportunidadId}`;
+            
             document.getElementById('creador-panel').classList.remove('hidden');
+            if (userIsAdmin && !esCreador) {
+              document.getElementById('panel-titulo').textContent = 'Panel de Administración de Oportunidad';
+            }
             document.getElementById('btn-ver-postulantes').href = `postulantes.html?id=${oportunidadId}`;
+            document.getElementById('btn-edit-panel-opo').href = `crear-oportunidad.html?id=${oportunidadId}`;
+          }
+
+          if (esCreador) {
             document.getElementById('inscripcion-section').classList.add('hidden');
           } else {
-            // Check if already inscribed
+            // Check if already inscribed (for admin or standard user)
             checkInscripcion();
           }
         } else {

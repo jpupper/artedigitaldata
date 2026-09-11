@@ -24,6 +24,10 @@ function closeGlobalEdit() {
 }
 
 async function loadItemToEdit(type, id, onComplete) {
+  if (type === 'oportunidades' || type === 'oportunidad') {
+    window.location.href = `crear-oportunidad.html?id=${id}`;
+    return;
+  }
   try {
     editOnComplete = onComplete;
     editNewImageBlob = null;

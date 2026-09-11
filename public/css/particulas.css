@@ -23,6 +23,50 @@ body, html {
   background-color: var(--bg);
   font-family: 'Outfit', sans-serif;
   color: var(--text);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+::selection {
+  background: transparent;
+  color: inherit;
+}
+
+::-moz-selection {
+  background: transparent;
+  color: inherit;
+}
+
+/* Modo Interfaz Oculta (Atajo F / Fullscreen) */
+body.ui-hidden .top-actions > *:not(#toggle-fullscreen-btn) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-12px) !important;
+}
+
+body.ui-hidden .control-panel {
+  transform: translateX(470px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.ui-hidden .panel-backdrop {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.ui-hidden .hint-bar {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 #p5-canvas {
@@ -33,6 +77,16 @@ body, html {
   height: 100%;
   z-index: 0;
   cursor: crosshair;
+  touch-action: none;
+}
+
+canvas {
+  touch-action: none;
+}
+
+/* Mobile backdrop */
+.panel-backdrop {
+  display: none;
 }
 
 /* Floating top bar */
@@ -87,6 +141,7 @@ body, html {
   top: 76px;
   right: 20px;
   width: 440px;
+  max-width: calc(100vw - 32px);
   max-height: calc(100vh - 96px);
   background: var(--panel-bg);
   backdrop-filter: blur(18px);
@@ -748,14 +803,196 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background-color: #090a0f;
 }
 
+/* ==========================================================================
+   Mobile-Friendly Responsive Layout (Screens <= 640px)
+   ========================================================================== */
 @media (max-width: 640px) {
-  .control-panel {
-    width: calc(100vw - 32px);
-    right: 16px;
-    left: 16px;
-    max-height: 75vh;
+  /* Telón de fondo móvil */
+  .panel-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 6, 11, 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 55;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .brand span {
-    display: none;
+  .panel-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Barra superior flotante */
+  .top-bar {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    justify-content: stretch;
+    pointer-events: none;
+  }
+  .top-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .btn-toggle-ui {
+    padding: 7px 12px;
+    font-size: 12px;
+    gap: 6px;
+    min-height: 40px;
+    background: rgba(9, 10, 15, 0.88);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .badge-counter {
+    padding: 1px 5px;
+    font-size: 9px;
+  }
+
+  /* Panel de Control convertido en Bottom Sheet Drawer */
+  .control-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 84vh;
+    border-radius: 22px 22px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -10px 45px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 242, 254, 0.18);
+    transform: translateY(0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    touch-action: pan-y;
+  }
+
+  /* Asa de arrastre visual superior en el drawer */
+  .control-panel::before {
+    content: '';
+    display: block;
+    width: 44px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 99px;
+    margin: 10px auto 2px auto;
+    flex-shrink: 0;
+  }
+
+  .control-panel.hidden-panel {
+    transform: translateY(105%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .panel-header {
+    padding: 8px 14px 10px 14px;
+  }
+  .panel-tabs-group {
+    flex: 1;
+    gap: 3px;
+  }
+  .tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .btn-close-header {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Cuerpo con scroll táctil suave */
+  .panel-body {
+    padding: 14px 16px;
+    gap: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevenir zoom no deseado en iOS Safari garantizando 16px */
+  .text-input,
+  .val-input,
+  input[type="text"],
+  input[type="number"] {
+    font-size: 16px !important;
+  }
+
+  .val-input {
+    width: 68px;
+    padding: 6px 6px;
+  }
+
+  /* Sliders más fáciles de manipular con el pulgar */
+  .slider-text-combo input[type="range"] {
+    height: 8px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.9);
+  }
+
+  /* Fila de agregar palabra */
+  .add-word-row {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .btn-add-word {
+    padding: 0 14px;
+    min-height: 42px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* Etiquetas de palabras más táctiles */
+  .word-pill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .word-pill .remove-word-btn {
+    font-size: 13px;
+    padding: 4px 6px;
+    margin-left: 4px;
+  }
+
+  .palette-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .color-input-wrap {
+    height: 42px;
+  }
+
+  /* Botonera de pie de página */
+  .panel-footer {
+    padding: 12px 16px 16px 16px;
+  }
+  .btn-save, .btn-reset {
+    min-height: 44px;
+    font-size: 12px;
+  }
+
+  /* Toast en móvil */
+  .toast {
+    width: calc(100% - 32px);
+    max-width: 380px;
+    text-align: center;
+    justify-content: center;
+    top: 14px;
+    padding: 10px 16px;
+    font-size: 12px;
   }
 }

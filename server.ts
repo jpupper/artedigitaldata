@@ -77,7 +77,7 @@ app.use((_req, res, next) => {
     "default-src 'self' *; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; " +
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com; " +
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
     "img-src * data: blob: ; " +
     "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; " +
     "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://www.artedigitaldata.com https://*.cloudinary.com https://cdn.socket.io;"
@@ -109,6 +109,11 @@ apiRouter.use('/public', publicRoutes);
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
 app.use('/api', apiRouter);
 app.use(`${BASE_PATH}/api`, apiRouter);
+
+// Ruta explícita para la versión GPU de prueba
+app.get([`${BASE_PATH}/letrasgpu`, '/letrasgpu'], (_req, res) => {
+  res.sendFile(path.join(ROOT_DIR, 'public', 'letrasgpu.html'));
+});
 
 // Static files - Servir tanto en raíz como en /artedigitaldata para máxima compatibilidad
 app.use(BASE_PATH, express.static(path.join(ROOT_DIR, 'public'), { extensions: ['html'] }));

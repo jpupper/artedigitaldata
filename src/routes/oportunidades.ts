@@ -119,7 +119,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
       'fechaDesde', 'fechaHasta', 'imagenUrl', 'parametrosPresentacion',
       'nombrePuesto', 'productoraEmpresa', 'nombreProyecto',
-      'colaboracionPedida', 'activa', 'tags'
+      'colaboracionPedida', 'activa', 'tags', 'visibility'
     ];
 
     updatableFields.forEach(field => {

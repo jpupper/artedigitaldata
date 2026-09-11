@@ -359,6 +359,12 @@ window.deleteEvento = async function(id) {
   if (res?.ok) await loadProfile();
 };
 
+window.deleteOportunidad = async function(id) {
+  if (!confirm('¿Estás seguro de que querés eliminar esta oportunidad?')) return;
+  const res = await apiRequest(`/oportunidades/${id}`, { method: 'DELETE' });
+  if (res?.ok) await loadProfile();
+};
+
 window.toggleEditMode = function() {
   const editForm = document.getElementById('edit-form');
   if (editForm) editForm.classList.toggle('hidden');
@@ -368,6 +374,7 @@ window.toggleEditMode = function() {
 window.openEditPost = function(id) { if (typeof loadItemToEdit === 'function') loadItemToEdit('posts', id); };
 window.openEditRecurso = function(id) { if (typeof loadItemToEdit === 'function') loadItemToEdit('recursos', id); };
 window.openEditEvento = function(id) { if (typeof loadItemToEdit === 'function') loadItemToEdit('eventos', id); };
+window.openEditOportunidad = function(id) { window.location.href = `crear-oportunidad.html?id=${id}`; };
 
 window.closeGlobalEdit = function() {
   const modal = document.getElementById('global-edit-modal');

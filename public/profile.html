@@ -738,6 +738,7 @@
               </a>
               ${(isLoggedIn() && (isOwner || isAdmin())) ? `
                 <div class="flex gap-1">
+                  <a href="crear-oportunidad.html?id=${opo._id}" class="text-gray-500 hover:text-emerald-400 transition-colors p-1" title="Editar"><i class="fas fa-edit text-xs"></i></a>
                   <button onclick="deleteOportunidad('${opo._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                 </div>
               ` : ''}

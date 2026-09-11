@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Editor de Partículas GPU - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/letrasgpu.css">
+</head>
+<body>
+  <!-- Contenedor del Lienzo WebGL GPU -->
+  <div id="gpu-canvas-container"></div>
+
+  <!-- FPS & Count Counter -->
+  <div id="fps-counter" class="fps-badge">
+    <i class="fas fa-microchip"></i>
+    <span>60 FPS (20,000 Partículas GPU)</span>
+  </div>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="top-actions">
+      <a href="./particulas.html" class="btn-toggle-ui" style="text-decoration: none;" title="Volver a versión p5 CPU">
+        <i class="fas fa-arrow-left"></i>
+        <span>Versión CPU</span>
+      </a>
+      <button id="toggle-panel-btn" class="btn-toggle-ui" title="Atajo de teclado: P">
+        <i class="fas fa-sliders-h"></i>
+        <span>Ajustes GPU</span>
+      </button>
+      <button id="toggle-fullscreen-btn" class="btn-toggle-ui" title="Pantalla Completa (Atajo: F)">
+        <i class="fas fa-expand"></i>
+        <span>Fullscreen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Panel de Control GPU -->
+  <aside id="control-panel" class="control-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-bolt"></i> Editor de Partículas GPU (Prueba)
+      </div>
+      <button id="close-panel-btn" class="btn-close-header" title="Cerrar panel">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Palabras Atractoras en Cliente -->
+      <div>
+        <div class="group-title"><i class="fas fa-bullseye"></i> Palabras de Click (Guardado Local)</div>
+        <p style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
+          Hacé click en la pantalla para atraer miles de partículas con aceleración GPU formando la palabra.
+        </p>
+        <div class="add-word-row">
+          <input type="text" id="new-word-input" class="text-input" placeholder="Escribí una palabra..." spellcheck="false">
+          <button id="add-word-btn" class="btn-add-word">
+            <i class="fas fa-plus"></i> Agregar
+          </button>
+        </div>
+        <div id="words-list" class="words-container">
+          <!-- Inyectado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Rendimiento GPU -->
+      <div>
+        <div class="group-title"><i class="fas fa-microchip"></i> Rendimiento GPU & Instanciación</div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Cantidad de Partículas GPU</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-PARTICLE_COUNT" min="5000" max="100000" step="5000" value="20000">
+            <input type="number" id="num-PARTICLE_COUNT" class="val-input" min="5000" max="100000" step="5000" value="20000">
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+            Simuladas simultáneamente en la GPU en Shaders GLSL.
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Tamaño Tipografía (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FONT_SIZE" min="10" max="60" step="1" value="22">
+            <input type="number" id="num-FONT_SIZE" class="val-input" min="10" max="60" step="1" value="22">
+          </div>
+        </div>
+      </div>
+
+      <!-- Físicas y Mouse -->
+      <div>
+        <div class="group-title"><i class="fas fa-wind"></i> Físicas en Shader</div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Fuerza Repulsión Mouse</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MOUSE_FORCE" min="0.5" max="8.0" step="0.5" value="2.5">
+            <input type="number" id="num-MOUSE_FORCE" class="val-input" min="0.5" max="8.0" step="0.5" value="2.5">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Radio Fuerza Mouse (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MOUSE_RADIUS" min="40" max="300" step="10" value="120">
+            <input type="number" id="num-MOUSE_RADIUS" class="val-input" min="40" max="300" step="10" value="120">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Velocidad Máxima</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-MAX_SPEED" min="1" max="25" step="1" value="8">
+            <input type="number" id="num-MAX_SPEED" class="val-input" min="1" max="25" step="1" value="8">
+          </div>
+        </div>
+      </div>
+
+      <!-- Flowfield GLSL -->
+      <div>
+        <div class="group-title"><i class="fas fa-stream"></i> Flowfield (Simplex Noise Shader)</div>
+
+        <div class="control-row">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Flowfield en GPU</span>
+            <input type="checkbox" id="param-FLOWFIELD_ENABLED" checked style="width: 18px; height: 18px; cursor: pointer;">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Fuerza de Corriente</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-FLOWFIELD_FORCE" min="0.1" max="3.0" step="0.1" value="0.8">
+            <input type="number" id="num-FLOWFIELD_FORCE" class="val-input" min="0.1" max="3.0" step="0.1" value="0.8">
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CDNs: Three.js y GPUComputationRenderer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/misc/GPUComputationRenderer.js"></script>
+
+  <script src="js/gpu-particles.js"></script>
+  <script src="js/letrasgpu-ui.js"></script>
+</body>
+</html>

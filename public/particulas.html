@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Editor de Partículas - Arte Digital Data</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,9 @@
 <body>
   <!-- Canvas p5 -->
   <div id="p5-canvas"></div>
+
+  <!-- Backdrop para mobile (cierra el panel al tocar fuera) -->
+  <div id="panel-backdrop" class="panel-backdrop"></div>
 
   <!-- Top Bar -->
   <header class="top-bar">
@@ -30,6 +33,14 @@
         <i class="fas fa-sliders-h"></i>
         <span>Ajustes</span>
       </button>
+      <button id="toggle-fullscreen-btn" class="btn-toggle-ui" title="Pantalla Completa (Atajo: F)">
+        <i class="fas fa-expand"></i>
+        <span>Fullscreen</span>
+      </button>
+      <a href="./letrasgpu" class="btn-toggle-ui" style="text-decoration: none;" title="Probar versión experimental con GPU Shaders">
+        <i class="fas fa-bolt" style="color: var(--accent-cyan);"></i>
+        <span>Probar GPU</span>
+      </a>
     </div>
   </header>
 
@@ -226,11 +237,34 @@
 
         <div class="control-row">
           <div class="control-label-wrap">
-            <span>Cantidad por Movimiento</span>
+            <span>Intervalo de Aparición Mouse (ms)</span>
           </div>
           <div class="slider-text-combo">
-            <input type="range" id="param-SPAWN_COUNT_MAX" min="1" max="10" step="1" value="2">
-            <input type="number" id="num-SPAWN_COUNT_MAX" class="val-input" min="1" max="10" step="1" value="2">
+            <input type="range" id="param-SPAWN_INTERVAL_MS" min="0" max="300" step="5" value="40">
+            <input type="number" id="num-SPAWN_INTERVAL_MS" class="val-input" min="0" max="300" step="5" value="40">
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+            0 = sin espera (cada frame). 50ms = 20 nacimientos/seg. A mayor valor, menos partículas nacen.
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Partículas Mín. al Mover Mouse</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-SPAWN_COUNT_MIN" min="0" max="50" step="1" value="1">
+            <input type="number" id="num-SPAWN_COUNT_MIN" class="val-input" min="0" max="50" step="1" value="1">
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label-wrap">
+            <span>Partículas Máx. al Mover Mouse</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-SPAWN_COUNT_MAX" min="0" max="50" step="1" value="2">
+            <input type="number" id="num-SPAWN_COUNT_MAX" class="val-input" min="0" max="50" step="1" value="2">
           </div>
         </div>
       </div>

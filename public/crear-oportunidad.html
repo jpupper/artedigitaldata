@@ -13,8 +13,8 @@
 
   <main class="pt-20 pb-10 max-w-4xl mx-auto px-4">
     <section class="mb-10 text-center pt-8 pb-4">
-      <h1 class="text-3xl md:text-4xl font-black gradient-text mb-2">Crear Oportunidad</h1>
-      <p class="text-gray-400">Publicá tu convocatoria, búsqueda laboral o colaboración.</p>
+      <h1 id="page-title" class="text-3xl md:text-4xl font-black gradient-text mb-2">Crear Oportunidad</h1>
+      <p id="page-subtitle" class="text-gray-400">Publicá tu convocatoria, búsqueda laboral o colaboración.</p>
     </section>
 
     <!-- Paso 1: Seleccionar tipo -->
@@ -335,14 +335,108 @@
   <script>
     let selectedTipo = null;
     let uploadedImageUrl = '';
+    let editingId = null;
 
-    // Verificar autenticación
-    document.addEventListener('DOMContentLoaded', () => {
+    // Verificar autenticación e inicializar edición si hay parámetro id
+    document.addEventListener('DOMContentLoaded', async () => {
       if (!isLoggedIn()) {
         showLogin();
         return;
       }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      editingId = urlParams.get('id');
+
+      if (editingId) {
+        await loadOportunidadToEdit(editingId);
+      }
     });
+
+    async function loadOportunidadToEdit(id) {
+      try {
+        const res = await fetch(CONFIG.API_URL + '/oportunidades/' + id);
+        if (!res.ok) {
+          alert('No se pudo cargar la oportunidad para editar.');
+          window.location.href = 'oportunidades.html';
+          return;
+        }
+
+        const data = await res.json();
+        const userId = getUserId();
+        const creatorId = data.creador?._id || data.creador;
+        const esCreador = userId && (creatorId === userId);
+        const userIsAdmin = isAdmin();
+
+        if (!esCreador && !userIsAdmin) {
+          alert('No tenés permisos para editar esta oportunidad.');
+          window.location.href = `oportunidad.html?id=${id}`;
+          return;
+        }
+
+        // Títulos de edición
+        const titleEl = document.getElementById('page-title');
+        if (titleEl) titleEl.textContent = 'Editar Oportunidad';
+        const subEl = document.getElementById('page-subtitle');
+        if (subEl) subEl.textContent = 'Modificá los datos de tu convocatoria, búsqueda laboral o colaboración.';
+        
+        document.title = 'Editar Oportunidad - Arte Digital Data';
+
+        const submitBtn = document.querySelector('#oportunidad-form button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar Cambios';
+        }
+
+        // Seleccionar tipo
+        selectTipo(data.tipo);
+
+        // Campos comunes
+        document.getElementById('opo-titulo').value = data.titulo || '';
+        document.getElementById('opo-descripcion').value = data.descripcion || '';
+        document.getElementById('opo-tags').value = (data.tags || []).join(', ');
+        if (document.getElementById('opo-visibility')) {
+          document.getElementById('opo-visibility').value = data.visibility || 'public';
+        }
+
+        // Campos específicos
+        if (data.tipo === 'convocatoria_obra') {
+          document.getElementById('opo-basesCondiciones').value = data.basesCondiciones || '';
+          document.getElementById('opo-lugarExposicion').value = data.lugarExposicion || '';
+          if (data.fechaDesde) {
+            document.getElementById('opo-fechaDesde').value = new Date(data.fechaDesde).toISOString().split('T')[0];
+          }
+          if (data.fechaHasta) {
+            document.getElementById('opo-fechaHasta').value = new Date(data.fechaHasta).toISOString().split('T')[0];
+          }
+          if (data.imagenUrl) {
+            uploadedImageUrl = data.imagenUrl;
+            const previewDiv = document.getElementById('opo-imagen-preview');
+            if (previewDiv) {
+              previewDiv.classList.remove('hidden');
+              const img = previewDiv.querySelector('img');
+              if (img) img.src = data.imagenUrl;
+              const label = document.getElementById('opo-imagen-label');
+              if (label) label.textContent = 'Imagen actual cargada';
+            }
+          }
+          const container = document.getElementById('parametros-container');
+          if (container) {
+            container.innerHTML = '';
+            if (data.parametrosPresentacion && data.parametrosPresentacion.length > 0) {
+              data.parametrosPresentacion.forEach(param => addParametro(param));
+            }
+          }
+        } else if (data.tipo === 'oportunidad_laboral') {
+          document.getElementById('opo-nombrePuesto').value = data.nombrePuesto || '';
+          document.getElementById('opo-productoraEmpresa').value = data.productoraEmpresa || '';
+        } else if (data.tipo === 'colaboracion') {
+          document.getElementById('opo-nombreProyecto').value = data.nombreProyecto || '';
+          document.getElementById('opo-colaboracionPedida').value = data.colaboracionPedida || '';
+        }
+      } catch (err) {
+        console.error('Error al cargar datos para edición:', err);
+        alert('Error de conexión al cargar la oportunidad.');
+      }
+    }
 
     function selectTipo(tipo) {
       selectedTipo = tipo;
@@ -354,8 +448,10 @@
       });
       
       const activeBtn = document.getElementById('btn-' + tipo);
-      activeBtn.classList.remove('border-white/10', 'bg-white/5');
-      activeBtn.classList.add('border-emerald-500/50', 'bg-emerald-500/10', 'ring-2', 'ring-emerald-500/30');
+      if (activeBtn) {
+        activeBtn.classList.remove('border-white/10', 'bg-white/5');
+        activeBtn.classList.add('border-emerald-500/50', 'bg-emerald-500/10', 'ring-2', 'ring-emerald-500/30');
+      }
 
       // Show form
       document.getElementById('step-form').classList.remove('hidden');
@@ -371,28 +467,32 @@
     }
 
     // Parámetros de presentación
-    function addParametro() {
+    function addParametro(paramData = null) {
       const container = document.getElementById('parametros-container');
       const row = document.createElement('div');
       row.className = 'parametro-row grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white/5 rounded-xl p-4 border border-white/5';
+      const label = paramData ? (paramData.label || '') : '';
+      const type = paramData ? (paramData.type || 'text') : 'text';
+      const required = paramData ? !!paramData.required : false;
+
       row.innerHTML = `
         <div>
           <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre</label>
-          <input type="text" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Portfolio">
+          <input type="text" class="param-label w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none" placeholder="Ej: Portfolio" value="${label}">
         </div>
         <div>
           <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo</label>
           <select class="param-type w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none">
-            <option value="text">Texto</option>
-            <option value="textarea">Texto largo</option>
-            <option value="url">URL / Link</option>
-            <option value="file">Archivo</option>
-            <option value="reel">Reel / Video</option>
+            <option value="text" ${type === 'text' ? 'selected' : ''}>Texto</option>
+            <option value="textarea" ${type === 'textarea' ? 'selected' : ''}>Texto largo</option>
+            <option value="url" ${type === 'url' ? 'selected' : ''}>URL / Link</option>
+            <option value="file" ${type === 'file' ? 'selected' : ''}>Archivo</option>
+            <option value="reel" ${type === 'reel' ? 'selected' : ''}>Reel / Video</option>
           </select>
         </div>
         <div class="flex items-center h-full pb-2">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50">
+            <input type="checkbox" class="param-required w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50" ${required ? 'checked' : ''}>
             <span class="text-xs text-gray-400">Obligatorio</span>
           </label>
         </div>
@@ -440,7 +540,9 @@
 
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Publicando...';
+      submitBtn.innerHTML = editingId
+        ? '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...'
+        : '<i class="fas fa-spinner fa-spin mr-2"></i>Publicando...';
 
       try {
         // Upload image if selected
@@ -502,34 +604,55 @@
           data.colaboracionPedida = document.getElementById('opo-colaboracionPedida').value;
         }
 
-        const res = await apiRequest('/oportunidades', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
+        let res;
+        if (editingId) {
+          res = await apiRequest('/oportunidades/' + editingId, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+          });
+        } else {
+          res = await apiRequest('/oportunidades', {
+            method: 'POST',
+            body: JSON.stringify(data),
+          });
+        }
 
         if (res && res.ok) {
           const oportunidad = await res.json();
           document.getElementById('step-tipo').classList.add('hidden');
           document.getElementById('step-form').classList.add('hidden');
+
+          const successTitle = document.querySelector('#success-message h2');
+          const successSub = document.querySelector('#success-message p');
+          if (editingId) {
+            if (successTitle) successTitle.textContent = '¡OPORTUNIDAD ACTUALIZADA!';
+            if (successSub) successSub.textContent = 'Los cambios fueron guardados exitosamente.';
+          }
+
           document.getElementById('success-message').classList.remove('hidden');
           document.getElementById('success-opo-id').value = oportunidad._id;
           document.getElementById('btn-ver-opo').href = `oportunidad.html?id=${oportunidad._id}`;
         } else {
-          alert('Error al publicar. Intentá de nuevo.');
+          alert(`Error al ${editingId ? 'guardar' : 'publicar'}. Intentá de nuevo.`);
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+          submitBtn.innerHTML = editingId
+            ? '<i class="fas fa-save mr-2"></i>Guardar Cambios'
+            : '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
         }
       } catch (err) {
         console.error(err);
-        alert('Error al publicar. Intentá de nuevo.');
+        alert(`Error al ${editingId ? 'guardar' : 'publicar'}. Intentá de nuevo.`);
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+        submitBtn.innerHTML = editingId
+          ? '<i class="fas fa-save mr-2"></i>Guardar Cambios'
+          : '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
       }
     });
 
     function resetForm() {
       selectedTipo = null;
       uploadedImageUrl = '';
+      editingId = null;
       document.getElementById('oportunidad-form').reset();
       clearImage();
       
@@ -538,6 +661,14 @@
         btn.classList.add('border-white/10', 'bg-white/5');
       });
       
+      const titleEl = document.getElementById('page-title');
+      if (titleEl) titleEl.textContent = 'Crear Oportunidad';
+      const subEl = document.getElementById('page-subtitle');
+      if (subEl) subEl.textContent = 'Publicá tu convocatoria, búsqueda laboral o colaboración.';
+      
+      const submitBtn = document.querySelector('#oportunidad-form button[type="submit"]');
+      if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+
       document.getElementById('step-tipo').classList.remove('hidden');
       document.getElementById('step-form').classList.add('hidden');
       document.getElementById('success-message').classList.add('hidden');

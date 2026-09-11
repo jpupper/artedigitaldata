@@ -466,8 +466,9 @@
             </td>
             <td class="px-6 py-4 text-gray-500">${o.inscripciones?.length || 0}</td>
             <td class="px-6 py-4 flex gap-3">
-              <a href="${CONFIG.BASE}/oportunidad.html?id=${o._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
-              <button onclick="deleteItem('oportunidades', '${o._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+              <a href="${CONFIG.BASE}/oportunidad.html?id=${o._id}" target="_blank" class="text-cyan-400 hover:text-white" title="Ver"><i class="fas fa-external-link-alt"></i></a>
+              <a href="${CONFIG.BASE}/crear-oportunidad.html?id=${o._id}" class="text-yellow-500 hover:text-yellow-400" title="Editar"><i class="fas fa-edit"></i></a>
+              <button onclick="deleteItem('oportunidades', '${o._id}')" class="text-red-500 hover:text-red-400" title="Eliminar"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
         `).join('');

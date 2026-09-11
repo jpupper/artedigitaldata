@@ -167,13 +167,18 @@ window.changeRole = async function(userId, newRole) {
 };
 
 window.deleteItem = async function(type, id) {
-  if (!confirm(`¿Estás seguro de que querés eliminar este ${type === 'posts' ? 'posteo' : type === 'eventos' ? 'evento' : 'recurso'}?`)) return;
-  const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : `/recursos/${id}`;
+  const itemLabel = type === 'posts' ? 'posteo' : type === 'eventos' ? 'evento' : type === 'oportunidades' ? 'oportunidad' : 'recurso';
+  if (!confirm(`¿Estás seguro de que querés eliminar este ${itemLabel}?`)) return;
+  const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : type === 'oportunidades' ? `/oportunidades/${id}` : `/recursos/${id}`;
   const res = await apiRequest(endpoint, { method: 'DELETE' });
   if (res?.ok) refreshAll();
 };
 
 window.openEdit = function(type, id) {
+  if (type === 'oportunidades') {
+    window.location.href = `${CONFIG.BASE}/crear-oportunidad.html?id=${id}`;
+    return;
+  }
   const item = data[type].find(x => x._id === id);
   if (!item) return;
   
