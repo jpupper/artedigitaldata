@@ -684,72 +684,158 @@
 
 
 
-          <!-- Importar Publicación por ID -->
-          <div style="margin-bottom: 14px; background: rgba(0, 242, 254, 0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.2);">
-            <label style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <i class="fas fa-file-import"></i> Importar Publicación por ID
-            </label>
-            <div class="add-word-row">
-              <input type="text" id="import-post-id-input" class="text-input" placeholder="ID de publicación (ej: 6a9eeb98...)..." spellcheck="false" style="padding: 7px 10px; font-size: 11px;">
-              <button id="import-post-id-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 11px; padding: 7px 12px; white-space: nowrap;">
-                <i class="fas fa-magic"></i> Importar
-              </button>
-            </div>
-            <div style="font-size: 10px; color: #94a3b8; margin-top: 5px;">
-              Mapea el texto de la publicación a frases distribuidas en páginas animadas.
-            </div>
-          </div>
-
-          <!-- Input de texto para Flyer -->
-          <div style="margin-bottom: 14px;">
-            <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
-              Texto / Frase para el Flyer
-            </label>
-            <div class="add-word-row">
-              <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
-              <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 700;">
-                <i class="fas fa-plus"></i> Agregar
-              </button>
-            </div>
-          </div>
-
-          <!-- Lista de Palabras del Flyer -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
-              <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
-                <i class="fas fa-trash-alt"></i> Limpiar Todo
-              </button>
-            </div>
-            <div id="flyer-words-list" class="words-container" style="max-height: 180px; overflow-y: auto;">
-              <!-- Inyectado dinámicamente -->
-            </div>
-          </div>
-
-          <!-- Botones Guardar Flyer -->
-          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-            <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
-              <i class="fas fa-save"></i> Guardar / Actualizar
+          <!-- Subtabs de Flyer Mode: EDITOR e IMPORT -->
+          <div class="flyer-subtabs" style="display: flex; background: rgba(0, 0, 0, 0.4); padding: 3px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <button id="btn-flyer-subtab-editor" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 10px; border: none; background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); color: #fff; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fas fa-edit"></i> EDITOR
             </button>
-            <div style="display: flex; gap: 8px;">
-              <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
-                <i class="fas fa-copy"></i> Guardar como Nuevo
-              </button>
-              <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
-                <i class="fas fa-file"></i> + Nuevo Proyecto
-              </button>
-            </div>
+            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 10px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fas fa-file-import"></i> IMPORT
+            </button>
           </div>
 
-          <!-- Secuencias / Proyectos Guardados del Usuario -->
-          <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
-            <div class="group-title"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
-            <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-top: 6px;">
-              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
-                Cargando secuencias guardadas...
+          <!-- SUBTAB CONTENT 1: EDITOR -->
+          <div id="flyer-subtab-content-editor">
+            <!-- Input de texto para Flyer -->
+            <div style="margin-bottom: 14px;">
+              <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
+                Texto / Frase para el Flyer
+              </label>
+              <div class="add-word-row">
+                <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+                <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 700;">
+                  <i class="fas fa-plus"></i> Agregar
+                </button>
               </div>
             </div>
-          </div>
+
+            <!-- Lista de Palabras del Flyer -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
+                <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
+                  <i class="fas fa-trash-alt"></i> Limpiar Todo
+                </button>
+              </div>
+              <div id="flyer-words-list" class="words-container" style="max-height: 180px; overflow-y: auto;">
+                <!-- Inyectado dinámicamente -->
+              </div>
+            </div>
+
+            <!-- Botones Guardar Flyer -->
+            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
+                <i class="fas fa-save"></i> Guardar / Actualizar
+              </button>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
+                  <i class="fas fa-copy"></i> Guardar como Nuevo
+                </button>
+                <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
+                  <i class="fas fa-file"></i> + Nuevo Proyecto
+                </button>
+              </div>
+            </div>
+
+            <!-- Secuencias / Proyectos Guardados del Usuario -->
+            <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+              <div class="group-title"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
+              <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-top: 6px;">
+                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+                  Cargando secuencias guardadas...
+                </div>
+              </div>
+            </div>
+          </div> <!-- fin flyer-subtab-content-editor -->
+
+          <!-- SUBTAB CONTENT 2: IMPORT -->
+          <div id="flyer-subtab-content-import" style="display: none;">
+            <!-- Importar Publicación por ID -->
+            <div style="margin-bottom: 14px; background: rgba(0, 242, 254, 0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.2);">
+              <label style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                <i class="fas fa-file-import"></i> Importar Publicación por ID
+              </label>
+              <div class="add-word-row" style="margin-bottom: 8px;">
+                <input type="text" id="import-post-id-input" class="text-input" placeholder="ID de publicación (ej: 6a9eeb98...)..." spellcheck="false" style="padding: 7px 10px; font-size: 11px;">
+                <button id="import-post-id-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 11px; padding: 7px 12px; white-space: nowrap;">
+                  <i class="fas fa-magic"></i> Importar
+                </button>
+              </div>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Mapea el contenido a líneas y hojas paginadas automáticamente en la línea de tiempo.
+              </div>
+            </div>
+
+            <!-- Parámetros de Maquetación y Distribución -->
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 14px;">
+              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e2e8f0;">
+                <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i> Configuración de Importación
+              </div>
+
+              <!-- Posición Central X -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Posición X Central (px)</span>
+                  <input type="number" id="import-num-center-x" value="960" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-center-x" min="0" max="1920" value="960" style="width: 100%;">
+              </div>
+
+              <!-- Posición Central Y -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Posición Y Central (px)</span>
+                  <input type="number" id="import-num-center-y" value="540" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-center-y" min="0" max="1080" value="540" style="width: 100%;">
+              </div>
+
+              <!-- Separación entre Frases -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Separación entre frases (px)</span>
+                  <input type="number" id="import-num-line-spacing" value="60" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-line-spacing" min="0" max="150" value="60" style="width: 100%;">
+              </div>
+
+              <!-- Ancho Máximo de Frase -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Ancho máximo de frase (px)</span>
+                  <input type="number" id="import-num-max-width" value="750" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-max-width" min="0" max="1800" value="750" style="width: 100%;">
+              </div>
+
+              <!-- Alto Máximo por Hoja -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Alto máximo por hoja (px)</span>
+                  <input type="number" id="import-num-max-height" value="450" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-max-height" min="0" max="1000" value="450" style="width: 100%;">
+              </div>
+
+              <!-- Duración por Hoja -->
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Duración de cada hoja (seg)</span>
+                  <input type="number" id="import-num-page-duration" value="2.0" step="0.1" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-page-duration" min="0" max="30" step="0.1" value="2.0" style="width: 100%;">
+              </div>
+
+              <!-- Tamaño de Fuente -->
+              <div style="margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                  <span>Tamaño de fuente (px)</span>
+                  <input type="number" id="import-num-font-size" value="32" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                </div>
+                <input type="range" id="import-font-size" min="0" max="100" value="32" style="width: 100%;">
+              </div>
+            </div>
+          </div> <!-- fin flyer-subtab-content-import -->
         </div>
       </div> <!-- fin tab-pane-flyer -->
     </div>

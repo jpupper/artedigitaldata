@@ -954,19 +954,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function formatTimelineTime(sec) {
+    const s = Math.max(0, sec);
+    const mins = Math.floor(s / 60);
+    const remainderSecs = (s % 60).toFixed(2);
+    const minsStr = String(mins).padStart(2, '0');
+    const secsStr = remainderSecs.padStart(5, '0');
+    return `${minsStr}:${secsStr}`;
+  }
+
   function updateTimelineReadout() {
     const readout = document.getElementById('tl-time-readout');
-    if (readout) {
-      const curSec = currentTimelineTime.toFixed(2).padStart(5, '0');
-      const durSec = timelineDuration.toFixed(2).padStart(5, '0');
-      readout.textContent = `00:${curSec} / 00:${durSec}`;
+    if (readout && !readout.querySelector('input')) {
+      readout.textContent = `${formatTimelineTime(currentTimelineTime)} / ${formatTimelineTime(timelineDuration)}`;
     }
 
     const playhead = document.getElementById('timeline-playhead');
     const rulerTarget = document.getElementById('ruler-lane') || document.getElementById('timeline-ruler');
     if (playhead && rulerTarget) {
-      const width = rulerTarget.clientWidth;
-      const pxPos = (currentTimelineTime / timelineDuration) * width;
+      const width = rulerTarget.clientWidth || 1;
+      const pxPos = Math.max(0, Math.min(width, (currentTimelineTime / timelineDuration) * width));
       playhead.style.left = pxPos + 'px';
     }
 
@@ -2929,6 +2936,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- SUBTABS DE FLYER MODE (EDITOR / IMPORT) ---
+  const btnSubtabEditor = document.getElementById('btn-flyer-subtab-editor');
+  const btnSubtabImport = document.getElementById('btn-flyer-subtab-import');
+  const contentSubtabEditor = document.getElementById('flyer-subtab-content-editor');
+  const contentSubtabImport = document.getElementById('flyer-subtab-content-import');
+
+  function switchFlyerSubtab(tabName) {
+    if (tabName === 'IMPORT') {
+      if (contentSubtabEditor) contentSubtabEditor.style.display = 'none';
+      if (contentSubtabImport) contentSubtabImport.style.display = 'block';
+
+      if (btnSubtabEditor) {
+        btnSubtabEditor.classList.remove('active');
+        btnSubtabEditor.style.background = 'transparent';
+        btnSubtabEditor.style.color = '#94a3b8';
+      }
+      if (btnSubtabImport) {
+        btnSubtabImport.classList.add('active');
+        btnSubtabImport.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
+        btnSubtabImport.style.color = '#fff';
+      }
+    } else {
+      if (contentSubtabEditor) contentSubtabEditor.style.display = 'block';
+      if (contentSubtabImport) contentSubtabImport.style.display = 'none';
+
+      if (btnSubtabEditor) {
+        btnSubtabEditor.classList.add('active');
+        btnSubtabEditor.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
+        btnSubtabEditor.style.color = '#fff';
+      }
+      if (btnSubtabImport) {
+        btnSubtabImport.classList.remove('active');
+        btnSubtabImport.style.background = 'transparent';
+        btnSubtabImport.style.color = '#94a3b8';
+      }
+    }
+  }
+
+  if (btnSubtabEditor) btnSubtabEditor.addEventListener('click', () => switchFlyerSubtab('EDITOR'));
+  if (btnSubtabImport) btnSubtabImport.addEventListener('click', () => switchFlyerSubtab('IMPORT'));
+
+  // Sincronización bidireccional de sliders y textfields en Configuración de Importación
+  const importParamsList = [
+    { key: 'line-spacing', defaultVal: 60, min: 0, max: 150 },
+    { key: 'max-width', defaultVal: 750, min: 0, max: 1800 },
+    { key: 'max-height', defaultVal: 450, min: 0, max: 1000 },
+    { key: 'page-duration', defaultVal: 2.0, min: 0, max: 30, isFloat: true },
+    { key: 'font-size', defaultVal: 32, min: 0, max: 100 },
+    { key: 'center-x', defaultVal: Math.round((window.innerWidth || 1920) / 2), min: 0, max: 1920 },
+    { key: 'center-y', defaultVal: Math.round((window.innerHeight || 1080) / 2), min: 0, max: 1080 }
+  ];
+
+  importParamsList.forEach(item => {
+    const slider = document.getElementById(`import-${item.key}`);
+    const numInput = document.getElementById(`import-num-${item.key}`);
+    if (!slider || !numInput) return;
+
+    slider.addEventListener('input', () => {
+      const val = item.isFloat ? parseFloat(slider.value) : parseInt(slider.value, 10);
+      numInput.value = val;
+    });
+
+    numInput.addEventListener('input', () => {
+      const rawVal = item.isFloat ? parseFloat(numInput.value) : parseInt(numInput.value, 10);
+      if (!isNaN(rawVal)) {
+        slider.value = Math.max(item.min, Math.min(item.max, rawVal));
+      }
+    });
+  });
+
   async function importPostToFlyer(postId) {
     if (!postId || typeof postId !== 'string') {
       showToast('Por favor ingresá un ID de publicación válido', 'error');
@@ -2946,76 +3023,131 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      let res = await fetch(getApiUrl() + '/posts/' + cleanId).catch(() => null);
-      if (!res || !res.ok) {
-        res = await fetch(getApiUrl() + '/public/posts/' + cleanId).catch(() => null);
-      }
-      if (!res || !res.ok) {
-        throw new Error('No se encontró la publicación especificada (ID: ' + cleanId + ')');
-      }
-      const post = await res.json();
-      if (!post) {
-        throw new Error('La publicación no existe');
+      let itemData = null;
+      let itemType = 'Publicación';
+
+      const endpoints = [
+        { url: '/posts/', type: 'Obra / Post' },
+        { url: '/eventos/', type: 'Evento' },
+        { url: '/recursos/', type: 'Recurso' },
+        { url: '/oportunidades/', type: 'Oportunidad' },
+        { url: '/public/posts/', type: 'Post' },
+        { url: '/public/eventos/', type: 'Evento' },
+        { url: '/public/recursos/', type: 'Recurso' }
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(getApiUrl() + ep.url + cleanId).catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data && (data.title || data.titulo || data.description || data.descripcion || data._id)) {
+              itemData = data;
+              itemType = ep.type;
+              break;
+            }
+          }
+        } catch (e) {}
       }
 
-      let rawText = ((post.title || '') + '\n' + (post.description || post.content || '')).trim();
+      if (!itemData) {
+        throw new Error('No se encontró ninguna publicación, evento o recurso con el ID: ' + cleanId);
+      }
+
+      const title = itemData.title || itemData.titulo || '';
+      const description = itemData.description || itemData.descripcion || itemData.content || '';
+      const location = itemData.location ? ('Lugar: ' + itemData.location) : '';
+      const dateStr = itemData.date ? ('Fecha: ' + new Date(itemData.date).toLocaleDateString('es-AR')) : '';
+
+      let rawText = [title, description, location, dateStr].filter(Boolean).join(' ').trim();
       rawText = rawText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
       if (!rawText) {
-        throw new Error('La publicación no contiene texto para importar');
+        throw new Error('El contenido del elemento no incluye texto para importar');
       }
 
-      const sentences = rawText.split(/(?<=[.?!;\n])\s+/);
-      const phrases = [];
+      // Parámetros de maquetación leídos de la interfaz gráfica (con fallback a textfields numéricos si existen)
+      const lineSpacing = parseFloat(document.getElementById('import-num-line-spacing')?.value || document.getElementById('import-line-spacing')?.value || 60);
+      const maxLineWidth = parseFloat(document.getElementById('import-num-max-width')?.value || document.getElementById('import-max-width')?.value || 750);
+      const maxPageHeight = parseFloat(document.getElementById('import-num-max-height')?.value || document.getElementById('import-max-height')?.value || 450);
+      const pageDuration = parseFloat(document.getElementById('import-num-page-duration')?.value || document.getElementById('import-page-duration')?.value || 2.0);
+      const fontSize = parseFloat(document.getElementById('import-num-font-size')?.value || document.getElementById('import-font-size')?.value || 32);
+      const centerX = parseFloat(document.getElementById('import-num-center-x')?.value || document.getElementById('import-center-x')?.value || (window.innerWidth / 2));
+      const centerY = parseFloat(document.getElementById('import-num-center-y')?.value || document.getElementById('import-center-y')?.value || (window.innerHeight / 2));
 
-      sentences.forEach(sent => {
-        const cleaned = sent.trim();
-        if (!cleaned) return;
+      // Medición exacta de ancho de texto con Canvas 2D
+      const measureCanvas = document.createElement('canvas');
+      const measureCtx = measureCanvas.getContext('2d');
+      if (measureCtx) {
+        measureCtx.font = `bold ${fontSize}px sans-serif`;
+      }
+      function getTextWidth(str) {
+        if (measureCtx) return measureCtx.measureText(str).width;
+        return str.length * (fontSize * 0.58);
+      }
 
-        if (cleaned.length <= 40) {
-          phrases.push(cleaned);
-        } else {
-          const wordsList = cleaned.split(/\s+/);
-          let currentChunk = '';
-          wordsList.forEach(w => {
-            if ((currentChunk + ' ' + w).trim().length <= 38) {
-              currentChunk = (currentChunk + ' ' + w).trim();
-            } else {
-              if (currentChunk) phrases.push(currentChunk);
-              currentChunk = w;
-            }
-          });
-          if (currentChunk) phrases.push(currentChunk);
+      // 1) Algoritmo de maquetación por línea (sin cortar palabras) y por hoja paginada
+      const words = rawText.split(/\s+/).filter(Boolean);
+      if (!words.length) {
+        throw new Error('No hay palabras en el texto');
+      }
+
+      const pages = []; // Arreglo de páginas; cada página es un Arreglo de strings (líneas)
+      let currentPageLines = [];
+      let currentLineWords = [];
+
+      function pushLineToPage() {
+        if (currentLineWords.length > 0) {
+          const lineStr = currentLineWords.join(' ');
+          currentPageLines.push(lineStr);
+          currentLineWords = [];
+
+          // Verificar si excede el alto máximo permitido para la hoja actual
+          const currentHeight = currentPageLines.length * lineSpacing;
+          if (currentHeight > maxPageHeight && currentPageLines.length > 1) {
+            const overflowLine = currentPageLines.pop();
+            pages.push(currentPageLines);
+            currentPageLines = [overflowLine];
+          }
         }
-      });
-
-      if (!phrases.length) {
-        throw new Error('No se pudieron extraer frases de la publicación');
       }
 
-      const screenW = window.innerWidth || 1920;
-      const screenH = window.innerHeight || 1080;
+      for (const word of words) {
+        const testLineWords = [...currentLineWords, word];
+        const testLineStr = testLineWords.join(' ');
+        const testWidth = getTextWidth(testLineStr);
 
-      const linesPerPage = 5;
-      const lineSpacing = 65;
-      const fontSize = 32;
-      const totalPages = Math.ceil(phrases.length / linesPerPage);
-      const pageDuration = 3.5;
+        if (testWidth <= maxLineWidth || currentLineWords.length === 0) {
+          currentLineWords.push(word);
+        } else {
+          pushLineToPage();
+          currentLineWords.push(word);
+        }
+      }
+
+      pushLineToPage();
+      if (currentPageLines.length > 0) {
+        pages.push(currentPageLines);
+      }
 
       flyerWords = [];
       timelineLayers = [];
       if (window.clearAllFlyerParticles) window.clearAllFlyerParticles();
 
-      for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-        const pagePhrases = phrases.slice(pageIdx * linesPerPage, (pageIdx + 1) * linesPerPage);
-        const totalPageHeight = (pagePhrases.length - 1) * lineSpacing;
-        const startY = Math.round((screenH / 2) - (totalPageHeight / 2));
-        const startTime = pageIdx * pageDuration;
+      let totalPhrasesCount = 0;
 
-        pagePhrases.forEach((phraseText, lineIdx) => {
-          const posX = Math.round(screenW / 2);
+      // 2) Mapeo a Flyer Words y Capas de Timeline con temporizaciones paginadas
+      pages.forEach((pageLines, pageIdx) => {
+        const totalPageHeight = (pageLines.length - 1) * lineSpacing;
+        const startY = Math.round(centerY - (totalPageHeight / 2));
+        const startTime = pageIdx * pageDuration;
+        const dur = Number(pageDuration.toFixed(2));
+
+        pageLines.forEach((phraseText, lineIdx) => {
+          totalPhrasesCount++;
+          const posX = Math.round(centerX);
           const posY = startY + (lineIdx * lineSpacing);
-          const clipId = 'fw_import_' + Date.now() + '_' + pageIdx + '_' + lineIdx;
+          const clipId = 'fw_imp_' + Date.now() + '_' + pageIdx + '_' + lineIdx;
           const uppercaseText = phraseText.toUpperCase();
 
           const flyerWord = {
@@ -3028,18 +3160,35 @@ document.addEventListener('DOMContentLoaded', () => {
             fontSize: fontSize,
             letterSpacing: 8,
             startTime: Number(startTime.toFixed(2)),
-            duration: Number((pageDuration - 0.3).toFixed(2)),
+            duration: dur,
+            page: pageIdx + 1,
             keyframes: []
           };
 
           flyerWords.push(flyerWord);
-          timelineLayers.push({
-            id: clipId,
-            flyerId: clipId,
-            name: uppercaseText,
-            startTime: Number(startTime.toFixed(2)),
-            duration: Number((pageDuration - 0.3).toFixed(2))
-          });
+
+          // Crear capa en Timeline
+          const layerObj = {
+            id: 'layer_' + clipId,
+            name: `H${pageIdx + 1}-L${lineIdx + 1}: ${uppercaseText.substring(0, 16)}`,
+            clips: [
+              {
+                id: clipId,
+                flyerId: clipId,
+                name: uppercaseText,
+                text: uppercaseText,
+                word: uppercaseText,
+                startTime: Number(startTime.toFixed(2)),
+                duration: dur,
+                x: posX,
+                y: posY,
+                fontSize: fontSize,
+                letterSpacing: 8
+              }
+            ]
+          };
+
+          timelineLayers.push(layerObj);
 
           if (typeof window.spawnWordParticles === 'function') {
             window.spawnWordParticles(uppercaseText, posX, posY, true, clipId, {
@@ -3048,8 +3197,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
         });
-      }
+      });
 
+      window.hasTimeline = true;
       window.timelineActive = true;
       const btnToggleTimeline = document.getElementById('btn-toggle-hastimeline');
       if (btnToggleTimeline) {
@@ -3057,17 +3207,26 @@ document.addEventListener('DOMContentLoaded', () => {
         btnToggleTimeline.style.borderColor = 'var(--accent-cyan)';
       }
 
-      window.timelineDuration = Math.max(8.0, Number((totalPages * pageDuration).toFixed(2)));
+      // Duración total del timeline = cantidad de hojas * duración de cada hoja
+      const totalTimelineDur = Number((pages.length * pageDuration).toFixed(2));
+      timelineDuration = Math.max(1.0, totalTimelineDur);
+      window.timelineDuration = timelineDuration;
+
       const durInput = document.getElementById('timeline-duration-input');
-      if (durInput) durInput.value = window.timelineDuration;
+      if (durInput) durInput.value = timelineDuration;
 
       switchRightTab('FLYERMODE');
+      switchFlyerSubtab('EDITOR');
 
       renderFlyerWordsList();
       renderTimelineTracks();
       if (window.updateTimelineReadout) window.updateTimelineReadout();
+      if (typeof evaluateTimelineAtTime === 'function') {
+        currentTimelineTime = 0.0;
+        evaluateTimelineAtTime(0);
+      }
 
-      showToast(`¡Publicación importada! (${phrases.length} frases distribuidas en ${totalPages} páginas)`, 'success');
+      showToast(`¡Publicación importada! (${totalPhrasesCount} frases distribuidas en ${pages.length} hojas - Duración: ${timelineDuration}s)`, 'success');
 
     } catch (err) {
       console.error('[Import Post Error]:', err);

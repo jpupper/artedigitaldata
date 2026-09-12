@@ -1236,20 +1236,27 @@ input[type="range"]::-webkit-slider-thumb:hover {
   position: absolute;
   top: 0;
   left: 0;
-  width: 2px;
+  width: 3px;
   height: 1000px;
   background: var(--accent-cyan);
   box-shadow: 0 0 8px var(--accent-cyan);
-  z-index: 10;
-  pointer-events: none;
+  z-index: 20;
+  pointer-events: auto;
+  cursor: ew-resize;
 }
 
 .playhead-handle {
-  width: 12px;
-  height: 14px;
+  width: 14px;
+  height: 16px;
   background: var(--accent-cyan);
   clip-path: polygon(0% 0%, 100% 0%, 100% 60%, 50% 100%, 0% 60%);
   transform: translateX(-5px);
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.playhead-handle:active {
+  cursor: grabbing;
 }
 
 .timeline-tracks {
