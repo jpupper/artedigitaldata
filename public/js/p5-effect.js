@@ -59,6 +59,9 @@
     LETTER_SPACING: 1.0,
     COLLAB_WORD_LIFESPAN: 0,
     SHOW_MOUSE_RADIUS: false,
+    P5_FONT: 'sans-serif',
+    GENERATIVE_SHADER: 'noise.frag',
+    ASCII_FONT_MODE: 0,
     FLYER_MODE_ENABLED: false,
     FLYER_WORDS: [],
     COLOR_1: '#40c4ff', // Cyan
@@ -1002,6 +1005,10 @@
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor); 
       textSize(size);
+      if (typeof textFont === 'function') {
+        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'sans-serif';
+        textFont(fontFam);
+      }
       text(this.char, this.pos.x, this.pos.y);
     }
 
@@ -1197,6 +1204,10 @@
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor);
       textSize(size);
+      if (typeof textFont === 'function') {
+        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'sans-serif';
+        textFont(fontFam);
+      }
       text(this.char, this.pos.x, posY);
     }
 

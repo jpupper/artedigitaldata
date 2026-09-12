@@ -275,6 +275,7 @@ void main() {
         u_noiseTexture: gl.getUniformLocation(prog, 'u_noiseTexture'),
         iChannel0: gl.getUniformLocation(prog, 'iChannel0'),
         u_glyphScale: gl.getUniformLocation(prog, 'u_glyphScale'),
+        u_fontMode: gl.getUniformLocation(prog, 'u_fontMode')
       }
     };
   }
@@ -299,6 +300,56 @@ void main() {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  let activeGenerativeShader = 'noise.frag';
+  let generativeShaderCache = {};
+
+  async function loadGenerativeShader(shaderName) {
+    if (!shaderName) shaderName = 'noise.frag';
+    if (activeGenerativeShader === shaderName && noiseProgramInfo && noiseProgramInfo.program) return true;
+
+    if (generativeShaderCache[shaderName]) {
+      const code = generativeShaderCache[shaderName];
+      const newNoise = buildProgramInfo(vsSource, code);
+      if (newNoise) {
+        noiseFsSource = code;
+        noiseProgramInfo = newNoise;
+        activeGenerativeShader = shaderName;
+        console.log('[AsciiShaderBG] Shader generativo cambiado desde caché:', shaderName);
+        return true;
+      }
+    }
+
+    const currentPath = window.location.pathname;
+    const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    const candidatePaths = [
+      folderPath + 'shaders/generative/',
+      'shaders/generative/',
+      './shaders/generative/',
+      '../shaders/generative/',
+      '/artedigitaldata/shaders/generative/',
+      (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE + '/shaders/generative/' : '/shaders/generative/')
+    ];
+
+    for (const basePath of candidatePaths) {
+      try {
+        const res = await fetch(basePath + shaderName + '?t=' + Date.now());
+        if (res.ok) {
+          const code = await res.text();
+          const newNoise = buildProgramInfo(vsSource, code);
+          if (newNoise) {
+            noiseFsSource = code;
+            noiseProgramInfo = newNoise;
+            activeGenerativeShader = shaderName;
+            generativeShaderCache[shaderName] = code;
+            console.log('[AsciiShaderBG] Shader generativo cargado desde:', basePath + shaderName);
+            return true;
+          }
+        }
+      } catch (err) {}
+    }
+    return false;
+  }
+
   async function loadExternalShaders() {
     const currentPath = window.location.pathname;
     const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
@@ -312,11 +363,13 @@ void main() {
       (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE + '/shaders/' : '/shaders/')
     ];
 
+    const genShaderToLoad = activeGenerativeShader || 'noise.frag';
+
     for (const basePath of candidatePaths) {
       try {
         const [vsRes, noiseRes, asciiRes] = await Promise.all([
           fetch(basePath + 'common.vert'),
-          fetch(basePath + 'noise.frag'),
+          fetch(basePath + 'generative/' + genShaderToLoad).catch(() => fetch(basePath + 'noise.frag')),
           fetch(basePath + 'ascii.frag')
         ]);
 
@@ -330,6 +383,7 @@ void main() {
           if (newAscii && newNoise) {
             asciiProgramInfo = newAscii;
             noiseProgramInfo = newNoise;
+            generativeShaderCache[genShaderToLoad] = noiseFsSource;
             console.log('[AsciiShaderBG] Shaders externos cargados exitosamente desde:', basePath);
             return;
           }
@@ -478,7 +532,16 @@ void main() {
       if (uAscii.u_glyphScale) {
         gl.uniform1f(uAscii.u_glyphScale, isNaN(glyphScale) ? 0.85 : glyphScale);
       }
+      const fontMode = cfg.ASCII_FONT_MODE !== undefined ? Number(cfg.ASCII_FONT_MODE) : 0;
+      if (uAscii.u_fontMode) {
+        gl.uniform1i(uAscii.u_fontMode, isNaN(fontMode) ? 0 : fontMode);
+      }
       gl.uniform1f(uAscii.u_opacity, opacity);
+
+      const targetShader = cfg.GENERATIVE_SHADER || 'noise.frag';
+      if (targetShader !== activeGenerativeShader) {
+        loadGenerativeShader(targetShader);
+      }
 
       // Vincular textura del FBO
       gl.activeTexture(gl.TEXTURE0);
@@ -570,6 +633,7 @@ void main() {
     stop,
     init: initWebGL,
     reloadShaders,
+    loadGenerativeShader,
     setVisible: (visible) => {
       if (visible) start();
       else stop();

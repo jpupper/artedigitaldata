@@ -379,6 +379,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const p5FontSelect = document.getElementById('param-P5_FONT');
+  if (p5FontSelect) {
+    p5FontSelect.addEventListener('change', () => {
+      applyConfigChange('P5_FONT', p5FontSelect.value);
+    });
+  }
+
+  const genShaderSelect = document.getElementById('param-GENERATIVE_SHADER');
+  if (genShaderSelect) {
+    genShaderSelect.addEventListener('change', () => {
+      applyConfigChange('GENERATIVE_SHADER', genShaderSelect.value);
+      if (window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
+        window.AsciiShaderBG.loadGenerativeShader(genShaderSelect.value);
+      }
+    });
+  }
+
+  const asciiFontModeSelect = document.getElementById('param-ASCII_FONT_MODE');
+  if (asciiFontModeSelect) {
+    asciiFontModeSelect.addEventListener('change', () => {
+      applyConfigChange('ASCII_FONT_MODE', Number(asciiFontModeSelect.value));
+    });
+  }
+
   window.updatePosSliders = function(x, y, isSilent = false) {
     const sliderX = document.getElementById('param-POS_X');
     const numX = document.getElementById('num-POS_X');
@@ -2461,6 +2485,21 @@ document.addEventListener('DOMContentLoaded', () => {
       showMouseRadiusToggleSync.checked = !!cfg.SHOW_MOUSE_RADIUS;
     }
 
+    const p5FontSelectSync = document.getElementById('param-P5_FONT');
+    if (p5FontSelectSync && cfg.P5_FONT !== undefined) {
+      p5FontSelectSync.value = cfg.P5_FONT;
+    }
+
+    const genShaderSelectSync = document.getElementById('param-GENERATIVE_SHADER');
+    if (genShaderSelectSync && cfg.GENERATIVE_SHADER !== undefined) {
+      genShaderSelectSync.value = cfg.GENERATIVE_SHADER;
+    }
+
+    const asciiFontModeSelectSync = document.getElementById('param-ASCII_FONT_MODE');
+    if (asciiFontModeSelectSync && cfg.ASCII_FONT_MODE !== undefined) {
+      asciiFontModeSelectSync.value = cfg.ASCII_FONT_MODE;
+    }
+
     if (flyerModeToggle && cfg.FLYER_MODE_ENABLED !== undefined) {
       flyerModeToggle.checked = !!cfg.FLYER_MODE_ENABLED;
     }
@@ -2890,6 +2929,177 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  async function importPostToFlyer(postId) {
+    if (!postId || typeof postId !== 'string') {
+      showToast('Por favor ingresá un ID de publicación válido', 'error');
+      return;
+    }
+
+    const cleanId = postId.trim();
+    if (!cleanId) return;
+
+    const btn = document.getElementById('import-post-id-btn');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Cargando...';
+    }
+
+    try {
+      let res = await fetch(getApiUrl() + '/posts/' + cleanId).catch(() => null);
+      if (!res || !res.ok) {
+        res = await fetch(getApiUrl() + '/public/posts/' + cleanId).catch(() => null);
+      }
+      if (!res || !res.ok) {
+        throw new Error('No se encontró la publicación especificada (ID: ' + cleanId + ')');
+      }
+      const post = await res.json();
+      if (!post) {
+        throw new Error('La publicación no existe');
+      }
+
+      let rawText = ((post.title || '') + '\n' + (post.description || post.content || '')).trim();
+      rawText = rawText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      if (!rawText) {
+        throw new Error('La publicación no contiene texto para importar');
+      }
+
+      const sentences = rawText.split(/(?<=[.?!;\n])\s+/);
+      const phrases = [];
+
+      sentences.forEach(sent => {
+        const cleaned = sent.trim();
+        if (!cleaned) return;
+
+        if (cleaned.length <= 40) {
+          phrases.push(cleaned);
+        } else {
+          const wordsList = cleaned.split(/\s+/);
+          let currentChunk = '';
+          wordsList.forEach(w => {
+            if ((currentChunk + ' ' + w).trim().length <= 38) {
+              currentChunk = (currentChunk + ' ' + w).trim();
+            } else {
+              if (currentChunk) phrases.push(currentChunk);
+              currentChunk = w;
+            }
+          });
+          if (currentChunk) phrases.push(currentChunk);
+        }
+      });
+
+      if (!phrases.length) {
+        throw new Error('No se pudieron extraer frases de la publicación');
+      }
+
+      const screenW = window.innerWidth || 1920;
+      const screenH = window.innerHeight || 1080;
+
+      const linesPerPage = 5;
+      const lineSpacing = 65;
+      const fontSize = 32;
+      const totalPages = Math.ceil(phrases.length / linesPerPage);
+      const pageDuration = 3.5;
+
+      flyerWords = [];
+      timelineLayers = [];
+      if (window.clearAllFlyerParticles) window.clearAllFlyerParticles();
+
+      for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+        const pagePhrases = phrases.slice(pageIdx * linesPerPage, (pageIdx + 1) * linesPerPage);
+        const totalPageHeight = (pagePhrases.length - 1) * lineSpacing;
+        const startY = Math.round((screenH / 2) - (totalPageHeight / 2));
+        const startTime = pageIdx * pageDuration;
+
+        pagePhrases.forEach((phraseText, lineIdx) => {
+          const posX = Math.round(screenW / 2);
+          const posY = startY + (lineIdx * lineSpacing);
+          const clipId = 'fw_import_' + Date.now() + '_' + pageIdx + '_' + lineIdx;
+          const uppercaseText = phraseText.toUpperCase();
+
+          const flyerWord = {
+            id: clipId,
+            name: uppercaseText,
+            text: uppercaseText,
+            word: uppercaseText,
+            x: posX,
+            y: posY,
+            fontSize: fontSize,
+            letterSpacing: 8,
+            startTime: Number(startTime.toFixed(2)),
+            duration: Number((pageDuration - 0.3).toFixed(2)),
+            keyframes: []
+          };
+
+          flyerWords.push(flyerWord);
+          timelineLayers.push({
+            id: clipId,
+            flyerId: clipId,
+            name: uppercaseText,
+            startTime: Number(startTime.toFixed(2)),
+            duration: Number((pageDuration - 0.3).toFixed(2))
+          });
+
+          if (typeof window.spawnWordParticles === 'function') {
+            window.spawnWordParticles(uppercaseText, posX, posY, true, clipId, {
+              fontSize: fontSize,
+              letterSpacing: 8
+            });
+          }
+        });
+      }
+
+      window.timelineActive = true;
+      const btnToggleTimeline = document.getElementById('btn-toggle-hastimeline');
+      if (btnToggleTimeline) {
+        btnToggleTimeline.innerHTML = '<i class="fas fa-toggle-on text-emerald-400"></i> Timeline ON';
+        btnToggleTimeline.style.borderColor = 'var(--accent-cyan)';
+      }
+
+      window.timelineDuration = Math.max(8.0, Number((totalPages * pageDuration).toFixed(2)));
+      const durInput = document.getElementById('timeline-duration-input');
+      if (durInput) durInput.value = window.timelineDuration;
+
+      switchRightTab('FLYERMODE');
+
+      renderFlyerWordsList();
+      renderTimelineTracks();
+      if (window.updateTimelineReadout) window.updateTimelineReadout();
+
+      showToast(`¡Publicación importada! (${phrases.length} frases distribuidas en ${totalPages} páginas)`, 'success');
+
+    } catch (err) {
+      console.error('[Import Post Error]:', err);
+      showToast(err.message || 'Error al importar publicación', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  window.importPostToFlyer = importPostToFlyer;
+
+  const btnImportPost = document.getElementById('import-post-id-btn');
+  const inputImportPost = document.getElementById('import-post-id-input');
+  if (btnImportPost && inputImportPost) {
+    btnImportPost.addEventListener('click', () => {
+      importPostToFlyer(inputImportPost.value);
+    });
+    inputImportPost.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        importPostToFlyer(inputImportPost.value);
+      }
+    });
+  }
+
+  const postParam = new URLSearchParams(window.location.search).get('postid') || new URLSearchParams(window.location.search).get('post') || new URLSearchParams(window.location.search).get('post_id');
+  if (postParam) {
+    importPostToFlyer(postParam);
+  }
+
   async function saveP5ConfigToServer(btnElement) {
     if (!window.ParticlesConfig) return;
     const btn = btnElement || document.getElementById('btn-save-collab-top');
@@ -2956,6 +3166,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  async function refreshGenerativeShadersDropdown() {
+    const genShaderSelect = document.getElementById('param-GENERATIVE_SHADER');
+    if (!genShaderSelect) return;
+
+    try {
+      const res = await fetch(getApiUrl() + '/public/generative-shaders').catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data && Array.isArray(data.shaders) && data.shaders.length > 0) {
+          const currentVal = genShaderSelect.value;
+          const existingOptions = Array.from(genShaderSelect.options).map(opt => opt.value);
+
+          data.shaders.forEach(shaderFile => {
+            if (!existingOptions.includes(shaderFile)) {
+              const opt = document.createElement('option');
+              opt.value = shaderFile;
+              const nameWithoutExt = shaderFile.replace('.frag', '');
+              opt.textContent = nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1) + ' (' + shaderFile + ')';
+              genShaderSelect.appendChild(opt);
+            }
+          });
+          if (currentVal) genShaderSelect.value = currentVal;
+        }
+      }
+    } catch (err) {}
+  }
+
+  refreshGenerativeShadersDropdown();
 
   if (window.location.pathname.includes('outputeffect.html')) {
     window.addEventListener('click', () => {

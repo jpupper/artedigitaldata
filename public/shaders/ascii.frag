@@ -10,6 +10,7 @@ uniform sampler2D iChannel0;
 uniform float u_charSize;   // Tileo de la grilla ASCII (px)
 uniform float u_glyphScale; // Tamaño de cada letra dentro de la celda (0.2 a 1.5)
 uniform float u_opacity;
+uniform int u_fontMode;    // Modo de tipografía ASCII (0 = Standard 5x5, 1 = Binary 0/1, 2 = Matrix Hex, 3 = Minimal Dots)
 
 // Función de dibujo de bitmask de caracter 5x5
 float character(int n, vec2 p) {
@@ -21,8 +22,51 @@ float character(int n, vec2 p) {
     return 0.0;
 }
 
-// Mapa tipográfico completo de 32 caracteres ASCII 5x5 (A-Z, números y símbolos)
+// Mapa tipográfico configurable por u_fontMode
 int getCharBitmask(float gray, vec2 cellCoord) {
+    int idx = int(clamp(gray * 31.0, 0.0, 31.0));
+
+    // Modo 1: Binary (0 y 1)
+    if (u_fontMode == 1) {
+        if (idx < 2) return 0; // espacio
+        if (idx < 17) return 15255086; // 0 bitmask
+        return 32641183; // 1 bitmask
+    }
+
+    // Modo 2: Matrix Hex (0-9, A-F)
+    if (u_fontMode == 2) {
+        int hexChars[16];
+        hexChars[0]  = 15255086; // 0
+        hexChars[1]  = 32641183; // 1
+        hexChars[2]  = 32540703; // 2
+        hexChars[3]  = 32540687; // 3
+        hexChars[4]  = 18415121; // 4
+        hexChars[5]  = 32603679; // 5
+        hexChars[6]  = 32603695; // 6
+        hexChars[7]  = 32514081; // 7
+        hexChars[8]  = 32554031; // 8
+        hexChars[9]  = 32554015; // 9
+        hexChars[10] = 18415150; // A
+        hexChars[11] = 16301619; // B
+        hexChars[12] = 31491102; // C
+        hexChars[13] = 7652647;  // D
+        hexChars[14] = 32554047; // E
+        hexChars[15] = 1096767;  // F
+        if (idx < 2) return 0;
+        int hIdx = int(clamp(gray * 15.0, 0.0, 15.0));
+        return hexChars[hIdx];
+    }
+
+    // Modo 3: Minimal Dots & Rings
+    if (u_fontMode == 3) {
+        if (idx < 4) return 0;
+        if (idx < 12) return 4096;    // .
+        if (idx < 20) return 65600;   // :
+        if (idx < 28) return 147584;  // +
+        return 332772;                // *
+    }
+
+    // Modo 0 (Por defecto): Mapa completo 32 caracteres ASCII 5x5 (A-Z, números y símbolos)
     int chars[32];
     chars[0]  = 0;        // (espacio)
     chars[1]  = 4096;     // . (punto centro)
@@ -57,7 +101,6 @@ int getCharBitmask(float gray, vec2 cellCoord) {
     chars[30] = 18732593; // W
     chars[31] = 11512810; // # (trama tipográfica)
 
-    int idx = int(clamp(gray * 31.0, 0.0, 31.0));
     return chars[idx];
 }
 

@@ -229,6 +229,22 @@ router.get('/contest', async (_req: Request, res: Response) => {
   }
 });
 
+// GET /public/generative-shaders — Listar shaders generativos disponibles en public/shaders/generative
+router.get('/generative-shaders', async (_req: Request, res: Response) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const genDir = path.join(__dirname, '../../public/shaders/generative');
+    if (fs.existsSync(genDir)) {
+      const files = fs.readdirSync(genDir).filter((f: string) => f.endsWith('.frag'));
+      return res.json({ shaders: files });
+    }
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag'] });
+  } catch (err: any) {
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag'] });
+  }
+});
+
 // GET /public/particles-config — Obtener configuración de partículas de p5
 router.get('/particles-config', async (_req: Request, res: Response) => {
   try {

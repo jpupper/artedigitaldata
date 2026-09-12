@@ -824,9 +824,14 @@
                 <span class="text-cyan-400 font-semibold">Palabras:</span> ${sampleWords || 'Sin palabras'}
               </p>
             </div>
-            <a href="visualeffects.html?id=${fx._id}" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-center font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
-              <i class="fas fa-external-link-alt"></i> Abrir en Editor
-            </a>
+            <div class="flex gap-2 mt-2">
+              <a href="visualeffects.html?id=${fx._id}" class="flex-1 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/40 rounded-xl text-center font-bold text-xs transition-all flex items-center justify-center gap-1.5">
+                <i class="fas fa-edit"></i> Abrir Editor
+              </a>
+              <a href="outputeffect.html?id=${fx._id}" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl text-center font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5">
+                <i class="fas fa-play"></i> Ver Output
+              </a>
+            </div>
           </div>`;
       }).join('');
     }
