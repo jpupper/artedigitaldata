@@ -503,15 +503,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const fontSz = sizeSlider ? parseFloat(sizeSlider.value) : 36;
     const spacePx = spaceSlider ? parseFloat(spaceSlider.value) : 4;
 
+    const commonId = 'flyer_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
     const initialClip = {
-      id: 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      id: commonId,
       startTime: 0.0,
       duration: 2.0,
       keyframes: []
     };
 
     const wordItem = {
-      id: 'flyer_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+      id: commonId,
       name: cleanWord,
       text: cleanWord,
       word: cleanWord,
@@ -536,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!Array.isArray(layer1.clips)) layer1.clips = [];
 
     const layer1Clip = {
-      id: 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      id: commonId,
       text: cleanWord,
       word: cleanWord,
       startTime: 0.0,
@@ -552,10 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedClipId = layer1Clip.id;
 
     if (window.spawnWordParticles) {
-      window.spawnWordParticles(cleanWord, px, py, true, layer1Clip.id, { fontSize: fontSz, letterSpacing: spacePx });
+      window.spawnWordParticles(cleanWord, px, py, true, commonId, { fontSize: fontSz, letterSpacing: spacePx });
     }
 
     applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
     renderFlyerWordsList();
     renderTimelineTracks();
     updateUIForSelectedLayerProps({ x: px, y: py, fontSize: fontSz, letterSpacing: spacePx });
@@ -573,6 +576,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!flyerWords || flyerWords.length === 0) return;
 
     let targetWord = flyerWords.find(w => typeof w === 'object' && w.id === (selectedFlyerWordId || window.activeFlyerWordId));
+    if (!targetWord && selectedClipId) {
+      targetWord = flyerWords.find(w => typeof w === 'object' && w.id === selectedClipId);
+    }
     if (!targetWord) {
       targetWord = flyerWords[flyerWords.length - 1];
     }
@@ -580,6 +586,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     targetWord.x = Math.round(x);
     targetWord.y = Math.round(y);
+
+    const activeId = targetWord.id || selectedClipId || window.activeFlyerWordId;
+
+    if (Array.isArray(timelineLayers)) {
+      timelineLayers.forEach(layer => {
+        if (Array.isArray(layer.clips)) {
+          layer.clips.forEach(clip => {
+            if (clip.id === activeId || clip.id === targetWord.id || clip.text === targetWord.text) {
+              clip.x = targetWord.x;
+              clip.y = targetWord.y;
+            }
+          });
+        }
+      });
+    }
 
     const posXSlider = document.getElementById('param-POS_X');
     const posYSlider = document.getElementById('param-POS_Y');
@@ -597,9 +618,18 @@ document.addEventListener('DOMContentLoaded', () => {
         fontSize: targetWord.fontSize,
         letterSpacing: targetWord.letterSpacing
       });
+      if (selectedClipId && selectedClipId !== targetWord.id) {
+        window.updateFlyerWordParticles(selectedClipId, {
+          x: targetWord.x,
+          y: targetWord.y,
+          fontSize: targetWord.fontSize,
+          letterSpacing: targetWord.letterSpacing
+        });
+      }
     }
 
     applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
   }
 
   window.moveActiveFlyerWordTo = moveActiveFlyerWordTo;
@@ -620,8 +650,91 @@ document.addEventListener('DOMContentLoaded', () => {
       window.removeFlyerWordParticles(removedId);
     }
 
+    if (Array.isArray(timelineLayers)) {
+      timelineLayers.forEach(layer => {
+        if (Array.isArray(layer.clips)) {
+          for (let cIdx = layer.clips.length - 1; cIdx >= 0; cIdx--) {
+            const clip = layer.clips[cIdx];
+            if (clip.id === removedId || clip.text === removedText || clip.word === removedText) {
+              if (window.removeFlyerWordParticles && clip.id) {
+                window.removeFlyerWordParticles(clip.id);
+              }
+              if (selectedClipId === clip.id) {
+                selectedClipId = null;
+              }
+              layer.clips.splice(cIdx, 1);
+            }
+          }
+        }
+      });
+    }
+
     applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
     renderFlyerWordsList();
+    renderTimelineTracks();
+    evaluateTimelineAtTime(currentTimelineTime);
+  }
+
+  function deleteSelectedTimelineWordOrClip() {
+    let deletedSomething = false;
+    let deletedName = '';
+
+    if (selectedClipId && Array.isArray(timelineLayers)) {
+      for (let l = 0; l < timelineLayers.length; l++) {
+        const layer = timelineLayers[l];
+        if (!Array.isArray(layer.clips)) continue;
+        const cIdx = layer.clips.findIndex(c => c.id === selectedClipId);
+        if (cIdx !== -1) {
+          const clip = layer.clips[cIdx];
+          deletedName = clip.text || clip.word || 'Clip';
+          
+          if (window.removeFlyerWordParticles) {
+            window.removeFlyerWordParticles(clip.id);
+          }
+          layer.clips.splice(cIdx, 1);
+
+          const wIdx = flyerWords.findIndex(w => (typeof w === 'object' && (w.id === clip.id || w.text === clip.text)) || w === clip.text);
+          if (wIdx !== -1) {
+            const removedWord = flyerWords[wIdx];
+            const rId = (typeof removedWord === 'object' && removedWord.id) ? removedWord.id : removedWord;
+            if (window.removeFlyerWordParticles && rId) {
+              window.removeFlyerWordParticles(rId);
+            }
+            flyerWords.splice(wIdx, 1);
+          }
+
+          selectedClipId = null;
+          deletedSomething = true;
+          break;
+        }
+      }
+    }
+
+    if (!deletedSomething && selectedFlyerWordId) {
+      const wIdx = flyerWords.findIndex(w => (typeof w === 'object' && w.id === selectedFlyerWordId) || w === selectedFlyerWordId);
+      if (wIdx !== -1) {
+        const removedWord = flyerWords[wIdx];
+        deletedName = (typeof removedWord === 'object' && removedWord.text) ? removedWord.text : String(removedWord);
+        removeFlyerWord(wIdx);
+        selectedFlyerWordId = null;
+        deletedSomething = true;
+      }
+    }
+
+    if (deletedSomething) {
+      if (selectedFlyerWordId && !flyerWords.some(w => (w.id || w) === selectedFlyerWordId)) {
+        selectedFlyerWordId = flyerWords.length ? (flyerWords[flyerWords.length - 1].id || flyerWords[flyerWords.length - 1]) : null;
+      }
+      window.activeFlyerWordId = selectedFlyerWordId || selectedClipId || null;
+
+      applyConfigChange('FLYER_WORDS', [...flyerWords]);
+      applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+      renderFlyerWordsList();
+      renderTimelineTracks();
+      evaluateTimelineAtTime(currentTimelineTime);
+      showToast(`Palabra "${deletedName}" eliminada del timeline`, 'info');
+    }
   }
 
   function clearAllFlyerWords() {
@@ -2379,7 +2492,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(syncInputsFromConfig, 200);
   setTimeout(syncInputsFromConfig, 600);
 
-  // Atajo de teclado: Barra Espaciadora (Play/Pausa) y Shift + T (Acomodar palabras en Capa 1)
+  // Atajo de teclado: Barra Espaciadora (Play/Pausa), Shift + T (Acomodar palabras), y Supr/Delete (Borrar palabra del timeline)
   document.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
     const isInput = activeEl && (
@@ -2387,6 +2500,14 @@ document.addEventListener('DOMContentLoaded', () => {
       activeEl.tagName === 'TEXTAREA' ||
       activeEl.isContentEditable
     );
+
+    if (e.key === 'Delete' || e.key === 'Del' || e.code === 'Delete' || e.key === 'Backspace') {
+      if (!isInput && (selectedClipId || selectedFlyerWordId)) {
+        e.preventDefault();
+        deleteSelectedTimelineWordOrClip();
+        return;
+      }
+    }
 
     if (e.shiftKey && (e.key === 't' || e.key === 'T' || e.code === 'KeyT')) {
       if (!isInput) {

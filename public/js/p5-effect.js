@@ -824,6 +824,35 @@
     return true;
   };
 
+  window.mouseDragged = function(e) {
+    if (e && e.target && (
+      e.target.closest('#control-panel') || 
+      e.target.closest('#left-control-panel') || 
+      e.target.closest('#right-control-panel') || 
+      e.target.closest('header') || 
+      e.target.closest('button') || 
+      e.target.closest('input') || 
+      e.target.closest('a') ||
+      e.target.closest('#timeline-panel') ||
+      e.target.closest('#panel-backdrop')
+    )) {
+      return;
+    }
+
+    const isFlyerMode = (window.appMode === 'FLYERMODE') || (CFG && CFG.FLYER_MODE_ENABLED);
+    if (isFlyerMode) {
+      const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
+      if (isCtrlPressed) {
+        if (window.updatePosSliders) {
+          window.updatePosSliders(Math.round(mouseX), Math.round(mouseY), true);
+        }
+        if (typeof window.moveActiveFlyerWordTo === 'function') {
+          window.moveActiveFlyerWordTo(mouseX, mouseY);
+        }
+      }
+    }
+  };
+
   window.touchMoved = function(e) {
     // Permitir siempre el desplazamiento vertical nativo en móviles
     return true;
