@@ -580,7 +580,7 @@
     spawnWordParticles(chosenWord, mouseX, mouseY);
   };
 
-  // Soporte Touch para dispositivos móviles
+  // Soporte Touch para dispositivos móviles sin bloquear el scroll del navegador
   window.touchStarted = function(e) {
     // Si el toque fue sobre elementos interactivos de la interfaz, permitir acción normal
     if (e && e.target && (
@@ -594,10 +594,15 @@
       return true;
     }
 
+    const isFullEditorPage = window.location.pathname.endsWith('particulas.html') || window.location.pathname.endsWith('particulas');
+    if (!isFullEditorPage) {
+      return true;
+    }
+
     lastTouchTimestamp = Date.now();
 
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
-    if (!words.length) return false;
+    if (!words.length) return true;
 
     let nextIdx = floor(random(words.length));
     if (words.length > 1 && nextIdx === currentWordIndex) {
@@ -617,19 +622,12 @@
     }
 
     spawnWordParticles(words[currentWordIndex], tx, ty);
-    return false; // Previene scroll no deseado y emulación sintética del mouse en el canvas
+    return true; // Permitir scroll nativo del navegador
   };
 
   window.touchMoved = function(e) {
-    // Permitir scroll normal dentro de paneles o listas
-    if (e && e.target && (
-      e.target.closest('#control-panel') || 
-      e.target.closest('#panel-backdrop')
-    )) {
-      return true;
-    }
-    // En el canvas prevenimos scroll y pull-to-refresh
-    return false;
+    // Permitir siempre el desplazamiento vertical nativo en móviles
+    return true;
   };
 
   window.windowResized = function() {

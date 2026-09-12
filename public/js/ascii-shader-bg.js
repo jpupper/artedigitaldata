@@ -352,6 +352,7 @@ void main() {
     canvas.style.height = '100%';
     canvas.style.zIndex = '0';
     canvas.style.pointerEvents = 'none';
+    canvas.style.touchAction = 'pan-y';
 
     gl = canvas.getContext('webgl2', { alpha: true, antialias: false, preserveDrawingBuffer: false });
     if (!gl) {

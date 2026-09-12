@@ -77,11 +77,11 @@ body.ui-hidden .hint-bar {
   height: 100%;
   z-index: 0;
   cursor: crosshair;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 canvas {
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 /* Mobile backdrop */
