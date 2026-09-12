@@ -2671,13 +2671,45 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!title || !title.trim()) return;
     }
 
+    const currentConfig = window.ParticlesConfig ? window.ParticlesConfig.get() : {};
+
+    // Asegurar que la fuente p5 actual, el shader de fondo y los parámetros clave queden capturados en config
+    const p5FontSelect = document.getElementById('param-P5_FONT');
+    if (p5FontSelect && p5FontSelect.value) {
+      currentConfig.P5_FONT = p5FontSelect.value;
+    }
+    const genShaderSelect = document.getElementById('param-GENERATIVE_SHADER');
+    if (genShaderSelect && genShaderSelect.value) {
+      currentConfig.GENERATIVE_SHADER = genShaderSelect.value;
+    }
+    const asciiFontModeSelect = document.getElementById('param-ASCII_FONT_MODE');
+    if (asciiFontModeSelect && asciiFontModeSelect.value !== undefined) {
+      currentConfig.ASCII_FONT_MODE = Number(asciiFontModeSelect.value);
+    }
+    const charBgToggle = document.getElementById('param-CHAR_BG_ENABLED');
+    if (charBgToggle) {
+      currentConfig.CHAR_BG_ENABLED = charBgToggle.checked;
+    }
+    const charBgColorInput = document.getElementById('param-CHAR_BG_COLOR');
+    if (charBgColorInput) {
+      currentConfig.CHAR_BG_COLOR = charBgColorInput.value;
+    }
+    const charBgOpacityInput = document.getElementById('param-CHAR_BG_OPACITY');
+    if (charBgOpacityInput) {
+      currentConfig.CHAR_BG_OPACITY = parseFloat(charBgOpacityInput.value);
+    }
+
+    if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+      window.ParticlesConfig.set(currentConfig);
+    }
+
     const payload = {
       title: title ? title.trim() : undefined,
       flyerWords: flyerWords,
       timelineLayers: timelineLayers,
       timelineDuration: timelineDuration,
       hasTimeline: hasTimeline,
-      config: window.ParticlesConfig ? window.ParticlesConfig.get() : {}
+      config: currentConfig
     };
 
     const endpoint = isUpdate ? `/visualeffects/${currentVisualEffectId}` : '/visualeffects';
@@ -2737,8 +2769,34 @@ document.addEventListener('DOMContentLoaded', () => {
           outputTitleEl.textContent = effect.title || 'Secuencia';
         }
 
+        // 1. Restaurar la configuración completa de parámetros de p5, tipografía y shader de fondo guardados
+        if (effect.config && typeof effect.config === 'object') {
+          if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+            window.ParticlesConfig.set(effect.config);
+          }
+
+          // Cargar el shader generativo de fondo si viene especificado
+          if (effect.config.GENERATIVE_SHADER && window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
+            window.AsciiShaderBG.loadGenerativeShader(effect.config.GENERATIVE_SHADER);
+          }
+
+          // Cargar el modo de fuente ASCII si viene especificado
+          if (effect.config.ASCII_FONT_MODE !== undefined && window.AsciiShaderBG) {
+            const fontMode = Number(effect.config.ASCII_FONT_MODE);
+            if (typeof window.AsciiShaderBG.setFontMode === 'function') {
+              window.AsciiShaderBG.setFontMode(fontMode);
+            }
+          }
+
+          // Sincronizar los controles gráficos de la UI si existen en pantalla
+          if (typeof syncInputsFromConfig === 'function') {
+            syncInputsFromConfig();
+          }
+        }
+
         if (effect.timelineDuration) {
           timelineDuration = Number(effect.timelineDuration);
+          window.timelineDuration = timelineDuration;
         }
         if (Array.isArray(effect.timelineLayers) && effect.timelineLayers.length > 0) {
           timelineLayers = effect.timelineLayers;
