@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Timeline State
   let currentTimelineTime = 0.0;
-  let timelineDuration = 10.0;
+  let timelineDuration = 2.0;
   let isTimelinePlaying = false;
   let lastPlayTimestamp = 0;
   let playAnimFrameId = null;
@@ -1719,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- FUNCIÓN SOLAPAMIENTO / SECUENCIACIÓN DE CAPA 1 (Ctrl + T) ---
+  // --- FUNCIÓN SOLAPAMIENTO / SECUENCIACIÓN DE CAPA 1 (Shift + T) ---
   function staggerLayer1Clips(customOverlapVal) {
     if (!Array.isArray(timelineLayers) || timelineLayers.length === 0 || !timelineLayers[0]) return;
     const layer1 = timelineLayers[0];
@@ -1738,16 +1738,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (slider && customOverlapVal !== undefined) slider.value = overlapVal;
 
     const overlapFraction = Math.max(0, Math.min(1.0, overlapVal / 100));
+    let maxRequiredDuration = 2.0;
 
     layer1.clips.forEach((clipObj, idx) => {
       const dur = clipObj.duration || 2.0;
       const step = dur * (1 - overlapFraction);
       clipObj.startTime = Number((idx * step).toFixed(2));
+      const clipEnd = clipObj.startTime + dur;
+      if (clipEnd > maxRequiredDuration) {
+        maxRequiredDuration = clipEnd;
+      }
     });
 
+    timelineDuration = Number(maxRequiredDuration.toFixed(2));
+
+    updateTimelineReadout();
     renderTimelineTracks();
     evaluateTimelineAtTime(currentTimelineTime);
-    showToast(`Palabras de Capa 1 acomodadas (${overlapVal}% solapamiento - Ctrl+T)`, 'success');
+    showToast(`Palabras de Capa 1 acomodadas (${overlapVal}% solapamiento). Duración: ${timelineDuration}s (Shift+T)`, 'success');
   }
 
   window.staggerLayer1Clips = staggerLayer1Clips;
@@ -2371,7 +2379,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(syncInputsFromConfig, 200);
   setTimeout(syncInputsFromConfig, 600);
 
-  // Atajo de teclado: Barra Espaciadora (Play/Pausa) y Ctrl + T (Acomodar palabras en Capa 1)
+  // Atajo de teclado: Barra Espaciadora (Play/Pausa) y Shift + T (Acomodar palabras en Capa 1)
   document.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
     const isInput = activeEl && (
@@ -2380,7 +2388,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeEl.isContentEditable
     );
 
-    if ((e.ctrlKey || e.metaKey) && (e.key === 't' || e.key === 'T')) {
+    if (e.shiftKey && (e.key === 't' || e.key === 'T' || e.code === 'KeyT')) {
       if (!isInput) {
         e.preventDefault();
         staggerLayer1Clips();
@@ -2403,6 +2411,40 @@ document.addEventListener('DOMContentLoaded', () => {
       if (t) return t;
     }
     return localStorage.getItem('artedigitaldata_token') || localStorage.getItem('token');
+  }
+
+  // Helper de conexión API con tolerancia a fallas de ruta e inspección de contenido JSON
+  async function fetchWithApiFallback(relPath, options = {}) {
+    const base = getApiUrl();
+    let url = relPath.startsWith('http') ? relPath : (base.endsWith('/') ? base.slice(0, -1) : base) + (relPath.startsWith('/') ? relPath : '/' + relPath);
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (e) {
+      console.warn('[Fetch Warning] Falló URL primaria:', url, e);
+    }
+
+    if (!res || (res.status === 404 && url.includes('/artedigitaldata/api'))) {
+      const altUrl = url.replace('/artedigitaldata/api', '/api');
+      try { res = await fetch(altUrl, options); } catch (e) {}
+    } else if (!res || (res.status === 404 && url.includes('/api') && !url.includes('/artedigitaldata/api'))) {
+      const altUrl = url.replace('/api', '/artedigitaldata/api');
+      try { res = await fetch(altUrl, options); } catch (e) {}
+    }
+
+    if (!res) {
+      throw new Error('No se pudo establecer conexión con el servidor API.');
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      if (res.status === 404) {
+        throw new Error(`La ruta de la API (${relPath}) no está activa en el servidor o devuelve 404.`);
+      }
+      throw new Error(`El servidor devolvió una respuesta no esperada (${res.status}).`);
+    }
+
+    return res;
   }
 
   // Guardar y Cargar Proyectos de Efectos Visuales (Flyer Mode) por Usuario
@@ -2437,11 +2479,11 @@ document.addEventListener('DOMContentLoaded', () => {
       config: window.ParticlesConfig ? window.ParticlesConfig.get() : {}
     };
 
-    const url = isUpdate ? `/api/visualeffects/${currentVisualEffectId}` : '/api/visualeffects';
+    const endpoint = isUpdate ? `/visualeffects/${currentVisualEffectId}` : '/visualeffects';
     const method = isUpdate ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch(url, {
+      const res = await fetchWithApiFallback(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -2470,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadUserVisualEffect(id) {
     if (!id) return;
     try {
-      const res = await fetch(`/api/visualeffects/${id}`);
+      const res = await fetchWithApiFallback(`/visualeffects/${id}`);
       if (!res.ok) return;
       const effect = await res.json();
       if (effect) {
@@ -2567,7 +2609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`/api/visualeffects/${id}`, {
+      const res = await fetchWithApiFallback(`/visualeffects/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2597,7 +2639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch('/api/visualeffects/my', {
+      const res = await fetchWithApiFallback('/visualeffects/my', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Error al obtener secuencias');
@@ -2641,7 +2683,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
     } catch (err) {
       console.error(err);
-      container.innerHTML = `<div style="font-size: 11px; color: #ff5252; text-align: center; padding: 6px;">Error al cargar secuencias.</div>`;
+      container.innerHTML = `<div style="font-size: 11px; color: #ff5252; text-align: center; padding: 6px;">${err.message || 'Error al cargar secuencias.'}</div>`;
     }
   }
 

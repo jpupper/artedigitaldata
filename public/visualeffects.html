@@ -643,16 +643,16 @@
         <button id="tl-btn-rewind" class="tl-btn" title="Ir al inicio (0s)"><i class="fas fa-step-backward"></i></button>
         <button id="tl-btn-play" class="tl-btn tl-btn-play" title="Play / Pausa (Espacio)"><i class="fas fa-play"></i></button>
         <button id="tl-btn-loop" class="tl-btn active" title="Activar / Desactivar Loop (Por defecto activado)"><i class="fas fa-redo"></i></button>
-        <span id="tl-time-readout" class="tl-time-readout" title="Doble click para cambiar la duración total del timeline (en segundos)" style="cursor: pointer;">00:00.00 / 00:10.00</span>
+        <span id="tl-time-readout" class="tl-time-readout" title="Doble click para cambiar la duración total del timeline (en segundos)" style="cursor: pointer;">00:00.00 / 00:02.00</span>
       </div>
 
       <div class="timeline-actions">
-        <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(0, 242, 254, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento (Atajo: Ctrl + T)">
+        <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(0, 242, 254, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento y ajustar duración (Atajo: Shift + T)">
           <span style="font-size: 10px; color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-layer-group"></i> Solapamiento:</span>
           <input type="range" id="tl-slider-overlap" min="0" max="100" value="20" style="width: 60px; cursor: pointer;">
           <span id="tl-val-overlap" style="font-size: 10px; color: #fff; font-weight: 700; min-width: 26px;">20%</span>
-          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Ctrl + T)">
-            <i class="fas fa-magic"></i> Ctrl + T
+          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Shift + T)">
+            <i class="fas fa-magic"></i> Shift + T
           </button>
         </div>
         <button id="tl-btn-add-layer" class="tl-btn tl-btn-accent" title="Agregar una nueva capa vacía a la línea de tiempo">
