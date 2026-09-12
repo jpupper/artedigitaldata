@@ -1,0 +1,24 @@
+import mongoose, { Schema, Document, Types } from 'mongoose';
+
+export interface IVisualEffect extends Document {
+  title: string;
+  author: Types.ObjectId;
+  flyerWords: any[];
+  config?: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const VisualEffectSchema: Schema = new Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    flyerWords: { type: Array, default: [] },
+    config: { type: Object, default: {} },
+  },
+  { timestamps: true }
+);
+
+VisualEffectSchema.index({ author: 1, createdAt: -1 });
+
+export default mongoose.model<IVisualEffect>('VisualEffect', VisualEffectSchema);

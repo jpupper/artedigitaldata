@@ -341,14 +341,15 @@ router.get('/particles-words', async (_req: Request, res: Response) => {
     }> = {};
 
     for (const doc of allWords) {
-      const uname = doc.addedBy?.username || '';
-      if (!uname || uname === 'Anónimo') continue; // Solo usuarios registrados
+      const uname = doc.addedBy?.username || 'Comunidad';
+      const dname = doc.addedBy?.displayName || (uname === 'Comunidad' ? 'Comunidad Arte Digital Data' : uname);
+      const avatar = doc.addedBy?.avatar || '';
 
       if (!byUserMap[uname]) {
         byUserMap[uname] = {
           username: uname,
-          displayName: doc.addedBy?.displayName || uname,
-          avatar: doc.addedBy?.avatar || '',
+          displayName: dname,
+          avatar: avatar,
           words: [],
           count: 0,
           lastAdded: doc.createdAt,
@@ -360,23 +361,18 @@ router.get('/particles-words', async (_req: Request, res: Response) => {
       }
     }
 
-    const byUser = Object.values(byUserMap).sort((a, b) => {
-      return b.count - a.count;
-    });
+    const byUser = Object.values(byUserMap).sort((a, b) => b.count - a.count);
 
-    const recent = allWords
-      .filter(w => w.addedBy?.username && w.addedBy.username !== 'Anónimo')
-      .slice(0, 40)
-      .map(w => ({
-        word: w.word,
-        username: w.addedBy?.username || '',
-        displayName: w.addedBy?.displayName || w.addedBy?.username || '',
-        avatar: w.addedBy?.avatar || '',
-        createdAt: w.createdAt,
-      }));
+    const recent = allWords.slice(0, 40).map(w => ({
+      word: w.word,
+      username: w.addedBy?.username || 'Comunidad',
+      displayName: w.addedBy?.displayName || w.addedBy?.username || 'Comunidad Arte Digital Data',
+      avatar: w.addedBy?.avatar || '',
+      createdAt: w.createdAt,
+    }));
 
     return res.json({
-      totalWords: allWords.filter(w => w.addedBy?.username && w.addedBy.username !== 'Anónimo').length,
+      totalWords: allWords.length,
       totalContributors: byUser.length,
       byUser,
       recent

@@ -4,7 +4,7 @@ function renderHeader() {
   const admin = isAdmin();
 
   const headerHTML = `
-  <header class="fixed top-0 left-0 w-full z-50 border-b border-cyan-500/30" style="background: rgba(13, 13, 18, 0.9); backdrop-filter: blur(10px);">
+  <header class="fixed top-0 left-0 w-full z-50 border-b border-cyan-500/30" style="background: rgba(13, 13, 18, 0.75); backdrop-filter: blur(10px);">
     <div class="max-w-7xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         
@@ -49,7 +49,7 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
             <i class="fas fa-users text-[10px]"></i> ARTISTAS
           </a>
-          <a href="${CONFIG.BASE}/particulas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap" title="Efecto de Partículas y Letras">
+          <a href="${CONFIG.BASE}/visualeffects.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap" title="Efecto de Partículas y Letras">
             <i class="fas fa-magic text-[10px]"></i> EFFECT
           </a>
           ${loggedIn ? `
@@ -133,7 +133,7 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/artistas.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
             <i class="fas fa-users mr-2"></i> ARTISTAS
           </a>
-          <a href="${CONFIG.BASE}/particulas.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
+          <a href="${CONFIG.BASE}/visualeffects.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             <i class="fas fa-magic mr-2"></i> EFFECT
           </a>
           ${loggedIn ? `

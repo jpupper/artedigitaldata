@@ -55,6 +55,7 @@
     CHAR_BG_COLOR: '#000000',
     CHAR_BG_OPACITY: 0.8,
     LETTER_SPACING: 1.0,
+    COLLAB_WORD_LIFESPAN: 15,
     FLYER_MODE_ENABLED: false,
     FLYER_WORDS: [],
     COLOR_1: '#40c4ff', // Cyan
@@ -229,6 +230,11 @@
   // Guardar configuración en backend y localStorage
   async function saveRemoteConfig(newConfig) {
     CFG = { ...CFG, ...newConfig };
+    if (CFG.TEXT_SIZE_MAX !== undefined) {
+      CFG.TEXT_SIZE = Number(CFG.TEXT_SIZE_MAX);
+    } else if (CFG.TEXT_SIZE !== undefined) {
+      CFG.TEXT_SIZE_MAX = Number(CFG.TEXT_SIZE);
+    }
     if (!Array.isArray(CFG.WORDS) || !CFG.WORDS.length) {
       CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
     }
@@ -283,6 +289,11 @@
         autoTimer = 999999;
       }
       CFG = { ...CFG, ...newConfig };
+      if (CFG.TEXT_SIZE_MAX !== undefined) {
+        CFG.TEXT_SIZE = Number(CFG.TEXT_SIZE_MAX);
+      } else if (CFG.TEXT_SIZE !== undefined) {
+        CFG.TEXT_SIZE_MAX = Number(CFG.TEXT_SIZE);
+      }
       if (!Array.isArray(CFG.WORDS) || !CFG.WORDS.length) {
         CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
       }
@@ -365,66 +376,170 @@
   }
 
   // Spawnea una palabra centrada en (targetCenterX, targetCenterY)
-  function spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer = false, flyerId = null) {
+  function spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer = false, flyerId = null, wordConfig = {}) {
     if (!word || typeof word !== 'string') return;
     const chars = word.trim().toUpperCase().split('');
     if (!chars.length) return;
 
-    const wordFontSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
-    const spacingMult = (CFG.LETTER_SPACING !== undefined) ? Number(CFG.LETTER_SPACING) : 1.0;
-    
-    // Separación proporcional directa al tamaño de la letra (0.0 a 3.0)
-    let spacing = wordFontSize * 0.65 * spacingMult;
-    let totalWidth = (chars.length - 1) * spacing;
-    
-    const maxAllowedWidth = windowWidth * 0.92;
-    if (totalWidth > maxAllowedWidth && chars.length > 1) {
-      spacing = maxAllowedWidth / (chars.length - 1);
-      totalWidth = (chars.length - 1) * spacing;
+    let fontSize = null;
+    let letterSpacingPx = null;
+    let customColor = null;
+
+    if (typeof wordConfig === 'object' && wordConfig !== null) {
+      fontSize = wordConfig.fontSize;
+      letterSpacingPx = wordConfig.letterSpacing;
+      customColor = wordConfig.color;
+    } else if (typeof wordConfig === 'number') {
+      fontSize = wordConfig;
+      if (arguments.length >= 7) customColor = arguments[6];
     }
 
-    let startX = targetCenterX - totalWidth / 2;
-    if (startX < 20) {
-      startX = 20;
-    } else if (startX + totalWidth > windowWidth - 20) {
-      startX = windowWidth - 20 - totalWidth;
+    const wordFontSize = fontSize || ((CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36));
+    const finalLetterSpacing = (letterSpacingPx !== undefined && letterSpacingPx !== null) ? Number(letterSpacingPx) : ((CFG.LETTER_SPACING !== undefined) ? Number(CFG.LETTER_SPACING) : 10);
+
+    // Calcular el ancho real de cada carácter con p5 textWidth y sumar la separación en px
+    if (typeof textSize === 'function') {
+      textSize(wordFontSize);
     }
 
+    let charWidths = chars.map(ch => (typeof textWidth === 'function' ? textWidth(ch) : wordFontSize * 0.65));
+    let totalWidth = 0;
+    for (let i = 0; i < chars.length; i++) {
+      totalWidth += charWidths[i];
+      if (i < chars.length - 1) {
+        totalWidth += finalLetterSpacing;
+      }
+    }
+
+    const startX = targetCenterX - totalWidth / 2;
     const startY = constrain(targetCenterY, 40, windowHeight - 40);
     const wordId = flyerId || (word + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+    window.activeFlyerWordId = wordId;
 
+    if (isFlyer && flyerId) {
+      particles = particles.filter(p => !(p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId));
+    }
+
+    let currentX = startX;
     for (let i = 0; i < chars.length; i++) {
       const ch = chars[i];
-      if (ch === ' ') continue;
-
-      const targetX = startX + i * spacing;
+      const charW = charWidths[i];
+      const targetX = currentX + charW / 2;
       const targetY = startY;
+
+      currentX += charW + finalLetterSpacing;
+
+      if (ch === ' ') continue;
 
       const angle = random(TWO_PI);
       const dist = random(60, 240);
       const spawnX = targetCenterX + cos(angle) * dist;
       const spawnY = targetCenterY + sin(angle) * dist;
 
-      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word));
+      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word, wordFontSize, customColor));
     }
   }
 
-  function removeFlyerWordParticles(flyerIdOrText) {
-    particles = particles.filter(p => {
-      if (p instanceof WordParticle && p.isFlyer) {
-        if (p.flyerId === flyerIdOrText || p.fullWord === flyerIdOrText) {
-          return false;
-        }
+  function updateFlyerWordParticles(flyerId, newProps = {}) {
+    if (!flyerId) return;
+    let flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
+
+    const wordFontSize = (newProps.fontSize !== undefined) ? Number(newProps.fontSize) : CFG.TEXT_SIZE;
+    const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : 4;
+    const targetCenterX = newProps.x !== undefined ? Number(newProps.x) : (newProps.targetCenterX || windowWidth / 2);
+    const targetCenterY = newProps.y !== undefined ? Number(newProps.y) : (newProps.targetCenterY || windowHeight / 2);
+    const customColor = newProps.color || null;
+
+    const rawText = newProps.text || (flyerParticles[0] ? (flyerParticles[0].fullWord || flyerParticles[0].wordText) : '') || '';
+    const nonSpaceCount = Array.from(String(rawText)).filter(ch => ch !== ' ').length;
+
+    if (newProps.visible !== false && rawText) {
+      const needsRespawn = (flyerParticles.length === 0) ||
+                           (flyerParticles.length !== nonSpaceCount) ||
+                           (flyerParticles[0] && flyerParticles[0].fullWord !== rawText);
+
+      if (needsRespawn) {
+        removeFlyerWordParticles(flyerId);
+        spawnWordParticles(rawText, targetCenterX, targetCenterY, true, flyerId, {
+          fontSize: wordFontSize,
+          letterSpacing: letterSpacingPx,
+          color: customColor
+        });
+        flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
       }
-      return true;
-    });
+    }
+
+    const chars = Array.from(String(rawText));
+    if (chars.length === 0 && flyerParticles.length === 0) return;
+
+    if (typeof textSize === 'function') {
+      textSize(wordFontSize);
+    }
+    let charWidths = chars.map(ch => (typeof textWidth === 'function' ? textWidth(ch) : wordFontSize * 0.65));
+    let totalWidth = 0;
+    for (let i = 0; i < chars.length; i++) {
+      totalWidth += charWidths[i];
+      if (i < chars.length - 1) totalWidth += letterSpacingPx;
+    }
+
+    let startX = targetCenterX - totalWidth / 2;
+    let currentX = startX;
+    let particleIdx = 0;
+
+    for (let i = 0; i < chars.length; i++) {
+      const ch = chars[i];
+      const charW = charWidths[i];
+      const targetX = currentX + charW / 2;
+      const targetY = targetCenterY;
+
+      currentX += charW + letterSpacingPx;
+
+      if (ch === ' ') continue;
+
+      if (particleIdx < flyerParticles.length) {
+        const p = flyerParticles[particleIdx];
+        p.char = ch;
+        p.fullWord = rawText;
+        p.target.set(targetX, targetY);
+        p.baseSize = wordFontSize;
+        if (customColor && typeof color === 'function') {
+          p.baseColor = color(customColor);
+        }
+        particleIdx++;
+      }
+    }
+
+    if (newProps.visible !== undefined) {
+      const shouldBeVisible = !!newProps.visible;
+      flyerParticles.forEach(p => {
+        if (shouldBeVisible) {
+          if (!p.isShowing) {
+            p.respawn(targetCenterX, targetCenterY);
+          }
+        } else {
+          if (p.isShowing) {
+            p.despawn();
+          }
+        }
+      });
+    }
+  }
+
+  function removeFlyerWordParticles(flyerId) {
+    if (!flyerId) return;
+    particles = particles.filter(p => !(p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId));
   }
 
   function clearAllFlyerParticles() {
-    particles = particles.filter(p => !(p instanceof WordParticle && p.isFlyer));
+    particles.forEach(p => {
+      if (p instanceof WordParticle && p.isFlyer) {
+        p.despawn();
+      }
+    });
   }
 
   window.spawnWordParticles = spawnWordParticles;
+  window.updateFlyerWordParticles = updateFlyerWordParticles;
   window.removeFlyerWordParticles = removeFlyerWordParticles;
   window.clearAllFlyerParticles = clearAllFlyerParticles;
 
@@ -582,30 +697,62 @@
     // Si el click fue sobre un input, botón, panel o elementos interactivos, no spawnear palabra
     if (e && e.target && (
       e.target.closest('#control-panel') || 
+      e.target.closest('#left-control-panel') || 
+      e.target.closest('#right-control-panel') || 
       e.target.closest('header') || 
       e.target.closest('button') || 
       e.target.closest('input') || 
       e.target.closest('a') ||
+      e.target.closest('#timeline-panel') ||
       e.target.closest('#panel-backdrop')
     )) {
       return;
     }
 
-    if (CFG.FLYER_MODE_ENABLED) {
-      const flyerInput = document.getElementById('flyer-word-input');
-      const textVal = flyerInput ? flyerInput.value.trim() : '';
-      if (textVal) {
-        spawnWordParticles(textVal, mouseX, mouseY, true);
-        if (typeof window.addFlyerWordToList === 'function') {
-          window.addFlyerWordToList(textVal);
+    // Sincronizar sliders POS_X y POS_Y sin mover la palabra previamente activa
+    if (window.updatePosSliders) {
+      window.updatePosSliders(Math.round(mouseX), Math.round(mouseY), true);
+    }
+
+    const isFlyerMode = (window.appMode === 'FLYERMODE') || (CFG && CFG.FLYER_MODE_ENABLED);
+
+    if (isFlyerMode) {
+      const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
+      if (isCtrlPressed) {
+        if (typeof window.moveActiveFlyerWordTo === 'function') {
+          window.moveActiveFlyerWordTo(mouseX, mouseY);
         }
-      } else {
-        const flyerWords = Array.isArray(CFG.FLYER_WORDS) && CFG.FLYER_WORDS.length ? CFG.FLYER_WORDS : [];
-        if (flyerWords.length > 0) {
-          const chosen = flyerWords[floor(random(flyerWords.length))];
-          spawnWordParticles(chosen, mouseX, mouseY, true);
+        return;
+      }
+
+      if (typeof window.addFlyerWordAt === 'function') {
+        window.addFlyerWordAt(mouseX, mouseY);
+      } else if (typeof window.addFlyerWordToList === 'function') {
+        window.addFlyerWordToList(null, mouseX, mouseY);
+      }
+      return;
+    }
+
+    // En COLLABMODE: si se hace click sobre una palabra o partícula activa, SE BORRA
+    let clickedParticle = null;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p instanceof WordParticle && p.visible && p.isShowing) {
+        const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
+        if (d < 45) {
+          clickedParticle = p;
+          break;
         }
       }
+    }
+
+    if (clickedParticle) {
+      const wordToRemove = clickedParticle.fullWord || clickedParticle.char;
+      particles.forEach(p => {
+        if (p instanceof WordParticle && (p.fullWord === wordToRemove || p === clickedParticle)) {
+          p.despawn();
+        }
+      });
       return;
     }
 
@@ -630,12 +777,13 @@
       e.target.closest('button') || 
       e.target.closest('input') || 
       e.target.closest('a') ||
+      e.target.closest('#timeline-panel') ||
       e.target.closest('#panel-backdrop')
     )) {
       return true;
     }
 
-    const isFullEditorPage = window.location.pathname.endsWith('particulas.html') || window.location.pathname.endsWith('particulas');
+    const isFullEditorPage = window.location.pathname.endsWith('visualeffects.html') || window.location.pathname.endsWith('visualeffects') || window.location.pathname.endsWith('particulas.html') || window.location.pathname.endsWith('particulas') || window.location.pathname.endsWith('particles.html') || window.location.pathname.endsWith('particles');
     if (!isFullEditorPage) {
       return true;
     }
@@ -652,20 +800,13 @@
       ty = e.touches[0].clientY;
     }
 
+    if (window.updatePosSliders) {
+      window.updatePosSliders(Math.round(tx), Math.round(ty), true);
+    }
+
     if (CFG.FLYER_MODE_ENABLED) {
-      const flyerInput = document.getElementById('flyer-word-input');
-      const textVal = flyerInput ? flyerInput.value.trim() : '';
-      if (textVal) {
-        spawnWordParticles(textVal, tx, ty, true);
-        if (typeof window.addFlyerWordToList === 'function') {
-          window.addFlyerWordToList(textVal);
-        }
-      } else {
-        const flyerWords = Array.isArray(CFG.FLYER_WORDS) && CFG.FLYER_WORDS.length ? CFG.FLYER_WORDS : [];
-        if (flyerWords.length > 0) {
-          const chosen = flyerWords[floor(random(flyerWords.length))];
-          spawnWordParticles(chosen, tx, ty, true);
-        }
+      if (typeof window.moveActiveFlyerWordTo === 'function') {
+        window.moveActiveFlyerWordTo(tx, ty);
       }
       return true;
     }
@@ -836,7 +977,7 @@
 
   // Partícula con atractor para formar palabras
   class WordParticle {
-    constructor(char, x, y, targetX, targetY, isFlyer = false, flyerId = null, fullWord = '') {
+    constructor(char, x, y, targetX, targetY, isFlyer = false, flyerId = null, fullWord = '', customSize = null, customColor = null) {
       this.char = char;
       this.pos = createVector(x, y);
       this.target = createVector(targetX, targetY);
@@ -846,6 +987,8 @@
       this.isFlyer = isFlyer;
       this.flyerId = flyerId;
       this.fullWord = fullWord;
+      this.isShowing = true;
+      this.visible = true;
 
       this.lifespan = 255;
       this.holdTime = isFlyer ? Infinity : 80;
@@ -856,32 +999,88 @@
 
       const minSize = (CFG.TEXT_SIZE_MIN !== undefined) ? Number(CFG.TEXT_SIZE_MIN) : 16;
       const maxSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
-      this.baseSize = Math.max(minSize, maxSize);
+      this.baseSize = customSize || Math.max(minSize, maxSize);
 
       this.age = 0;
+      this.spawnTime = millis();
       const totalWordLife = 30 + (isFlyer ? 100 : this.holdTime) + (255 / (this.decay || 1));
       this.scaleInDuration = Math.max(1, totalWordLife * 0.15);
       this.scale = 0;
 
-      let colorPos = random(1);
-      if (!palette.length) updatePalette();
-      if (colorPos < 0.33) {
-        this.baseColor = lerpColor(palette[0], palette[1], map(colorPos, 0, 0.33, 0, 1));
-      } else if (colorPos < 0.66) {
-        this.baseColor = lerpColor(palette[1], palette[2], map(colorPos, 0.33, 0.66, 0, 1));
+      if (customColor && typeof color === 'function') {
+        this.baseColor = color(customColor);
       } else {
-        this.baseColor = lerpColor(palette[2], palette[3], map(colorPos, 0.66, 1, 0, 1));
+        let colorPos = random(1);
+        if (!palette.length) updatePalette();
+        if (colorPos < 0.33) {
+          this.baseColor = lerpColor(palette[0], palette[1], map(colorPos, 0, 0.33, 0, 1));
+        } else if (colorPos < 0.66) {
+          this.baseColor = lerpColor(palette[1], palette[2], map(colorPos, 0.33, 0.66, 0, 1));
+        } else {
+          this.baseColor = lerpColor(palette[2], palette[3], map(colorPos, 0.66, 1, 0, 1));
+        }
       }
+    }
+
+    respawn(centerX, centerY) {
+      const angle = random(TWO_PI);
+      const distRadius = random(60, 240);
+      const cx = centerX !== undefined ? centerX : (this.target ? this.target.x : windowWidth / 2);
+      const cy = centerY !== undefined ? centerY : (this.target ? this.target.y : windowHeight / 2);
+      this.pos.set(cx + cos(angle) * distRadius, cy + sin(angle) * distRadius);
+      this.vel = p5.Vector.random2D().mult(random(3, 8));
+      this.acc.set(0, 0);
+      this.age = 0;
+      this.lifespan = 255;
+      this.scale = 0;
+      this.isShowing = true;
+      this.visible = true;
+    }
+
+    despawn() {
+      this.isShowing = false;
     }
 
     applyRepulsion(others) {}
 
     update() {
       this.age++;
-      if (this.age < this.scaleInDuration) {
-        this.scale = this.age / this.scaleInDuration;
+      if (!this.isFlyer && CFG.COLLAB_WORD_LIFESPAN && Number(CFG.COLLAB_WORD_LIFESPAN) > 0) {
+        if ((millis() - this.spawnTime) > (Number(CFG.COLLAB_WORD_LIFESPAN) * 1000)) {
+          this.despawn();
+        }
+      }
+      if (this.isShowing) {
+        if (this.age < this.scaleInDuration) {
+          this.scale = this.age / this.scaleInDuration;
+        } else {
+          this.scale = 1;
+        }
+        if (this.lifespan < 255) {
+          this.lifespan = Math.min(255, this.lifespan + 25);
+        }
       } else {
-        this.scale = 1;
+        // Despawn: las partículas se dispersan con impulso y se desvanecen
+        this.lifespan = Math.max(0, this.lifespan - 18);
+        this.scale = Math.max(0, this.scale - 0.05);
+        this.vel.add(p5.Vector.random2D().mult(0.6));
+        this.pos.add(this.vel);
+        if (this.lifespan <= 0) {
+          this.visible = false;
+        }
+        return;
+      }
+
+      // Repulsor por proximidad del Mouse para Flyer Mode y palabras activas
+      const dMouse = dist(this.pos.x, this.pos.y, mouseX, mouseY);
+      const repelRadius = 85;
+      let isRepelled = false;
+      if (dMouse < repelRadius && dMouse > 0) {
+        isRepelled = true;
+        const repelDir = p5.Vector.sub(this.pos, createVector(mouseX, mouseY));
+        const forceMag = map(dMouse, 0, repelRadius, 9.0, 0.2);
+        repelDir.setMag(forceMag);
+        this.acc.add(repelDir);
       }
 
       const desired = p5.Vector.sub(this.target, this.pos);
@@ -896,18 +1095,18 @@
       }
 
       const steer = p5.Vector.sub(desired, this.vel);
-      steer.limit(this.maxForce);
+      steer.limit(isRepelled ? this.maxForce * 2.5 : this.maxForce);
       this.acc.add(steer);
       this.vel.add(this.acc);
 
-      if (d < 18) this.vel.mult(0.85);
-      if (d < 3) this.vel.mult(0.35);
+      if (d < 18 && !isRepelled) this.vel.mult(0.85);
+      if (d < 3 && !isRepelled) this.vel.mult(0.35);
 
       this.pos.add(this.vel);
       this.acc.mult(0);
 
       if (this.isFlyer) {
-        if (d < 4) {
+        if (d < 3 && !isRepelled) {
           this.pos.set(this.target);
           this.vel.set(0, 0);
         }
@@ -927,7 +1126,7 @@
     }
 
     display() {
-      if (this.scale <= 0.01) return;
+      if (this.visible === false || this.scale <= 0.01) return;
       const size = this.baseSize * this.scale;
       const d = p5.Vector.dist(this.pos, this.target);
       const floatY = (!this.isFlyer && d < 5 && this.holdTime > 0) ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 : 0;
@@ -956,8 +1155,10 @@
     }
 
     isDead() {
-      if (this.isFlyer) return false;
-      return this.lifespan <= 0;
+      if (this.isFlyer) {
+        return !this.isShowing && (this.lifespan <= 0 || this.visible === false);
+      }
+      return this.lifespan <= 0 || this.visible === false;
     }
   }
 

@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Editor de Partículas - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/particulas.css">
+</head>
+<body>
+  <!-- Canvas p5 -->
+  <div id="p5-canvas"></div>
+
+  <!-- Backdrop para mobile (cierra los paneles al tocar fuera) -->
+  <div id="panel-backdrop" class="panel-backdrop"></div>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="top-actions">
+      <a href="./index.html" class="btn-toggle-ui" style="text-decoration: none;" title="Volver al Inicio">
+        <i class="fas fa-arrow-left"></i>
+        <span>Inicio</span>
+      </a>
+      <button id="toggle-left-panel-btn" class="btn-toggle-ui" title="Panel de Parámetros de Sistema (Atajo: P)">
+        <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i>
+        <span>Parámetros</span>
+      </button>
+      <button id="toggle-right-panel-btn" class="btn-toggle-ui" title="Panel de Modos Flyer/Collab (Atajo: M)">
+        <i class="fas fa-layer-group" style="color: var(--accent-magenta);"></i>
+        <span>Modos</span>
+      </button>
+      <button id="btn-save-fx" class="btn-toggle-ui" title="Guardar Proyecto de Efecto Visual">
+        <i class="fas fa-save" style="color: #06b6d4;"></i>
+        <span>Guardar</span>
+      </button>
+      <button id="toggle-fullscreen-btn" class="btn-toggle-ui" title="Pantalla Completa (Atajo: F)">
+        <i class="fas fa-expand"></i>
+        <span>Fullscreen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- PANEL IZQUIERDO: Parámetros del Sistema y Shaders -->
+  <aside id="left-control-panel" class="control-panel left-panel">
+    <div class="panel-header">
+      <div class="panel-tabs-group">
+        <button id="tab-btn-params-p5" class="tab-btn active" title="Parámetros del sistema de partículas p5.js">
+          <i class="fas fa-microchip"></i> Letrasp5
+        </button>
+        <button id="tab-btn-params-shader" class="tab-btn" title="Parámetros del fondo Shader ASCII GLSL">
+          <i class="fas fa-terminal"></i> Shaderfondo
+        </button>
+      </div>
+      <button id="close-left-panel-btn" class="btn-close-header" title="Cerrar panel de parámetros">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Sub-Pestaña 1: Letrasp5 (Parámetros del sistema de partículas) -->
+      <div id="tab-pane-params-p5" class="tab-pane active">
+        <!-- Tipografía y Letras -->
+        <div>
+          <div class="group-title"><i class="fas fa-font"></i> Tipografía y Caracteres</div>
+          
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Tamaño Mínimo de Letra (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-TEXT_SIZE_MIN" min="8" max="72" step="1" value="16">
+              <input type="number" id="num-TEXT_SIZE_MIN" class="val-input" min="8" max="72" step="1" value="16">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Tamaño Máximo de Letra (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-TEXT_SIZE_MAX" min="8" max="72" step="1" value="36">
+              <input type="number" id="num-TEXT_SIZE_MAX" class="val-input" min="8" max="72" step="1" value="36">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Separación entre Letras (0px - 100px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-LETTER_SPACING" min="0" max="100" step="1" value="10">
+              <input type="number" id="num-LETTER_SPACING" class="val-input" min="0" max="100" step="1" value="10">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Posición Centrado X (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-POS_X" min="0" max="1920" step="1" value="960">
+              <input type="number" id="num-POS_X" class="val-input" min="0" max="1920" step="1" value="960">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Posición Centrado Y (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-POS_Y" min="0" max="1080" step="1" value="540">
+              <input type="number" id="num-POS_Y" class="val-input" min="0" max="1080" step="1" value="540">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 11px; color: #cbd5e1;">Fondo Cuadrado (Bounding Box)</span>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  Dibuja un marco/cuadrado detrás de cada letra.
+                </div>
+              </div>
+              <label class="switch-ui" style="transform: scale(0.85);" title="Activar fondo cuadrado en letras">
+                <input type="checkbox" id="param-CHAR_BG_ENABLED">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+            <div class="color-picker-box" style="flex: 1;">
+              <label style="font-size: 10px; color: #94a3b8;">Color de Fondo</label>
+              <div class="color-input-wrap">
+                <input type="color" id="param-CHAR_BG_COLOR" value="#000000">
+              </div>
+            </div>
+            <div style="flex: 2;">
+              <div class="control-label-wrap">
+                <span>Opacidad del Cuadrado</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CHAR_BG_OPACITY" min="0.0" max="1.0" step="0.05" value="0.8">
+                <input type="number" id="num-CHAR_BG_OPACITY" class="val-input" min="0.0" max="1.0" step="0.05" value="0.8">
+              </div>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Caracteres ambientales</span>
+            </div>
+            <input type="text" id="param-CHARACTERS" class="text-input" spellcheck="false" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&*+-/;:,. ">
+          </div>
+        </div>
+
+        <!-- Paleta de Colores -->
+        <div>
+          <div class="group-title"><i class="fas fa-palette"></i> Paleta Cromática</div>
+          <div class="palette-grid">
+            <div class="color-picker-box">
+              <label>Color 1</label>
+              <div class="color-input-wrap">
+                <input type="color" id="param-COLOR_1" value="#40c4ff">
+              </div>
+            </div>
+            <div class="color-picker-box">
+              <label>Color 2</label>
+              <div class="color-input-wrap">
+                <input type="color" id="param-COLOR_2" value="#ff9100">
+              </div>
+            </div>
+            <div class="color-picker-box">
+              <label>Color 3</label>
+              <div class="color-input-wrap">
+                <input type="color" id="param-COLOR_3" value="#e040fb">
+              </div>
+            </div>
+            <div class="color-picker-box">
+              <label>Color 4</label>
+              <div class="color-input-wrap">
+                <input type="color" id="param-COLOR_4" value="#00e676">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Físicas y Movimiento -->
+        <div>
+          <div class="group-title"><i class="fas fa-wind"></i> Dinámica y Físicas</div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Velocidad Máxima</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-MAX_SPEED" min="0.5" max="15.0" step="0.5" value="4">
+              <input type="number" id="num-MAX_SPEED" class="val-input" min="0.5" max="15.0" step="0.5" value="4">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Fuerza de Impulso</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-MAX_FORCE" min="0.1" max="2.0" step="0.05" value="0.6">
+              <input type="number" id="num-MAX_FORCE" class="val-input" min="0.1" max="2.0" step="0.05" value="0.6">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Fuerza del Mouse (Multiplicador)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-MOUSE_FORCE_MULT" min="0.2" max="3.0" step="0.05" value="1.1">
+              <input type="number" id="num-MOUSE_FORCE_MULT" class="val-input" min="0.2" max="3.0" step="0.05" value="1.1">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Radio de Repulsión mutua (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-REPULSION_RADIUS" min="0" max="40" step="1" value="5">
+              <input type="number" id="num-REPULSION_RADIUS" class="val-input" min="0" max="40" step="1" value="5">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Dispersión Angular</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-DISPERSION_MAX" min="0.0" max="2.0" step="0.05" value="0.5">
+              <input type="number" id="num-DISPERSION_MAX" class="val-input" min="0.0" max="2.0" step="0.05" value="0.5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Generación y Vida -->
+        <div>
+          <div class="group-title"><i class="fas fa-hourglass-half"></i> Generación y Vida</div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Radio Máx. Aparición (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-SPAWN_RADIUS_MAX" min="20" max="250" step="5" value="100">
+              <input type="number" id="num-SPAWN_RADIUS_MAX" class="val-input" min="20" max="250" step="5" value="100">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Desvanecimiento (Decay)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-LIFESPAN_DECAY_MAX" min="0.2" max="6.0" step="0.1" value="2.5">
+              <input type="number" id="num-LIFESPAN_DECAY_MAX" class="val-input" min="0.2" max="6.0" step="0.1" value="2.5">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Intervalo Aparición Mouse (ms)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-SPAWN_INTERVAL_MS" min="0" max="300" step="5" value="40">
+              <input type="number" id="num-SPAWN_INTERVAL_MS" class="val-input" min="0" max="300" step="5" value="40">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Partículas Mín. al Mover Mouse</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-SPAWN_COUNT_MIN" min="0" max="50" step="1" value="1">
+              <input type="number" id="num-SPAWN_COUNT_MIN" class="val-input" min="0" max="50" step="1" value="1">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-label-wrap">
+              <span>Partículas Máx. al Mover Mouse</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-SPAWN_COUNT_MAX" min="0" max="50" step="1" value="2">
+              <input type="number" id="num-SPAWN_COUNT_MAX" class="val-input" min="0" max="50" step="1" value="2">
+            </div>
+          </div>
+        </div>
+
+        <!-- Modo Automático -->
+        <div>
+          <div class="group-title"><i class="fas fa-robot"></i> Modo Automático</div>
+          <div class="control-row">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 12px; font-weight: 700; color: #fff;">Formar Palabras Automáticamente</span>
+              </div>
+              <label class="switch-ui" title="Activar / Desactivar Modo Automático">
+                <input type="checkbox" id="param-AUTO_MODE">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Intervalo entre palabras (seg)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-AUTO_INTERVAL_SEC" min="0.8" max="7.0" step="0.2" value="2.5">
+              <input type="number" id="num-AUTO_INTERVAL_SEC" class="val-input" min="0.8" max="7.0" step="0.2" value="2.5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Flowfield -->
+        <div>
+          <div class="group-title"><i class="fas fa-wind"></i> Flowfield (Campo de Flujo)</div>
+
+          <div class="control-row">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Flowfield</span>
+              <label class="switch-ui" title="Activar / Desactivar Flowfield">
+                <input type="checkbox" id="param-FLOWFIELD_ENABLED">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Tamaño Celda Grilla X (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-FLOWFIELD_GRID_X" min="10" max="150" step="2" value="40">
+              <input type="number" id="num-FLOWFIELD_GRID_X" class="val-input" min="10" max="150" step="2" value="40">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Fuerza del Campo (Empuje)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-FLOWFIELD_FORCE" min="0.05" max="2.0" step="0.05" value="0.4">
+              <input type="number" id="num-FLOWFIELD_FORCE" class="val-input" min="0.05" max="2.0" step="0.05" value="0.4">
+            </div>
+          </div>
+        </div>
+      </div> <!-- fin tab-pane-params-p5 -->
+
+      <!-- Sub-Pestaña 2: Shaderfondo (Todos los parámetros del Shader ASCII GLSL) -->
+      <div id="tab-pane-params-shader" class="tab-pane" style="display: none;">
+        <div>
+          <div class="group-title"><i class="fas fa-terminal"></i> Fondo Shader ASCII</div>
+
+          <div class="control-row">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Shader ASCII</span>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  Matriz de caracteres ASCII animados con ruido GLSL detrás del texto.
+                </div>
+              </div>
+              <label class="switch-ui" title="Activar / Desactivar Shader ASCII">
+                <input type="checkbox" id="param-ASCII_ENABLED" checked>
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 11px; color: #cbd5e1;">Solo Ruido de Fondo (Sin caracteres)</span>
+              </div>
+              <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el ruido de fondo">
+                <input type="checkbox" id="param-ASCII_NOISE_ONLY">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Opacidad del Shader (0.0 - 1.0)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-ASCII_OPACITY" min="0.0" max="1.0" step="0.05" value="0.35">
+              <input type="number" id="num-ASCII_OPACITY" class="val-input" min="0.0" max="1.0" step="0.05" value="0.35">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Tileo / Grilla ASCII (px)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-ASCII_CHAR_SIZE" min="4" max="48" step="1" value="14">
+              <input type="number" id="num-ASCII_CHAR_SIZE" class="val-input" min="4" max="48" step="1" value="14">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Tamaño de la Letra GLYPH (0.0 - 1.5)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-ASCII_GLYPH_SCALE" min="0.0" max="1.5" step="0.05" value="0.85">
+              <input type="number" id="num-ASCII_GLYPH_SCALE" class="val-input" min="0.0" max="1.5" step="0.05" value="0.85">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Escala / Tile de Ruido</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-ASCII_TILE" min="0.0" max="10.0" step="0.1" value="3.0">
+              <input type="number" id="num-ASCII_TILE" class="val-input" min="0.0" max="10.0" step="0.1" value="3.0">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 8px;">
+            <div class="control-label-wrap">
+              <span>Velocidad de Variación (0.0 - 3.0)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-ASCII_SPEED" min="0.0" max="3.0" step="0.05" value="1.0">
+              <input type="number" id="num-ASCII_SPEED" class="val-input" min="0.0" max="3.0" step="0.05" value="1.0">
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top: 14px;">
+            <button id="btn-reload-ascii-shaders" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.4); color: #00e676; padding: 8px 12px; font-weight: 600; gap: 8px; cursor: pointer;" title="Atajo de teclado: R">
+              <i class="fas fa-sync-alt"></i> Recargar Shaders en Vivo ⚡ (R)
+            </button>
+          </div>
+        </div>
+      </div> <!-- fin tab-pane-params-shader -->
+    </div>
+
+    <div class="panel-footer">
+      <div class="buttons-row">
+        <button id="reset-defaults-btn" class="btn-reset" title="Restablecer a valores iniciales">
+          <i class="fas fa-undo"></i> Reset
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- PANEL DERECHO: Modos (COLLABMODE activo por defecto y FLYERMODE) -->
+  <aside id="right-control-panel" class="control-panel right-panel">
+    <div class="panel-header">
+      <div class="panel-tabs-group">
+        <button id="tab-btn-flyer" class="tab-btn" title="Modo Flyer (Composición tipográfica y Timeline)">
+          <i class="fas fa-layer-group"></i> FLYERMODE
+        </button>
+        <button id="tab-btn-collab" class="tab-btn active" title="Modo Colaborativo (Palabras dinámicas e interactivas)">
+          <i class="fas fa-users"></i> COLLABMODE
+        </button>
+      </div>
+      <button id="close-right-panel-btn" class="btn-close-header" title="Cerrar panel de modos">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Pestaña Modo Colaborativo (COLLABMODE - Activo por Defecto) -->
+      <div id="tab-pane-collab" class="tab-pane active">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-users"></i> Modo Colaborativo</div>
+            <span id="words-count-badge" class="words-count-badge">0 palabras</span>
+          </div>
+
+          <button id="btn-save-collab-top" class="btn-save" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer; border: none; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fas fa-save"></i> Guardar Parámetros P5 en Servidor
+          </button>
+          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">
+            Hacé click en la pantalla para formarlas. <strong>Al hacer click sobre una palabra en el lienzo, esta se BORRA.</strong>
+          </p>
+
+          <!-- Slider Timer de Vida / Lifespan -->
+          <div class="control-row" style="background: rgba(0, 242, 254, 0.05); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(0, 242, 254, 0.15); margin-bottom: 12px;">
+            <div class="control-label-wrap">
+              <span style="color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-clock mr-1"></i> Timer de Vida (Segundos)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-COLLAB_WORD_LIFESPAN" min="1" max="60" step="1" value="15">
+              <input type="number" id="num-COLLAB_WORD_LIFESPAN" class="val-input" min="1" max="60" step="1" value="15">
+            </div>
+            <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+              Tiempo que permanece cada palabra antes de desvanecerse automáticamente.
+            </div>
+          </div>
+
+          <!-- Input Agregar Palabras -->
+          <div class="add-word-row">
+            <input type="text" id="new-word-input" class="text-input" placeholder="Escribí palabras o frases (ej: HOLA, MUNDO)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+            <button id="add-word-btn" class="btn-add-word">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+
+          <div class="words-filter-row" style="margin-top: 8px;">
+            <input type="text" id="filter-word-input" class="text-input" placeholder="Buscar palabra..." spellcheck="false" style="padding: 5px 8px; font-size: 11px; background: rgba(0,0,0,0.3);">
+          </div>
+
+          <!-- Unificación de Palabras Colaborativas -->
+          <div id="words-list" class="words-container" style="margin-top: 8px; max-height: 240px; overflow-y: auto;">
+            <!-- Inyectado dinámicamente -->
+          </div>
+
+          <!-- Stats colaborativas -->
+          <div class="contributors-stats-bar" style="margin-top: 14px;">
+            <div class="stat-card">
+              <span id="stat-total-words" class="stat-card-val">0</span>
+              <span class="stat-card-lbl">Palabras Totales</span>
+            </div>
+            <div class="stat-card">
+              <span id="stat-total-contributors" class="stat-card-val">0</span>
+              <span class="stat-card-lbl">Colaboradores</span>
+            </div>
+          </div>
+
+          <!-- Lista de Usuarios y Colaboraciones -->
+          <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+            <div class="group-title"><i class="fas fa-user-friends"></i> Usuarios y Palabras de la Comunidad</div>
+            <input type="text" id="filter-contributors-input" class="text-input" placeholder="Buscar por usuario o palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 11px; margin-bottom: 8px;">
+            <div id="contributors-list" class="contributors-list" style="max-height: 200px; overflow-y: auto;">
+              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 15px;">
+                <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón Guardar Collab -->
+        <div style="margin-top: 16px;">
+          <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
+            <i class="fas fa-save"></i> Guardar Palabras Collab
+          </button>
+        </div>
+      </div> <!-- fin tab-pane-collab -->
+
+      <!-- Pestaña Modo Flyer (FLYERMODE) -->
+      <div id="tab-pane-flyer" class="tab-pane" style="display: none;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
+            <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-file-image"></i> Módulo Flyer Mode</div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button id="btn-toggle-hastimeline" class="btn-toggle-ui" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Activar/Desactivar animación por Timeline (Si está OFF, todas las palabras quedan fijas siempre)">
+                <i class="fas fa-toggle-off"></i> Timeline OFF
+              </button>
+              <button id="btn-toggle-timeline-panel" class="btn-toggle-ui" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Mostrar u ocultar la interfaz gráfica de la línea de tiempo">
+                <i class="fas fa-film"></i> Ver Timeline
+              </button>
+            </div>
+          </div>
+          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">
+            Diseñá composiciones tipográficas animadas con la línea de tiempo.
+          </p>
+
+
+
+          <!-- Input de texto para Flyer -->
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
+              Texto / Frase para el Flyer
+            </label>
+            <div class="add-word-row">
+              <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+              <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 700;">
+                <i class="fas fa-plus"></i> Agregar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Palabras del Flyer -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
+              <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
+                <i class="fas fa-trash-alt"></i> Limpiar Todo
+              </button>
+            </div>
+            <div id="flyer-words-list" class="words-container" style="max-height: 180px; overflow-y: auto;">
+              <!-- Inyectado dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Botones Guardar Flyer -->
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+            <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
+              <i class="fas fa-save"></i> Guardar / Actualizar
+            </button>
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
+                <i class="fas fa-copy"></i> Guardar como Nuevo
+              </button>
+              <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
+                <i class="fas fa-file"></i> + Nuevo Proyecto
+              </button>
+            </div>
+          </div>
+
+          <!-- Secuencias / Proyectos Guardados del Usuario -->
+          <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+            <div class="group-title"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
+            <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-top: 6px;">
+              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+                Cargando secuencias guardadas...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- fin tab-pane-flyer -->
+    </div>
+  </aside>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <i class="fas fa-check-circle"></i>
+    <span>¡Efecto guardado exitosamente!</span>
+  </div>
+
+  <!-- Timeline Panel (Edición & Keyframing) -->
+  <div id="timeline-panel" class="timeline-panel">
+    <div class="timeline-header">
+      <div class="timeline-transport">
+        <button id="tl-btn-rewind" class="tl-btn" title="Ir al inicio (0s)"><i class="fas fa-step-backward"></i></button>
+        <button id="tl-btn-play" class="tl-btn tl-btn-play" title="Play / Pausa (Espacio)"><i class="fas fa-play"></i></button>
+        <button id="tl-btn-loop" class="tl-btn active" title="Activar / Desactivar Loop (Por defecto activado)"><i class="fas fa-redo"></i></button>
+        <span id="tl-time-readout" class="tl-time-readout" title="Doble click para cambiar la duración total del timeline (en segundos)" style="cursor: pointer;">00:00.00 / 00:10.00</span>
+      </div>
+
+      <div class="timeline-actions">
+        <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(0, 242, 254, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento (Atajo: Ctrl + T)">
+          <span style="font-size: 10px; color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-layer-group"></i> Solapamiento:</span>
+          <input type="range" id="tl-slider-overlap" min="0" max="100" value="20" style="width: 60px; cursor: pointer;">
+          <span id="tl-val-overlap" style="font-size: 10px; color: #fff; font-weight: 700; min-width: 26px;">20%</span>
+          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Ctrl + T)">
+            <i class="fas fa-magic"></i> Ctrl + T
+          </button>
+        </div>
+        <button id="tl-btn-add-layer" class="tl-btn tl-btn-accent" title="Agregar una nueva capa vacía a la línea de tiempo">
+          <i class="fas fa-plus"></i> + Agregar Capa
+        </button>
+        <button id="tl-btn-add-kf" class="tl-btn tl-btn-accent" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 230, 118, 0.3)); border-color: var(--accent-cyan);" title="Agregar Keyframe a la capa seleccionada en el tiempo actual">
+          <i class="fas fa-gem"></i> Add Keyframe
+        </button>
+        <button id="tl-btn-del-kf" class="tl-btn" title="Eliminar Keyframe o Capa seleccionada">
+          <i class="fas fa-trash"></i> Delete KF
+        </button>
+        <button id="tl-btn-close" class="tl-btn" title="Cerrar Timeline"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <div class="timeline-body">
+      <!-- Time Ruler -->
+      <div id="timeline-ruler" class="timeline-ruler">
+        <div class="ruler-header">
+          <span style="font-size: 10px; color: #94a3b8; font-weight: 600;"><i class="fas fa-clock"></i> Tiempo</span>
+        </div>
+        <div id="ruler-lane" class="ruler-lane">
+          <div id="timeline-playhead" class="timeline-playhead">
+            <div class="playhead-handle"></div>
+          </div>
+          <div id="timeline-duration-handle" class="timeline-duration-handle" title="Arrastrar para ajustar la duración total del timeline">
+            <div class="duration-knob"><i class="fas fa-arrows-alt-h"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Tracks Area -->
+      <div id="timeline-tracks" class="timeline-tracks">
+        <!-- Tracks inyectados dinámicamente por palabra -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts Base, Auth y p5 -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
+  <script src="js/particulas.js"></script>
+</body>
+</html>

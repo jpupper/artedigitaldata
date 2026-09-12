@@ -5,6 +5,7 @@ import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import Oportunidad from '../models/Oportunidad';
+import VisualEffect from '../models/VisualEffect';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { hydrate } from '../utils/userHydration';
 
@@ -86,6 +87,7 @@ router.get('/:username', async (req: Request, res: Response) => {
       ]
     }).sort({ date: 1 });
     const oportunidades = await Oportunidad.find({ creador: user._id }).sort({ createdAt: -1 });
+    const visualeffects = await VisualEffect.find({ author: user._id }).sort({ createdAt: -1 });
 
     const doorEvents = await Evento.find({ doorUsers: user._id }).sort({ date: 1 });
 
@@ -95,6 +97,7 @@ router.get('/:username', async (req: Request, res: Response) => {
       recursos: await hydrate(recursos), 
       eventos: await hydrate(eventos, 'creator'),
       oportunidades: await hydrate(oportunidades, 'creador'),
+      visualeffects: visualeffects || [],
       doorEvents: await hydrate(doorEvents, 'creator'),
       favorites: {
         posts: await hydrate(likedPosts),

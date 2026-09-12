@@ -155,6 +155,9 @@
       <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-ticket-alt mr-2 text-fuchsia-500"></i>ENTRADAS
       </button>
+      <button onclick="switchTab('visualeffects')" id="tab-visualeffects" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+        <i class="fas fa-wand-magic-sparkles mr-2 text-cyan-400"></i>VISUAL EFFECTS
+      </button>
       <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="tab-btn hidden px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-bell mr-2 text-yellow-400"></i>NOTIFICACIONES
         <span id="notif-badge" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black"></span>
@@ -216,6 +219,26 @@
         <div class="text-center text-gray-500 py-10">
           <i class="fas fa-spinner fa-spin text-2xl text-fuchsia-400 mb-3"></i>
           <p>Cargando entradas...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-visualeffects" class="content-section hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-wand-magic-sparkles text-cyan-400"></i> Mis Efectos Visuales
+          </h3>
+          <p class="text-xs text-gray-400 mt-1">Proyectos guardados del Flyer Mode</p>
+        </div>
+        <a href="visualeffects.html" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all">
+          <i class="fas fa-plus"></i> Crear Nuevo Efecto
+        </a>
+      </div>
+      <div id="user-visualeffects" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center text-gray-500 py-10">
+          <i class="fas fa-spinner fa-spin text-2xl text-cyan-400 mb-3"></i>
+          <p>Cargando efectos visuales...</p>
         </div>
       </div>
     </div>
@@ -388,6 +411,7 @@
         renderUserRecursos(recursos || []);
         renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
         renderUserOportunidades(oportunidades || []);
+        renderUserVisualEffects(visualeffects || []);
         renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
 
         // XP level bar (shown for everyone)
@@ -761,6 +785,70 @@
             </div>
           </div>`;
       }).join('');
+    }
+
+    function renderUserVisualEffects(effects) {
+      const container = document.getElementById('user-visualeffects');
+      if (!container) return;
+      if (!effects || !effects.length) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-10">
+            <i class="fas fa-wand-magic-sparkles text-4xl text-cyan-400/30 mb-3"></i>
+            <p>No hay efectos visuales guardados aún.</p>
+            <a href="visualeffects.html" class="inline-block mt-3 px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-all">
+              <i class="fas fa-plus mr-1"></i> Crear primer efecto
+            </a>
+          </div>`;
+        return;
+      }
+      container.innerHTML = effects.map(fx => {
+        const wordsList = (fx.flyerWords || []).map(w => w.text || w.word).filter(Boolean);
+        const sampleWords = wordsList.slice(0, 5).join(', ') + (wordsList.length > 5 ? '...' : '');
+        const dateStr = new Date(fx.createdAt).toLocaleDateString();
+        return `
+          <div class="rounded-2xl p-5 border border-cyan-500/10 card-cyber transition-all duration-300 group flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <h3 class="font-bold text-white text-lg line-clamp-1 group-hover:text-cyan-400 transition-colors">${fx.title || 'Proyecto Flyer'}</h3>
+                ${(isLoggedIn() && (isOwner || isAdmin())) ? `
+                  <button onclick="deleteVisualEffect('${fx._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
+                ` : ''}
+              </div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/10 text-cyan-400 uppercase font-bold">
+                  <i class="fas fa-layer-group mr-1"></i>${wordsList.length} ${wordsList.length === 1 ? 'capa' : 'capas'}
+                </span>
+                <span class="text-[10px] text-gray-500">${dateStr}</span>
+              </div>
+              <p class="text-xs text-gray-400 line-clamp-2 mb-4">
+                <span class="text-cyan-400 font-semibold">Palabras:</span> ${sampleWords || 'Sin palabras'}
+              </p>
+            </div>
+            <a href="visualeffects.html?id=${fx._id}" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-center font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+              <i class="fas fa-external-link-alt"></i> Abrir en Editor
+            </a>
+          </div>`;
+      }).join('');
+    }
+
+    async function deleteVisualEffect(id) {
+      if (!confirm('¿Seguro que querés eliminar este proyecto de efecto visual?')) return;
+      const token = localStorage.getItem('token');
+      try {
+        const res = await fetch(`/api/visualeffects/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          loadProfile();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al eliminar');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al conectar con el servidor');
+      }
     }
 
     async function deletePost(postId) {
