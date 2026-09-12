@@ -2,6 +2,16 @@
 // Arte Digital Data
 
 (function(window) {
+  // Auto-cargar ascii-shader-bg.js si no está cargado en la página
+  if (!window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
+    const script = document.createElement('script');
+    const currentPath = window.location.pathname;
+    const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    script.src = folderPath + 'js/ascii-shader-bg.js';
+    script.async = false;
+    document.head.appendChild(script);
+  }
+
   // Valores por defecto
   const DEFAULT_CONFIG = {
     TEXT_SIZE: 36,
@@ -34,6 +44,13 @@
     FLOWFIELD_SCALE: 0.006,
     FLOWFIELD_SPEED: 0.002,
     FLOWFIELD_SHOW_VECTORS: false,
+    ASCII_ENABLED: true,
+    ASCII_NOISE_ONLY: false,
+    ASCII_OPACITY: 0.35,
+    ASCII_CHAR_SIZE: 14,
+    ASCII_GLYPH_SCALE: 0.85,
+    ASCII_TILE: 3.0,
+    ASCII_SPEED: 1.0,
     COLOR_1: '#40c4ff', // Cyan
     COLOR_2: '#ff9100', // Naranja
     COLOR_3: '#e040fb', // Magenta
@@ -297,7 +314,7 @@
     container.style.left = '0';
     container.style.width = '100%';
     container.style.height = '100%';
-    container.style.zIndex = '0';
+    container.style.zIndex = '1';
     container.style.pointerEvents = 'none';
     return container;
   }
@@ -394,7 +411,7 @@
     canvas.style('position', 'fixed');
     canvas.style('top', '0');
     canvas.style('left', '0');
-    canvas.style('z-index', '0');
+    canvas.style('z-index', '1');
     canvas.style('pointer-events', 'none');
     
     textFont('monospace');
@@ -407,7 +424,9 @@
   window.draw = function() {
     // Opacidad de fondo para regular el efecto de feedback / estela
     const bgAlpha = (CFG.BG_ALPHA !== undefined) ? Number(CFG.BG_ALPHA) : 50;
-    if (bgAlpha >= 255) {
+    if (CFG.ASCII_ENABLED) {
+      clear();
+    } else if (bgAlpha >= 255) {
       clear();
     } else if (bgAlpha > 0) {
       // Velo semitransparente con el color de fondo para feedback progresivo

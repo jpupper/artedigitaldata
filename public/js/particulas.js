@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
   }
+  window.showToast = showToast;
 
   function updateWordAuthHint() {
     const hintEl = document.getElementById('word-auth-hint');
@@ -197,7 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('MSFullscreenChange', updateFullscreenButtonState);
 
   window.addEventListener('keydown', (e) => {
-    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+    const isTextInput = e.target && (
+      (e.target.tagName === 'INPUT' && ['text', 'search', 'password', 'email', 'url'].includes((e.target.type || 'text').toLowerCase())) ||
+      e.target.tagName === 'TEXTAREA' ||
+      e.target.isContentEditable
+    );
+    if (isTextInput) {
       return;
     }
 
@@ -214,6 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
         openPanel('params');
       } else {
         closePanel();
+      }
+    } else if (e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      if (window.AsciiShaderBG && typeof window.AsciiShaderBG.reloadShaders === 'function') {
+        window.AsciiShaderBG.reloadShaders(true);
       }
     }
   });
@@ -239,7 +250,12 @@ document.addEventListener('DOMContentLoaded', () => {
     'FLOWFIELD_FORCE',
     'FLOWFIELD_SCALE_X',
     'FLOWFIELD_SCALE_Y',
-    'FLOWFIELD_SPEED'
+    'FLOWFIELD_SPEED',
+    'ASCII_OPACITY',
+    'ASCII_CHAR_SIZE',
+    'ASCII_GLYPH_SCALE',
+    'ASCII_TILE',
+    'ASCII_SPEED'
   ];
 
   const autoModeToggle = document.getElementById('param-AUTO_MODE');
@@ -260,6 +276,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (flowfieldVectorsToggle) {
     flowfieldVectorsToggle.addEventListener('change', () => {
       applyConfigChange('FLOWFIELD_SHOW_VECTORS', flowfieldVectorsToggle.checked);
+    });
+  }
+
+  const asciiToggle = document.getElementById('param-ASCII_ENABLED');
+  if (asciiToggle) {
+    asciiToggle.addEventListener('change', () => {
+      applyConfigChange('ASCII_ENABLED', asciiToggle.checked);
+    });
+  }
+
+  const asciiNoiseOnlyToggle = document.getElementById('param-ASCII_NOISE_ONLY');
+  if (asciiNoiseOnlyToggle) {
+    asciiNoiseOnlyToggle.addEventListener('change', () => {
+      applyConfigChange('ASCII_NOISE_ONLY', asciiNoiseOnlyToggle.checked);
+    });
+  }
+
+  const btnReloadShaders = document.getElementById('btn-reload-ascii-shaders');
+  if (btnReloadShaders) {
+    btnReloadShaders.addEventListener('click', () => {
+      if (window.AsciiShaderBG && typeof window.AsciiShaderBG.reloadShaders === 'function') {
+        window.AsciiShaderBG.reloadShaders(true);
+      }
     });
   }
 
@@ -728,6 +767,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (flowfieldVectorsToggle && cfg.FLOWFIELD_SHOW_VECTORS !== undefined) {
       flowfieldVectorsToggle.checked = !!cfg.FLOWFIELD_SHOW_VECTORS;
+    }
+
+    if (asciiToggle && cfg.ASCII_ENABLED !== undefined) {
+      asciiToggle.checked = !!cfg.ASCII_ENABLED;
+    }
+
+    if (asciiNoiseOnlyToggle && cfg.ASCII_NOISE_ONLY !== undefined) {
+      asciiNoiseOnlyToggle.checked = !!cfg.ASCII_NOISE_ONLY;
     }
 
     if (cfg.CHARACTERS && charInput) {

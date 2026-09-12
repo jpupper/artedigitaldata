@@ -405,6 +405,97 @@
           </div>
         </div>
       </div>
+
+      <!-- Fondo Shader ASCII -->
+      <div>
+        <div class="group-title"><i class="fas fa-terminal"></i> Fondo Shader ASCII</div>
+
+        <div class="control-row">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Shader ASCII</span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Matriz de caracteres ASCII animados con ruido GLSL detrás del texto.
+              </div>
+            </div>
+            <label class="switch-ui" title="Activar / Desactivar Shader ASCII">
+              <input type="checkbox" id="param-ASCII_ENABLED" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 11px; color: #cbd5e1;">Solo Ruido de Fondo (Sin caracteres)</span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Muestra el gradiente de ruido fluido sin la máscara ASCII.
+              </div>
+            </div>
+            <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el ruido de fondo">
+              <input type="checkbox" id="param-ASCII_NOISE_ONLY">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Opacidad del Shader (0.0 - 1.0)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-ASCII_OPACITY" min="0.0" max="1.0" step="0.05" value="0.35">
+            <input type="number" id="num-ASCII_OPACITY" class="val-input" min="0.0" max="1.0" step="0.05" value="0.35">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Tileo / Grilla ASCII (px)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-ASCII_CHAR_SIZE" min="4" max="48" step="1" value="14">
+            <input type="number" id="num-ASCII_CHAR_SIZE" class="val-input" min="4" max="48" step="1" value="14">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Tamaño de la Letra (Escala 0.0 - 1.5)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-ASCII_GLYPH_SCALE" min="0.0" max="1.5" step="0.05" value="0.85">
+            <input type="number" id="num-ASCII_GLYPH_SCALE" class="val-input" min="0.0" max="1.5" step="0.05" value="0.85">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Escala / Tile de Ruido</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-ASCII_TILE" min="0.0" max="10.0" step="0.1" value="3.0">
+            <input type="number" id="num-ASCII_TILE" class="val-input" min="0.0" max="10.0" step="0.1" value="3.0">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Velocidad de Variación (0.0 - 3.0)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-ASCII_SPEED" min="0.0" max="3.0" step="0.05" value="1.0">
+            <input type="number" id="num-ASCII_SPEED" class="val-input" min="0.0" max="3.0" step="0.05" value="1.0">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 12px;">
+          <button id="btn-reload-ascii-shaders" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.4); color: #00e676; padding: 8px 12px; font-weight: 600; gap: 8px; cursor: pointer;" title="Atajo de teclado: R">
+            <i class="fas fa-sync-alt"></i> Recargar Shaders en Vivo ⚡ (R)
+          </button>
+        </div>
+      </div>
     </div> <!-- fin tab-pane-params -->
 
       <!-- Pestaña 2: Palabras por Usuario (Comunidad) -->
@@ -470,6 +561,7 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/ascii-shader-bg.js"></script>
   <script src="js/p5-effect.js"></script>
   <script src="js/particulas.js"></script>
 </body>
