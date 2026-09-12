@@ -51,6 +51,9 @@
         <button id="tab-btn-params" class="tab-btn active">
           <i class="fas fa-sliders-h"></i> Parámetros
         </button>
+        <button id="tab-btn-flyer" class="tab-btn">
+          <i class="fas fa-file-image"></i> Flyer Mode
+        </button>
         <button id="tab-btn-contributors" class="tab-btn">
           <i class="fas fa-users"></i> Palabras de Usuarios
           <span id="tab-contributors-badge" class="tab-badge">0</span>
@@ -117,7 +120,50 @@
           </div>
         </div>
 
-        <div class="control-row">
+        <div class="control-row" style="margin-top: 8px;">
+          <div class="control-label-wrap">
+            <span>Separación entre Letras (0.0 - 3.0)</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="param-LETTER_SPACING" min="0.0" max="3.0" step="0.05" value="1.0">
+            <input type="number" id="num-LETTER_SPACING" class="val-input" min="0.0" max="3.0" step="0.05" value="1.0">
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 11px; color: #cbd5e1;">Fondo Cuadrado (Bounding Box)</span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                Dibuja un marco/cuadrado detrás de cada letra.
+              </div>
+            </div>
+            <label class="switch-ui" style="transform: scale(0.85);" title="Activar fondo cuadrado en letras">
+              <input type="checkbox" id="param-CHAR_BG_ENABLED">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+          <div class="color-picker-box" style="flex: 1;">
+            <label style="font-size: 10px; color: #94a3b8;">Color de Fondo</label>
+            <div class="color-input-wrap">
+              <input type="color" id="param-CHAR_BG_COLOR" value="#000000">
+            </div>
+          </div>
+          <div style="flex: 2;">
+            <div class="control-label-wrap">
+              <span>Opacidad del Cuadrado (0.0 - 1.0)</span>
+            </div>
+            <div class="slider-text-combo">
+              <input type="range" id="param-CHAR_BG_OPACITY" min="0.0" max="1.0" step="0.05" value="0.8">
+              <input type="number" id="num-CHAR_BG_OPACITY" class="val-input" min="0.0" max="1.0" step="0.05" value="0.8">
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row" style="margin-top: 8px;">
           <div class="control-label-wrap">
             <span>Caracteres ambientales</span>
           </div>
@@ -498,7 +544,61 @@
       </div>
     </div> <!-- fin tab-pane-params -->
 
-      <!-- Pestaña 2: Palabras por Usuario (Comunidad) -->
+      <!-- Pestaña 2: Flyer Mode -->
+      <div id="tab-pane-flyer" class="tab-pane">
+        <div>
+          <div class="group-title"><i class="fas fa-file-image"></i> Módulo Flyer Mode</div>
+          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">
+            Diseñá composiciones tipográficas fijas. Las palabras creadas aquí tienen vida infinita y quedan fijadas permanentemente.
+          </p>
+
+          <div class="control-row" style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Flyer Mode</span>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  Las palabras creadas permanecen fijas en pantalla sin borrarse.
+                </div>
+              </div>
+              <label class="switch-ui" title="Activar / Desactivar Flyer Mode">
+                <input type="checkbox" id="param-FLYER_MODE_ENABLED">
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Input de texto para Flyer -->
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
+              Texto / Frase para el Flyer
+            </label>
+            <div class="add-word-row">
+              <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+              <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 700;">
+                <i class="fas fa-plus"></i> Agregar
+              </button>
+            </div>
+            <div style="font-size: 10px; color: #94a3b8; margin-top: 5px; display: flex; align-items: center; gap: 5px;">
+              <i class="fas fa-mouse-pointer" style="color: var(--accent-cyan);"></i> También podés hacer click en el lienzo para posicionar la frase.
+            </div>
+          </div>
+
+          <!-- Lista de Palabras del Flyer -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
+              <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
+                <i class="fas fa-trash-alt"></i> Limpiar Todo
+              </button>
+            </div>
+            <div id="flyer-words-list" class="words-container">
+              <!-- Inyectado dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña 3: Palabras por Usuario (Comunidad) -->
       <div id="tab-pane-contributors" class="tab-pane">
         <div>
           <div class="group-title"><i class="fas fa-users"></i> Palabras de la Comunidad</div>

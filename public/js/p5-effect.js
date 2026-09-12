@@ -51,6 +51,12 @@
     ASCII_GLYPH_SCALE: 0.85,
     ASCII_TILE: 3.0,
     ASCII_SPEED: 1.0,
+    CHAR_BG_ENABLED: false,
+    CHAR_BG_COLOR: '#000000',
+    CHAR_BG_OPACITY: 0.8,
+    LETTER_SPACING: 1.0,
+    FLYER_MODE_ENABLED: false,
+    FLYER_WORDS: [],
     COLOR_1: '#40c4ff', // Cyan
     COLOR_2: '#ff9100', // Naranja
     COLOR_3: '#e040fb', // Magenta
@@ -359,24 +365,24 @@
   }
 
   // Spawnea una palabra centrada en (targetCenterX, targetCenterY)
-  function spawnWordParticles(word, targetCenterX, targetCenterY) {
+  function spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer = false, flyerId = null) {
     if (!word || typeof word !== 'string') return;
     const chars = word.trim().toUpperCase().split('');
     if (!chars.length) return;
 
-    // Las letras que forman las palabras siempre usan el tamaño máximo
     const wordFontSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
-    let spacing = Math.max(12, wordFontSize * 0.68);
+    const spacingMult = (CFG.LETTER_SPACING !== undefined) ? Number(CFG.LETTER_SPACING) : 1.0;
+    
+    // Separación proporcional directa al tamaño de la letra (0.0 a 3.0)
+    let spacing = wordFontSize * 0.65 * spacingMult;
     let totalWidth = (chars.length - 1) * spacing;
     
-    // Si la palabra/frase excede el ancho de la ventana, reducir espaciado dinámicamente para que entre
-    const maxAllowedWidth = windowWidth * 0.90;
-    if (totalWidth > maxAllowedWidth) {
+    const maxAllowedWidth = windowWidth * 0.92;
+    if (totalWidth > maxAllowedWidth && chars.length > 1) {
       spacing = maxAllowedWidth / (chars.length - 1);
       totalWidth = (chars.length - 1) * spacing;
     }
 
-    // Asegurar que quede dentro de la pantalla horizontalmente
     let startX = targetCenterX - totalWidth / 2;
     if (startX < 20) {
       startX = 20;
@@ -385,6 +391,7 @@
     }
 
     const startY = constrain(targetCenterY, 40, windowHeight - 40);
+    const wordId = flyerId || (word + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
 
     for (let i = 0; i < chars.length; i++) {
       const ch = chars[i];
@@ -393,15 +400,33 @@
       const targetX = startX + i * spacing;
       const targetY = startY;
 
-      // Nacen dispersas en un radio alrededor del click
       const angle = random(TWO_PI);
       const dist = random(60, 240);
       const spawnX = targetCenterX + cos(angle) * dist;
       const spawnY = targetCenterY + sin(angle) * dist;
 
-      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY));
+      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word));
     }
   }
+
+  function removeFlyerWordParticles(flyerIdOrText) {
+    particles = particles.filter(p => {
+      if (p instanceof WordParticle && p.isFlyer) {
+        if (p.flyerId === flyerIdOrText || p.fullWord === flyerIdOrText) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function clearAllFlyerParticles() {
+    particles = particles.filter(p => !(p instanceof WordParticle && p.isFlyer));
+  }
+
+  window.spawnWordParticles = spawnWordParticles;
+  window.removeFlyerWordParticles = removeFlyerWordParticles;
+  window.clearAllFlyerParticles = clearAllFlyerParticles;
 
   // Clases y p5 setup
   window.setup = function() {
@@ -566,10 +591,27 @@
       return;
     }
 
+    if (CFG.FLYER_MODE_ENABLED) {
+      const flyerInput = document.getElementById('flyer-word-input');
+      const textVal = flyerInput ? flyerInput.value.trim() : '';
+      if (textVal) {
+        spawnWordParticles(textVal, mouseX, mouseY, true);
+        if (typeof window.addFlyerWordToList === 'function') {
+          window.addFlyerWordToList(textVal);
+        }
+      } else {
+        const flyerWords = Array.isArray(CFG.FLYER_WORDS) && CFG.FLYER_WORDS.length ? CFG.FLYER_WORDS : [];
+        if (flyerWords.length > 0) {
+          const chosen = flyerWords[floor(random(flyerWords.length))];
+          spawnWordParticles(chosen, mouseX, mouseY, true);
+        }
+      }
+      return;
+    }
+
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
     if (!words.length) return;
 
-    // Elegir palabra distinta a la anterior
     let nextIdx = floor(random(words.length));
     if (words.length > 1 && nextIdx === currentWordIndex) {
       nextIdx = (nextIdx + 1) % words.length;
@@ -577,12 +619,11 @@
     currentWordIndex = nextIdx;
 
     const chosenWord = words[currentWordIndex];
-    spawnWordParticles(chosenWord, mouseX, mouseY);
+    spawnWordParticles(chosenWord, mouseX, mouseY, false);
   };
 
   // Soporte Touch para dispositivos móviles sin bloquear el scroll del navegador
   window.touchStarted = function(e) {
-    // Si el toque fue sobre elementos interactivos de la interfaz, permitir acción normal
     if (e && e.target && (
       e.target.closest('#control-panel') || 
       e.target.closest('header') || 
@@ -601,16 +642,6 @@
 
     lastTouchTimestamp = Date.now();
 
-    const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
-    if (!words.length) return true;
-
-    let nextIdx = floor(random(words.length));
-    if (words.length > 1 && nextIdx === currentWordIndex) {
-      nextIdx = (nextIdx + 1) % words.length;
-    }
-    currentWordIndex = nextIdx;
-
-    // Obtener coordenadas de toque de forma precisa
     let tx = mouseX;
     let ty = mouseY;
     if (touches && touches.length > 0) {
@@ -621,8 +652,35 @@
       ty = e.touches[0].clientY;
     }
 
-    spawnWordParticles(words[currentWordIndex], tx, ty);
-    return true; // Permitir scroll nativo del navegador
+    if (CFG.FLYER_MODE_ENABLED) {
+      const flyerInput = document.getElementById('flyer-word-input');
+      const textVal = flyerInput ? flyerInput.value.trim() : '';
+      if (textVal) {
+        spawnWordParticles(textVal, tx, ty, true);
+        if (typeof window.addFlyerWordToList === 'function') {
+          window.addFlyerWordToList(textVal);
+        }
+      } else {
+        const flyerWords = Array.isArray(CFG.FLYER_WORDS) && CFG.FLYER_WORDS.length ? CFG.FLYER_WORDS : [];
+        if (flyerWords.length > 0) {
+          const chosen = flyerWords[floor(random(flyerWords.length))];
+          spawnWordParticles(chosen, tx, ty, true);
+        }
+      }
+      return true;
+    }
+
+    const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
+    if (!words.length) return true;
+
+    let nextIdx = floor(random(words.length));
+    if (words.length > 1 && nextIdx === currentWordIndex) {
+      nextIdx = (nextIdx + 1) % words.length;
+    }
+    currentWordIndex = nextIdx;
+
+    spawnWordParticles(words[currentWordIndex], tx, ty, false);
+    return true;
   };
 
   window.touchMoved = function(e) {
@@ -747,9 +805,27 @@
 
     display() {
       if (this.scale <= 0.01) return;
+      const size = this.baseSize * this.scale;
+
+      // Dibujar caja contenedora de fondo (bounding box) detras de la letra
+      if (CFG.CHAR_BG_ENABLED) {
+        push();
+        rectMode(CENTER);
+        noStroke();
+        const bgCol = color(CFG.CHAR_BG_COLOR || '#000000');
+        const bgAlpha = (CFG.CHAR_BG_OPACITY !== undefined) ? Number(CFG.CHAR_BG_OPACITY) * 255 : 204;
+        bgCol.setAlpha(bgAlpha * (this.lifespan / 255));
+        fill(bgCol);
+
+        const boxW = size * 0.85;
+        const boxH = size * 1.05;
+        rect(this.pos.x, this.pos.y, boxW, boxH, 4);
+        pop();
+      }
+
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor); 
-      textSize(this.baseSize * this.scale);
+      textSize(size);
       text(this.char, this.pos.x, this.pos.y);
     }
 
@@ -760,33 +836,33 @@
 
   // Partícula con atractor para formar palabras
   class WordParticle {
-    constructor(char, x, y, targetX, targetY) {
+    constructor(char, x, y, targetX, targetY, isFlyer = false, flyerId = null, fullWord = '') {
       this.char = char;
       this.pos = createVector(x, y);
       this.target = createVector(targetX, targetY);
       this.vel = p5.Vector.random2D().mult(random(2, 6));
       this.acc = createVector(0, 0);
 
+      this.isFlyer = isFlyer;
+      this.flyerId = flyerId;
+      this.fullWord = fullWord;
+
       this.lifespan = 255;
-      // Las partículas de palabra se mantienen vivas mientras se forman y un momento más
-      this.holdTime = 80; // frames manteniéndose formadas
-      this.decay = 2.2;
+      this.holdTime = isFlyer ? Infinity : 80;
+      this.decay = isFlyer ? 0 : 2.2;
       this.maxSpeed = Math.max(8, CFG.MAX_SPEED * 2.0);
       this.maxForce = Math.max(0.6, CFG.MAX_FORCE * 1.5);
       this.noiseSeed = random(1000);
 
-      // Las letras que forman palabras SIEMPRE eligen el tamaño MÁXIMO
       const minSize = (CFG.TEXT_SIZE_MIN !== undefined) ? Number(CFG.TEXT_SIZE_MIN) : 16;
       const maxSize = (CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36);
       this.baseSize = Math.max(minSize, maxSize);
 
-      // Animación de entrada: escala de 0 a 1 durante el primer 15% de su vida total
       this.age = 0;
-      const totalWordLife = 30 + this.holdTime + (255 / this.decay);
+      const totalWordLife = 30 + (isFlyer ? 100 : this.holdTime) + (255 / (this.decay || 1));
       this.scaleInDuration = Math.max(1, totalWordLife * 0.15);
       this.scale = 0;
 
-      // Color vibrante de la paleta
       let colorPos = random(1);
       if (!palette.length) updatePalette();
       if (colorPos < 0.33) {
@@ -798,12 +874,9 @@
       }
     }
 
-    applyRepulsion(others) {
-      // Las letras de las palabras no se repelen entre sí para formarse con total precisión sin rebotar
-    }
+    applyRepulsion(others) {}
 
     update() {
-      // Progresión de escala (0 -> 1 durante el primer 15% de vida)
       this.age++;
       if (this.age < this.scaleInDuration) {
         this.scale = this.age / this.scaleInDuration;
@@ -811,13 +884,11 @@
         this.scale = 1;
       }
 
-      // Atractor (Arrive hacia la posición asignada de la letra)
       const desired = p5.Vector.sub(this.target, this.pos);
       const d = desired.mag();
 
       const slowRadius = 60;
       if (d < slowRadius) {
-        // Frenado progresivo al acercarse (easing suave)
         const speed = map(d, 0, slowRadius, 0, this.maxSpeed);
         desired.setMag(speed);
       } else {
@@ -827,48 +898,65 @@
       const steer = p5.Vector.sub(desired, this.vel);
       steer.limit(this.maxForce);
       this.acc.add(steer);
-
       this.vel.add(this.acc);
 
-      // Amortiguación progresiva al acercarse para asentar la letra sin sobrepasos ni rebotes
-      if (d < 18) {
-        this.vel.mult(0.85);
-      }
-      if (d < 3) {
-        this.vel.mult(0.35);
-      }
+      if (d < 18) this.vel.mult(0.85);
+      if (d < 3) this.vel.mult(0.35);
 
       this.pos.add(this.vel);
       this.acc.mult(0);
 
-      // Una vez que llega y se forma la palabra
-      if (d < 5) {
-        if (this.holdTime > 0) {
-          this.holdTime--;
-        } else {
-          this.lifespan -= this.decay;
-          // Al terminar el tiempo de retención, las letras se dispersan suavemente
-          this.vel.add(p5.Vector.random2D().mult(0.3));
+      if (this.isFlyer) {
+        if (d < 4) {
+          this.pos.set(this.target);
+          this.vel.set(0, 0);
         }
+        this.lifespan = 255;
       } else {
-        // En camino decae muy lentamente para dar tiempo a que se forme
-        this.lifespan -= 0.15;
+        if (d < 5) {
+          if (this.holdTime > 0) {
+            this.holdTime--;
+          } else {
+            this.lifespan -= this.decay;
+            this.vel.add(p5.Vector.random2D().mult(0.3));
+          }
+        } else {
+          this.lifespan -= 0.15;
+        }
       }
     }
 
     display() {
       if (this.scale <= 0.01) return;
+      const size = this.baseSize * this.scale;
+      const d = p5.Vector.dist(this.pos, this.target);
+      const floatY = (!this.isFlyer && d < 5 && this.holdTime > 0) ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 : 0;
+      const posY = this.pos.y + floatY;
+
+      // Dibujar caja contenedora de fondo (bounding box) detras de la letra de la palabra
+      if (CFG.CHAR_BG_ENABLED) {
+        push();
+        rectMode(CENTER);
+        noStroke();
+        const bgCol = color(CFG.CHAR_BG_COLOR || '#000000');
+        const bgAlpha = (CFG.CHAR_BG_OPACITY !== undefined) ? Number(CFG.CHAR_BG_OPACITY) * 255 : 204;
+        bgCol.setAlpha(bgAlpha * (this.lifespan / 255));
+        fill(bgCol);
+
+        const boxW = size * 0.85;
+        const boxH = size * 1.05;
+        rect(this.pos.x, posY, boxW, boxH, 4);
+        pop();
+      }
+
       this.baseColor.setAlpha(this.lifespan);
       fill(this.baseColor);
-      textSize(this.baseSize * this.scale);
-
-      // Ondulación sutil visual mientras la palabra está formada para darle dinamismo sin desarmar la palabra
-      const d = p5.Vector.dist(this.pos, this.target);
-      const floatY = (d < 5 && this.holdTime > 0) ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 : 0;
-      text(this.char, this.pos.x, this.pos.y + floatY);
+      textSize(size);
+      text(this.char, this.pos.x, posY);
     }
 
     isDead() {
+      if (this.isFlyer) return false;
       return this.lifespan <= 0;
     }
   }

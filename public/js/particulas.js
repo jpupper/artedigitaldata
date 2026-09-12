@@ -9,8 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const toast = document.getElementById('toast');
 
   const tabBtnParams = document.getElementById('tab-btn-params');
+  const tabBtnFlyer = document.getElementById('tab-btn-flyer');
   const tabBtnContributors = document.getElementById('tab-btn-contributors');
   const tabPaneParams = document.getElementById('tab-pane-params');
+  const tabPaneFlyer = document.getElementById('tab-pane-flyer');
   const tabPaneContributors = document.getElementById('tab-pane-contributors');
 
   const newWordInput = document.getElementById('new-word-input');
@@ -103,22 +105,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Control de Pestañas
   function switchTab(target) {
+    if (tabBtnParams) tabBtnParams.classList.remove('active');
+    if (tabBtnFlyer) tabBtnFlyer.classList.remove('active');
+    if (tabBtnContributors) tabBtnContributors.classList.remove('active');
+
+    if (tabPaneParams) tabPaneParams.classList.remove('active');
+    if (tabPaneFlyer) tabPaneFlyer.classList.remove('active');
+    if (tabPaneContributors) tabPaneContributors.classList.remove('active');
+
     if (target === 'contributors') {
-      tabBtnParams.classList.remove('active');
-      tabBtnContributors.classList.add('active');
-      tabPaneParams.classList.remove('active');
-      tabPaneContributors.classList.add('active');
+      if (tabBtnContributors) tabBtnContributors.classList.add('active');
+      if (tabPaneContributors) tabPaneContributors.classList.add('active');
       loadContributors();
+    } else if (target === 'flyer') {
+      if (tabBtnFlyer) tabBtnFlyer.classList.add('active');
+      if (tabPaneFlyer) tabPaneFlyer.classList.add('active');
     } else {
-      tabBtnContributors.classList.remove('active');
-      tabBtnParams.classList.add('active');
-      tabPaneContributors.classList.remove('active');
-      tabPaneParams.classList.add('active');
+      if (tabBtnParams) tabBtnParams.classList.add('active');
+      if (tabPaneParams) tabPaneParams.classList.add('active');
     }
   }
 
-  tabBtnParams.addEventListener('click', () => switchTab('params'));
-  tabBtnContributors.addEventListener('click', () => switchTab('contributors'));
+  if (tabBtnParams) tabBtnParams.addEventListener('click', () => switchTab('params'));
+  if (tabBtnFlyer) tabBtnFlyer.addEventListener('click', () => switchTab('flyer'));
+  if (tabBtnContributors) tabBtnContributors.addEventListener('click', () => switchTab('contributors'));
 
   const backdrop = document.getElementById('panel-backdrop');
 
@@ -255,7 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'ASCII_CHAR_SIZE',
     'ASCII_GLYPH_SCALE',
     'ASCII_TILE',
-    'ASCII_SPEED'
+    'ASCII_SPEED',
+    'CHAR_BG_OPACITY',
+    'LETTER_SPACING'
   ];
 
   const autoModeToggle = document.getElementById('param-AUTO_MODE');
@@ -293,6 +305,142 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const charBgToggle = document.getElementById('param-CHAR_BG_ENABLED');
+  if (charBgToggle) {
+    charBgToggle.addEventListener('change', () => {
+      applyConfigChange('CHAR_BG_ENABLED', charBgToggle.checked);
+    });
+  }
+
+  const charBgColorInput = document.getElementById('param-CHAR_BG_COLOR');
+  if (charBgColorInput) {
+    charBgColorInput.addEventListener('input', () => {
+      applyConfigChange('CHAR_BG_COLOR', charBgColorInput.value);
+    });
+  }
+
+  const flyerModeToggle = document.getElementById('param-FLYER_MODE_ENABLED');
+  if (flyerModeToggle) {
+    flyerModeToggle.addEventListener('change', () => {
+      applyConfigChange('FLYER_MODE_ENABLED', flyerModeToggle.checked);
+    });
+  }
+
+  // --- Gestión de Palabras de Flyer Mode ---
+  const flyerWordInput = document.getElementById('flyer-word-input');
+  const addFlyerWordBtn = document.getElementById('add-flyer-word-btn');
+  const clearFlyerWordsBtn = document.getElementById('clear-flyer-words-btn');
+  const flyerWordsListEl = document.getElementById('flyer-words-list');
+  let flyerWords = [];
+
+  function renderFlyerWordsList() {
+    if (!flyerWordsListEl) return;
+    flyerWordsListEl.innerHTML = '';
+
+    flyerWords.forEach((w, idx) => {
+      const pill = document.createElement('div');
+      pill.className = 'word-pill';
+      pill.title = 'Hacé click para re-posicionar o recrear esta palabra en el centro';
+
+      pill.innerHTML = `
+        <span>${w}</span>
+        <i class="fas fa-times remove-word-btn" title="Eliminar del flyer"></i>
+      `;
+
+      const removeBtn = pill.querySelector('.remove-word-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeFlyerWord(idx);
+        });
+      }
+
+      pill.addEventListener('click', () => {
+        if (window.spawnWordParticles) {
+          window.spawnWordParticles(w, window.innerWidth / 2, window.innerHeight / 2, true);
+        }
+      });
+
+      flyerWordsListEl.appendChild(pill);
+    });
+
+    if (flyerWords.length === 0) {
+      flyerWordsListEl.innerHTML = '<div style="padding: 10px; font-size: 11px; color: #64748b; width: 100%; text-align: center;">No hay palabras en la lista del flyer</div>';
+    }
+  }
+
+  function addFlyerWord(text, spawnOnCanvas = true) {
+    if (!text || !text.trim()) return;
+    const cleanWord = text.trim().toUpperCase();
+    flyerWords.push(cleanWord);
+
+    if (spawnOnCanvas && window.spawnWordParticles) {
+      window.spawnWordParticles(cleanWord, window.innerWidth / 2, window.innerHeight / 2, true);
+    }
+
+    applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    renderFlyerWordsList();
+  }
+
+  window.addFlyerWordToList = function(text) {
+    if (!text || !text.trim()) return;
+    const cleanWord = text.trim().toUpperCase();
+    if (!flyerWords.includes(cleanWord)) {
+      flyerWords.push(cleanWord);
+      applyConfigChange('FLYER_WORDS', [...flyerWords]);
+      renderFlyerWordsList();
+    }
+  };
+
+  function removeFlyerWord(idx) {
+    if (idx < 0 || idx >= flyerWords.length) return;
+    const removedText = flyerWords[idx];
+    flyerWords.splice(idx, 1);
+
+    if (window.removeFlyerWordParticles) {
+      window.removeFlyerWordParticles(removedText);
+    }
+
+    applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    renderFlyerWordsList();
+  }
+
+  function clearAllFlyerWords() {
+    flyerWords = [];
+    if (window.clearAllFlyerParticles) {
+      window.clearAllFlyerParticles();
+    }
+    applyConfigChange('FLYER_WORDS', []);
+    renderFlyerWordsList();
+  }
+
+  if (addFlyerWordBtn && flyerWordInput) {
+    addFlyerWordBtn.addEventListener('click', () => {
+      if (flyerWordInput.value) {
+        addFlyerWord(flyerWordInput.value);
+        flyerWordInput.value = '';
+      }
+    });
+
+    flyerWordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (flyerWordInput.value) {
+          addFlyerWord(flyerWordInput.value);
+          flyerWordInput.value = '';
+        }
+      }
+    });
+  }
+
+  if (clearFlyerWordsBtn) {
+    clearFlyerWordsBtn.addEventListener('click', () => {
+      if (flyerWords.length === 0) return;
+      clearAllFlyerWords();
+      showToast('Palabras del flyer borradas', 'info');
+    });
+  }
+
   const btnReloadShaders = document.getElementById('btn-reload-ascii-shaders');
   if (btnReloadShaders) {
     btnReloadShaders.addEventListener('click', () => {
@@ -302,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'];
+  const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4', 'CHAR_BG_COLOR'];
 
   // Aplicar cambio reactivo a p5
   function applyConfigChange(key, val) {
@@ -776,6 +924,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (asciiNoiseOnlyToggle && cfg.ASCII_NOISE_ONLY !== undefined) {
       asciiNoiseOnlyToggle.checked = !!cfg.ASCII_NOISE_ONLY;
     }
+
+    if (charBgToggle && cfg.CHAR_BG_ENABLED !== undefined) {
+      charBgToggle.checked = !!cfg.CHAR_BG_ENABLED;
+    }
+
+    if (flyerModeToggle && cfg.FLYER_MODE_ENABLED !== undefined) {
+      flyerModeToggle.checked = !!cfg.FLYER_MODE_ENABLED;
+    }
+
+    if (Array.isArray(cfg.FLYER_WORDS)) {
+      flyerWords = [...cfg.FLYER_WORDS];
+    }
+    renderFlyerWordsList();
 
     if (cfg.CHARACTERS && charInput) {
       charInput.value = cfg.CHARACTERS;
