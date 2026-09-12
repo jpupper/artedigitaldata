@@ -31,6 +31,8 @@
     MOUSE_FORCE_MAX: 2,
     DISPERSION_MIN: 0,
     DISPERSION_MAX: 0.5,
+    WORD_REPEL_RADIUS: 85,
+    WORD_REPEL_FORCE: 9.0,
     SPAWN_COUNT_MIN: 1,
     SPAWN_COUNT_MAX: 2,
     AUTO_MODE: false,
@@ -55,7 +57,8 @@
     CHAR_BG_COLOR: '#000000',
     CHAR_BG_OPACITY: 0.8,
     LETTER_SPACING: 1.0,
-    COLLAB_WORD_LIFESPAN: 15,
+    COLLAB_WORD_LIFESPAN: 0,
+    SHOW_MOUSE_RADIUS: false,
     FLYER_MODE_ENABLED: false,
     FLYER_WORDS: [],
     COLOR_1: '#40c4ff', // Cyan
@@ -683,6 +686,17 @@
         particles.splice(i, 1);
       }
     }
+
+    // Dibujar indicador visual del puntero de repulsión del mouse si está activo
+    if (CFG.SHOW_MOUSE_RADIUS) {
+      push();
+      noFill();
+      stroke(255, 255, 255, 180);
+      strokeWeight(1.5);
+      const repelRad = (CFG.WORD_REPEL_RADIUS !== undefined) ? Number(CFG.WORD_REPEL_RADIUS) : 85;
+      circle(mouseX, mouseY, repelRad * 2);
+      pop();
+    }
   };
 
   let lastTouchTimestamp = 0;
@@ -733,28 +747,6 @@
       return;
     }
 
-    // En COLLABMODE: si se hace click sobre una palabra o partícula activa, SE BORRA
-    let clickedParticle = null;
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      if (p instanceof WordParticle && p.visible && p.isShowing) {
-        const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
-        if (d < 45) {
-          clickedParticle = p;
-          break;
-        }
-      }
-    }
-
-    if (clickedParticle) {
-      const wordToRemove = clickedParticle.fullWord || clickedParticle.char;
-      particles.forEach(p => {
-        if (p instanceof WordParticle && (p.fullWord === wordToRemove || p === clickedParticle)) {
-          p.despawn();
-        }
-      });
-      return;
-    }
 
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
     if (!words.length) return;
@@ -868,7 +860,8 @@
       this.pos = createVector(x, y);
       
       let dir = mVel.copy(); 
-      let speedMult = constrain(mVel.mag() * CFG.MOUSE_FORCE_MULT, CFG.MOUSE_FORCE_MIN, CFG.MOUSE_FORCE_MAX);
+      const mouseMult = (CFG.MOUSE_FORCE_MULT !== undefined) ? Number(CFG.MOUSE_FORCE_MULT) : 1.1;
+      let speedMult = mVel.mag() * mouseMult;
       
       if (dir.magSq() > 0) {
         dir.normalize();
@@ -958,8 +951,21 @@
         this.scale = 1;
       }
 
+      // Repulsión por proximidad del mouse multiplicada por MOUSE_FORCE_MULT
+      const dMouse = dist(this.pos.x, this.pos.y, mouseX, mouseY);
+      const repelRadius = (CFG.WORD_REPEL_RADIUS !== undefined) ? Number(CFG.WORD_REPEL_RADIUS) : 85;
+      const baseRepelForce = (CFG.WORD_REPEL_FORCE !== undefined) ? Number(CFG.WORD_REPEL_FORCE) : 9.0;
+      const mouseMult = (CFG.MOUSE_FORCE_MULT !== undefined) ? Number(CFG.MOUSE_FORCE_MULT) : 1.1;
+      const maxRepelForce = baseRepelForce * mouseMult;
+      if (repelRadius > 0 && maxRepelForce > 0 && dMouse < repelRadius && dMouse > 0) {
+        const repelDir = p5.Vector.sub(this.pos, createVector(mouseX, mouseY));
+        const forceMag = map(dMouse, 0, repelRadius, maxRepelForce * 0.5, 0.1 * mouseMult);
+        repelDir.setMag(forceMag);
+        this.acc.add(repelDir);
+      }
+
       this.vel.add(this.acc);
-      this.vel.limit(CFG.MAX_SPEED);
+      this.vel.limit(CFG.MAX_SPEED * Math.max(1, mouseMult));
       this.pos.add(this.vel);
       this.acc.mult(0);
       this.lifespan -= this.decay;
@@ -1020,8 +1026,8 @@
       this.visible = true;
 
       this.lifespan = 255;
-      this.holdTime = isFlyer ? Infinity : 80;
-      this.decay = isFlyer ? 0 : 2.2;
+      this.holdTime = Infinity;
+      this.decay = 0;
       this.maxSpeed = Math.max(8, CFG.MAX_SPEED * 2.0);
       this.maxForce = Math.max(0.6, CFG.MAX_FORCE * 1.5);
       this.noiseSeed = random(1000);
@@ -1032,8 +1038,7 @@
 
       this.age = 0;
       this.spawnTime = millis();
-      const totalWordLife = 30 + (isFlyer ? 100 : this.holdTime) + (255 / (this.decay || 1));
-      this.scaleInDuration = Math.max(1, totalWordLife * 0.15);
+      this.scaleInDuration = 15;
       this.scale = 0;
 
       if (customColor && typeof color === 'function') {
@@ -1102,12 +1107,15 @@
 
       // Repulsor por proximidad del Mouse para Flyer Mode y palabras activas
       const dMouse = dist(this.pos.x, this.pos.y, mouseX, mouseY);
-      const repelRadius = 85;
+      const repelRadius = (CFG.WORD_REPEL_RADIUS !== undefined) ? Number(CFG.WORD_REPEL_RADIUS) : 85;
+      const baseRepelForce = (CFG.WORD_REPEL_FORCE !== undefined) ? Number(CFG.WORD_REPEL_FORCE) : 9.0;
+      const mouseMult = (CFG.MOUSE_FORCE_MULT !== undefined) ? Number(CFG.MOUSE_FORCE_MULT) : 1.1;
+      const maxRepelForce = baseRepelForce * mouseMult;
       let isRepelled = false;
-      if (dMouse < repelRadius && dMouse > 0) {
+      if (repelRadius > 0 && maxRepelForce > 0 && dMouse < repelRadius && dMouse > 0) {
         isRepelled = true;
         const repelDir = p5.Vector.sub(this.pos, createVector(mouseX, mouseY));
-        const forceMag = map(dMouse, 0, repelRadius, 9.0, 0.2);
+        const forceMag = map(dMouse, 0, repelRadius, maxRepelForce, 0.2 * mouseMult);
         repelDir.setMag(forceMag);
         this.acc.add(repelDir);
       }
@@ -1141,15 +1149,24 @@
         }
         this.lifespan = 255;
       } else {
-        if (d < 5) {
-          if (this.holdTime > 0) {
-            this.holdTime--;
-          } else {
-            this.lifespan -= this.decay;
-            this.vel.add(p5.Vector.random2D().mult(0.3));
+        if (!CFG.COLLAB_WORD_LIFESPAN || Number(CFG.COLLAB_WORD_LIFESPAN) <= 0) {
+          this.lifespan = 255;
+          if (d < 3 && !isRepelled) {
+            this.vel.mult(0.35);
           }
         } else {
-          this.lifespan -= 0.15;
+          if (d < 5) {
+            if (this.holdTime > 0 && this.holdTime !== Infinity) {
+              this.holdTime--;
+            } else if (this.holdTime !== Infinity) {
+              this.lifespan -= this.decay;
+              this.vel.add(p5.Vector.random2D().mult(0.3));
+            }
+          } else {
+            if (this.holdTime !== Infinity) {
+              this.lifespan -= 0.15;
+            }
+          }
         }
       }
     }

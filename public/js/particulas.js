@@ -316,6 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'ASCII_SPEED',
     'CHAR_BG_OPACITY',
     'LETTER_SPACING',
+    'WORD_REPEL_RADIUS',
+    'WORD_REPEL_FORCE',
     'COLLAB_WORD_LIFESPAN',
     'POS_X',
     'POS_Y'
@@ -360,6 +362,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (charBgToggle) {
     charBgToggle.addEventListener('change', () => {
       applyConfigChange('CHAR_BG_ENABLED', charBgToggle.checked);
+    });
+  }
+
+  const showMouseRadiusToggle = document.getElementById('param-SHOW_MOUSE_RADIUS');
+  if (showMouseRadiusToggle) {
+    showMouseRadiusToggle.addEventListener('change', () => {
+      applyConfigChange('SHOW_MOUSE_RADIUS', showMouseRadiusToggle.checked);
     });
   }
 
@@ -1910,10 +1919,10 @@ document.addEventListener('DOMContentLoaded', () => {
       patch['FLOWFIELD_SCALE'] = val;
     }
     if (key === 'LIFESPAN_DECAY_MAX') {
-      patch['LIFESPAN_DECAY_MIN'] = Math.max(0.2, +(val * 0.4).toFixed(1));
+      patch['LIFESPAN_DECAY_MIN'] = +(val * 0.4).toFixed(1);
     }
     if (key === 'SPAWN_RADIUS_MAX') {
-      patch['SPAWN_RADIUS_MIN'] = Math.max(10, Math.round(val * 0.25));
+      patch['SPAWN_RADIUS_MIN'] = Math.round(val * 0.25);
     }
     if (key === 'SPAWN_COUNT_MAX') {
       const currentMin = window.ParticlesConfig ? (window.ParticlesConfig.get().SPAWN_COUNT_MIN || 1) : 1;
@@ -1936,10 +1945,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (['TEXT_SIZE_MAX', 'LETTER_SPACING', 'POS_X', 'POS_Y'].includes(key) && isUserSliderDrag && window.activeFlyerWordId && window.updateFlyerWordParticles) {
       const cfg = window.ParticlesConfig ? window.ParticlesConfig.get() : {};
       const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === (window.activeFlyerWordId || selectedFlyerWordId));
-      const newFontSize = key === 'TEXT_SIZE_MAX' ? val : (matchingWord && matchingWord.fontSize ? matchingWord.fontSize : (cfg.TEXT_SIZE_MAX || 36));
-      const newSpacing = key === 'LETTER_SPACING' ? val : (matchingWord && matchingWord.letterSpacing ? matchingWord.letterSpacing : (cfg.LETTER_SPACING || 10));
-      const newX = key === 'POS_X' ? val : (matchingWord && matchingWord.x !== undefined ? matchingWord.x : (cfg.POS_X || (window.innerWidth / 2)));
-      const newY = key === 'POS_Y' ? val : (matchingWord && matchingWord.y !== undefined ? matchingWord.y : (cfg.POS_Y || (window.innerHeight / 2)));
+      const newFontSize = key === 'TEXT_SIZE_MAX' ? val : (matchingWord && matchingWord.fontSize !== undefined ? matchingWord.fontSize : (cfg.TEXT_SIZE_MAX !== undefined ? cfg.TEXT_SIZE_MAX : 36));
+      const newSpacing = key === 'LETTER_SPACING' ? val : (matchingWord && matchingWord.letterSpacing !== undefined ? matchingWord.letterSpacing : (cfg.LETTER_SPACING !== undefined ? cfg.LETTER_SPACING : 10));
+      const newX = key === 'POS_X' ? val : (matchingWord && matchingWord.x !== undefined ? matchingWord.x : (cfg.POS_X !== undefined ? cfg.POS_X : (window.innerWidth / 2)));
+      const newY = key === 'POS_Y' ? val : (matchingWord && matchingWord.y !== undefined ? matchingWord.y : (cfg.POS_Y !== undefined ? cfg.POS_Y : (window.innerHeight / 2)));
 
       if (matchingWord) {
         matchingWord.x = newX;
@@ -1957,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Conectar sliders con textfields bidireccionalmente
+  // Conectar sliders con textfields bidireccionalmente sin restricción de rango en textfields
   numericFields.forEach(key => {
     const slider = document.getElementById(`param-${key}`);
     const textInput = document.getElementById(`num-${key}`);
@@ -1969,12 +1978,21 @@ document.addEventListener('DOMContentLoaded', () => {
       applyConfigChange(key, val, true);
     });
 
+    textInput.addEventListener('input', () => {
+      let val = parseFloat(textInput.value);
+      if (!isNaN(val)) {
+        slider.value = val;
+        applyConfigChange(key, val, true);
+      }
+    });
+
     textInput.addEventListener('change', () => {
       let val = parseFloat(textInput.value);
-      if (isNaN(val)) val = parseFloat(slider.value);
-      val = Math.min(Math.max(val, parseFloat(slider.min)), parseFloat(slider.max));
-      slider.value = val;
+      if (isNaN(val)) {
+        val = parseFloat(slider.value) || 0;
+      }
       textInput.value = val;
+      slider.value = val;
       applyConfigChange(key, val, true);
     });
   });
@@ -1995,6 +2013,17 @@ document.addEventListener('DOMContentLoaded', () => {
       applyConfigChange('CHARACTERS', charInput.value);
     });
   }
+
+  // Collapsible category groups toggle
+  document.querySelectorAll('.param-group .group-title').forEach(header => {
+    header.addEventListener('click', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.closest('.switch-ui'))) return;
+      const group = header.closest('.param-group');
+      if (group) {
+        group.classList.toggle('collapsed');
+      }
+    });
+  });
 
   // --- Gestión de Palabras (Atractor) ---
   function getInitialWords() {
@@ -2425,6 +2454,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (charBgToggle && cfg.CHAR_BG_ENABLED !== undefined) {
       charBgToggle.checked = !!cfg.CHAR_BG_ENABLED;
+    }
+
+    const showMouseRadiusToggleSync = document.getElementById('param-SHOW_MOUSE_RADIUS');
+    if (showMouseRadiusToggleSync && cfg.SHOW_MOUSE_RADIUS !== undefined) {
+      showMouseRadiusToggleSync.checked = !!cfg.SHOW_MOUSE_RADIUS;
     }
 
     if (flyerModeToggle && cfg.FLYER_MODE_ENABLED !== undefined) {
