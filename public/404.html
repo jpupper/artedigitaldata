@@ -1,291 +1,266 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Acantilado | Arte Digital Data</title>
-    <meta name="description" content="Llegaste a un acantilado, no hay nada acá. Página no encontrada.">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/404.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERROR 404 - Acantilado | Arte Digital Data</title>
+  <meta name="description" content="Llegaste a un acantilado acá no hay nada. Error 404 - Arte Digital Data.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body>
-    <div class="container">
-        <h1>404</h1>
-        <p>"Llegaste a un acantilado, no hay nada acá"</p>
-        
-        <div id="game-container"></div>
+  <!-- Fondo con el shader WebGL y partículas de letras -->
+  <div id="p5-canvas"></div>
 
-        <a href="/" class="btn-home">Volver al Inicio</a>
-        <div class="instructions">Usa las flechas ← → para manejar el cuatriciclo</div>
+  <!-- Tarjeta de composición principal -->
+  <main class="container">
+    <!-- Canvas generativo de líneas sugiriendo el acantilado -->
+    <div class="cliff-wrapper" id="cliff-wrapper">
+      <canvas id="cliff-canvas"></canvas>
     </div>
 
-    <script>
-        let segments = [];
-        let playerX = 0; 
-        let roadWidth = 220;
-        let speed = 8;
-        let score = 0;
-        let gameActive = true;
-        let horizon = 0;
-        let totalSegments = 60;
-        let curve = 0;
-        let targetCurve = 0;
-        let curveTimer = 0;
-        let particles = [];
+    <!-- Título y mensaje solicitado -->
+    <h1 class="error-title">ERROR 404</h1>
+    <p class="error-subtitle">"Llegaste a un acantilado acá no hay nada"</p>
 
-        function setup() {
-            let container = document.getElementById('game-container');
-            let canvas = createCanvas(container.offsetWidth, container.offsetHeight);
-            canvas.parent('game-container');
-            
-            horizon = height * 0.45;
-            playerX = width / 2;
-            
-            for (let i = 0; i < totalSegments; i++) {
-                segments.push({
-                    x: width / 2, 
-                    w: roadWidth,
-                    color: i % 4 < 2 ? '#111' : '#1a1a1a',
-                    rumble: i % 4 < 2 ? '#ff00e0' : '#00f5ff'
-                });
+    <!-- Botón de regreso al inicio -->
+    <a href="/" id="btn-back-home" class="btn-home">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver al Inicio</span>
+    </a>
+  </main>
+
+  <!-- Scripts para el efecto de fondo (Shader WebGL + p5 Partículas de Letras) -->
+  <script src="js/config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
+
+  <!-- Script del dibujo generativo de líneas del acantilado -->
+  <script>
+    (function() {
+      // Configurar enlace de retorno dinámico según el entorno
+      const homeBtn = document.getElementById('btn-back-home');
+      if (homeBtn) {
+        const basePath = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE : '';
+        homeBtn.href = (basePath || '') + '/index.html';
+      }
+
+      const canvas = document.getElementById('cliff-canvas');
+      const wrapper = document.getElementById('cliff-wrapper');
+      if (!canvas || !wrapper) return;
+
+      const ctx = canvas.getContext('2d');
+      let animationFrameId = null;
+      let width = 0;
+      let height = 0;
+      let mouseX = 0;
+      let mouseY = 0;
+      let targetTiltX = 0;
+      let targetTiltY = 0;
+      let currentTiltX = 0;
+      let currentTiltY = 0;
+
+      // Partículas cayendo por el acantilado
+      const particles = [];
+      const MAX_PARTICLES = 30;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = wrapper.clientWidth || 500;
+        height = wrapper.clientHeight || 200;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Interacción sutil con el ratón
+      window.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left - 50 &&
+          e.clientX <= rect.right + 50 &&
+          e.clientY >= rect.top - 50 &&
+          e.clientY <= rect.bottom + 50
+        ) {
+          mouseX = (e.clientX - rect.left) / width - 0.5;
+          mouseY = (e.clientY - rect.top) / height - 0.5;
+          targetTiltX = mouseX * 18;
+          targetTiltY = mouseY * 12;
+        } else {
+          targetTiltX = 0;
+          targetTiltY = 0;
+        }
+      });
+
+      // Inicializar partículas del abismo
+      for (let i = 0; i < MAX_PARTICLES; i++) {
+        particles.push({
+          x: Math.random(),
+          y: Math.random(),
+          speed: 0.002 + Math.random() * 0.004,
+          size: 1 + Math.random() * 2,
+          alpha: 0.2 + Math.random() * 0.6,
+          hue: Math.random() > 0.5 ? '#00f5ff' : '#ff00e0'
+        });
+      }
+
+      let time = 0;
+
+      function drawCliff() {
+        time += 0.02;
+        currentTiltX += (targetTiltX - currentTiltX) * 0.08;
+        currentTiltY += (targetTiltY - currentTiltY) * 0.08;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Fondo atmosférico profundo
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+        bgGrad.addColorStop(0, '#0a0d18');
+        bgGrad.addColorStop(0.6, '#06070d');
+        bgGrad.addColorStop(1, '#030406');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Dibujar niebla / partículas cayendo en el abismo (lado derecho)
+        particles.forEach(p => {
+          p.y += p.speed;
+          if (p.y > 1) {
+            p.y = 0;
+            p.x = 0.52 + Math.random() * 0.45;
+          }
+          const px = p.x * width + Math.sin(time + p.y * 6) * 6 + currentTiltX * 0.5;
+          const py = p.y * height;
+          ctx.fillStyle = p.hue;
+          ctx.globalAlpha = p.alpha * (0.3 + Math.sin(time * 2 + p.x * 10) * 0.2);
+          ctx.fillRect(px, py, p.size, p.size * 2);
+        });
+        ctx.globalAlpha = 1.0;
+
+        // Líneas generativas del acantilado
+        const TOTAL_LINES = 22;
+        const cliffEdgePoints = [];
+
+        for (let i = 0; i < TOTAL_LINES; i++) {
+          const depth = (i + 1) / TOTAL_LINES; // 0 (lejos) a 1 (cerca)
+          const baseY = height * 0.24 + depth * (height * 0.68) + currentTiltY * (depth - 0.5);
+
+          // Coordenada X donde ocurre la ruptura del acantilado
+          // Ondula suavemente con el tiempo y la profundidad
+          const cliffBreakFactor = 0.52 + Math.sin(depth * 3.4 + time * 0.25) * 0.03 + Math.cos(depth * 7.1 - time * 0.15) * 0.015;
+          const cliffBreakX = width * cliffBreakFactor + currentTiltX * depth;
+
+          // Meseta (lado izquierdo hasta el borde)
+          ctx.beginPath();
+          let edgeY = baseY;
+
+          const steps = 36;
+          for (let s = 0; s <= steps; s++) {
+            const u = (s / steps) * cliffBreakFactor;
+            const x = u * width + currentTiltX * depth * (u / cliffBreakFactor);
+
+            // Elevación del terreno con armónicos sinusoidales generativos
+            const wave1 = Math.sin(u * 14 + time * 0.8 + depth * 4.0) * 6;
+            const wave2 = Math.cos(u * 28 - time * 0.5 + depth * 2.0) * 3;
+            const wave3 = Math.sin(u * 45 + depth * 8.0) * 1.5;
+            const elevation = (wave1 + wave2 + wave3) * (0.7 + depth * 0.6);
+
+            const y = baseY - elevation - 14 * depth;
+
+            if (s === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
             }
+
+            if (s === steps) {
+              edgeY = y;
+            }
+          }
+
+          // Guardar puntos del borde para trazar la pared vertical y resplandor
+          cliffEdgePoints.push({ x: cliffBreakX, y: edgeY, depth: depth, baseY: baseY });
+
+          // Estilo de la línea de la meseta: Cyan neón con gradiente de profundidad
+          const plateauAlpha = 0.35 + depth * 0.65;
+          ctx.strokeStyle = `rgba(0, 245, 255, ${plateauAlpha.toFixed(2)})`;
+          ctx.lineWidth = 1.0 + depth * 0.9;
+          ctx.stroke();
+
+          // Caída vertical abrupta por el acantilado (Sheer drop-off hacia el abismo)
+          ctx.beginPath();
+          ctx.moveTo(cliffBreakX, edgeY);
+
+          // Pequeña fractura jagged en la pared
+          const midFallX = cliffBreakX + (Math.sin(depth * 10 + time) * 3);
+          const fallBottomY = Math.min(height - 4, baseY + 18 + depth * 22);
+          ctx.lineTo(midFallX, (edgeY + fallBottomY) * 0.5);
+          ctx.lineTo(cliffBreakX + 4, fallBottomY);
+
+          // Estilo de la caída vertical: Magenta neón
+          const dropAlpha = 0.25 + depth * 0.65;
+          ctx.strokeStyle = `rgba(255, 0, 224, ${dropAlpha.toFixed(2)})`;
+          ctx.lineWidth = 1.2 + depth * 0.8;
+          ctx.stroke();
+
+          // Fondo abisal / vacío (a la derecha del acantilado): líneas tenues en la profundidad
+          ctx.beginPath();
+          ctx.moveTo(cliffBreakX + 10, fallBottomY);
+          const abyssSteps = 16;
+          for (let as = 1; as <= abyssSteps; as++) {
+            const au = as / abyssSteps;
+            const ax = (cliffBreakX + 10) + au * (width - cliffBreakX - 10);
+            const ay = fallBottomY + Math.sin(au * 8 + time + depth * 3) * 3;
+            ctx.lineTo(ax, ay);
+          }
+          ctx.strokeStyle = `rgba(148, 163, 184, ${ (0.05 + depth * 0.12).toFixed(2) })`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
         }
 
-        function draw() {
-            if (!gameActive) {
-                background(13, 13, 18, 220);
-                fill(255);
-                noStroke();
-                textSize(32);
-                textAlign(CENTER, CENTER);
-                text("¡TE CAÍSTE!", width / 2, height / 2 - 20);
-                textSize(16);
-                fill(148, 163, 184);
-                text("Presiona R para reintentar", width / 2, height / 2 + 30);
-                updateParticles();
-                return;
-            }
+        // Trazar cresta de ruptura / borde del acantilado con brillo cyan intenso
+        if (cliffEdgePoints.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(cliffEdgePoints[0].x, cliffEdgePoints[0].y);
+          for (let p = 1; p < cliffEdgePoints.length; p++) {
+            ctx.lineTo(cliffEdgePoints[p].x, cliffEdgePoints[p].y);
+          }
+          ctx.strokeStyle = 'rgba(0, 245, 255, 0.95)';
+          ctx.lineWidth = 2.2;
+          ctx.shadowColor = '#00F5FF';
+          ctx.shadowBlur = 12;
+          ctx.stroke();
+          ctx.shadowBlur = 0; // Reset
 
-            // Sky
-            background(13, 13, 18);
-            noStroke();
-            for(let i=0; i<horizon; i++) {
-                let inter = map(i, 0, horizon, 0, 1);
-                let c = lerpColor(color(10, 10, 20), color(26, 26, 46), inter);
-                stroke(c);
-                line(0, i, width, i);
-            }
-            
-            // Abyss
-            noStroke();
-            fill(5, 5, 8);
-            rect(0, horizon, width, height - horizon);
-
-            // Road Logic
-            curveTimer--;
-            if (curveTimer <= 0) {
-                targetCurve = random(-5, 5);
-                curveTimer = random(40, 100);
-            }
-            curve = lerp(curve, targetCurve, 0.04);
-
-            let lastX = segments[segments.length - 1].x;
-            let newX = lastX + curve;
-            newX = constrain(newX, width * 0.1, width * 0.9);
-            
-            segments.shift();
-            segments.push({
-                x: newX,
-                w: roadWidth,
-                color: frameCount % 8 < 4 ? '#111' : '#1a1a1a',
-                rumble: frameCount % 8 < 4 ? '#ff00e0' : '#00f5ff'
-            });
-
-            // Render Road
-            for (let i = segments.length - 1; i >= 0; i--) {
-                let segment = segments[i];
-                let perspective = 1 / (i * 0.12 + 1);
-                
-                let y = horizon + (height - horizon) * (1 - perspective);
-                let nextPerspective = 1 / ((i-1) * 0.12 + 1);
-                let nextY = horizon + (height - horizon) * (1 - nextPerspective);
-                
-                let w = roadWidth * perspective;
-                let x = segment.x; 
-                
-                let nextSegment = segments[i-1] || segment;
-                let nextW = roadWidth * nextPerspective;
-                let nextX = nextSegment.x;
-
-                let screenX = width/2 + (x - width/2) * perspective;
-                let nextScreenX = width/2 + (nextX - width/2) * nextPerspective;
-
-                // Cliff
-                fill(20, 15, 30);
-                beginShape();
-                vertex(screenX - w, y);
-                vertex(screenX - w, y + 100);
-                vertex(nextScreenX - nextW, nextY + 100);
-                vertex(nextScreenX - nextW, nextY);
-                endShape(CLOSE);
-                
-                beginShape();
-                vertex(screenX + w, y);
-                vertex(screenX + w, y + 100);
-                vertex(nextScreenX + nextW, nextY + 100);
-                vertex(nextScreenX + nextW, nextY);
-                endShape(CLOSE);
-
-                // Road
-                fill(segment.color);
-                beginShape();
-                vertex(screenX - w, y);
-                vertex(screenX + w, y);
-                vertex(nextScreenX + nextW, nextY);
-                vertex(nextScreenX - nextW, nextY);
-                endShape(CLOSE);
-
-                // Rumble
-                fill(segment.rumble);
-                rect(screenX - w - 2, y, 4 * perspective, nextY - y);
-                rect(screenX + w - 2, y, 4 * perspective, nextY - y);
-            }
-
-            // Controls
-            if (keyIsDown(LEFT_ARROW)) playerX -= 7;
-            if (keyIsDown(RIGHT_ARROW)) playerX += 7;
-            playerX = constrain(playerX, 10, width - 10);
-
-            // Draw ATV (Fixed perspective)
-            push();
-            translate(playerX, height - 70);
-            
-            // Subtle tilt
-            if (keyIsDown(LEFT_ARROW)) rotate(-0.06);
-            if (keyIsDown(RIGHT_ARROW)) rotate(0.06);
-
-            // Shadow
-            fill(0, 120);
-            noStroke();
-            ellipse(0, 15, 75, 22);
-
-            // Wheels (Driving away)
-            fill(15);
-            // Rear Wheels
-            rect(-32, 0, 18, 28, 5); 
-            rect(14, 0, 18, 28, 5);  
-            // Front Wheels
-            rect(-28, -38, 14, 22, 5); 
-            rect(14, -38, 14, 22, 5);  
-
-            // Body
-            fill(0, 245, 255); 
-            beginShape();
-            vertex(-20, 10); 
-            vertex(20, 10);  
-            vertex(14, -36); 
-            vertex(-14, -36);
-            endShape(CLOSE);
-
-            // Seat
-            fill(30);
-            rect(-12, -12, 24, 24, 6);
-
-            // Handlebars (At the top = front)
-            stroke(255, 0, 224); 
-            strokeWeight(5);
-            line(-22, -34, 22, -34);
-            // Grips
-            stroke(0);
-            line(-22, -34, -16, -34);
-            line(16, -34, 22, -34);
-
-            pop();
-
-            // Collision
-            let bottomRoadX = segments[0].x;
-            if (abs(playerX - bottomRoadX) > roadWidth / 2 + 10) {
-                gameOver();
-            }
-
-            score += speed;
-            fill(0, 245, 255);
-            noStroke();
-            textSize(18);
-            textAlign(LEFT);
-            text("Distancia: " + floor(score/10) + "m", 25, 40);
-            
-            if (frameCount % 4 === 0) {
-                particles.push({
-                    x: random(width),
-                    y: horizon,
-                    vy: random(2, 6),
-                    life: 255,
-                    c: color(0, 245, 255, 100)
-                });
-            }
-            updateParticles();
+          // Pulso de advertencia en el borde más cercano del precipicio
+          const frontPoint = cliffEdgePoints[cliffEdgePoints.length - 1];
+          const pulse = (Math.sin(time * 3.5) + 1) * 0.5;
+          ctx.beginPath();
+          ctx.arc(frontPoint.x, frontPoint.y, 3.5 + pulse * 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 0, 224, ${ (0.7 + pulse * 0.3).toFixed(2) })`;
+          ctx.shadowColor = '#FF00E0';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
 
-        function gameOver() {
-            gameActive = false;
-            for(let i=0; i<30; i++) {
-                particles.push({
-                    x: playerX,
-                    y: height - 70,
-                    vx: random(-6, 6),
-                    vy: random(-12, 0),
-                    life: 255,
-                    c: random(1) > 0.5 ? color(255, 0, 224) : color(0, 245, 255)
-                });
-            }
-        }
+        animationFrameId = requestAnimationFrame(drawCliff);
+      }
 
-        function updateParticles() {
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                if (gameActive) {
-                    stroke(p.c);
-                    line(p.x, p.y, p.x, p.y + p.vy * 3);
-                    p.y += p.vy * 2;
-                } else {
-                    noStroke();
-                    fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life);
-                    circle(p.x, p.y, 6);
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.25;
-                }
-                p.life -= 4;
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-        }
+      drawCliff();
 
-        function keyPressed() {
-            if ((key === 'r' || key === 'R') && !gameActive) {
-                gameActive = true;
-                playerX = width / 2;
-                score = 0;
-                segments = [];
-                particles = [];
-                for (let i = 0; i < totalSegments; i++) {
-                    segments.push({
-                        x: width / 2,
-                        w: roadWidth,
-                        color: i % 4 < 2 ? '#111' : '#1a1a1a',
-                        rumble: i % 4 < 2 ? '#ff00e0' : '#00f5ff'
-                    });
-                }
-            }
+      window.addEventListener('beforeunload', () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
         }
-
-        function windowResized() {
-            let container = document.getElementById('game-container');
-            resizeCanvas(container.offsetWidth, container.offsetHeight);
-        }
-    </script>
+      });
+    })();
+  </script>
 </body>
 </html>

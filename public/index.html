@@ -67,17 +67,212 @@
       box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
     }
 
-    /* === TAMAÑO DEL LOGO PRINCIPAL (Modificá este valor para cambiar el alto) === */
-    .hero-logo {
-      height: 100px; /* <--- Cambiá este alto a tu gusto (ej: 80px, 100px, 120px) */
-      width: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 0 25px rgba(0, 245, 255, 0.35));
-      margin-bottom: 1rem;
-      transition: transform 0.3s ease;
+    /* === SOLAR SYSTEM HERO === */
+    .sun-stage {
+      position: relative;
+      width: 310px;
+      height: 310px;
+      margin: 1rem auto 2rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .hero-logo:hover {
-      transform: scale(1.05);
+    @media (min-width: 640px) {
+      .sun-stage {
+        width: 380px;
+        height: 380px;
+        margin: 1.5rem auto 2.5rem auto;
+      }
+    }
+    @media (min-width: 768px) {
+      .sun-stage {
+        width: 440px;
+        height: 440px;
+        margin: 2rem auto 3rem auto;
+      }
+    }
+
+    /* Sol Central & Corona */
+    .sun-core-wrap {
+      position: absolute;
+      z-index: 20;
+      width: 106px;
+      height: 106px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @media (min-width: 640px) {
+      .sun-core-wrap {
+        width: 126px;
+        height: 126px;
+      }
+    }
+    @media (min-width: 768px) {
+      .sun-core-wrap {
+        width: 144px;
+        height: 144px;
+      }
+    }
+
+    .sun-corona {
+      position: absolute;
+      inset: -24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 190, 20, 0.75) 0%, rgba(255, 110, 0, 0.45) 45%, rgba(255, 50, 0, 0.12) 70%, transparent 85%);
+      filter: blur(14px);
+      animation: sunGlowPulse 3.8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    .sun-flares {
+      position: absolute;
+      inset: -40px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(255, 210, 50, 0.5) 0deg,
+        transparent 25deg,
+        rgba(255, 120, 0, 0.4) 50deg,
+        transparent 75deg,
+        rgba(255, 235, 80, 0.55) 100deg,
+        transparent 125deg,
+        rgba(255, 90, 0, 0.35) 150deg,
+        transparent 175deg,
+        rgba(255, 220, 50, 0.5) 200deg,
+        transparent 225deg,
+        rgba(255, 140, 0, 0.45) 250deg,
+        transparent 275deg,
+        rgba(255, 245, 90, 0.55) 300deg,
+        transparent 325deg,
+        rgba(255, 210, 50, 0.5) 360deg
+      );
+      filter: blur(8px);
+      animation: sunFlaresSpin 45s linear infinite;
+      pointer-events: none;
+    }
+    .sun-disc {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255, 240, 180, 0.95), rgba(255, 145, 10, 0.88) 60%, rgba(210, 65, 0, 0.98) 100%);
+      box-shadow: 0 0 35px rgba(255, 175, 0, 0.9), 0 0 75px rgba(255, 90, 0, 0.65), inset 0 0 20px rgba(255, 255, 255, 0.6);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255, 235, 160, 0.85);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+    .sun-disc:hover {
+      transform: scale(1.07);
+    }
+    .sun-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+    }
+
+    @keyframes sunGlowPulse {
+      0% { transform: scale(0.93); opacity: 0.75; }
+      100% { transform: scale(1.14); opacity: 1; }
+    }
+    @keyframes sunFlaresSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Anillo Orbital */
+    .orbit-ring {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(255, 195, 80, 0.22);
+      box-shadow: 0 0 30px rgba(255, 175, 0, 0.08), inset 0 0 30px rgba(255, 175, 0, 0.08);
+      pointer-events: none;
+    }
+
+    /* Moons Orbit Rotator */
+    .orbit-rotator {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: moonsOrbit 80s linear infinite;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* Moons Counter-Rotation (para mantener los textos siempre nivelados) */
+    .moon-unit {
+      position: absolute;
+      pointer-events: auto;
+      transform-origin: center center;
+    }
+    .moon-counter {
+      animation: moonsCounter 80s linear infinite;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* Ubicaciones de las 4 Lunas (Norte, Este, Sur, Oeste) */
+    .moon-north {
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .moon-east {
+      top: 50%;
+      right: 0;
+      transform: translate(50%, -50%);
+    }
+    .moon-south {
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, 50%);
+    }
+    .moon-west {
+      top: 50%;
+      left: 0;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes moonsOrbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes moonsCounter {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+
+    /* Moon Buttons */
+    .moon-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.25s ease;
+    }
+    .moon-pill:hover {
+      transform: scale(1.12);
     }
   </style>
 </head>
@@ -86,32 +281,73 @@
   <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></div>
   <div id="app-header" style="position: relative; z-index: 100;"></div>
 
-  <main class="pt-20 pb-10 max-w-7xl mx-auto px-4" style="position: relative; z-index: 10;">
-    <!-- Hero Section -->
-    <section class="mb-8 text-center pt-6 pb-2 flex flex-col items-center justify-center">
-      <img src="img/artedigital.png" alt="Arte Digital Data" class="hero-logo">
-      <p class="text-white text-lg md:text-xl max-w-2xl mx-auto font-medium">
-        La red social para artistas digitales.
-      </p>
-      <div id="hero-cta"></div>
-    </section>
+  <main class="pt-16 pb-10 max-w-7xl mx-auto px-4" style="position: relative; z-index: 10;">
+    <!-- Hero / Solar System Section -->
+    <section class="text-center pt-2 pb-2 flex flex-col items-center justify-center relative select-none">
+      
+      <!-- Solar Orbit Container -->
+      <div id="solar-system" class="sun-stage">
+        
+        <!-- Sol (Center Logo + Solar Corona + Flares) -->
+        <div class="sun-core-wrap">
+          <div class="sun-corona"></div>
+          <div class="sun-flares"></div>
+          <div class="sun-disc">
+            <img src="img/artedigital.png" alt="Arte Digital Data" class="sun-logo-img">
+          </div>
+        </div>
 
-    <!-- Feed Filters (2x2 Grid) -->
-    <section class="mb-8">
-      <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto">
-        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active flex items-center justify-center gap-2.5 px-6 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap">
-          <i class="fas fa-palette text-sm shrink-0"></i><span>Obras</span>
-        </button>
-        <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active flex items-center justify-center gap-2.5 px-6 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap">
-          <i class="fas fa-briefcase text-sm shrink-0"></i><span>Oportunidades</span>
-        </button>
-        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active flex items-center justify-center gap-2.5 px-6 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap">
-          <i class="fas fa-calendar-alt text-sm shrink-0"></i><span>Eventos</span>
-        </button>
-        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active flex items-center justify-center gap-2.5 px-6 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap">
-          <i class="fas fa-box-open text-sm shrink-0"></i><span>Recursos</span>
-        </button>
+        <!-- Anillo Orbital -->
+        <div class="orbit-ring"></div>
+
+        <!-- Orbiting Moons Carrier (4 categorías que orbitan muy lentamente alrededor del sol) -->
+        <div id="orbit-rotator" class="orbit-rotator">
+          
+          <!-- Luna 1: Obras (Norte) -->
+          <div class="moon-unit moon-north">
+            <div class="moon-counter">
+              <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active moon-pill">
+                <i class="fas fa-palette text-xs shrink-0"></i>
+                <span>Obras</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Luna 2: Chance (Este) -->
+          <div class="moon-unit moon-east">
+            <div class="moon-counter">
+              <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active moon-pill">
+                <i class="fas fa-briefcase text-xs shrink-0"></i>
+                <span>Chance</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Luna 3: Eventos (Sur) -->
+          <div class="moon-unit moon-south">
+            <div class="moon-counter">
+              <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active moon-pill">
+                <i class="fas fa-calendar-alt text-xs shrink-0"></i>
+                <span>Eventos</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Luna 4: Recursos (Oeste) -->
+          <div class="moon-unit moon-west">
+            <div class="moon-counter">
+              <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active moon-pill">
+                <i class="fas fa-box-open text-xs shrink-0"></i>
+                <span>Recursos</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
+
+      <div id="hero-cta"></div>
     </section>
 
     <!-- Pinned Events Section -->

@@ -70,3 +70,32 @@ export async function hydrateComments(item: any, fields = 'username avatar') {
     
     return obj;
 }
+
+/**
+ * Hidrata los likes dentro de un objeto con datos de usuario (username, displayName, avatar).
+ */
+export async function hydrateLikes(item: any, fields = 'username displayName avatar') {
+    if (!item) return item;
+    const obj = item.toObject ? item.toObject() : item;
+    if (!obj.likes || !Array.isArray(obj.likes) || obj.likes.length === 0) {
+        obj.likesUsers = [];
+        return obj;
+    }
+    
+    const userIds: string[] = Array.from(new Set(obj.likes.map((id: any) => (id?._id || id).toString())));
+    const users = await User.find({ _id: { $in: userIds } }).select(fields);
+    const userMap: Record<string, any> = {};
+    users.forEach(u => { 
+        const d = u.toObject() as any;
+        userMap[u._id.toString()] = {
+            _id: u._id,
+            username: d.username,
+            displayName: d.displayName || d.username,
+            avatar: d.avatar || ''
+        }; 
+    });
+
+    obj.likesUsers = userIds.map((id: string) => userMap[id] || { _id: id, username: 'Usuario', displayName: 'Usuario', avatar: '' });
+    return obj;
+}
+

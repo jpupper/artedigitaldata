@@ -8,6 +8,7 @@ export interface IVisualEffect extends Document {
   timelineDuration?: number;
   hasTimeline?: boolean;
   config?: any;
+  isDefaultFront?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +22,7 @@ const VisualEffectSchema: Schema = new Schema(
     timelineDuration: { type: Number, default: 10.0 },
     hasTimeline: { type: Boolean, default: false },
     config: { type: Object, default: {} },
+    isDefaultFront: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -842,7 +842,11 @@ void main() {
     }
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      start();
+    });
+  } else {
     start();
-  });
+  }
 })(window);

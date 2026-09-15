@@ -147,7 +147,7 @@
         <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
       </button>
       <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-briefcase mr-2"></i>OPORTUNIDADES
+        <i class="fas fa-briefcase mr-2"></i>CHANCE
       </button>
       <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-heart mr-2 text-red-500"></i>TUS FAV
@@ -360,72 +360,98 @@
         const headers = {};
         const tok = getToken();
         if (tok) headers['Authorization'] = `Bearer ${tok}`;
-        const res = await fetch(CONFIG.API_URL + `/profile/${targetUsername}`, { headers });
-        if (!res.ok) throw new Error('Not found');
-        const { user: profile, posts, recursos, eventos, oportunidades, doorEvents, favorites } = await res.json();
+        const res = await fetch(CONFIG.API_URL + `/profile/${encodeURIComponent(targetUsername)}`, { headers });
+        if (!res.ok) {
+          document.getElementById('profile-username').textContent = 'Usuario no encontrado';
+          return;
+        }
+        const data = await res.json();
+        const profile = data.user;
+        if (!profile) {
+          document.getElementById('profile-username').textContent = 'Usuario no encontrado';
+          return;
+        }
+        const posts = Array.isArray(data.posts) ? data.posts : [];
+        const recursos = Array.isArray(data.recursos) ? data.recursos : [];
+        const eventos = Array.isArray(data.eventos) ? data.eventos : [];
+        const oportunidades = Array.isArray(data.oportunidades) ? data.oportunidades : [];
+        const doorEvents = Array.isArray(data.doorEvents) ? data.doorEvents : [];
+        const favorites = data.favorites || { posts: [], recursos: [], eventos: [], oportunidades: [] };
+        const visualeffects = Array.isArray(data.visualeffects) ? data.visualeffects : [];
 
         document.getElementById('profile-username').textContent = profile.displayName || profile.username;
         const bioText = profile.bio || 'Sin bio';
         document.getElementById('profile-bio').innerHTML = typeof formatMentions === 'function' ? formatMentions(bioText) : bioText;
         document.getElementById('profile-meta').innerHTML = `
-          <i class="fas fa-calendar-alt mr-1"></i> Se unió el ${new Date(profile.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
+          <i class="fas fa-calendar-alt mr-1"></i> Se unió el ${new Date(profile.createdAt || Date.now()).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
           <span class="mx-2">•</span>
-          <span class="px-2 py-0.5 rounded text-xs ${profile.role === 'ADMINISTRADOR' ? 'bg-cyan-500/20 text-[var(--color-cyan)] border border-cyan-500/30' : 'bg-white/10 text-gray-400'}">${profile.role}</span>
+          <span class="px-2 py-0.5 rounded text-xs ${profile.role === 'ADMINISTRADOR' || profile.role === 'ADMIN' ? 'bg-cyan-500/20 text-[var(--color-cyan)] border border-cyan-500/30' : 'bg-white/10 text-gray-400'}">${profile.role || 'USUARIO'}</span>
         `;
 
         const avatarEl = document.getElementById('profile-avatar');
         if (profile.avatar) {
-          avatarEl.innerHTML = `<img src="${profile.avatar}" class="w-24 h-24 rounded-full object-cover" alt="${profile.displayName || profile.username}">`;
+          avatarEl.innerHTML = `<img src="${sanitizeUrl(profile.avatar)}" class="w-24 h-24 rounded-full object-cover" alt="${escapeHTML(profile.displayName || profile.username)}">`;
         } else {
-          avatarEl.textContent = (profile.displayName || profile.username)[0].toUpperCase();
-          avatarEl.innerHTML = (profile.displayName || profile.username)[0].toUpperCase();
+          avatarEl.textContent = (profile.displayName || profile.username || '?')[0].toUpperCase();
         }
 
         if (isOwner) {
-          document.getElementById('edit-email-display').value = profile.email || 'No disponible';
-          document.getElementById('edit-display-name').value = profile.displayName || '';
-          document.getElementById('edit-bio').value = profile.bio || '';
-          document.getElementById('edit-avatar-url').value = profile.avatar || '';
+          const emailDisplay = document.getElementById('edit-email-display');
+          if (emailDisplay) emailDisplay.value = profile.email || 'No disponible';
+          const dispName = document.getElementById('edit-display-name');
+          if (dispName) dispName.value = profile.displayName || '';
+          const bioEl = document.getElementById('edit-bio');
+          if (bioEl) bioEl.value = profile.bio || '';
+          const avUrl = document.getElementById('edit-avatar-url');
+          if (avUrl) avUrl.value = profile.avatar || '';
           if (profile.socials) {
-            document.getElementById('edit-social-instagram').value = profile.socials.instagram || '';
-            document.getElementById('edit-social-discord').value = profile.socials.discord || '';
-            document.getElementById('edit-social-whatsapp').value = profile.socials.whatsapp || '';
-            document.getElementById('edit-social-facebook').value = profile.socials.facebook || '';
-            document.getElementById('edit-social-tiktok').value = profile.socials.tiktok || '';
+            const ig = document.getElementById('edit-social-instagram');
+            if (ig) ig.value = profile.socials.instagram || '';
+            const dc = document.getElementById('edit-social-discord');
+            if (dc) dc.value = profile.socials.discord || '';
+            const wa = document.getElementById('edit-social-whatsapp');
+            if (wa) wa.value = profile.socials.whatsapp || '';
+            const fb = document.getElementById('edit-social-facebook');
+            if (fb) fb.value = profile.socials.facebook || '';
+            const tt = document.getElementById('edit-social-tiktok');
+            if (tt) tt.value = profile.socials.tiktok || '';
           }
         }
 
         const socialsContainer = document.getElementById('profile-socials');
-        socialsContainer.innerHTML = '';
-        if (profile.socials) {
-          const s = profile.socials;
-          if (s.instagram) socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-pink-500/10 text-pink-500 hover:bg-pink-500 hover:text-white transition-all"><i class="fab fa-instagram"></i></a>`;
-          if (s.discord) socialsContainer.innerHTML += `<a href="${s.discord.startsWith('http') ? s.discord : '#'}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all"><i class="fab fa-discord"></i></a>`;
-          if (s.whatsapp) socialsContainer.innerHTML += `<a href="https://wa.me/${s.whatsapp.replace(/\+/g,'')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a>`;
-          if (s.facebook) socialsContainer.innerHTML += `<a href="${s.facebook.startsWith('http') ? s.facebook : `https://facebook.com/${s.facebook}`}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-facebook"></i></a>`;
-          if (s.tiktok) socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-500/10 text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a>`;
+        if (socialsContainer) {
+          socialsContainer.innerHTML = '';
+          if (profile.socials) {
+            const s = profile.socials;
+            if (s.instagram) socialsContainer.innerHTML += `<a href="https://instagram.com/${s.instagram.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-pink-500/10 text-pink-500 hover:bg-pink-500 hover:text-white transition-all"><i class="fab fa-instagram"></i></a>`;
+            if (s.discord) socialsContainer.innerHTML += `<a href="${s.discord.startsWith('http') ? s.discord : '#'}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all"><i class="fab fa-discord"></i></a>`;
+            if (s.whatsapp) socialsContainer.innerHTML += `<a href="https://wa.me/${s.whatsapp.replace(/\+/g,'')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a>`;
+            if (s.facebook) socialsContainer.innerHTML += `<a href="${s.facebook.startsWith('http') ? s.facebook : `https://facebook.com/${s.facebook}`}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-facebook"></i></a>`;
+            if (s.tiktok) socialsContainer.innerHTML += `<a href="https://tiktok.com/@${s.tiktok.replace('@','')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-500/10 text-white hover:bg-white hover:text-black transition-all"><i class="fab fa-tiktok"></i></a>`;
+          }
         }
         
-        renderUserPosts(posts.filter(p => !p.isContest));
-        renderUserConcursos(posts.filter(p => p.isContest));
-        renderUserRecursos(recursos || []);
-        renderUserEventos(eventos || [], isOwner ? (doorEvents || []) : []);
-        renderUserOportunidades(oportunidades || []);
-        renderUserVisualEffects(visualeffects || []);
-        renderUserFavorites(favorites || { posts: [], recursos: [], eventos: [] });
+        try { renderUserPosts(posts.filter(p => !p.isContest)); } catch(e) { console.error('Error in renderUserPosts:', e); }
+        try { renderUserConcursos(posts.filter(p => p.isContest)); } catch(e) { console.error('Error in renderUserConcursos:', e); }
+        try { renderUserRecursos(recursos); } catch(e) { console.error('Error in renderUserRecursos:', e); }
+        try { renderUserEventos(eventos, isOwner ? doorEvents : []); } catch(e) { console.error('Error in renderUserEventos:', e); }
+        try { renderUserOportunidades(oportunidades); } catch(e) { console.error('Error in renderUserOportunidades:', e); }
+        try { renderUserVisualEffects(visualeffects); } catch(e) { console.error('Error in renderUserVisualEffects:', e); }
+        try { renderUserFavorites(favorites); } catch(e) { console.error('Error in renderUserFavorites:', e); }
 
         // XP level bar (shown for everyone)
-        renderXPLevel(profile, posts, recursos || [], eventos || []);
+        try { renderXPLevel(profile, posts, recursos, eventos); } catch(e) { console.error('Error in renderXPLevel:', e); }
 
         // Owner-only: completion widget + owner tabs
         if (isOwner) {
-          renderProfileCompletion(profile, posts, recursos || [], eventos || []);
-          loadUserTickets();
-          loadUserNotifications();
+          try { renderProfileCompletion(profile, posts, recursos, eventos); } catch(e) { console.error('Error in renderProfileCompletion:', e); }
+          try { loadUserTickets(); } catch(e) {}
+          try { loadUserNotifications(); } catch(e) {}
         }
       } catch (err) {
         console.error("Error loading profile:", err);
-        document.getElementById('profile-username').textContent = 'Usuario no encontrado';
+        const nameEl = document.getElementById('profile-username');
+        if (nameEl) nameEl.textContent = 'Usuario no encontrado';
       }
     }
 

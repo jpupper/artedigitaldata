@@ -225,6 +225,13 @@ function toggleFilter(type) {
   }
   updateFilterStyles();
   renderFeed();
+
+  // Impulso orbital cósmico al interactuar
+  const sunDisc = document.querySelector('.sun-disc');
+  if (sunDisc) {
+    sunDisc.style.transform = 'scale(1.1)';
+    setTimeout(() => { sunDisc.style.transform = ''; }, 350);
+  }
 }
 
 async function loadFeed() {

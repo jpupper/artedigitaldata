@@ -3126,19 +3126,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const userIsAdmin = (typeof checkAdminStatus === 'function' ? checkAdminStatus() : false) || (typeof isAdmin === 'function' ? isAdmin() : false);
+
       container.innerHTML = effects.map(fx => {
         const wordCount = (fx.flyerWords || []).length;
         const dateStr = new Date(fx.createdAt).toLocaleDateString();
         const outputUrl = `outputeffect.html?outputeffect=${fx._id}`;
         const escapedTitle = (fx.title || 'Secuencia').replace(/'/g, "\\'");
+        const isPinned = !!fx.isDefaultFront;
         return `
-          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 10px; font-size: 11px; cursor: pointer;" title="Doble click para renombrar esta secuencia">
+          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid ${isPinned ? 'rgba(234, 179, 8, 0.4)' : 'rgba(255,255,255,0.08)'}; padding: 8px 10px; border-radius: 10px; font-size: 11px; cursor: pointer; transition: all 0.2s;" title="Doble click para renombrar esta secuencia">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
-                <strong style="color: #fff; font-size: 12px; display: block;" title="Doble click para modificar el nombre">${fx.title}</strong>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <strong style="color: #fff; font-size: 12px; display: block;" title="Doble click para modificar el nombre">${fx.title}</strong>
+                  ${isPinned ? `<span style="background: rgba(234, 179, 8, 0.25); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.5); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-thumbtack mr-1"></i>Default Front</span>` : ''}
+                </div>
                 <div style="font-size: 10px; color: #94a3b8;"><i class="fas fa-layer-group mr-1"></i>${wordCount} ${wordCount === 1 ? 'capa' : 'capas'} • ${dateStr}</div>
               </div>
               <div style="display: flex; gap: 4px;" onclick="event.stopPropagation();" ondblclick="event.stopPropagation();">
+                ${userIsAdmin ? `
+                  <button onclick="window.togglePinDefaultEffect('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: ${isPinned ? 'rgba(234, 179, 8, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-color: ${isPinned ? '#facc15' : 'rgba(255,255,255,0.2)'}; color: ${isPinned ? '#facc15' : '#94a3b8'}; cursor: pointer;" title="${isPinned ? 'Secuencia activa en el FRONT de todas las páginas (Click para desfijar)' : 'Fijar esta secuencia como template por defecto en el FRONT de todas las páginas'}">
+                    <i class="fas fa-thumbtack ${isPinned ? 'text-amber-400' : ''}"></i> ${isPinned ? 'Front Activo' : 'Pinear Front'}
+                  </button>
+                ` : ''}
                 <button onclick="window.loadVisualEffectById('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(224, 64, 251, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta); cursor: pointer;" title="Cargar en el editor">
                   <i class="fas fa-play"></i> Cargar
                 </button>
@@ -3160,6 +3171,29 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = `<div style="font-size: 11px; color: #ff5252; text-align: center; padding: 6px;">${err.message || 'Error al cargar secuencias.'}</div>`;
     }
   }
+
+  window.togglePinDefaultEffect = async function(id) {
+    const token = getAuthToken();
+    if (!token) {
+      alert('Debes iniciar sesión con una cuenta de administrador.');
+      return;
+    }
+    try {
+      const res = await fetchWithApiFallback(`/visualeffects/${id}/set-default`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al fijar');
+      showToast(data.message, 'success');
+      loadSavedFlyerSequences();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Error al fijar secuencia en el front', 'error');
+    }
+  };
 
   window.loadVisualEffectById = (id) => {
     loadUserVisualEffect(id);

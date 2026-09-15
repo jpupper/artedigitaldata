@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import Post from '../models/Post';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { hydrate, hydrateComments } from '../utils/userHydration';
+import { hydrate, hydrateComments, hydrateLikes } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import User from '../models/User';
 
@@ -27,7 +27,19 @@ router.get('/:id', async (req: Request, res: Response) => {
     
     let hydrated = await hydrate([post]);
     let final = await hydrateComments(hydrated[0]);
+    final = await hydrateLikes(final);
     return res.json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id/likes', async (req: Request, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post no encontrado' });
+    const postWithLikes = await hydrateLikes(post);
+    return res.json({ likes: postWithLikes.likesUsers || [] });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -118,7 +130,9 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
       }).catch(() => {});
     }
 
-    return res.json(post);
+    let hydrated = await hydrate([post]);
+    let final = await hydrateLikes(hydrated[0]);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

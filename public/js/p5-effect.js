@@ -5,10 +5,16 @@
   // Auto-cargar ascii-shader-bg.js si no está cargado en la página
   if (!window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
     const script = document.createElement('script');
+    const basePath = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE + '/' : '';
     const currentPath = window.location.pathname;
     const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-    script.src = folderPath + 'js/ascii-shader-bg.js';
+    script.src = basePath ? (basePath + 'js/ascii-shader-bg.js') : (folderPath + 'js/ascii-shader-bg.js');
     script.async = false;
+    script.onload = () => {
+      if (window.AsciiShaderBG && typeof window.AsciiShaderBG.start === 'function') {
+        window.AsciiShaderBG.start();
+      }
+    };
     document.head.appendChild(script);
   }
 
@@ -1228,5 +1234,137 @@
       } catch (err) {}
     }
   });
+
+  // ========== SECUENCIA DEFAULT PINEADA PARA EL FRONT (Admin Pinned) ==========
+  async function initDefaultFrontVisualEffect() {
+    if (window.location.pathname.includes('visualeffects.html') || window.location.pathname.includes('outputeffect.html')) return;
+
+    try {
+      const apiUrl = (window.CONFIG && window.CONFIG.API_URL) 
+        ? window.CONFIG.API_URL 
+        : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'https://vps-4455523-x.dattaweb.com/artedigitaldata/api' 
+            : '/artedigitaldata/api');
+      
+      const res = await fetch(`${apiUrl}/visualeffects/default-front`);
+      if (!res.ok) return;
+      const effect = await res.json();
+      if (!effect || !effect.isDefaultFront) return;
+
+      console.log('[Front VisualEffect] Cargando secuencia default:', effect.title);
+
+      // 1. Aplicar la configuración guardada (colores, shader, modos, etc.)
+      if (effect.config && typeof effect.config === 'object') {
+        if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+          window.ParticlesConfig.set(effect.config);
+        }
+        if (effect.config.GENERATIVE_SHADER && window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
+          window.AsciiShaderBG.loadGenerativeShader(effect.config.GENERATIVE_SHADER);
+        }
+        if (effect.config.ASCII_FONT_MODE !== undefined && window.AsciiShaderBG && typeof window.AsciiShaderBG.setFontMode === 'function') {
+          window.AsciiShaderBG.setFontMode(Number(effect.config.ASCII_FONT_MODE));
+        }
+      }
+
+      // 2. Si tiene palabras de flyer, instanciarlas y correr la línea de tiempo
+      const flyerWords = Array.isArray(effect.flyerWords) ? effect.flyerWords : [];
+      const timelineLayers = Array.isArray(effect.timelineLayers) ? effect.timelineLayers : [];
+      const timelineDuration = Number(effect.timelineDuration) || 10.0;
+      const hasTimeline = !!effect.hasTimeline;
+
+      if (flyerWords.length > 0) {
+        const trySpawn = () => {
+          if (typeof window.spawnWordParticles !== 'function' || !window.width) {
+            setTimeout(trySpawn, 150);
+            return;
+          }
+
+          window.clearAllFlyerParticles();
+          flyerWords.forEach(w => {
+            const wordText = w.text || w.word || '';
+            const posX = w.x !== undefined ? w.x : (window.innerWidth / 2);
+            const posY = w.y !== undefined ? w.y : (window.innerHeight / 2);
+            window.spawnWordParticles(wordText, posX, posY, true, w.id, {
+              fontSize: w.fontSize,
+              letterSpacing: w.letterSpacing,
+              color: w.color
+            });
+          });
+
+          // 3. Loop de evaluación de timeline si está activo
+          if (hasTimeline && timelineLayers.length > 0) {
+            let frontTimelineTime = 0.0;
+            let lastFrontTime = performance.now();
+
+            function evaluateFrontTimeline(t) {
+              timelineLayers.forEach(layerObj => {
+                if (!Array.isArray(layerObj.clips)) return;
+                layerObj.clips.forEach(clipObj => {
+                  const s = clipObj.startTime !== undefined ? clipObj.startTime : 0.0;
+                  const d = clipObj.duration || 2.0;
+                  const isActive = (t >= s && t <= (s + d));
+
+                  let props = {
+                    x: clipObj.x !== undefined ? clipObj.x : (window.innerWidth / 2),
+                    y: clipObj.y !== undefined ? clipObj.y : (window.innerHeight / 2),
+                    fontSize: clipObj.fontSize || 36,
+                    letterSpacing: clipObj.letterSpacing || 4,
+                    visible: isActive,
+                    text: clipObj.text || clipObj.word || 'PALABRA'
+                  };
+
+                  if (Array.isArray(clipObj.keyframes) && clipObj.keyframes.length > 0 && isActive) {
+                    const sorted = [...clipObj.keyframes].sort((a, b) => a.time - b.time);
+                    if (t <= sorted[0].time) {
+                      props = { ...props, ...sorted[0], visible: true };
+                    } else if (t >= sorted[sorted.length - 1].time) {
+                      props = { ...props, ...sorted[sorted.length - 1], visible: true };
+                    } else {
+                      for (let i = 0; i < sorted.length - 1; i++) {
+                        if (t >= sorted[i].time && t <= sorted[i + 1].time) {
+                          const f = (t - sorted[i].time) / (sorted[i + 1].time - sorted[i].time || 1);
+                          props.x = sorted[i].x + (sorted[i + 1].x - sorted[i].x) * f;
+                          props.y = sorted[i].y + (sorted[i + 1].y - sorted[i].y) * f;
+                          props.fontSize = Math.round(sorted[i].fontSize + (sorted[i + 1].fontSize - sorted[i].fontSize) * f);
+                          props.letterSpacing = Math.round(sorted[i].letterSpacing + (sorted[i + 1].letterSpacing - sorted[i].letterSpacing) * f);
+                          props.visible = true;
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  if (typeof window.updateFlyerWordParticles === 'function') {
+                    window.updateFlyerWordParticles(clipObj.id, props);
+                  }
+                });
+              });
+            }
+
+            function loopFrontTimeline(now) {
+              const delta = (now - lastFrontTime) / 1000;
+              lastFrontTime = now;
+              frontTimelineTime = (frontTimelineTime + delta) % timelineDuration;
+              evaluateFrontTimeline(frontTimelineTime);
+              requestAnimationFrame(loopFrontTimeline);
+            }
+
+            requestAnimationFrame(loopFrontTimeline);
+          }
+        };
+
+        trySpawn();
+      }
+
+    } catch (err) {
+      console.warn('[Front VisualEffect] Error cargando secuencia default:', err);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDefaultFrontVisualEffect);
+  } else {
+    setTimeout(initDefaultFrontVisualEffect, 100);
+  }
 
 })(window);

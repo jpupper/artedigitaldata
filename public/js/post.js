@@ -8,6 +8,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPost(postId);
 });
 
+let currentPostLikesUsers = [];
+
+function renderLikesUsersList(users) {
+  if (!users || users.length === 0) {
+    return `<div class="text-xs text-gray-400 py-3 text-center italic">Aún no hay likes</div>`;
+  }
+  return users.map(u => `
+    <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(u.username)}" class="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white/5 transition-colors group">
+      <div class="w-7 h-7 rounded-full overflow-hidden bg-cyan-500 text-black flex items-center justify-center text-xs font-bold shrink-0">
+        ${u.avatar ? `<img src="${sanitizeUrl ? sanitizeUrl(u.avatar) : u.avatar}" alt="${u.username}" class="w-full h-full object-cover">` : (u.username || '?')[0].toUpperCase()}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
+          ${u.displayName || u.username}
+        </p>
+        <p class="text-[10px] text-gray-400 truncate">@${u.username}</p>
+      </div>
+    </a>
+  `).join('');
+}
+
+window.showLikesPopup = function() {
+  const popup = document.getElementById('likes-popup');
+  if (popup) popup.classList.remove('hidden');
+};
+
+window.hideLikesPopup = function() {
+  const popup = document.getElementById('likes-popup');
+  if (popup) popup.classList.add('hidden');
+};
+
 window.loadPost = async function(postId) {
   const isYouTubeURL = (url) => {
     if (!url) return false;
@@ -21,6 +52,7 @@ window.loadPost = async function(postId) {
     const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
     if (!res.ok) throw new Error('Post no encontrado');
     const post = await res.json();
+    currentPostLikesUsers = post.likesUsers || [];
     const isAuthor = isLoggedIn() && getUserId() === post.author?._id;
 
     document.title = `${post.title} - Arte Digital Data`;
@@ -40,7 +72,10 @@ window.loadPost = async function(postId) {
               <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
                 ${post.author?.username || 'Anónimo'}
               </a>
-              <p class="text-sm text-gray-500">${new Date(post.createdAt).toLocaleString()}</p>
+              <p class="text-base md:text-lg font-semibold text-slate-200 mt-1 flex items-center gap-2 tracking-wide">
+                <i class="far fa-calendar-alt text-xs text-cyan-400"></i>
+                <span>${new Date(post.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} hs</span>
+              </p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -50,10 +85,21 @@ window.loadPost = async function(postId) {
                 <span>Editar</span>
               </button>
             ` : ''}
-            <button onclick="toggleLike('${post._id}')" id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${post.likes?.includes(getUserId()) ? 'text-red-500' : 'text-gray-400'}">
-              <i class="${post.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart text-xl"></i>
-              <span id="like-count" class="font-bold">${post.likes?.length || 0}</span>
-            </button>
+            <div class="relative inline-block" id="like-container" onmouseenter="showLikesPopup()" onmouseleave="hideLikesPopup()">
+              <button onclick="toggleLike('${post._id}')" id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${post.likes?.includes(getUserId()) ? 'text-red-500' : 'text-gray-400'}">
+                <i class="${post.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart text-xl"></i>
+                <span id="like-count" class="font-bold">${post.likes?.length || 0}</span>
+              </button>
+              <div id="likes-popup" class="hidden absolute right-0 top-full mt-2 w-64 p-3 rounded-2xl bg-[#0d0d14]/95 border border-cyan-500/30 backdrop-blur-xl shadow-[0_10px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(0,245,255,0.15)] z-50 text-left transition-all">
+                <div class="text-[11px] font-black uppercase tracking-wider text-cyan-400 border-b border-white/10 pb-1.5 mb-2 flex items-center justify-between">
+                  <span><i class="fas fa-heart text-red-500 mr-1"></i> Les gusta esto</span>
+                  <span id="popup-like-count" class="text-gray-400 font-normal text-[10px]">${post.likes?.length || 0}</span>
+                </div>
+                <div id="likes-users-list" class="max-h-48 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-white/10 pr-1">
+                  ${renderLikesUsersList(currentPostLikesUsers)}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="p-0">
@@ -199,6 +245,12 @@ window.toggleLike = async function(postId) {
         if (icon) icon.className = `${isLiked ? 'fas' : 'far'} fa-heart text-xl`;
       }
       if (count) count.innerText = post.likes.length;
+
+      currentPostLikesUsers = post.likesUsers || [];
+      const popupCount = document.getElementById('popup-like-count');
+      if (popupCount) popupCount.innerText = post.likes.length;
+      const usersList = document.getElementById('likes-users-list');
+      if (usersList) usersList.innerHTML = renderLikesUsersList(currentPostLikesUsers);
     }
   } catch (err) {
     console.error(err);

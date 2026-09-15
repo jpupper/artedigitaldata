@@ -40,7 +40,19 @@ router.get('/:username', async (req: Request, res: Response) => {
     // Un mismo username puede existir con origin distintos (pizarraia, jpshadeditor,
     // fscauth, artedigitaldata...). findOne solo devuelve el primero y puede apuntar
     // a la cuenta vacía de OTRA app. Por eso elegimos el match correcto de esta app.
-    const matches = await User.find({ username: req.params.username }).select('-password');
+    const rawUsername = (req.params.username || '').trim();
+    const escaped = rawUsername.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^${escaped}$`, 'i');
+
+    const queryConditions: any[] = [
+      { username: regex },
+      { displayName: regex }
+    ];
+    if (/^[0-9a-fA-F]{24}$/.test(rawUsername)) {
+      queryConditions.push({ _id: rawUsername });
+    }
+
+    const matches = await User.find({ $or: queryConditions }).select('-password');
     if (!matches.length) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     // Si el pedido viene autenticado y coincide con uno de los candidatos, ese gana.

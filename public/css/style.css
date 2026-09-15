@@ -15,7 +15,29 @@ html, body {
   user-select: none;
 }
 
-input, textarea, [contenteditable="true"] {
+/* Campos interactivos y editables */
+input, textarea, select, option, [contenteditable="true"], [contenteditable] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Contenido de usuario, posteos, obras, eventos, recursos, oportunidades y comentarios */
+.selectable-text,
+.user-select-text,
+p, article, pre, code, blockquote,
+.prose, .prose *,
+.post-content, .post-content *,
+#post-detail-container, #post-detail-container p, #post-detail-container h1, #post-detail-container h2, #post-detail-container h3, #post-detail-container span, #post-detail-container a,
+#event-content, #event-content p, #event-content h1, #event-content h2, #event-content h3, #event-content span,
+#resource-content, #resource-content p, #resource-content h1, #resource-content h2, #resource-content h3,
+#oportunidad-content, #oportunidad-content p, #oportunidad-content h1, #oportunidad-content h2, #oportunidad-content h3,
+#profile-bio, .user-bio, .profile-description, #profile-header p, #profile-header h1, #profile-header h2, #profile-header span,
+#user-posts, #user-posts p, #user-posts h3, #user-recursos, #user-eventos, #user-oportunidades,
+#comments-list, #comments-list p, .comment-content, .comment-body, .comment-text,
+#feed-container p, #feed-container h2, #feed-container h3,
+.card-cyber p, .card-cyber h1, .card-cyber h2, .card-cyber h3, .card-cyber h4 {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
@@ -23,13 +45,13 @@ input, textarea, [contenteditable="true"] {
 }
 
 ::selection {
-  background: transparent;
-  color: inherit;
+  background: rgba(0, 245, 255, 0.4);
+  color: #ffffff;
 }
 
 ::-moz-selection {
-  background: transparent;
-  color: inherit;
+  background: rgba(0, 245, 255, 0.4);
+  color: #ffffff;
 }
 
 body {

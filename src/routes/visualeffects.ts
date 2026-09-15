@@ -1,8 +1,19 @@
 import { Router, Request, Response } from 'express';
 import VisualEffect from '../models/VisualEffect';
+import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+// GET /api/visualeffects/default-front - Obtener el efecto predeterminado fijado para el front
+router.get('/default-front', async (req: Request, res: Response) => {
+  try {
+    const defaultEffect = await VisualEffect.findOne({ isDefaultFront: true });
+    return res.json(defaultEffect || null);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/visualeffects/my - Obtener todos los efectos guardados del usuario logueado
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -92,6 +103,38 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     await VisualEffect.deleteOne({ _id: req.params.id });
     return res.json({ message: 'Efecto visual eliminado exitosamente' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/visualeffects/:id/set-default - Fijar / desfijar como efecto por defecto en el front (SOLO ADMIN)
+router.post('/:id/set-default', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.user!.id);
+    const isAdmin = user && (user.role === 'ADMIN' || user.permissions?.artedigital?.role === 'ADMINISTRADOR');
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Solo administradores pueden fijar el efecto del front' });
+    }
+
+    const effect = await VisualEffect.findById(req.params.id);
+    if (!effect) {
+      return res.status(404).json({ error: 'Efecto visual no encontrado' });
+    }
+
+    const willBeDefault = !effect.isDefaultFront;
+    if (willBeDefault) {
+      await VisualEffect.updateMany({}, { $set: { isDefaultFront: false } });
+    }
+
+    effect.isDefaultFront = willBeDefault;
+    await effect.save();
+
+    return res.json({
+      message: willBeDefault ? 'Secuencia fijada como predeterminada en el front' : 'Secuencia desfijada del front',
+      isDefaultFront: willBeDefault,
+      effect
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
