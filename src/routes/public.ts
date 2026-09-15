@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
@@ -526,6 +528,20 @@ router.delete('/particles-words/:word', authMiddleware, adminMiddleware, async (
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /public/generative-shaders — lista de archivos .frag en /shaders/generative
+router.get('/generative-shaders', async (_req: Request, res: Response) => {
+  try {
+    const shadersDir = path.join(__dirname, '../../public/shaders/generative');
+    if (fs.existsSync(shadersDir)) {
+      const files = fs.readdirSync(shadersDir).filter(file => file.endsWith('.frag'));
+      return res.json({ shaders: files });
+    }
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
+  } catch (err: any) {
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
   }
 });
 

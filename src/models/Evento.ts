@@ -1,10 +1,7 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Types } from 'mongoose';
+import { IPosteoBase, CommentSchema, IComment } from './PosteoBase';
 
-export interface IComment {
-  user: Types.ObjectId;
-  text: string;
-  createdAt: Date;
-}
+export { IComment };
 
 export interface ITicketConfig {
   enabled: boolean;
@@ -18,32 +15,14 @@ export interface ITicketConfig {
   isContribution: boolean;
 }
 
-export interface IEvento extends Document {
-  title: string;
-  description: string;
+export interface IEvento extends IPosteoBase {
   date: Date;
   location: string;
-  imageUrl: string;
-  youtube_video: string;
   creator: Types.ObjectId;
   participants: Types.ObjectId[];
-  likes: Types.ObjectId[];
-  comments: IComment[];
   ticketConfig: ITicketConfig;
   doorUsers: Types.ObjectId[];
-  pinned: boolean;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
-
-const CommentSchema: Schema = new Schema(
-  {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true },
-  },
-  { timestamps: true }
-);
 
 const TicketConfigSchema: Schema = new Schema({
   enabled: { type: Boolean, default: false },
@@ -75,7 +54,17 @@ const EventoSchema: Schema = new Schema(
     tags: { type: [String], default: [] },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
+// Virtual author compatible con IPosteoBase
+EventoSchema.virtual('author')
+  .get(function() {
+    return this.creator;
+  })
+  .set(function(val) {
+    this.creator = val;
+  });
+
 export default mongoose.model<IEvento>('Evento', EventoSchema);
+

@@ -77,6 +77,7 @@ router.get('/:username', async (req: Request, res: Response) => {
     const likedPosts = await Post.find({ likes: user._id }).sort({ createdAt: -1 });
     const likedRecursos = await Recurso.find({ likes: user._id }).sort({ createdAt: -1 });
     const likedEventos = await Evento.find({ likes: user._id }).sort({ date: 1 });
+    const likedOportunidades = await Oportunidad.find({ likes: user._id }).sort({ createdAt: -1 });
 
     const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 });
     const recursos = await Recurso.find({ author: user._id }).sort({ createdAt: -1 });
@@ -102,9 +103,11 @@ router.get('/:username', async (req: Request, res: Response) => {
       favorites: {
         posts: await hydrate(likedPosts),
         recursos: await hydrate(likedRecursos),
-        eventos: await hydrate(likedEventos, 'creator')
+        eventos: await hydrate(likedEventos, 'creator'),
+        oportunidades: await hydrate(likedOportunidades, 'creador')
       }
     });
+
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

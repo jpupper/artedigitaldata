@@ -333,7 +333,7 @@
           apiRequest('/posts?t=' + t),
           apiRequest('/recursos?t=' + t),
           apiRequest('/eventos?t=' + t),
-          apiRequest('/oportunidades?t=' + t)
+          apiRequest('/oportunidades?all=true&t=' + t)
         ]);
 
         data.users = await usersRes.json();
@@ -356,19 +356,19 @@
       );
 
       filteredData.posts = data.posts.filter(p => 
-        p.title.toLowerCase().includes(q) || p.author?.username?.toLowerCase().includes(q)
+        (p.title || '').toLowerCase().includes(q) || p.author?.username?.toLowerCase().includes(q)
       );
 
       filteredData.recursos = data.recursos.filter(r => 
-        r.title.toLowerCase().includes(q) || r.author?.username?.toLowerCase().includes(q)
+        (r.title || '').toLowerCase().includes(q) || r.author?.username?.toLowerCase().includes(q)
       );
 
       filteredData.eventos = data.eventos.filter(e => 
-        e.title.toLowerCase().includes(q) || e.creator?.username?.toLowerCase().includes(q)
+        (e.title || '').toLowerCase().includes(q) || (e.creator?.username || e.author?.username)?.toLowerCase().includes(q)
       );
 
       filteredData.oportunidades = data.oportunidades.filter(o => 
-        o.titulo.toLowerCase().includes(q) || o.creador?.username?.toLowerCase().includes(q)
+        (o.titulo || o.title || '').toLowerCase().includes(q) || (o.creador?.username || o.author?.username)?.toLowerCase().includes(q)
       );
 
       renderTable();
@@ -443,7 +443,7 @@
         tbody.innerHTML = filteredData.eventos.map(e => `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
             <td class="px-6 py-4 font-bold text-white">${escapeHTML(e.title)}</td>
-            <td class="px-6 py-4 text-gray-400">${escapeHTML(e.creator?.username || 'Anónimo')}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(e.creator?.username || e.author?.username || 'Anónimo')}</td>
             <td class="px-6 py-4 text-xs text-magenta-400">${new Date(e.date).toLocaleString()}</td>
             <td class="px-6 py-4 text-gray-500">${escapeHTML(e.location || 'Virtual')}</td>
             <td class="px-6 py-4 flex gap-3">
@@ -456,24 +456,37 @@
         `).join('');
       } else if (currentTab === 'oportunidades') {
         const tbody = document.getElementById('oportunidades-tbody');
-        tbody.innerHTML = filteredData.oportunidades.map(o => `
+        tbody.innerHTML = filteredData.oportunidades.map(o => {
+          const title = o.titulo || o.title || 'Sin título';
+          const creatorName = o.creador?.username || o.author?.username || 'Anónimo';
+          const isPublic = o.visibility === 'public';
+          const inscCount = o.inscripciones?.length || 0;
+          return `
           <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="px-6 py-4 font-bold text-white">${escapeHTML(o.titulo)}</td>
-            <td class="px-6 py-4 uppercase text-xs text-emerald-400">${o.tipo?.replace('_', ' ')}</td>
-            <td class="px-6 py-4 text-gray-400">${escapeHTML(o.creador?.username || 'Anónimo')}</td>
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(title)}</td>
+            <td class="px-6 py-4 uppercase text-xs text-emerald-400 font-bold">${escapeHTML((o.tipo || '').replace('_', ' '))}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(creatorName)}</td>
             <td class="px-6 py-4">
-              <span class="px-2 py-1 rounded text-xs ${o.visibility === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}">${o.visibility === 'public' ? 'Público' : 'No listado'}</span>
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isPublic ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}">
+                ${isPublic ? '🌍 Público' : '🔗 No listado'}
+              </span>
             </td>
-            <td class="px-6 py-4 text-gray-500">${o.inscripciones?.length || 0}</td>
-            <td class="px-6 py-4 flex gap-3">
+            <td class="px-6 py-4">
+              <a href="${CONFIG.BASE}/postulantes.html?id=${o._id}" class="text-xs font-bold text-gray-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5" title="Ver postulantes">
+                <i class="fas fa-users text-[10px]"></i> ${inscCount}
+              </a>
+            </td>
+            <td class="px-6 py-4 flex items-center gap-3">
               <a href="${CONFIG.BASE}/oportunidad.html?id=${o._id}" target="_blank" class="text-cyan-400 hover:text-white" title="Ver"><i class="fas fa-external-link-alt"></i></a>
               <a href="${CONFIG.BASE}/crear-oportunidad.html?id=${o._id}" class="text-yellow-500 hover:text-yellow-400" title="Editar"><i class="fas fa-edit"></i></a>
               <button onclick="deleteItem('oportunidades', '${o._id}')" class="text-red-500 hover:text-red-400" title="Eliminar"><i class="fas fa-trash"></i></button>
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
     }
+
 
     async function changeRole(userId, newRole) {
       const res = await apiRequest(`/admin/users/${userId}/role`, {

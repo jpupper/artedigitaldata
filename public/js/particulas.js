@@ -161,6 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (target === 'shader') {
       if (tabBtnParamsShader) tabBtnParamsShader.classList.add('active');
       if (tabPaneParamsShader) tabPaneParamsShader.style.display = 'block';
+      if (typeof refreshGenerativeShadersDropdown === 'function') {
+        refreshGenerativeShadersDropdown();
+      }
+      if (window.AsciiShaderBG && typeof window.AsciiShaderBG.getActiveUniforms === 'function') {
+        renderGenerativeUniformControls(
+          window.AsciiShaderBG.getActiveGenerativeShader() || 'noise.frag',
+          window.AsciiShaderBG.getActiveUniforms()
+        );
+      }
     } else {
       if (tabBtnParamsP5) tabBtnParamsP5.classList.add('active');
       if (tabPaneParamsP5) tabPaneParamsP5.style.display = 'block';
@@ -393,6 +402,212 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
         window.AsciiShaderBG.loadGenerativeShader(genShaderSelect.value);
       }
+    });
+  }
+
+  // --- RENDERING Y GESTIÓN DINÁMICA DE UNIFORMS Y SHADERS CUSTOM ---
+  function renderGenerativeUniformControls(shaderName, uniforms) {
+    const container = document.getElementById('generative-uniforms-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!Array.isArray(uniforms) || uniforms.length === 0) {
+      container.innerHTML = '<div style="font-size: 10px; color: #64748b; padding: 4px;">Este shader no requiere parámetros adicionales.</div>';
+      return;
+    }
+
+    const currentCfg = (window.ParticlesConfig && window.ParticlesConfig.get) ? window.ParticlesConfig.get() : {};
+
+    uniforms.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'control-row';
+      row.style.marginTop = '6px';
+
+      let labelText = u.name;
+      if (u.name === 'u_tile') labelText = 'Escala / Tile de Ruido';
+      else if (u.name === 'u_speed') labelText = 'Velocidad de Variación';
+      else if (u.name === 'u_color1') labelText = 'Color Shader 1';
+      else if (u.name === 'u_color2') labelText = 'Color Shader 2';
+      else if (u.name === 'u_color3') labelText = 'Color Shader 3';
+      else if (u.name === 'u_color4') labelText = 'Color Shader 4';
+      else {
+        labelText = u.name.charAt(0).toUpperCase() + u.name.slice(1);
+      }
+
+      const isColor = u.type === 'vec3' || u.name.toLowerCase().includes('color');
+
+      if (isColor) {
+        let val = currentCfg[u.name];
+        if (!val || typeof val !== 'string') {
+          if (u.name === 'u_color1') val = currentCfg.COLOR_1 || '#40c4ff';
+          else if (u.name === 'u_color2') val = currentCfg.COLOR_2 || '#ff9100';
+          else if (u.name === 'u_color3') val = currentCfg.COLOR_3 || '#e040fb';
+          else if (u.name === 'u_color4') val = currentCfg.COLOR_4 || '#00e676';
+          else val = '#00f2fe';
+        }
+
+        row.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+            <div class="color-input-wrap">
+              <input type="color" id="dyn-param-${u.name}" value="${val}">
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+
+        const inputEl = row.querySelector(`#dyn-param-${u.name}`);
+        if (inputEl) {
+          inputEl.addEventListener('input', () => {
+            applyConfigChange(u.name, inputEl.value);
+          });
+        }
+      } else if (u.type === 'bool') {
+        const val = currentCfg[u.name] !== undefined ? !!currentCfg[u.name] : false;
+        row.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+            <label class="switch-ui" style="transform: scale(0.85);">
+              <input type="checkbox" id="dyn-param-${u.name}" ${val ? 'checked' : ''}>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        `;
+        container.appendChild(row);
+
+        const checkEl = row.querySelector(`#dyn-param-${u.name}`);
+        if (checkEl) {
+          checkEl.addEventListener('change', () => {
+            applyConfigChange(u.name, checkEl.checked);
+          });
+        }
+      } else {
+        let min = 0;
+        let max = 1.0;
+        let step = 0.01;
+        let defaultVal = 0.5;
+
+        if (u.name === 'tile') { min = 0.1; max = 2.0; step = 0.01; defaultVal = 0.85; }
+        else if (u.name === 'u_tile') { min = 0.1; max = 10.0; step = 0.1; defaultVal = 3.0; }
+        else if (u.name === 'zoom') { min = 0.05; max = 3.0; step = 0.01; defaultVal = 0.8; }
+        else if (u.name === 'formuparam') { min = 0.3; max = 1.0; step = 0.005; defaultVal = 0.53; }
+        else if (u.name === 'stepsize') { min = 0.01; max = 0.4; step = 0.005; defaultVal = 0.1; }
+        else if (u.name === 'iterations') { min = 0.1; max = 1.0; step = 0.01; defaultVal = 0.5; }
+        else if (u.name === 'volsteps') { min = 0.1; max = 1.0; step = 0.01; defaultVal = 0.6; }
+        else if (u.name === 'speed' || u.name === 'u_speed') { min = 0.0; max = 3.0; step = 0.05; defaultVal = 1.0; }
+        else if (u.name === 'speedx' || u.name === 'speedy') { min = 0.0; max = 1.0; step = 0.01; defaultVal = 0.5; }
+        else if (u.name === 'brightness') { min = 0.0; max = 3.0; step = 0.01; defaultVal = 0.5; }
+        else if (u.name === 'darkmatter') { min = 0.0; max = 1.5; step = 0.01; defaultVal = 0.3; }
+        else if (u.name === 'distfading') { min = 0.1; max = 1.0; step = 0.01; defaultVal = 0.73; }
+        else if (u.name === 'saturation') { min = 0.0; max = 2.0; step = 0.01; defaultVal = 0.85; }
+        else if (u.name === 'ma1' || u.name === 'ma2') { min = 0.0; max = 3.1416; step = 0.01; defaultVal = (u.name === 'ma1' ? 0.5 : 0.8); }
+        else if (u.type === 'int') { min = 0; max = 100; step = 1; defaultVal = 0; }
+        else if (u.defaultValueStr) {
+          const parsed = parseFloat(u.defaultValueStr);
+          if (!isNaN(parsed)) {
+            defaultVal = parsed;
+            if (defaultVal > 1.0) max = Math.ceil(defaultVal * 2);
+            if (defaultVal < 0) min = Math.floor(defaultVal * 2);
+          }
+        }
+
+        let val = currentCfg[u.name];
+        if (val === undefined) val = defaultVal;
+
+        row.innerHTML = `
+          <div class="control-label-wrap">
+            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+          </div>
+          <div class="slider-text-combo">
+            <input type="range" id="dyn-param-${u.name}" min="${min}" max="${max}" step="${step}" value="${val}">
+            <input type="number" id="dyn-num-${u.name}" class="val-input" min="${min}" max="${max}" step="${step}" value="${val}">
+          </div>
+        `;
+        container.appendChild(row);
+
+        const rangeInput = row.querySelector(`#dyn-param-${u.name}`);
+        const numInput = row.querySelector(`#dyn-num-${u.name}`);
+
+        if (rangeInput && numInput) {
+          rangeInput.addEventListener('input', () => {
+            const numVal = parseFloat(rangeInput.value);
+            numInput.value = rangeInput.value;
+            applyConfigChange(u.name, numVal);
+          });
+
+          numInput.addEventListener('input', () => {
+            const numVal = parseFloat(numInput.value);
+            if (!isNaN(numVal)) {
+              rangeInput.value = numInput.value;
+              applyConfigChange(u.name, numVal);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  window.addEventListener('generative-shader-changed', (e) => {
+    if (e.detail) {
+      renderGenerativeUniformControls(e.detail.shaderName, e.detail.uniforms);
+    }
+  });
+
+  // Forzar carga por defecto de noise.frag y renderizar controles en el startup
+  function initDefaultGenerativeShader() {
+    if (window.AsciiShaderBG) {
+      if (typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
+        window.AsciiShaderBG.loadGenerativeShader('noise.frag');
+      }
+      if (typeof window.AsciiShaderBG.getActiveUniforms === 'function') {
+        const uniforms = window.AsciiShaderBG.getActiveUniforms();
+        if (uniforms && uniforms.length > 0) {
+          renderGenerativeUniformControls('noise.frag', uniforms);
+        }
+      }
+    }
+  }
+
+  setTimeout(initDefaultGenerativeShader, 50);
+  setTimeout(initDefaultGenerativeShader, 300);
+
+  const btnUploadShader = document.getElementById('btn-upload-shader');
+  const inputUploadShader = document.getElementById('input-upload-shader');
+  if (btnUploadShader && inputUploadShader) {
+    btnUploadShader.addEventListener('click', () => inputUploadShader.click());
+    inputUploadShader.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const content = evt.target.result;
+        if (!content) return;
+
+        const shaderName = file.name;
+        if (window.AsciiShaderBG && typeof window.AsciiShaderBG.registerCustomShader === 'function') {
+          window.AsciiShaderBG.registerCustomShader(shaderName, content);
+
+          const selectEl = document.getElementById('param-GENERATIVE_SHADER');
+          if (selectEl) {
+            let exists = false;
+            for (let opt of selectEl.options) {
+              if (opt.value === shaderName) { exists = true; break; }
+            }
+            if (!exists) {
+              const opt = document.createElement('option');
+              opt.value = shaderName;
+              opt.textContent = shaderName + ' (Custom)';
+              selectEl.appendChild(opt);
+            }
+            selectEl.value = shaderName;
+            applyConfigChange('GENERATIVE_SHADER', shaderName);
+          }
+
+          showToast(`<i class="fas fa-file-code"></i> Shader ${shaderName} cargado exitosamente`, 'success');
+        }
+      };
+      reader.readAsText(file);
     });
   }
 
@@ -3388,27 +3603,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const genShaderSelect = document.getElementById('param-GENERATIVE_SHADER');
     if (!genShaderSelect) return;
 
-    try {
-      const res = await fetch(getApiUrl() + '/public/generative-shaders').catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json().catch(() => null);
-        if (data && Array.isArray(data.shaders) && data.shaders.length > 0) {
-          const currentVal = genShaderSelect.value;
-          const existingOptions = Array.from(genShaderSelect.options).map(opt => opt.value);
+    const candidateUrls = [
+      // 1. Endpoints locales del servidor Node actual
+      window.location.origin + (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE : '') + '/api/generative-shaders',
+      window.location.origin + '/api/generative-shaders',
+      window.location.origin + (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE : '') + '/api/public/generative-shaders',
+      window.location.origin + '/api/public/generative-shaders',
+      // 2. Rutas relativas locales
+      'api/generative-shaders',
+      '/api/generative-shaders',
+      'api/public/generative-shaders',
+      '/api/public/generative-shaders',
+      // 3. Manifiesto estático index.json de shaders
+      'shaders/generative/index.json',
+      './shaders/generative/index.json',
+      (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE : '') + '/shaders/generative/index.json',
+      // 4. API externa
+      getApiUrl() + '/public/generative-shaders'
+    ];
 
-          data.shaders.forEach(shaderFile => {
-            if (!existingOptions.includes(shaderFile)) {
-              const opt = document.createElement('option');
-              opt.value = shaderFile;
-              const nameWithoutExt = shaderFile.replace('.frag', '');
-              opt.textContent = nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1) + ' (' + shaderFile + ')';
-              genShaderSelect.appendChild(opt);
-            }
-          });
-          if (currentVal) genShaderSelect.value = currentVal;
+    let foundShaders = null;
+
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url + '?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data && Array.isArray(data.shaders) && data.shaders.length > 0) {
+            foundShaders = data.shaders;
+            break;
+          } else if (Array.isArray(data) && data.length > 0) {
+            foundShaders = data;
+            break;
+          }
         }
+      } catch (err) {}
+    }
+
+    if (foundShaders && Array.isArray(foundShaders)) {
+      const currentVal = genShaderSelect.value || 'noise.frag';
+      const existingOptions = Array.from(genShaderSelect.options).map(opt => opt.value);
+
+      foundShaders.forEach(item => {
+        const shaderFile = typeof item === 'string' ? item : item.name;
+        if (shaderFile && shaderFile.endsWith('.frag') && !existingOptions.includes(shaderFile)) {
+          const opt = document.createElement('option');
+          opt.value = shaderFile;
+          const nameWithoutExt = shaderFile.replace('.frag', '');
+          opt.textContent = nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1) + ' (' + shaderFile + ')';
+          genShaderSelect.appendChild(opt);
+          existingOptions.push(shaderFile);
+        }
+      });
+
+      if (currentVal && Array.from(genShaderSelect.options).some(o => o.value === currentVal)) {
+        genShaderSelect.value = currentVal;
       }
-    } catch (err) {}
+    }
+  }
+
+  // Refrescar al interactuar con el dropdown para descubrir nuevos archivos (.frag) en caliente
+  const genSelect = document.getElementById('param-GENERATIVE_SHADER');
+  if (genSelect) {
+    genSelect.addEventListener('focus', refreshGenerativeShadersDropdown);
+    genSelect.addEventListener('mousedown', refreshGenerativeShadersDropdown);
   }
 
   refreshGenerativeShadersDropdown();

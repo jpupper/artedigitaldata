@@ -1,34 +1,13 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Types } from 'mongoose';
+import { IPosteoBase, CommentSchema, IComment } from './PosteoBase';
 
-export interface IComment {
-  user: Types.ObjectId;
-  text: string;
-  createdAt: Date;
-}
+export { IComment };
 
-export interface IRecurso extends Document {
-  title: string;
-  description: string;
+export interface IRecurso extends IPosteoBase {
   type: 'software' | 'github' | 'drive' | 'tutorial' | 'texto' | 'other';
   url: string;
-  author: Types.ObjectId;
-  imageUrl?: string;
-  youtube_video?: string;
-  tags: string[];
-  likes: Types.ObjectId[];
-  comments: IComment[];
   source: 'human' | 'ia';
-  createdAt: Date;
-  updatedAt: Date;
 }
-
-const CommentSchema: Schema = new Schema(
-  {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true },
-  },
-  { timestamps: true }
-);
 
 const RecursoSchema: Schema = new Schema(
   {
@@ -44,8 +23,10 @@ const RecursoSchema: Schema = new Schema(
     comments: [CommentSchema],
     source: { type: String, enum: ['human', 'ia'], default: 'human' },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
+    pinned: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
 export default mongoose.model<IRecurso>('Recurso', RecursoSchema);
+

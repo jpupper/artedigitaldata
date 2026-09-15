@@ -1,4 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { IPosteoBase, CommentSchema, IComment } from './PosteoBase';
+
+export { IComment };
 
 // =============================================
 // TIPOS DE OPORTUNIDAD
@@ -36,8 +39,9 @@ export interface IInscripcion {
 
 // =============================================
 // OPORTUNIDAD
+
 // =============================================
-export interface IOportunidad extends Document {
+export interface IOportunidad extends IPosteoBase {
   tipo: TipoOportunidad;
   titulo: string;
   descripcion: string;
@@ -62,9 +66,6 @@ export interface IOportunidad extends Document {
   // Compartidos
   activa: boolean;
   inscripciones: Types.ObjectId[];
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 // =============================================
@@ -110,14 +111,35 @@ const OportunidadSchema: Schema = new Schema(
     nombreProyecto: { type: String, default: '' },
     colaboracionPedida: { type: String, default: '' },
     
-    // Compartidos
+    // Compartidos & PosteoBase
     activa: { type: Boolean, default: true },
     inscripciones: [{ type: Schema.Types.ObjectId, ref: 'Inscripcion' }],
     tags: { type: [String], default: [] },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
+    pinned: { type: Boolean, default: false },
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    comments: [CommentSchema],
+    youtube_video: { type: String, default: '' },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// Virtuals de compatibilidad bidireccional con IPosteoBase
+OportunidadSchema.virtual('title')
+  .get(function() { return this.titulo; })
+  .set(function(val: string) { this.titulo = val; });
+
+OportunidadSchema.virtual('description')
+  .get(function() { return this.descripcion; })
+  .set(function(val: string) { this.descripcion = val; });
+
+OportunidadSchema.virtual('author')
+  .get(function() { return this.creador; })
+  .set(function(val: any) { this.creador = val; });
+
+OportunidadSchema.virtual('imageUrl')
+  .get(function() { return this.imagenUrl; })
+  .set(function(val: string) { this.imagenUrl = val; });
 
 // =============================================
 // INSCRIPCIÓN SCHEMA
@@ -144,3 +166,4 @@ export const Oportunidad = mongoose.model<IOportunidad>('Oportunidad', Oportunid
 export const Inscripcion = mongoose.model<IInscripcion>('Inscripcion', InscripcionSchema);
 
 export default Oportunidad;
+

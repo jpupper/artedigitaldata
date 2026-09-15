@@ -4,6 +4,7 @@ dotenv.config();
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import { Server as SocketServer } from 'socket.io';
@@ -27,6 +28,7 @@ import ticketRoutes from './src/routes/tickets';
 import notificationRoutes from './src/routes/notifications';
 import publicRoutes from './src/routes/public';
 import visualeffectsRoutes from './src/routes/visualeffects';
+import posteosRoutes from './src/routes/posteos';
 import { runAutobot } from './src/scripts/cronbot';
 import { hydrate } from './src/utils/userHydration';
 import { getBotConfig } from './src/models/BotConfig';
@@ -71,6 +73,29 @@ app.use((req, _res, next) => {
   next();
 });
 
+// Redirección canónica a artedigitaldata.com si se navega páginas web en el VPS
+app.use((req, res, next) => {
+  const host = req.get('host') || '';
+  if (host.includes('vps-4455523-x.dattaweb.com')) {
+    if (req.path.startsWith('/fscauth')) {
+      return next();
+    }
+    const isApi = req.path.startsWith('/api') || req.path.startsWith(`${BASE_PATH}/api`);
+    const isSocket = req.path.includes('socket.io');
+    const isStatic = /\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|frag|vert|json|mp4|webm|woff2?|ttf|eot)$/i.test(req.path);
+    
+    if (!isApi && !isSocket && !isStatic && req.method === 'GET') {
+      let targetPath = req.path;
+      if (targetPath.startsWith(BASE_PATH)) {
+        targetPath = targetPath.slice(BASE_PATH.length) || '/';
+      }
+      const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      return res.redirect(302, `https://artedigitaldata.com${targetPath}${query}`);
+    }
+  }
+  next();
+});
+
 // Middleware para neutralizar el CSP restrictivo del VPS y permitir CDNs
 app.use((_req, res, next) => {
   res.setHeader(
@@ -96,6 +121,7 @@ apiRouter.use('/tagging', searchRoutes);
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/posts', postRoutes);
+apiRouter.use('/posteos', posteosRoutes);
 apiRouter.use('/chat', chatRoutes);
 apiRouter.use('/recursos', recursosRoutes);
 apiRouter.use('/oportunidades', oportunidadesRoutes);
@@ -111,6 +137,30 @@ apiRouter.use('/visualeffects', visualeffectsRoutes);
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
 app.use('/api', apiRouter);
 app.use(`${BASE_PATH}/api`, apiRouter);
+
+// Endpoint para listar dinámicamente shaders generativos (.frag)
+app.get([
+  '/api/generative-shaders',
+  `${BASE_PATH}/api/generative-shaders`,
+  '/api/public/generative-shaders',
+  `${BASE_PATH}/api/public/generative-shaders`
+], (_req, res) => {
+  try {
+    const candidateDirs = [
+      path.join(ROOT_DIR, 'public', 'shaders', 'generative'),
+      path.join(__dirname, 'public', 'shaders', 'generative'),
+      path.join(process.cwd(), 'public', 'shaders', 'generative')
+    ];
+    const foundDir = candidateDirs.find(d => fs.existsSync(d));
+    if (foundDir) {
+      const files = fs.readdirSync(foundDir).filter(f => f.endsWith('.frag'));
+      return res.json({ shaders: files });
+    }
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
+  } catch (err: any) {
+    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
+  }
+});
 
 // Ruta explícita para la versión GPU de prueba
 app.get([`${BASE_PATH}/letrasgpu`, '/letrasgpu'], (_req, res) => {

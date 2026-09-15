@@ -1,0 +1,8 @@
+{
+  "shaders": [
+    "noise.frag",
+    "radial.frag",
+    "flower.frag",
+    "starnest.frag"
+  ]
+}

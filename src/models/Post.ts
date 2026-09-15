@@ -1,34 +1,13 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Types } from 'mongoose';
+import { IPosteoBase, CommentSchema, IComment } from './PosteoBase';
 
-export interface IComment {
-  user: Types.ObjectId;
-  text: string;
-  createdAt: Date;
-}
+export { IComment };
 
-export interface IPost extends Document {
-  author: Types.ObjectId;
-  title: string;
-  description: string;
-  imageUrl: string;
-  youtube_video: string;
-  likes: Types.ObjectId[];
-  comments: IComment[];
-  tags: string[];
+export interface IPost extends IPosteoBase {
   isContest: boolean;
   contestMonth: string;
   source: 'human' | 'ia';
-  createdAt: Date;
-  updatedAt: Date;
 }
-
-const CommentSchema: Schema = new Schema(
-  {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true },
-  },
-  { timestamps: true }
-);
 
 const PostSchema: Schema = new Schema(
   {
@@ -44,8 +23,10 @@ const PostSchema: Schema = new Schema(
     contestMonth: { type: String, default: '' },
     source: { type: String, enum: ['human', 'ia'], default: 'human' },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
+    pinned: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
 export default mongoose.model<IPost>('Post', PostSchema);
+

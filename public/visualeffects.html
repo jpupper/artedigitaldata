@@ -468,9 +468,9 @@
             <div class="control-row" style="margin-top: 8px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <span style="font-size: 11px; color: #cbd5e1;">Solo Ruido de Fondo (Sin caracteres)</span>
+                  <span style="font-size: 11px; color: #cbd5e1;">Solo buffer de fondo</span>
                 </div>
-                <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el ruido de fondo">
+                <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el buffer generativo de fondo">
                   <input type="checkbox" id="param-ASCII_NOISE_ONLY">
                   <span class="slider-toggle"></span>
                 </label>
@@ -482,13 +482,30 @@
                 <span>Buffer Generativo de Fondo</span>
               </div>
               <select id="param-GENERATIVE_SHADER" class="text-input" style="padding: 5px 8px; font-size: 11px;">
-                <option value="noise.frag">Noise / Simplex FBM (noise.frag)</option>
+                <option value="noise.frag" selected>Noise / Simplex FBM (noise.frag)</option>
                 <option value="radial.frag">Radial / Tunnel (radial.frag)</option>
                 <option value="flower.frag">Flower / Mandala (flower.frag)</option>
+                <option value="starnest.frag">Star Nest (starnest.frag)</option>
               </select>
+              <div style="margin-top: 6px; display: flex; gap: 6px;">
+                <input type="file" id="input-upload-shader" accept=".frag,.glsl,.txt" style="display: none;">
+                <button id="btn-upload-shader" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px;" title="Subir tu propio shader (.frag)">
+                  <i class="fas fa-file-upload"></i> Subir Shader (.frag)
+                </button>
+              </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <!-- Contenedor dinámico de Parámetros/Uniforms del Shader activo -->
+            <div class="control-row" style="margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 10px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-sliders-h"></i> Parámetros Específicos del Shader
+              </div>
+              <div id="generative-uniforms-container" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Se inyecta dinámicamente según los uniforms del shader activo -->
+              </div>
+            </div>
+
+            <div class="control-row" style="margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px;">
               <div class="control-label-wrap">
                 <span>Tipografía Shader ASCII</span>
               </div>
@@ -527,26 +544,6 @@
               <div class="slider-text-combo">
                 <input type="range" id="param-ASCII_GLYPH_SCALE" min="0" max="1.5" step="0.05" value="0.85">
                 <input type="number" id="num-ASCII_GLYPH_SCALE" class="val-input" min="0" max="1.5" step="0.05" value="0.85">
-              </div>
-            </div>
-
-            <div class="control-row" style="margin-top: 8px;">
-              <div class="control-label-wrap">
-                <span>Escala / Tile de Ruido</span>
-              </div>
-              <div class="slider-text-combo">
-                <input type="range" id="param-ASCII_TILE" min="0" max="10.0" step="0.1" value="3.0">
-                <input type="number" id="num-ASCII_TILE" class="val-input" min="0" max="10.0" step="0.1" value="3.0">
-              </div>
-            </div>
-
-            <div class="control-row" style="margin-top: 8px;">
-              <div class="control-label-wrap">
-                <span>Velocidad de Variación (0.0 - 3.0)</span>
-              </div>
-              <div class="slider-text-combo">
-                <input type="range" id="param-ASCII_SPEED" min="0" max="3.0" step="0.05" value="1.0">
-                <input type="number" id="num-ASCII_SPEED" class="val-input" min="0" max="3.0" step="0.05" value="1.0">
               </div>
             </div>
 

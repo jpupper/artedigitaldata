@@ -57,6 +57,7 @@ window.renderResults = function(results) {
   const posts = results.filter(r => r.type === 'post');
   const events = results.filter(r => r.type === 'event');
   const resources = results.filter(r => r.type === 'resource');
+  const oportunidades = results.filter(r => r.type === 'oportunidad');
 
   let html = '';
 
@@ -168,6 +169,38 @@ window.renderResults = function(results) {
               <p class="text-gray-500 text-xs">@${r.author}</p>
             </a>
           `).join('')}
+        </div>
+      </section>`;
+  if (oportunidades.length) {
+    html += `
+      <section>
+        <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <i class="fas fa-briefcase text-emerald-400"></i> Oportunidades
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          ${oportunidades.map(o => {
+            const youtubeId = extractYouTubeId(o);
+            return `
+            <div class="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer"
+                 onclick="window.location.href='oportunidad.html?id=${o.id}'">
+              <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 relative bg-emerald-950/30 border border-emerald-500/20"
+                   ${youtubeId ? `onmouseenter="event.stopPropagation(); playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}>
+                <img src="${o.image || 'img/artedigital.png'}" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-black/80 text-emerald-400 border border-emerald-500/30">${o.subType || 'Oportunidad'}</span>
+                ${youtubeId ? `
+                  <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
+                    <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="flex-1 min-w-0 py-1">
+                <h3 class="text-white font-bold truncate">${o.label}</h3>
+                <p class="text-emerald-400 text-xs mt-1">${o.author ? `por @${o.author}` : ''}</p>
+                <p class="text-gray-400 text-xs mt-1 line-clamp-2">${o.desc || ''}</p>
+                <p class="text-gray-500 text-[10px] mt-2">${o.date ? new Date(o.date).toLocaleDateString() : ''}</p>
+              </div>
+            </div>
+          `; }).join('')}
         </div>
       </section>`;
   }

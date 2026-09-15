@@ -13,15 +13,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPinnedEvents() {
   try {
-    const res = await fetch(CONFIG.API_URL + '/eventos/pinned/list');
-    if (!res.ok) throw new Error('Error loading pinned events');
-    const pinnedEvents = await res.json();
-    if (pinnedEvents.length > 0) {
+    let pinnedItems = [];
+    try {
+      const res = await fetch(CONFIG.API_URL + '/posteos/pinned/list');
+      if (res.ok) pinnedItems = await res.json();
+    } catch {
+      const res = await fetch(CONFIG.API_URL + '/eventos/pinned/list');
+      if (res.ok) pinnedItems = await res.json();
+    }
+
+    if (pinnedItems && pinnedItems.length > 0) {
       document.getElementById('pinned-section').classList.remove('hidden');
-      renderPinnedEvents(pinnedEvents);
+      renderPinnedEvents(pinnedItems);
+    } else {
+      document.getElementById('pinned-section').classList.add('hidden');
     }
   } catch (err) {
-    console.error('Error loading pinned events:', err);
+    console.error('Error loading pinned items:', err);
   }
 }
 
@@ -30,30 +38,48 @@ function renderPinnedEvents(events) {
   container.innerHTML = events.map(ev => {
     const youtubeId = extractYouTubeId(ev);
     const userIsAdmin = isAdmin();
+    const isEvento = ev.feedType === 'evento' || (!ev.feedType && ev.date);
+    const isOportunidad = ev.feedType === 'oportunidad' || ev.tipo;
+    const isPost = ev.feedType === 'post' || (!ev.feedType && !ev.url && !ev.date && !ev.tipo);
+    const isRecurso = ev.feedType === 'recurso' || ev.url;
+    
+    const link = isPost ? `post.html?id=${ev._id}` :
+                 (isRecurso ? `recurso.html?id=${ev._id}` : 
+                 (isEvento ? `evento.html?id=${ev._id}` : `oportunidad.html?id=${ev._id}`));
+
+    const accentColor = isPost ? 'cyan' : (isRecurso ? 'lime' : (isEvento ? 'fuchsia' : 'gold'));
+    const badgeText = isPost ? 'OBRA DESTACADA' : (isRecurso ? 'RECURSO DESTACADO' : (isEvento ? 'EVENTO DESTACADO' : 'DESTACADO'));
+    const title = ev.title || ev.titulo || 'Sin título';
+    const description = ev.description || ev.descripcion || '';
+    const author = ev.author || ev.creator || ev.creador || { username: 'Anónimo' };
+    const dateStr = ev.date ? new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) : (ev.createdAt ? new Date(ev.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) : '');
+    const imgUrl = ev.imageUrl || ev.imagenUrl;
+    const typeKey = ev.feedType || (isEvento ? 'evento' : (isOportunidad ? 'oportunidad' : (isRecurso ? 'recurso' : 'post')));
+
     return `
-      <div class="group rounded-2xl overflow-hidden border-2 border-cyan-500/30 bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-cyan-500/60 hover:shadow-[0_0_30px_rgba(6,182,212,0.2)] flex flex-col h-full card-cyber relative">
+      <div class="group rounded-2xl overflow-hidden border-2 border-${accentColor}-500/30 bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-${accentColor}-500/60 hover:shadow-[0_0_30px_rgba(6,182,212,0.2)] flex flex-col h-full card-cyber relative">
         ${userIsAdmin ? `
           <div class="absolute top-3 right-3 z-20">
-            <button onclick="unpinEvent('${ev._id}')" class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="Despinnar evento">
+            <button onclick="unpinItem('${ev._id}', '${typeKey}')" class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="Despinnar posteo">
               <i class="fas fa-thumbtack transform rotate-45 text-xs"></i>
             </button>
           </div>
         ` : `
           <div class="absolute top-3 right-3 z-20">
-            <span class="px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-wider border border-cyan-500/30">
-              <i class="fas fa-thumbtack mr-1"></i>DESTACADO
+            <span class="px-2 py-1 rounded-full bg-${accentColor}-500/20 text-${accentColor}-400 text-[10px] font-black uppercase tracking-wider border border-${accentColor}-500/30">
+              <i class="fas fa-thumbtack mr-1"></i>${badgeText}
             </span>
           </div>
         `}
         <div class="relative aspect-video overflow-hidden">
           <div class="block w-full h-full relative cursor-pointer"
                ${youtubeId ? `onmouseenter="playVideo(this, '${youtubeId}')" onmouseleave="stopVideo(this)"` : ''}
-               onclick="window.location.href='evento.html?id=${ev._id}'">
-            ${ev.imageUrl || ev.imagenUrl ? `
-              <img src="${sanitizeUrl(ev.imageUrl || ev.imagenUrl)}" alt="${escapeHTML(ev.title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+               onclick="window.location.href='${link}'">
+            ${imgUrl ? `
+              <img src="${sanitizeUrl(imgUrl)}" alt="${escapeHTML(title)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
             ` : `
               <div class="w-full h-full bg-cyan-500/10 flex items-center justify-center">
-                <i class="fas fa-calendar-alt text-4xl text-cyan-500/30"></i>
+                <i class="fas fa-${isPost ? 'palette' : (isEvento ? 'calendar-alt' : (isOportunidad ? 'briefcase' : 'box-open'))} text-4xl text-cyan-500/30"></i>
               </div>
             `}
             ${youtubeId ? `
@@ -66,32 +92,36 @@ function renderPinnedEvents(events) {
           </div>
         </div>
         <div class="p-5 flex-1 flex flex-col">
+          ${dateStr ? `
           <div class="flex items-center gap-2 mb-3">
             <span class="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg text-xs font-bold uppercase tracking-wider">
-              ${new Date(ev.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
+              ${dateStr}
             </span>
-            <span class="text-xs text-gray-500">${new Date(ev.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs</span>
+            ${ev.date ? `<span class="text-xs text-gray-500">${new Date(ev.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs</span>` : ''}
           </div>
+          ` : ''}
           <h3 class="text-lg font-black text-white mb-2 leading-tight group-hover:text-cyan-400 transition-colors line-clamp-1">
-            ${escapeHTML(ev.title)}
+            ${escapeHTML(title)}
           </h3>
           <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-            ${formatMentions(ev.description) || 'Sin descripción'}
+            ${formatMentions(description) || 'Sin descripción'}
           </p>
+          ${isEvento ? `
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
             <i class="fas fa-map-marker-alt text-cyan-500"></i>
             <span class="truncate">${escapeHTML(ev.location || 'Virtual')}</span>
           </div>
+          ` : ''}
           <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
-                ${ev.creator?.avatar ? `
-                  <img src="${sanitizeUrl(ev.creator.avatar)}" alt="${escapeHTML(ev.creator.username)}" class="w-full h-full object-cover">
+                ${author.avatar ? `
+                  <img src="${sanitizeUrl(author.avatar)}" alt="${escapeHTML(author.username)}" class="w-full h-full object-cover">
                 ` : `
-                  <span class="text-[10px] font-bold text-gray-500">${escapeHTML((ev.creator?.username || '?')[0].toUpperCase())}</span>
+                  <span class="text-[10px] font-bold text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</span>
                 `}
               </div>
-              <span class="text-xs font-bold text-gray-400">${escapeHTML(ev.creator?.username || 'Anónimo')}</span>
+              <span class="text-xs font-bold text-gray-400">${escapeHTML(author.username || 'Anónimo')}</span>
             </div>
             ${ev.ticketConfig?.enabled ? `
               <a href="ticket-purchase?event=${ev._id}" class="group relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white text-xs font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] overflow-hidden">
@@ -100,8 +130,8 @@ function renderPinnedEvents(events) {
                 ${ev.ticketConfig.price === 0 ? 'RESERVAR' : 'COMPRAR'}
               </a>
             ` : `
-              <a href="evento.html?id=${ev._id}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
-                Ver Evento <i class="fas fa-arrow-right ml-1"></i>
+              <a href="${link}" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all">
+                Ver más <i class="fas fa-arrow-right ml-1"></i>
               </a>
             `}
           </div>
@@ -111,10 +141,11 @@ function renderPinnedEvents(events) {
   }).join('');
 }
 
-async function unpinEvent(eventId) {
-  if (!confirm('¿Despinnar este evento?')) return;
+async function unpinItem(itemId, type) {
+  if (!confirm('¿Despinnar este posteo?')) return;
   try {
-    const res = await apiRequest(`/eventos/${eventId}/unpin`, { method: 'POST' });
+    const endpoint = type === 'evento' ? `/eventos/${itemId}/unpin` : `/posteos/${type}/${itemId}/unpin`;
+    const res = await apiRequest(endpoint, { method: 'POST' });
     if (res.ok) {
       await loadPinnedEvents();
       const pinnedContainer = document.getElementById('pinned-container');
@@ -123,24 +154,26 @@ async function unpinEvent(eventId) {
       }
     }
   } catch (err) {
-    console.error('Error unpinning event:', err);
-    alert('Error al despinnar el evento');
+    console.error('Error unpinning item:', err);
+    alert('Error al despinnar el posteo');
   }
 }
 
-async function pinEventFromFeed(eventId) {
-  if (!confirm('¿Pinnar este evento como destacado?')) return;
+async function pinItemFromFeed(itemId, type) {
+  if (!confirm('¿Pinnar este posteo como destacado?')) return;
   try {
-    const res = await apiRequest(`/eventos/${eventId}/pin`, { method: 'POST' });
+    const endpoint = type === 'evento' ? `/eventos/${itemId}/pin` : `/posteos/${type}/${itemId}/pin`;
+    const res = await apiRequest(endpoint, { method: 'POST' });
     if (res.ok) {
       await Promise.all([loadPinnedEvents(), loadFeed()]);
       document.getElementById('pinned-section').classList.remove('hidden');
     }
   } catch (err) {
-    console.error('Error pinning event:', err);
-    alert('Error al pinear el evento');
+    console.error('Error pinning item:', err);
+    alert('Error al pinear el posteo');
   }
 }
+
 
 let allFeedItems = [];
 let activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
@@ -297,8 +330,8 @@ function renderFeed() {
               ${badgeText}
             </span>
             ${isOportunidad ? `<span class="px-2 py-0.5 rounded text-[8px] font-bold bg-${accentColor}-500/20 text-${accentColor}-400 uppercase tracking-wider">${subcategoria}</span>` : ''}
-            ${isEvento && isAdmin() && !item.pinned ? `
-            <button onclick="event.stopPropagation(); pinEventFromFeed('${item._id}')" class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all flex items-center justify-center" title="Pinnar evento destacado">
+            ${isAdmin() && !item.pinned ? `
+            <button onclick="event.stopPropagation(); pinItemFromFeed('${item._id}', '${item.feedType}')" class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all flex items-center justify-center" title="Pinnar posteo destacado">
               <i class="fas fa-thumbtack text-[10px] transform rotate-45"></i>
             </button>
             ` : ''}
@@ -364,7 +397,8 @@ async function toggleFeedLike(event, id, type) {
   }
   const endpoint = type === 'post' ? `/posts/${id}/like` :
                    (type === 'recurso' ? `/recursos/${id}/like` : 
-                   (type === 'evento' ? `/eventos/${id}/like` : null));
+                   (type === 'evento' ? `/eventos/${id}/like` : 
+                   (type === 'oportunidad' ? `/oportunidades/${id}/like` : `/posteos/${type}/${id}/like`)));
   if (!endpoint) return;
   const btn = event.currentTarget;
   const icon = btn.querySelector('i');
@@ -374,12 +408,13 @@ async function toggleFeedLike(event, id, type) {
     if (res.ok) {
       const data = await res.json();
       const userId = getUserId();
-      const isLiked = data.likes.includes(userId);
+      const isLiked = (data.likes || []).includes(userId);
       icon.className = `${isLiked ? 'fas' : 'far'} fa-heart`;
       btn.className = `flex items-center gap-1.5 text-xs font-bold transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-cyan-400'}`;
-      countSpan.innerText = data.likes.length;
+      countSpan.innerText = (data.likes || []).length;
     }
   } catch (err) {
     console.error(err);
   }
 }
+

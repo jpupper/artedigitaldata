@@ -2,17 +2,26 @@ import { Router, Request, Response } from 'express';
 import { Oportunidad, Inscripcion } from '../models/Oportunidad';
 import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth';
 import User from '../models/User';
-import { hydrate } from '../utils/userHydration';
+import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
 
 // =============================================
-// LISTAR OPORTUNIDADES (público)
+// LISTAR OPORTUNIDADES (público / admin)
 // =============================================
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const filter: any = { activa: true, visibility: 'public' };
+    const filter: any = {};
+    const isAdminUser = req.user && (req.user.role === 'ADMIN' || req.user.role === 'ADMINISTRADOR' || req.user.username === 'jpupper');
+    const showAll = req.query.all === 'true' || isAdminUser;
+
+    if (!showAll) {
+      filter.activa = true;
+      filter.visibility = 'public';
+    }
+
     if (req.query.tipo) filter.tipo = req.query.tipo;
+    if (req.query.pinned === 'true') filter.pinned = true;
     
     const oportunidades = await Oportunidad.find(filter)
       .sort({ createdAt: -1 });
@@ -22,6 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 // =============================================
 // OBTENER UNA OPORTUNIDAD (público)
@@ -34,11 +44,13 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
     
     const [hydrated] = await hydrate([oportunidad], 'creador');
-    return res.json(hydrated);
+    const final = await hydrateComments(hydrated);
+    return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 // =============================================
 // CREAR OPORTUNIDAD (requiere auth)
@@ -328,4 +340,123 @@ router.get('/mis-oportunidades/listar', authMiddleware, async (req: AuthRequest,
   }
 });
 
+// =============================================
+// LIKE / UNLIKE OPORTUNIDAD (requiere auth)
+// =============================================
+router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    const userId = req.user!.id as any;
+    if (!oportunidad.likes) oportunidad.likes = [];
+    
+    const index = oportunidad.likes.findIndex(id => id.toString() === userId.toString());
+    if (index === -1) {
+      oportunidad.likes.push(userId);
+    } else {
+      oportunidad.likes.splice(index, 1);
+    }
+
+    await oportunidad.save();
+    return res.json({ likes: oportunidad.likes });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// COMENTARIOS EN OPORTUNIDAD (requiere auth)
+// =============================================
+router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'El comentario no puede estar vacío' });
+    }
+
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    if (!oportunidad.comments) oportunidad.comments = [];
+    oportunidad.comments.push({
+      user: req.user!.id as any,
+      text: text.trim(),
+      createdAt: new Date()
+    });
+
+    await oportunidad.save();
+    const [hydrated] = await hydrate([oportunidad], 'creador');
+    const final = await hydrateComments(hydrated);
+    return res.status(201).json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id/comments/:commentId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    const commentIndex = (oportunidad.comments || []).findIndex(
+      c => (c as any)._id?.toString() === req.params.commentId
+    );
+
+    if (commentIndex === -1) {
+      return res.status(404).json({ error: 'Comentario no encontrado' });
+    }
+
+    const comment = oportunidad.comments[commentIndex];
+    const isCommentAuthor = comment.user.toString() === req.user!.id;
+    const isOpoCreator = oportunidad.creador.toString() === req.user!.id;
+    const isAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'ADMINISTRADOR' || req.user!.username === 'jpupper';
+
+    if (!isCommentAuthor && !isOpoCreator && !isAdmin) {
+      return res.status(403).json({ error: 'No autorizado para eliminar este comentario' });
+    }
+
+    oportunidad.comments.splice(commentIndex, 1);
+    await oportunidad.save();
+
+    const [hydrated] = await hydrate([oportunidad], 'creador');
+    const final = await hydrateComments(hydrated);
+    return res.json(final);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// PINEAR / DESPINEAR OPORTUNIDAD (admin)
+// =============================================
+router.post('/:id/pin', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const isAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'ADMINISTRADOR' || req.user!.username === 'jpupper';
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Solo administradores pueden pinear' });
+    }
+    const oportunidad = await Oportunidad.findByIdAndUpdate(req.params.id, { pinned: true }, { new: true });
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+    return res.json({ message: 'Oportunidad pineada', oportunidad });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/unpin', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const isAdmin = req.user!.role === 'ADMIN' || req.user!.role === 'ADMINISTRADOR' || req.user!.username === 'jpupper';
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Solo administradores pueden despinnar' });
+    }
+    const oportunidad = await Oportunidad.findByIdAndUpdate(req.params.id, { pinned: false }, { new: true });
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+    return res.json({ message: 'Oportunidad despineada', oportunidad });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
+

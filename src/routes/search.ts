@@ -3,6 +3,7 @@ import User from '../models/User';
 import Post from '../models/Post';
 import Evento from '../models/Evento';
 import Recurso from '../models/Recurso';
+import Oportunidad from '../models/Oportunidad';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const query = new RegExp(q, 'i');
 
-    const [users, posts, events, resources] = await Promise.all([
+    const [users, posts, events, resources, oportunidades] = await Promise.all([
       User.find({ 
         $or: [
           { username: query },
@@ -43,14 +44,28 @@ router.get('/', async (req: Request, res: Response) => {
           { tags: query },
           { description: query }
         ]
-      }).limit(10).populate('author', 'username').select('title author url type tags description youtube_video')
+      }).limit(10).populate('author', 'username').select('title author url type tags description youtube_video'),
+
+      Oportunidad.find({
+        activa: true,
+        visibility: 'public',
+        $or: [
+          { titulo: query },
+          { descripcion: query },
+          { tags: query },
+          { lugarExposicion: query },
+          { nombrePuesto: query },
+          { nombreProyecto: query }
+        ]
+      }).limit(10).populate('creador', 'username').select('titulo creador imagenUrl createdAt tags descripcion tipo youtube_video')
     ]);
 
     const results = [
       ...users.map(u => ({ type: 'user', id: u.username, _id: u._id, label: u.displayName || u.username, avatar: u.avatar })),
       ...posts.map(p => ({ type: 'post', id: p._id, label: p.title, author: (p.author as any)?.username, image: p.imageUrl, date: p.createdAt, youtube_video: p.youtube_video, description: p.description })),
       ...events.map(e => ({ type: 'event', id: e._id, label: e.title, date: e.date, image: e.imageUrl, desc: e.description, youtube_video: e.youtube_video })),
-      ...resources.map(r => ({ type: 'resource', id: r._id, label: r.title, author: (r.author as any)?.username, url: r.url, resourceType: r.type, youtube_video: r.youtube_video, description: r.description }))
+      ...resources.map(r => ({ type: 'resource', id: r._id, label: r.title, author: (r.author as any)?.username, url: r.url, resourceType: r.type, youtube_video: r.youtube_video, description: r.description })),
+      ...oportunidades.map(o => ({ type: 'oportunidad', id: o._id, label: o.titulo, author: (o.creador as any)?.username, image: o.imagenUrl, date: o.createdAt, desc: o.descripcion, subType: o.tipo, youtube_video: o.youtube_video }))
     ];
 
     return res.json(results);
@@ -59,5 +74,6 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 export default router;

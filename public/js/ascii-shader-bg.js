@@ -223,6 +223,26 @@ void main() {
 
   let asciiProgramInfo = null;
   let noiseProgramInfo = null;
+  let blitProgramInfo = null;
+
+  let blitVsSource = `#version 300 es
+in vec2 position;
+out vec2 v_uv;
+void main() {
+    v_uv = position * 0.5 + 0.5;
+    gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+  let blitFsSource = `#version 300 es
+precision highp float;
+in vec2 v_uv;
+out vec4 fragColor;
+uniform sampler2D u_bufferTexture;
+uniform float u_opacity;
+void main() {
+    vec4 col = texture(u_bufferTexture, v_uv);
+    fragColor = vec4(col.rgb * u_opacity, col.a * u_opacity);
+}`;
 
   function hexToRgb(hex) {
     if (!hex) return [0, 1, 1];
@@ -302,52 +322,138 @@ void main() {
 
   let activeGenerativeShader = 'noise.frag';
   let generativeShaderCache = {};
+  let customGenerativeShaders = {};
+  let activeGenerativeShaderUniforms = [];
+
+  // Cargar custom shaders guardados en localStorage
+  try {
+    const savedCustoms = localStorage.getItem('custom_generative_shaders');
+    if (savedCustoms) {
+      customGenerativeShaders = JSON.parse(savedCustoms);
+      for (const name in customGenerativeShaders) {
+        generativeShaderCache[name] = customGenerativeShaders[name];
+      }
+    }
+  } catch (err) {}
+
+  function preprocessShaderCode(code) {
+    if (!code) return '';
+    
+    // Inyectar o reemplazar #pragma include / #include o proveer mapr
+    if (code.includes('#pragma include') || code.includes('#include') || code.includes('mapr(')) {
+      const maprDef = `\nfloat mapr(float value, float minOut, float maxOut) {\n    return minOut + clamp(value, 0.0, 1.0) * (maxOut - minOut);\n}\n`;
+      if (!code.includes('float mapr(')) {
+        code = maprDef + code;
+      }
+      code = code.replace(/#pragma\s+include\s+["'][^"']+["']/g, '');
+      code = code.replace(/#include\s+["'][^"']+["']/g, '');
+    }
+    
+    // Reemplazar compatibilidad iResolution e iTime
+    code = code.replace(/\biResolution\b/g, 'u_resolution');
+    code = code.replace(/\biTime\b/g, 'u_time');
+    
+    return code;
+  }
+
+  function extractGenerativeUniforms(fsCode) {
+    const EXCLUDED = ['u_resolution', 'iResolution', 'u_time', 'iTime', 'u_noiseTexture', 'iChannel0', 'u_charSize', 'u_glyphScale', 'u_fontMode', 'u_opacity'];
+    const uniforms = [];
+    const seen = new Set();
+
+    const lines = fsCode.split('\n');
+    for (let line of lines) {
+      const commentIdx = line.indexOf('//');
+      if (commentIdx !== -1) line = line.substring(0, commentIdx);
+      
+      const match = line.match(/uniform\s+(?:highp\s+|mediump\s+|lowp\s+)?(float|int|vec2|vec3|vec4|bool)\s+([a-zA-Z0-9_]+)\s*(?:=\s*([^;]+))?\s*;/);
+      if (match) {
+        const type = match[1];
+        const name = match[2];
+        const defaultValStr = match[3] ? match[3].trim() : null;
+        if (!EXCLUDED.includes(name) && !seen.has(name)) {
+          seen.add(name);
+          uniforms.push({
+            name,
+            type,
+            defaultValueStr: defaultValStr
+          });
+        }
+      }
+    }
+    return uniforms;
+  }
+
+  function notifyGenerativeShaderChanged() {
+    if (typeof window.onGenerativeShaderChanged === 'function') {
+      window.onGenerativeShaderChanged(activeGenerativeShader, activeGenerativeShaderUniforms);
+    }
+    window.dispatchEvent(new CustomEvent('generative-shader-changed', {
+      detail: {
+        shaderName: activeGenerativeShader,
+        uniforms: activeGenerativeShaderUniforms
+      }
+    }));
+  }
 
   async function loadGenerativeShader(shaderName) {
     if (!shaderName) shaderName = 'noise.frag';
-    if (activeGenerativeShader === shaderName && noiseProgramInfo && noiseProgramInfo.program) return true;
 
-    if (generativeShaderCache[shaderName]) {
-      const code = generativeShaderCache[shaderName];
-      const newNoise = buildProgramInfo(vsSource, code);
-      if (newNoise) {
-        noiseFsSource = code;
-        noiseProgramInfo = newNoise;
-        activeGenerativeShader = shaderName;
-        console.log('[AsciiShaderBG] Shader generativo cambiado desde caché:', shaderName);
-        return true;
+    let code = generativeShaderCache[shaderName] || customGenerativeShaders[shaderName];
+
+    if (!code) {
+      const currentPath = window.location.pathname;
+      const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+      const candidatePaths = [
+        folderPath + 'shaders/generative/',
+        'shaders/generative/',
+        './shaders/generative/',
+        '../shaders/generative/',
+        '/artedigitaldata/shaders/generative/',
+        (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE + '/shaders/generative/' : '/shaders/generative/')
+      ];
+
+      for (const basePath of candidatePaths) {
+        try {
+          const res = await fetch(basePath + shaderName + '?t=' + Date.now());
+          if (res.ok) {
+            code = await res.text();
+            break;
+          }
+        } catch (err) {}
       }
     }
 
-    const currentPath = window.location.pathname;
-    const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-    const candidatePaths = [
-      folderPath + 'shaders/generative/',
-      'shaders/generative/',
-      './shaders/generative/',
-      '../shaders/generative/',
-      '/artedigitaldata/shaders/generative/',
-      (window.CONFIG && window.CONFIG.BASE ? window.CONFIG.BASE + '/shaders/generative/' : '/shaders/generative/')
-    ];
-
-    for (const basePath of candidatePaths) {
-      try {
-        const res = await fetch(basePath + shaderName + '?t=' + Date.now());
-        if (res.ok) {
-          const code = await res.text();
-          const newNoise = buildProgramInfo(vsSource, code);
-          if (newNoise) {
-            noiseFsSource = code;
-            noiseProgramInfo = newNoise;
-            activeGenerativeShader = shaderName;
-            generativeShaderCache[shaderName] = code;
-            console.log('[AsciiShaderBG] Shader generativo cargado desde:', basePath + shaderName);
-            return true;
-          }
-        }
-      } catch (err) {}
+    if (code) {
+      const processedCode = preprocessShaderCode(code);
+      const newNoise = buildProgramInfo(vsSource, processedCode);
+      if (newNoise) {
+        noiseFsSource = processedCode;
+        noiseProgramInfo = newNoise;
+        activeGenerativeShader = shaderName;
+        generativeShaderCache[shaderName] = processedCode;
+        activeGenerativeShaderUniforms = extractGenerativeUniforms(processedCode);
+        console.log('[AsciiShaderBG] Shader generativo cargado:', shaderName, 'Uniforms:', activeGenerativeShaderUniforms);
+        notifyGenerativeShaderChanged();
+        return true;
+      }
     }
     return false;
+  }
+
+  function registerCustomShader(shaderName, shaderCode) {
+    if (!shaderName) shaderName = 'custom_' + Date.now() + '.frag';
+    if (!shaderName.endsWith('.frag')) shaderName += '.frag';
+
+    const processed = preprocessShaderCode(shaderCode);
+    customGenerativeShaders[shaderName] = processed;
+    generativeShaderCache[shaderName] = processed;
+
+    try {
+      localStorage.setItem('custom_generative_shaders', JSON.stringify(customGenerativeShaders));
+    } catch(err){}
+
+    return loadGenerativeShader(shaderName);
   }
 
   async function loadExternalShaders() {
@@ -384,7 +490,10 @@ void main() {
             asciiProgramInfo = newAscii;
             noiseProgramInfo = newNoise;
             generativeShaderCache[genShaderToLoad] = noiseFsSource;
-            console.log('[AsciiShaderBG] Shaders externos cargados exitosamente desde:', basePath);
+            activeGenerativeShader = genShaderToLoad;
+            activeGenerativeShaderUniforms = extractGenerativeUniforms(noiseFsSource);
+            console.log('[AsciiShaderBG] Shaders externos cargados exitosamente desde:', basePath, 'Uniforms:', activeGenerativeShaderUniforms);
+            notifyGenerativeShaderChanged();
             return;
           }
         }
@@ -427,6 +536,11 @@ void main() {
 
     asciiProgramInfo = buildProgramInfo(vsSource, asciiFsSource);
     noiseProgramInfo = buildProgramInfo(vsSource, noiseFsSource);
+    blitProgramInfo = buildProgramInfo(blitVsSource, blitFsSource);
+
+    activeGenerativeShader = 'noise.frag';
+    activeGenerativeShaderUniforms = extractGenerativeUniforms(noiseFsSource);
+    notifyGenerativeShaderChanged();
 
     loadExternalShaders();
 
@@ -465,9 +579,14 @@ void main() {
       return;
     }
 
+    const targetShader = cfg.GENERATIVE_SHADER || 'noise.frag';
+    if (targetShader !== activeGenerativeShader) {
+      loadGenerativeShader(targetShader);
+    }
+
     const elapsed = (performance.now() - startTime) / 1000.0;
 
-    // --- PASO 1: Renderizar noise.frag dentro del FBO (Textura de Entrada) ---
+    // --- PASO 1: Renderizar shader generativo dentro del FBO (Textura de Entrada) ---
     gl.bindFramebuffer(gl.FRAMEBUFFER, noiseFbo);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 0);
@@ -485,22 +604,74 @@ void main() {
     const charSize = cfg.ASCII_CHAR_SIZE !== undefined ? Number(cfg.ASCII_CHAR_SIZE) : 14;
     const glyphScale = cfg.ASCII_GLYPH_SCALE !== undefined ? Number(cfg.ASCII_GLYPH_SCALE) : 0.85;
 
-    const uNoise = noiseProgramInfo.uniforms;
-    gl.uniform2f(uNoise.u_resolution, canvas.width, canvas.height);
-    gl.uniform1f(uNoise.u_time, elapsed);
-    gl.uniform1f(uNoise.u_tile, isNaN(tile) ? 3.0 : tile);
-    gl.uniform1f(uNoise.u_opacity, 1.0);
-    gl.uniform1f(uNoise.u_speed, isNaN(speed) ? 1.0 : speed);
+    // Uniforms globales estándar
+    const resLoc = gl.getUniformLocation(noiseProgramInfo.program, 'u_resolution');
+    if (resLoc) gl.uniform2f(resLoc, canvas.width, canvas.height);
+    const timeLoc = gl.getUniformLocation(noiseProgramInfo.program, 'u_time');
+    if (timeLoc) gl.uniform1f(timeLoc, elapsed);
 
-    const c1 = hexToRgb(cfg.COLOR_1 || '#40c4ff');
-    const c2 = hexToRgb(cfg.COLOR_2 || '#ff9100');
-    const c3 = hexToRgb(cfg.COLOR_3 || '#e040fb');
-    const c4 = hexToRgb(cfg.COLOR_4 || '#00e676');
+    // Uniform opacidad (si existe en el shader)
+    const opLoc = gl.getUniformLocation(noiseProgramInfo.program, 'u_opacity');
+    if (opLoc) gl.uniform1f(opLoc, 1.0);
 
-    gl.uniform3f(uNoise.u_color1, c1[0], c1[1], c1[2]);
-    gl.uniform3f(uNoise.u_color2, c2[0], c2[1], c2[2]);
-    gl.uniform3f(uNoise.u_color3, c3[0], c3[1], c3[2]);
-    gl.uniform3f(uNoise.u_color4, c4[0], c4[1], c4[2]);
+    // Bucle de binding dinámico para todos los uniforms del shader activo
+    if (Array.isArray(activeGenerativeShaderUniforms)) {
+      activeGenerativeShaderUniforms.forEach(u => {
+        const loc = gl.getUniformLocation(noiseProgramInfo.program, u.name);
+        if (!loc) return;
+
+        let val = cfg[u.name];
+        if (val === undefined && window.ParticlesConfig && window.ParticlesConfig.get) {
+          val = window.ParticlesConfig.get()[u.name];
+        }
+
+        if (val === undefined) {
+          if (u.name === 'zoom') val = 0.8;
+          else if (u.name === 'tile') val = (activeGenerativeShader === 'starnest.frag' ? 0.85 : (cfg.ASCII_TILE !== undefined ? cfg.ASCII_TILE : 3.0));
+          else if (u.name === 'u_tile') val = cfg.ASCII_TILE !== undefined ? cfg.ASCII_TILE : 3.0;
+          else if (u.name === 'speed' || u.name === 'u_speed') val = cfg.ASCII_SPEED !== undefined ? cfg.ASCII_SPEED : 1.0;
+          else if (u.name === 'speedx' || u.name === 'speedy') val = 0.5;
+          else if (u.name === 'iterations') val = 0.5;
+          else if (u.name === 'volsteps') val = 0.6;
+          else if (u.name === 'formuparam') val = 0.53;
+          else if (u.name === 'stepsize') val = 0.1;
+          else if (u.name === 'brightness') val = 0.5;
+          else if (u.name === 'darkmatter') val = 0.3;
+          else if (u.name === 'distfading') val = 0.73;
+          else if (u.name === 'saturation') val = 0.85;
+          else if (u.name === 'ma1') val = 0.5;
+          else if (u.name === 'ma2') val = 0.8;
+          else if (u.name === 'u_color1') val = cfg.COLOR_1 || '#40c4ff';
+          else if (u.name === 'u_color2') val = cfg.COLOR_2 || '#ff9100';
+          else if (u.name === 'u_color3') val = cfg.COLOR_3 || '#e040fb';
+          else if (u.name === 'u_color4') val = cfg.COLOR_4 || '#00e676';
+          else val = u.defaultValueStr ? Number(u.defaultValueStr) || 0.5 : 0.5;
+        }
+
+        if (u.type === 'float') {
+          gl.uniform1f(loc, Number(val));
+        } else if (u.type === 'int') {
+          gl.uniform1i(loc, Math.round(Number(val)));
+        } else if (u.type === 'bool') {
+          gl.uniform1i(loc, val ? 1 : 0);
+        } else if (u.type === 'vec3') {
+          if (typeof val === 'string') {
+            const rgb = hexToRgb(val);
+            gl.uniform3f(loc, rgb[0], rgb[1], rgb[2]);
+          } else if (Array.isArray(val)) {
+            gl.uniform3f(loc, val[0] || 0, val[1] || 0, val[2] || 0);
+          } else {
+            gl.uniform3f(loc, 0.5, 0.5, 0.5);
+          }
+        } else if (u.type === 'vec2') {
+          if (Array.isArray(val)) gl.uniform2f(loc, val[0] || 0, val[1] || 0);
+          else gl.uniform2f(loc, Number(val) || 0, Number(val) || 0);
+        } else if (u.type === 'vec4') {
+          if (Array.isArray(val)) gl.uniform4f(loc, val[0] || 0, val[1] || 0, val[2] || 0, val[3] || 0);
+          else gl.uniform4f(loc, 0, 0, 0, 1);
+        }
+      });
+    }
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -511,10 +682,24 @@ void main() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     if (cfg.ASCII_NOISE_ONLY) {
-      // Dibujar directamente el contenido de noise.frag a la pantalla aplicando la opacidad de usuario
-      gl.useProgram(noiseProgramInfo.program);
-      gl.uniform1f(uNoise.u_opacity, opacity);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      // Dibujar directamente la textura generada en FBO usando blitProgramInfo
+      if (blitProgramInfo && blitProgramInfo.program) {
+        gl.useProgram(blitProgramInfo.program);
+
+        posLoc = gl.getAttribLocation(blitProgramInfo.program, 'position');
+        gl.enableVertexAttribArray(posLoc);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, noiseFboTexture);
+        const uTex = gl.getUniformLocation(blitProgramInfo.program, 'u_bufferTexture');
+        if (uTex) gl.uniform1i(uTex, 0);
+        const uOp = gl.getUniformLocation(blitProgramInfo.program, 'u_opacity');
+        if (uOp) gl.uniform1f(uOp, opacity);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
     } else {
       // ascii.frag recibe el FBO (noiseFboTexture) como la entrada sampler2D (u_noiseTexture)
       gl.useProgram(asciiProgramInfo.program);
@@ -537,11 +722,6 @@ void main() {
         gl.uniform1i(uAscii.u_fontMode, isNaN(fontMode) ? 0 : fontMode);
       }
       gl.uniform1f(uAscii.u_opacity, opacity);
-
-      const targetShader = cfg.GENERATIVE_SHADER || 'noise.frag';
-      if (targetShader !== activeGenerativeShader) {
-        loadGenerativeShader(targetShader);
-      }
 
       // Vincular textura del FBO
       gl.activeTexture(gl.TEXTURE0);
@@ -611,6 +791,8 @@ void main() {
             asciiProgramInfo = newAscii;
             noiseProgramInfo = newNoise;
             console.log('%c[AsciiShaderBG] ¡SHADERS RECARGADOS EXITOSAMENTE DESDE: ' + basePath + '!', 'background: #00e676; color: #050b14; font-weight: bold; padding: 6px 10px; border-radius: 4px;');
+            activeGenerativeShaderUniforms = extractGenerativeUniforms(noiseFsSource);
+            notifyGenerativeShaderChanged();
             if (showNotice && typeof window.showToast === 'function') {
               window.showToast('<i class="fas fa-bolt" style="color:var(--accent-cyan);"></i> Shaders recargados en vivo ⚡', 'success');
             }
@@ -634,6 +816,10 @@ void main() {
     init: initWebGL,
     reloadShaders,
     loadGenerativeShader,
+    registerCustomShader,
+    getActiveGenerativeShader: () => activeGenerativeShader,
+    getActiveUniforms: () => activeGenerativeShaderUniforms,
+    getCustomShaders: () => customGenerativeShaders,
     setVisible: (visible) => {
       if (visible) start();
       else stop();

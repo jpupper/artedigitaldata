@@ -1,6 +1,6 @@
 let currentTab = 'users';
-let data = { users: [], posts: [], recursos: [], eventos: [] };
-let filteredData = { users: [], posts: [], recursos: [], eventos: [] };
+let data = { users: [], posts: [], recursos: [], eventos: [], oportunidades: [] };
+let filteredData = { users: [], posts: [], recursos: [], eventos: [], oportunidades: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof isLoggedIn === 'undefined' || typeof isAdmin === 'undefined' || !isLoggedIn() || !isAdmin()) {
@@ -16,23 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.refreshAll = async function() {
   try {
-    const urls = [
-      '/admin/users',
-      '/posts',
-      '/recursos',
-      '/eventos'
-    ];
-    
-    // We use apiRequest for admin/users because it likely needs auth headers handled by apiRequest
-    const usersRes = await apiRequest('/admin/users');
-    const postsRes = await fetch(CONFIG.API_URL + '/posts');
-    const recursosRes = await fetch(CONFIG.API_URL + '/recursos');
-    const eventosRes = await fetch(CONFIG.API_URL + '/eventos');
+    const t = Date.now();
+    const [usersRes, postsRes, recursosRes, eventosRes, oportunidadesRes] = await Promise.all([
+      apiRequest('/admin/users?t=' + t),
+      apiRequest('/posts?t=' + t),
+      apiRequest('/recursos?t=' + t),
+      apiRequest('/eventos?t=' + t),
+      apiRequest('/oportunidades?all=true&t=' + t)
+    ]);
 
     data.users = await usersRes.json();
     data.posts = await postsRes.json();
     data.recursos = await recursosRes.json();
     data.eventos = await eventosRes.json();
+    data.oportunidades = await oportunidadesRes.json();
     
     handleSearch();
   } catch (err) {
@@ -49,15 +46,19 @@ window.handleSearch = function() {
   );
 
   filteredData.posts = data.posts.filter(p => 
-    p.title.toLowerCase().includes(q) || p.author?.username?.toLowerCase().includes(q)
+    (p.title || '').toLowerCase().includes(q) || p.author?.username?.toLowerCase().includes(q)
   );
 
   filteredData.recursos = data.recursos.filter(r => 
-    r.title.toLowerCase().includes(q) || r.author?.username?.toLowerCase().includes(q)
+    (r.title || '').toLowerCase().includes(q) || r.author?.username?.toLowerCase().includes(q)
   );
 
   filteredData.eventos = data.eventos.filter(e => 
-    e.title.toLowerCase().includes(q) || e.creator?.username?.toLowerCase().includes(q)
+    (e.title || '').toLowerCase().includes(q) || (e.creator?.username || e.author?.username)?.toLowerCase().includes(q)
+  );
+
+  filteredData.oportunidades = data.oportunidades.filter(o => 
+    (o.titulo || o.title || '').toLowerCase().includes(q) || (o.creador?.username || o.author?.username)?.toLowerCase().includes(q)
   );
 
   renderTable();
@@ -89,8 +90,8 @@ window.renderTable = function() {
     if (tbody) {
       tbody.innerHTML = filteredData.users.map(u => `
         <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-          <td class="px-6 py-4 font-bold text-white">${u.username}</td>
-          <td class="px-6 py-4 text-gray-400">${u.email}</td>
+          <td class="px-6 py-4 font-bold text-white">${escapeHTML(u.username)}</td>
+          <td class="px-6 py-4 text-gray-400">${escapeHTML(u.email)}</td>
           <td class="px-6 py-4">
             <select onchange="changeRole('${u._id}', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs">
               <option value="USUARIO" ${u.role === 'USUARIO' ? 'selected' : ''}>USUARIO</option>
@@ -99,7 +100,7 @@ window.renderTable = function() {
           </td>
           <td class="px-6 py-4 text-xs text-gray-500">${new Date(u.createdAt).toLocaleDateString()}</td>
           <td class="px-6 py-4">
-            <a href="${CONFIG.BASE}/profile.html?user=${u.username}" class="text-cyan-400 hover:underline">Ver Perfil</a>
+            <a href="${CONFIG.BASE}/profile.html?user=${escapeHTML(u.username)}" class="text-cyan-400 hover:underline">Ver Perfil</a>
           </td>
         </tr>
       `).join('');
@@ -109,8 +110,8 @@ window.renderTable = function() {
     if (tbody) {
       tbody.innerHTML = filteredData.posts.map(p => `
         <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-          <td class="px-6 py-4 font-bold text-white">${p.title}</td>
-          <td class="px-6 py-4 text-gray-400">${p.author?.username || 'Anónimo'}</td>
+          <td class="px-6 py-4 font-bold text-white">${escapeHTML(p.title)}</td>
+          <td class="px-6 py-4 text-gray-400">${escapeHTML(p.author?.username || 'Anónimo')}</td>
           <td class="px-6 py-4 text-xs text-gray-500">${new Date(p.createdAt).toLocaleDateString()}</td>
           <td class="px-6 py-4 text-gray-500">${p.likes?.length || 0} / ${p.comments?.length || 0}</td>
           <td class="px-6 py-4 flex gap-3">
@@ -126,10 +127,10 @@ window.renderTable = function() {
     if (tbody) {
       tbody.innerHTML = filteredData.recursos.map(r => `
         <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-          <td class="px-6 py-4 font-bold text-white">${r.title}</td>
-          <td class="px-6 py-4 uppercase text-xs text-orange-400">${r.type}</td>
-          <td class="px-6 py-4 text-gray-400">${r.author?.username || 'Anónimo'}</td>
-          <td class="px-6 py-4 truncate max-w-[150px]"><a href="${r.url}" target="_blank" class="text-gray-500 hover:text-cyan-400">${r.url}</a></td>
+          <td class="px-6 py-4 font-bold text-white">${escapeHTML(r.title)}</td>
+          <td class="px-6 py-4 uppercase text-xs text-orange-400">${escapeHTML(r.type)}</td>
+          <td class="px-6 py-4 text-gray-400">${escapeHTML(r.author?.username || 'Anónimo')}</td>
+          <td class="px-6 py-4 truncate max-w-[150px]"><a href="${sanitizeUrl(r.url)}" target="_blank" class="text-gray-500 hover:text-cyan-400">${escapeHTML(r.url)}</a></td>
           <td class="px-6 py-4 flex gap-3">
             <a href="${CONFIG.BASE}/recurso.html?id=${r._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
             <button onclick="openEdit('recursos', '${r._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
@@ -143,20 +144,54 @@ window.renderTable = function() {
     if (tbody) {
       tbody.innerHTML = filteredData.eventos.map(e => `
         <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-          <td class="px-6 py-4 font-bold text-white">${e.title}</td>
-          <td class="px-6 py-4 text-gray-400">${e.creator?.username || 'Anónimo'}</td>
+          <td class="px-6 py-4 font-bold text-white">${escapeHTML(e.title)}</td>
+          <td class="px-6 py-4 text-gray-400">${escapeHTML(e.creator?.username || e.author?.username || 'Anónimo')}</td>
           <td class="px-6 py-4 text-xs text-magenta-400">${new Date(e.date).toLocaleString()}</td>
-          <td class="px-6 py-4 text-gray-500">${e.location || 'Virtual'}</td>
+          <td class="px-6 py-4 text-gray-500">${escapeHTML(e.location || 'Virtual')}</td>
           <td class="px-6 py-4 flex gap-3">
             <a href="${CONFIG.BASE}/evento.html?id=${e._id}" target="_blank" class="text-cyan-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
+            ${e.ticketConfig?.enabled ? `<a href="${CONFIG.BASE}/event-tickets.html?event=${e._id}" target="_blank" class="text-green-400 hover:text-green-300" title="Administrar entradas"><i class="fas fa-ticket-alt"></i></a>` : ''}
             <button onclick="openEdit('eventos', '${e._id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-edit"></i></button>
             <button onclick="deleteItem('eventos', '${e._id}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
           </td>
         </tr>
       `).join('');
     }
+  } else if (currentTab === 'oportunidades') {
+    const tbody = document.getElementById('oportunidades-tbody');
+    if (tbody) {
+      tbody.innerHTML = filteredData.oportunidades.map(o => {
+        const title = o.titulo || o.title || 'Sin título';
+        const creatorName = o.creador?.username || o.author?.username || 'Anónimo';
+        const isPublic = o.visibility === 'public';
+        const inscCount = o.inscripciones?.length || 0;
+        return `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${escapeHTML(title)}</td>
+            <td class="px-6 py-4 uppercase text-xs text-emerald-400 font-bold">${escapeHTML((o.tipo || '').replace('_', ' '))}</td>
+            <td class="px-6 py-4 text-gray-400">${escapeHTML(creatorName)}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isPublic ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'}">
+                ${isPublic ? '🌍 Público' : '🔗 No listado'}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <a href="${CONFIG.BASE}/postulantes.html?id=${o._id}" class="text-xs font-bold text-gray-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5" title="Ver postulantes">
+                <i class="fas fa-users text-[10px]"></i> ${inscCount}
+              </a>
+            </td>
+            <td class="px-6 py-4 flex items-center gap-3">
+              <a href="${CONFIG.BASE}/oportunidad.html?id=${o._id}" target="_blank" class="text-cyan-400 hover:text-white" title="Ver"><i class="fas fa-external-link-alt"></i></a>
+              <a href="${CONFIG.BASE}/crear-oportunidad.html?id=${o._id}" class="text-yellow-500 hover:text-yellow-400" title="Editar"><i class="fas fa-edit"></i></a>
+              <button onclick="deleteItem('oportunidades', '${o._id}')" class="text-red-500 hover:text-red-400" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
   }
 };
+
 
 window.changeRole = async function(userId, newRole) {
   const res = await apiRequest(`/admin/users/${userId}/role`, {
