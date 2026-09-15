@@ -46,6 +46,13 @@ const FORM_TEMPLATES = {
         <input type="file" id="${prefix}-file" name="file" accept="image/*" ${item._id ? '' : 'required'}
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-500/20 file:text-cyan-400 file:cursor-pointer">
       </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Visibilidad</label>
+        <select id="${prefix}-visibility" name="visibility" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">
+          <option value="public" ${item.visibility === 'unlisted' ? '' : 'selected'}>Público (Listado)</option>
+          <option value="unlisted" ${item.visibility === 'unlisted' ? 'selected' : ''}>No Listado</option>
+        </select>
+      </div>
     </div>
   `,
 

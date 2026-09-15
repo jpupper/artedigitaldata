@@ -156,7 +156,7 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, tags, imageUrl, youtube_video } = req.body;
+    const { title, description, tags, imageUrl, youtube_video, visibility } = req.body;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
 
@@ -169,6 +169,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (tags !== undefined) post.tags = tags;
     if (imageUrl !== undefined) post.imageUrl = imageUrl;
     if (youtube_video !== undefined) post.youtube_video = youtube_video;
+    if (visibility !== undefined) post.visibility = visibility;
 
     await post.save();
     return res.json(post);

@@ -102,8 +102,13 @@
         body.innerHTML += `
           <div class="calendar-day ${isToday ? 'today' : ''}">
             <span class="text-xs font-bold ${isToday ? 'text-cyan-400' : 'text-gray-500'}">${i}</span>
-            <div class="mt-2">
-              ${dayEvents.map(e => `<div class="event-pill" onclick="showEvent('${e._id}')">${e.title}</div>`).join('')}
+            <div class="mt-2 space-y-1">
+              ${dayEvents.map(e => `
+                <div class="event-pill flex items-center gap-1.5 p-1 rounded-lg bg-fuchsia-600/80 hover:bg-fuchsia-500 text-white cursor-pointer transition-all border border-white/10" onclick="showEvent('${e._id}')" title="${escapeHTML(e.title || '')}">
+                  ${e.imageUrl ? `<img src="${sanitizeUrl(e.imageUrl)}" class="w-6 h-6 rounded-md object-cover shrink-0 border border-white/20">` : `<div class="w-6 h-6 rounded-md bg-black/40 flex items-center justify-center shrink-0 text-[10px] text-fuchsia-300"><i class="fas fa-calendar-alt"></i></div>`}
+                  <span class="truncate text-[11px] font-bold leading-tight flex-1">${escapeHTML(e.title || 'Evento')}</span>
+                </div>
+              `).join('')}
             </div>
           </div>
         `;

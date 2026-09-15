@@ -737,9 +737,9 @@
       window.updatePosSliders(Math.round(mouseX), Math.round(mouseY), true);
     }
 
-    const isFlyerMode = (window.appMode === 'FLYERMODE') || (CFG && CFG.FLYER_MODE_ENABLED);
+    const isFullEditorPage = typeof window.addFlyerWordAt === 'function' || typeof window.addFlyerWordToList === 'function';
 
-    if (isFlyerMode) {
+    if (isFullEditorPage) {
       const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
       if (isCtrlPressed) {
         if (typeof window.moveActiveFlyerWordTo === 'function') {

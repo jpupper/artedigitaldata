@@ -115,7 +115,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, tags } = req.body;
+    const { title, description, date, location, imageUrl, youtube_video, ticketConfig, tags, visibility } = req.body;
     const evento = await Evento.findById(req.params.id);
     if (!evento) return res.status(404).json({ error: 'Evento no encontrado' });
 
@@ -163,6 +163,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (youtube_video !== undefined) evento.youtube_video = youtube_video;
     if (ticketConfig !== undefined) evento.ticketConfig = ticketConfig;
     if (tags !== undefined) evento.tags = tags;
+    if (visibility !== undefined) evento.visibility = visibility;
 
     await evento.save();
     

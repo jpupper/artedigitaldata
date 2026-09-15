@@ -728,16 +728,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function addFlyerWord(rawText, x, y) {
     let cleanWord = (rawText || '').trim().toUpperCase();
+    if (!cleanWord && flyerWordInput && flyerWordInput.value.trim()) {
+      cleanWord = flyerWordInput.value.trim().toUpperCase();
+    }
     if (!cleanWord) {
-      if (Array.isArray(words) && words.length > 0) {
-        cleanWord = words[flyerWords.length % words.length];
-      } else {
-        cleanWord = "NUEVA PALABRA";
-      }
+      cleanWord = "NUEVA PALABRA";
     }
 
     if (flyerWordInput) {
-      flyerWordInput.value = cleanWord;
+      flyerWordInput.value = '';
     }
 
     const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
@@ -903,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Array.isArray(layer.clips)) {
           for (let cIdx = layer.clips.length - 1; cIdx >= 0; cIdx--) {
             const clip = layer.clips[cIdx];
-            if (clip.id === removedId || clip.text === removedText || clip.word === removedText) {
+            if (clip.id === removedId || clip.flyerId === removedId) {
               if (window.removeFlyerWordParticles && clip.id) {
                 window.removeFlyerWordParticles(clip.id);
               }
@@ -1006,42 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') {
         e.preventDefault();
         addFlyerWord(flyerWordInput.value);
-      }
-    });
-
-    // Edición en vivo de la palabra activa desde el campo de texto
-    flyerWordInput.addEventListener('input', () => {
-      const newText = flyerWordInput.value.trim().toUpperCase();
-      if (!newText || !selectedFlyerWordId) return;
-
-      const itemObj = flyerWords.find(w => typeof w === 'object' && w.id === selectedFlyerWordId);
-      if (itemObj) {
-        itemObj.text = newText;
-        itemObj.name = newText;
-        itemObj.word = newText;
-        const px = itemObj.x !== undefined ? itemObj.x : Math.round(window.innerWidth / 2);
-        const py = itemObj.y !== undefined ? itemObj.y : Math.round(window.innerHeight / 2);
-
-        if (window.updateFlyerWordParticles) {
-          window.updateFlyerWordParticles(itemObj.id, {
-            text: newText,
-            x: px,
-            y: py,
-            fontSize: itemObj.fontSize,
-            letterSpacing: itemObj.letterSpacing
-          });
-        }
-
-        const matchingLayer = timelineLayers.find(l => l.id === itemObj.id);
-        if (matchingLayer) {
-          matchingLayer.text = newText;
-          matchingLayer.name = newText;
-          matchingLayer.word = newText;
-          renderTimelineTracks();
-        }
-
-        applyConfigChange('FLYER_WORDS', [...flyerWords]);
-        renderFlyerWordsList();
       }
     });
   }

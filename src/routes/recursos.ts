@@ -76,7 +76,7 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, type, url, tags, imageUrl, youtube_video } = req.body;
+    const { title, description, type, url, tags, imageUrl, youtube_video, visibility } = req.body;
     const recurso = await Recurso.findById(req.params.id);
     if (!recurso) return res.status(404).json({ error: 'Recurso no encontrado' });
 
@@ -91,6 +91,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (tags !== undefined) recurso.tags = tags;
     if (imageUrl !== undefined) recurso.imageUrl = imageUrl;
     if (youtube_video !== undefined) recurso.youtube_video = youtube_video;
+    if (visibility !== undefined) recurso.visibility = visibility;
 
     await recurso.save();
     return res.json(recurso);

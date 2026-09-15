@@ -47,6 +47,14 @@ export async function hydrate(items: any[], userField = 'author', fields = 'user
             const uid = val.toString();
             obj[userField] = userMap[uid] || { _id: uid, username: 'Usuario', displayName: 'Usuario central', isFallback: true };
         }
+
+        // Asegurar consistencia entre author, creator y creador
+        if (userField === 'creator' || userField === 'creador') {
+            obj.author = obj[userField];
+        } else if (userField === 'author') {
+            obj.creator = obj.author;
+            obj.creador = obj.author;
+        }
         return obj;
     });
 }

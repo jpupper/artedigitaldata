@@ -127,6 +127,10 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       return res.status(403).json({ error: 'No autorizado' });
     }
 
+    if (req.body.title !== undefined && req.body.titulo === undefined) req.body.titulo = req.body.title;
+    if (req.body.description !== undefined && req.body.descripcion === undefined) req.body.descripcion = req.body.description;
+    if (req.body.imageUrl !== undefined && req.body.imagenUrl === undefined) req.body.imagenUrl = req.body.imageUrl;
+
     const updatableFields = [
       'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
       'fechaDesde', 'fechaHasta', 'imagenUrl', 'parametrosPresentacion',

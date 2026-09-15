@@ -304,7 +304,10 @@ function renderFeed() {
     const accentColor = isPost ? 'cyan' : (isRecurso ? 'lime' : (isEvento ? 'fuchsia' : 'gold'));
     const badgeText = isPost ? 'OBRA' : (isRecurso ? 'RECURSO' : (isEvento ? 'EVENTO' : 'OPORTUNIDAD'));
     const subcategoria = isOportunidad ? (item.tipo === 'convocatoria_obra' ? 'Convocatoria de Obra' : item.tipo === 'oportunidad_laboral' ? 'Oportunidad Laboral' : 'Colaboración') : '';
-    const author = item.author || item.creator || item.creador || { username: 'Anónimo' };
+    const authorObj = (typeof item.author === 'object' && item.author?.username) ? item.author : 
+                      ((typeof item.creator === 'object' && item.creator?.username) ? item.creator : 
+                      ((typeof item.creador === 'object' && item.creador?.username) ? item.creador : { username: 'Anónimo', avatar: '' }));
+    const author = authorObj;
     const title = item.title || item.titulo || 'Sin título';
     const description = item.description || item.descripcion || '';
     const date = new Date(item.createdAt || item.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -360,7 +363,7 @@ function renderFeed() {
                 <a href="profile.html?user=${encodeURIComponent(author.username)}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
                   ${escapeHTML(author.username)}
                 </a>
-                <span class="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">${date}</span>
+                <span class="text-xs text-slate-300 font-semibold uppercase tracking-wider">${date}</span>
               </div>
             </div>
           </div>

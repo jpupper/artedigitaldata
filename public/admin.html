@@ -195,6 +195,14 @@
               <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Etiquetas (coma)</label>
               <input type="text" id="edit-tags" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
             </div>
+
+            <div id="div-visibility">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Visibilidad</label>
+              <select id="edit-visibility" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:border-cyan-500 outline-none">
+                <option value="public">Público (Listado en el feed)</option>
+                <option value="unlisted">No Listado (Acceso solo con enlace directo)</option>
+              </select>
+            </div>
           </div>
 
           <div class="space-y-4">
@@ -510,12 +518,15 @@
       
       document.getElementById('edit-id').value = item._id;
       document.getElementById('edit-type').value = type;
-      document.getElementById('edit-title').value = item.title;
-      document.getElementById('edit-description').value = item.description || '';
+      document.getElementById('edit-title').value = item.title || item.titulo || '';
+      document.getElementById('edit-description').value = item.description || item.descripcion || '';
       document.getElementById('edit-imageUrl').value = item.imageUrl || '';
-      document.getElementById('modal-title').innerText = `Editar ${type === 'posts' ? 'Obra' : type === 'recursos' ? 'Recurso' : 'Evento'}`;
+      document.getElementById('edit-visibility').value = item.visibility || 'public';
       
-      // Reset visibility
+      const titleMap = { posts: 'Obra', recursos: 'Recurso', eventos: 'Evento', oportunidades: 'Oportunidad' };
+      document.getElementById('modal-title').innerText = `Editar ${titleMap[type] || 'Contenido'}`;
+      
+      // Reset visibility of conditional fields
       ['div-date', 'div-location', 'div-url', 'div-rec-type', 'div-tags'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
       if (type === 'posts') {
@@ -534,7 +545,6 @@
         document.getElementById('edit-location').value = item.location || '';
         if (item.date) {
           const d = new Date(item.date);
-          // Use the same helper logic if available, or just the local adjustment
           const offset = d.getTimezoneOffset() * 60000;
           const localISOTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
           document.getElementById('edit-date').value = localISOTime;
@@ -585,7 +595,8 @@
       const body = {
         title: document.getElementById('edit-title').value,
         description: document.getElementById('edit-description').value,
-        imageUrl: document.getElementById('edit-imageUrl').value
+        imageUrl: document.getElementById('edit-imageUrl').value,
+        visibility: document.getElementById('edit-visibility').value
       };
 
       if (type === 'posts') {
@@ -598,9 +609,12 @@
         const dateVal = document.getElementById('edit-date').value;
         body.date = dateVal ? new Date(dateVal).toISOString() : null;
         body.location = document.getElementById('edit-location').value;
+      } else if (type === 'oportunidades') {
+        body.titulo = body.title;
+        body.descripcion = body.description;
       }
 
-      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : `/recursos/${id}`;
+      const endpoint = type === 'posts' ? `/posts/${id}` : type === 'eventos' ? `/eventos/${id}` : type === 'oportunidades' ? `/oportunidades/${id}` : `/recursos/${id}`;
       const res = await apiRequest(endpoint, {
         method: 'PATCH',
         body: JSON.stringify(body)

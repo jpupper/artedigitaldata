@@ -222,10 +222,12 @@ async function saveEdit() {
     imageUrl = document.getElementById('edit-img-url').value.trim();
   }
 
+  const visEl = document.getElementById('edit-visibility');
   const body = {
     title: document.getElementById('edit-title').value.trim(),
     description: document.getElementById('edit-desc').value.trim(),
-    youtube_video: document.getElementById('edit-youtube').value.trim(),
+    youtube_video: document.getElementById('edit-youtube')?.value?.trim() || '',
+    visibility: visEl ? visEl.value : 'public',
     imageUrl
   };
 
