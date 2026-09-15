@@ -21,163 +21,165 @@
 
     <!-- Contenido -->
     <div id="oportunidad-content" class="hidden">
-      <!-- Header -->
-      <section class="mb-8">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3">
-            <a href="oportunidades.html" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-emerald-500/50 transition-all">
-              <i class="fas fa-arrow-left"></i>
-            </a>
-            <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+      <div class="rounded-3xl overflow-hidden border border-white/10 card-cyber bg-[#0d0d12]/80 backdrop-blur-xl p-8 md:p-12">
+        <!-- Header -->
+        <section class="mb-8">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-3">
+              <a href="oportunidades.html" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-emerald-500/50 transition-all">
+                <i class="fas fa-arrow-left"></i>
+              </a>
+              <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+            </div>
+            <div id="opo-edit-btn-container" class="hidden">
+              <a id="btn-edit-opo" href="#" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all font-bold text-sm">
+                <i class="fas fa-edit"></i>
+                <span>Editar</span>
+              </a>
+            </div>
           </div>
-          <div id="opo-edit-btn-container" class="hidden">
-            <a id="btn-edit-opo" href="#" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all font-bold text-sm">
-              <i class="fas fa-edit"></i>
-              <span>Editar</span>
-            </a>
+          <h1 id="opo-titulo" class="text-3xl md:text-4xl font-black text-white mb-4"></h1>
+          <div class="flex items-center gap-4 text-sm text-gray-400">
+            <div class="flex items-center gap-2">
+              <div id="opo-creador-avatar" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold"></div>
+              <span id="opo-creador-nombre"></span>
+            </div>
+            <span id="opo-fecha"></span>
           </div>
-        </div>
-        <h1 id="opo-titulo" class="text-3xl md:text-4xl font-black text-white mb-4"></h1>
-        <div class="flex items-center gap-4 text-sm text-gray-400">
-          <div class="flex items-center gap-2">
-            <div id="opo-creador-avatar" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold"></div>
-            <span id="opo-creador-nombre"></span>
+        </section>
+
+        <!-- Imagen -->
+        <section id="opo-imagen-section" class="hidden mb-8">
+          <img id="opo-imagen" src="" alt="" class="w-full max-h-96 object-cover rounded-2xl border border-white/10">
+        </section>
+
+        <!-- Descripción -->
+        <section class="mb-8">
+          <h2 class="text-xl font-bold text-white mb-3"><i class="fas fa-align-left text-emerald-400 mr-2"></i>Descripción</h2>
+          <div id="opo-descripcion" class="text-gray-300 leading-relaxed whitespace-pre-wrap"></div>
+        </section>
+
+        <!-- Campos específicos CONVOCATORIA DE OBRA -->
+        <section id="fields-convocatoria_obra" class="hidden space-y-6 mb-8">
+          <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-cyan-400 mb-4"><i class="fas fa-palette mr-2"></i>Convocatoria de Obra</h2>
+            
+            <div id="opo-bases-section" class="hidden mb-6">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-file-contract mr-2"></i>Bases y Condiciones</h3>
+              <div id="opo-basesCondiciones" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
+            </div>
+
+            <div id="opo-lugar-section" class="hidden mb-6">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Lugar de Exposición</h3>
+              <p id="opo-lugarExposicion" class="text-gray-400 text-sm"></p>
+            </div>
+
+            <div id="opo-fechas-section" class="hidden mb-6">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-calendar-alt mr-2"></i>Fechas de Exposición</h3>
+              <p id="opo-fechas" class="text-gray-400 text-sm"></p>
+            </div>
+
+            <div id="opo-parametros-section" class="hidden">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-clipboard-list mr-2"></i>Parámetros de Presentación</h3>
+              <div id="opo-parametros" class="flex flex-wrap gap-2"></div>
+            </div>
           </div>
-          <span id="opo-fecha"></span>
-        </div>
-      </section>
+        </section>
 
-      <!-- Imagen -->
-      <section id="opo-imagen-section" class="hidden mb-8">
-        <img id="opo-imagen" src="" alt="" class="w-full max-h-96 object-cover rounded-2xl border border-white/10">
-      </section>
+        <!-- Campos específicos OPORTUNIDAD LABORAL -->
+        <section id="fields-oportunidad_laboral" class="hidden space-y-6 mb-8">
+          <div class="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-orange-400 mb-4"><i class="fas fa-briefcase mr-2"></i>Oportunidad Laboral</h2>
+            
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-user-tie mr-2"></i>Puesto</h3>
+              <p id="opo-nombrePuesto" class="text-gray-400 text-sm"></p>
+            </div>
 
-      <!-- Descripción -->
-      <section class="mb-8">
-        <h2 class="text-xl font-bold text-white mb-3"><i class="fas fa-align-left text-emerald-400 mr-2"></i>Descripción</h2>
-        <div id="opo-descripcion" class="text-gray-300 leading-relaxed whitespace-pre-wrap"></div>
-      </section>
-
-      <!-- Campos específicos CONVOCATORIA DE OBRA -->
-      <section id="fields-convocatoria_obra" class="hidden space-y-6 mb-8">
-        <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-2xl p-6">
-          <h2 class="text-xl font-bold text-cyan-400 mb-4"><i class="fas fa-palette mr-2"></i>Convocatoria de Obra</h2>
-          
-          <div id="opo-bases-section" class="hidden mb-6">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-file-contract mr-2"></i>Bases y Condiciones</h3>
-            <div id="opo-basesCondiciones" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
+            <div>
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-building mr-2"></i>Productora / Empresa</h3>
+              <p id="opo-productoraEmpresa" class="text-gray-400 text-sm"></p>
+            </div>
           </div>
+        </section>
 
-          <div id="opo-lugar-section" class="hidden mb-6">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Lugar de Exposición</h3>
-            <p id="opo-lugarExposicion" class="text-gray-400 text-sm"></p>
+        <!-- Campos específicos COLABORACIÓN -->
+        <section id="fields-colaboracion" class="hidden space-y-6 mb-8">
+          <div class="bg-magenta-500/5 border border-magenta-500/20 rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-magenta-400 mb-4"><i class="fas fa-handshake mr-2"></i>Colaboración</h2>
+            
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-project-diagram mr-2"></i>Proyecto</h3>
+              <p id="opo-nombreProyecto" class="text-gray-400 text-sm"></p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-hands-helping mr-2"></i>Colaboración Pedida</h3>
+              <div id="opo-colaboracionPedida" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
+            </div>
           </div>
+        </section>
 
-          <div id="opo-fechas-section" class="hidden mb-6">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-calendar-alt mr-2"></i>Fechas de Exposición</h3>
-            <p id="opo-fechas" class="text-gray-400 text-sm"></p>
-          </div>
+        <!-- Tags -->
+        <section id="opo-tags-section" class="hidden mb-8">
+          <div class="flex flex-wrap gap-2" id="opo-tags"></div>
+        </section>
 
-          <div id="opo-parametros-section" class="hidden">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-clipboard-list mr-2"></i>Parámetros de Presentación</h3>
-            <div id="opo-parametros" class="flex flex-wrap gap-2"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Campos específicos OPORTUNIDAD LABORAL -->
-      <section id="fields-oportunidad_laboral" class="hidden space-y-6 mb-8">
-        <div class="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-6">
-          <h2 class="text-xl font-bold text-orange-400 mb-4"><i class="fas fa-briefcase mr-2"></i>Oportunidad Laboral</h2>
-          
-          <div class="mb-4">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-user-tie mr-2"></i>Puesto</h3>
-            <p id="opo-nombrePuesto" class="text-gray-400 text-sm"></p>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-building mr-2"></i>Productora / Empresa</h3>
-            <p id="opo-productoraEmpresa" class="text-gray-400 text-sm"></p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Campos específicos COLABORACIÓN -->
-      <section id="fields-colaboracion" class="hidden space-y-6 mb-8">
-        <div class="bg-magenta-500/5 border border-magenta-500/20 rounded-2xl p-6">
-          <h2 class="text-xl font-bold text-magenta-400 mb-4"><i class="fas fa-handshake mr-2"></i>Colaboración</h2>
-          
-          <div class="mb-4">
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-project-diagram mr-2"></i>Proyecto</h3>
-            <p id="opo-nombreProyecto" class="text-gray-400 text-sm"></p>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-hands-helping mr-2"></i>Colaboración Pedida</h3>
-            <div id="opo-colaboracionPedida" class="text-gray-400 text-sm whitespace-pre-wrap"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Tags -->
-      <section id="opo-tags-section" class="hidden mb-8">
-        <div class="flex flex-wrap gap-2" id="opo-tags"></div>
-      </section>
-
-      <!-- Botón Inscribirse -->
-      <section id="inscripcion-section" class="mb-8">
-        <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-          <i class="fas fa-paper-plane mr-2"></i>Inscribirse a esta Oportunidad
-        </button>
-        <p id="ya-inscrito-msg" class="hidden text-center text-emerald-400 text-sm font-bold mt-3">
-          <i class="fas fa-check-circle mr-2"></i>Ya estás inscrito en esta oportunidad
-        </p>
-      </section>
-
-      <!-- Formulario de Inscripción -->
-      <section id="inscripcion-form" class="hidden mb-8 bg-white/5 border border-white/10 rounded-2xl p-6">
-        <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-edit text-emerald-400 mr-2"></i>Formulario de Inscripción</h3>
-        
-        <div id="inscripcion-campos-dinamicos" class="space-y-4 mb-6"></div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-bold text-gray-300 mb-2">Mensaje (opcional)</label>
-          <textarea id="insc-mensaje" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Escribí un mensaje para el creador de la oportunidad..."></textarea>
-        </div>
-
-        <div class="flex gap-4">
-          <button onclick="submitInscripcion()" class="flex-1 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all">
-            <i class="fas fa-paper-plane mr-2"></i>Enviar Inscripción
+        <!-- Botón Inscribirse -->
+        <section id="inscripcion-section" class="mb-8">
+          <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+            <i class="fas fa-paper-plane mr-2"></i>Inscribirse a esta Oportunidad
           </button>
-          <button onclick="toggleInscripcionForm()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
-            Cancelar
-          </button>
-        </div>
-      </section>
+          <p id="ya-inscrito-msg" class="hidden text-center text-emerald-400 text-sm font-bold mt-3">
+            <i class="fas fa-check-circle mr-2"></i>Ya estás inscrito en esta oportunidad
+          </p>
+        </section>
 
-      <!-- Mensaje de éxito inscripción -->
-      <section id="inscripcion-success" class="hidden mb-8 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 text-center">
-        <i class="fas fa-check-circle text-4xl text-emerald-400 mb-3"></i>
-        <h3 class="text-lg font-bold text-white mb-1">¡Inscripción enviada!</h3>
-        <p class="text-sm text-gray-400">El creador de la oportunidad recibirá tu postulación.</p>
-      </section>
+        <!-- Formulario de Inscripción -->
+        <section id="inscripcion-form" class="hidden mb-8 bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-edit text-emerald-400 mr-2"></i>Formulario de Inscripción</h3>
+          
+          <div id="inscripcion-campos-dinamicos" class="space-y-4 mb-6"></div>
 
-      <!-- Panel del creador: Link a la página de postulantes y edición -->
-      <section id="creador-panel" class="hidden">
-        <div class="border-t border-white/10 pt-8 mt-8 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 text-center">
-          <i class="fas fa-users text-4xl text-emerald-400 mb-3"></i>
-          <h2 class="text-xl font-bold text-white mb-2" id="panel-titulo">Sos el creador de esta oportunidad</h2>
-          <p class="text-sm text-gray-400 mb-6">Podés revisar y gestionar las postulaciones o editar la información de esta oportunidad.</p>
-          <div class="flex flex-wrap items-center justify-center gap-4">
-            <a id="btn-ver-postulantes" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-              <i class="fas fa-users mr-1"></i> Ver Postulantes
-            </a>
-            <a id="btn-edit-panel-opo" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/10 transition-all">
-              <i class="fas fa-edit mr-1"></i> Editar Oportunidad
-            </a>
+          <div class="mb-4">
+            <label class="block text-sm font-bold text-gray-300 mb-2">Mensaje (opcional)</label>
+            <textarea id="insc-mensaje" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Escribí un mensaje para el creador de la oportunidad..."></textarea>
           </div>
-        </div>
-      </section>
+
+          <div class="flex gap-4">
+            <button onclick="submitInscripcion()" class="flex-1 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all">
+              <i class="fas fa-paper-plane mr-2"></i>Enviar Inscripción
+            </button>
+            <button onclick="toggleInscripcionForm()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
+              Cancelar
+            </button>
+          </div>
+        </section>
+
+        <!-- Mensaje de éxito inscripción -->
+        <section id="inscripcion-success" class="hidden mb-8 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 text-center">
+          <i class="fas fa-check-circle text-4xl text-emerald-400 mb-3"></i>
+          <h3 class="text-lg font-bold text-white mb-1">¡Inscripción enviada!</h3>
+          <p class="text-sm text-gray-400">El creador de la oportunidad recibirá tu postulación.</p>
+        </section>
+
+        <!-- Panel del creador: Link a la página de postulantes y edición -->
+        <section id="creador-panel" class="hidden">
+          <div class="border-t border-white/10 pt-8 mt-8 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 text-center">
+            <i class="fas fa-users text-4xl text-emerald-400 mb-3"></i>
+            <h2 class="text-xl font-bold text-white mb-2" id="panel-titulo">Sos el creador de esta oportunidad</h2>
+            <p class="text-sm text-gray-400 mb-6">Podés revisar y gestionar las postulaciones o editar la información de esta oportunidad.</p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+              <a id="btn-ver-postulantes" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <i class="fas fa-users mr-1"></i> Ver Postulantes
+              </a>
+              <a id="btn-edit-panel-opo" href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/10 transition-all">
+                <i class="fas fa-edit mr-1"></i> Editar Oportunidad
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- Error -->

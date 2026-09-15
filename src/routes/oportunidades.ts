@@ -132,7 +132,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (req.body.imageUrl !== undefined && req.body.imagenUrl === undefined) req.body.imagenUrl = req.body.imageUrl;
 
     const updatableFields = [
-      'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
+      'tipo', 'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
       'fechaDesde', 'fechaHasta', 'imagenUrl', 'parametrosPresentacion',
       'nombrePuesto', 'productoraEmpresa', 'nombreProyecto',
       'colaboracionPedida', 'activa', 'tags', 'visibility'
