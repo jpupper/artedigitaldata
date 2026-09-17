@@ -63,7 +63,7 @@
     CHAR_BG_COLOR: '#000000',
     CHAR_BG_OPACITY: 0.8,
     LETTER_SPACING: 1.0,
-    COLLAB_WORD_LIFESPAN: 0,
+    COLLAB_WORD_LIFESPAN: 8,
     SHOW_MOUSE_RADIUS: false,
     P5_FONT: 'sans-serif',
     GENERATIVE_SHADER: 'noise.frag',
@@ -199,8 +199,8 @@
     if (saved) {
       const parsed = JSON.parse(saved);
       CFG = { ...CFG, ...parsed };
-      // Si la lista guardada no existe o tiene menos de 20 palabras (versión anterior vieja), forzar las nuevas palabras completas
-      if (!Array.isArray(CFG.WORDS) || CFG.WORDS.length < 20) {
+      // Si la lista guardada no existe o está vacía, cargar palabras por defecto
+      if (!Array.isArray(CFG.WORDS) || CFG.WORDS.length === 0) {
         CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
         localStorage.setItem('particles_p5_config', JSON.stringify(CFG));
       }
@@ -224,7 +224,7 @@
         const data = await res.json();
         if (data && data.config) {
           CFG = { ...CFG, ...data.config };
-          if (!Array.isArray(CFG.WORDS) || CFG.WORDS.length < 20) {
+          if (!Array.isArray(CFG.WORDS) || CFG.WORDS.length === 0) {
             CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
           }
           localStorage.setItem('particles_p5_config', JSON.stringify(CFG));
@@ -426,7 +426,9 @@
     const startX = targetCenterX - totalWidth / 2;
     const startY = constrain(targetCenterY, 40, windowHeight - 40);
     const wordId = flyerId || (word + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
-    window.activeFlyerWordId = wordId;
+    if (isFlyer) {
+      window.activeFlyerWordId = wordId;
+    }
 
     if (isFlyer && flyerId) {
       particles = particles.filter(p => !(p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId));
@@ -458,26 +460,28 @@
 
     const wordFontSize = (newProps.fontSize !== undefined) ? Number(newProps.fontSize) : CFG.TEXT_SIZE;
     const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : 4;
-    const targetCenterX = newProps.x !== undefined ? Number(newProps.x) : (newProps.targetCenterX || windowWidth / 2);
-    const targetCenterY = newProps.y !== undefined ? Number(newProps.y) : (newProps.targetCenterY || windowHeight / 2);
+    const targetCenterX = (newProps.x !== undefined) ? Number(newProps.x) : (newProps.targetCenterX !== undefined ? Number(newProps.targetCenterX) : (flyerParticles[0] ? flyerParticles[0].target.x : windowWidth / 2));
+    const targetCenterY = (newProps.y !== undefined) ? Number(newProps.y) : (newProps.targetCenterY !== undefined ? Number(newProps.targetCenterY) : (flyerParticles[0] ? flyerParticles[0].target.y : windowHeight / 2));
     const customColor = newProps.color || null;
 
-    const rawText = newProps.text || (flyerParticles[0] ? (flyerParticles[0].fullWord || flyerParticles[0].wordText) : '') || '';
+    const rawText = (newProps.text !== undefined) ? String(newProps.text) : ((flyerParticles[0] ? (flyerParticles[0].fullWord || flyerParticles[0].wordText) : '') || '');
     const nonSpaceCount = Array.from(String(rawText)).filter(ch => ch !== ' ').length;
 
-    if (newProps.visible !== false && rawText) {
+    if (newProps.visible !== false) {
       const needsRespawn = (flyerParticles.length === 0) ||
                            (flyerParticles.length !== nonSpaceCount) ||
                            (flyerParticles[0] && flyerParticles[0].fullWord !== rawText);
 
       if (needsRespawn) {
         removeFlyerWordParticles(flyerId);
-        spawnWordParticles(rawText, targetCenterX, targetCenterY, true, flyerId, {
-          fontSize: wordFontSize,
-          letterSpacing: letterSpacingPx,
-          color: customColor
-        });
-        flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
+        if (nonSpaceCount > 0) {
+          spawnWordParticles(rawText, targetCenterX, targetCenterY, true, flyerId, {
+            fontSize: wordFontSize,
+            letterSpacing: letterSpacingPx,
+            color: customColor
+          });
+          flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
+        }
       }
     }
 
@@ -737,14 +741,31 @@
       window.updatePosSliders(Math.round(mouseX), Math.round(mouseY), true);
     }
 
-    const isFullEditorPage = typeof window.addFlyerWordAt === 'function' || typeof window.addFlyerWordToList === 'function';
+    const isFlyerMode = window.appMode ? (window.appMode === 'FLYERMODE') : Boolean(CFG && CFG.FLYER_MODE_ENABLED);
 
-    if (isFullEditorPage) {
+    if (isFlyerMode) {
       const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
       if (isCtrlPressed) {
         if (typeof window.moveActiveFlyerWordTo === 'function') {
           window.moveActiveFlyerWordTo(mouseX, mouseY);
         }
+        return;
+      }
+
+      // Si hace click sobre una palabra del flyer en pantalla, seleccionarla
+      let clickedFlyerId = null;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
+          const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
+          if (d < 45) {
+            clickedFlyerId = p.flyerId;
+            break;
+          }
+        }
+      }
+      if (clickedFlyerId && typeof window.selectFlyerWordById === 'function') {
+        window.selectFlyerWordById(clickedFlyerId);
         return;
       }
 
@@ -756,7 +777,31 @@
       return;
     }
 
+    // --- MODO COLABORATIVO (COLLABMODE) ---
+    // 1. Si se hace click sobre una palabra colaborativa activa en el lienzo, SE BORRA
+    let clickedCollabParticle = null;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p instanceof WordParticle && !p.isFlyer && p.visible && p.isShowing) {
+        const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
+        if (d < 45) {
+          clickedCollabParticle = p;
+          break;
+        }
+      }
+    }
 
+    if (clickedCollabParticle) {
+      const wordToRemove = clickedCollabParticle.fullWord || clickedCollabParticle.char;
+      particles.forEach(p => {
+        if (p instanceof WordParticle && !p.isFlyer && (p.fullWord === wordToRemove || p === clickedCollabParticle)) {
+          p.despawn();
+        }
+      });
+      return;
+    }
+
+    // 2. Si se hace click en el lienzo, se instancia una palabra aleatoria de la lista de COLLABMODE
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
     if (!words.length) return;
 
@@ -805,10 +850,34 @@
       window.updatePosSliders(Math.round(tx), Math.round(ty), true);
     }
 
-    if (CFG.FLYER_MODE_ENABLED) {
+    const isFlyerMode = window.appMode ? (window.appMode === 'FLYERMODE') : Boolean(CFG && CFG.FLYER_MODE_ENABLED);
+    if (isFlyerMode) {
       if (typeof window.moveActiveFlyerWordTo === 'function') {
         window.moveActiveFlyerWordTo(tx, ty);
       }
+      return true;
+    }
+
+    // En COLLABMODE touch: si toca una palabra existente, borrarla
+    let clickedCollabParticle = null;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p instanceof WordParticle && !p.isFlyer && p.visible && p.isShowing) {
+        const d = dist(tx, ty, p.pos.x, p.pos.y);
+        if (d < 45) {
+          clickedCollabParticle = p;
+          break;
+        }
+      }
+    }
+
+    if (clickedCollabParticle) {
+      const wordToRemove = clickedCollabParticle.fullWord || clickedCollabParticle.char;
+      particles.forEach(p => {
+        if (p instanceof WordParticle && !p.isFlyer && (p.fullWord === wordToRemove || p === clickedCollabParticle)) {
+          p.despawn();
+        }
+      });
       return true;
     }
 
@@ -840,7 +909,7 @@
       return;
     }
 
-    const isFlyerMode = (window.appMode === 'FLYERMODE') || (CFG && CFG.FLYER_MODE_ENABLED);
+    const isFlyerMode = window.appMode ? (window.appMode === 'FLYERMODE') : Boolean(CFG && CFG.FLYER_MODE_ENABLED);
     if (isFlyerMode) {
       const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
       if (isCtrlPressed) {
@@ -1039,8 +1108,18 @@
       this.visible = true;
 
       this.lifespan = 255;
-      this.holdTime = Infinity;
-      this.decay = 0;
+      if (this.isFlyer) {
+        this.holdTime = Infinity;
+        this.decay = 0;
+      } else {
+        const lifespanSec = (CFG.COLLAB_WORD_LIFESPAN && Number(CFG.COLLAB_WORD_LIFESPAN) > 0)
+          ? Number(CFG.COLLAB_WORD_LIFESPAN)
+          : 8;
+        this.holdTime = Math.round(lifespanSec * 60);
+        const decayMin = (CFG.LIFESPAN_DECAY_MIN !== undefined) ? Number(CFG.LIFESPAN_DECAY_MIN) : 1.5;
+        const decayMax = (CFG.LIFESPAN_DECAY_MAX !== undefined) ? Number(CFG.LIFESPAN_DECAY_MAX) : 3.0;
+        this.decay = random(decayMin, decayMax);
+      }
       this.maxSpeed = Math.max(8, CFG.MAX_SPEED * 2.0);
       this.maxForce = Math.max(0.6, CFG.MAX_FORCE * 1.5);
       this.noiseSeed = random(1000);
@@ -1092,8 +1171,11 @@
 
     update() {
       this.age++;
-      if (!this.isFlyer && CFG.COLLAB_WORD_LIFESPAN && Number(CFG.COLLAB_WORD_LIFESPAN) > 0) {
-        if ((millis() - this.spawnTime) > (Number(CFG.COLLAB_WORD_LIFESPAN) * 1000)) {
+      if (!this.isFlyer) {
+        const lifespanSec = (CFG.COLLAB_WORD_LIFESPAN && Number(CFG.COLLAB_WORD_LIFESPAN) > 0)
+          ? Number(CFG.COLLAB_WORD_LIFESPAN)
+          : 8;
+        if ((millis() - this.spawnTime) > (lifespanSec * 1000)) {
           this.despawn();
         }
       }
@@ -1162,24 +1244,8 @@
         }
         this.lifespan = 255;
       } else {
-        if (!CFG.COLLAB_WORD_LIFESPAN || Number(CFG.COLLAB_WORD_LIFESPAN) <= 0) {
-          this.lifespan = 255;
-          if (d < 3 && !isRepelled) {
-            this.vel.mult(0.35);
-          }
-        } else {
-          if (d < 5) {
-            if (this.holdTime > 0 && this.holdTime !== Infinity) {
-              this.holdTime--;
-            } else if (this.holdTime !== Infinity) {
-              this.lifespan -= this.decay;
-              this.vel.add(p5.Vector.random2D().mult(0.3));
-            }
-          } else {
-            if (this.holdTime !== Infinity) {
-              this.lifespan -= 0.15;
-            }
-          }
+        if (d < 3 && !isRepelled) {
+          this.vel.mult(0.35);
         }
       }
     }

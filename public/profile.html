@@ -136,27 +136,35 @@
     <div class="flex border-b border-white/10 mb-8 overflow-x-auto scrollbar-hide">
       <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn active px-6 py-4 text-sm font-bold text-[var(--color-cyan)] border-b-2 border-primary-500 whitespace-nowrap transition-all">
         <i class="fas fa-palette mr-2"></i>OBRAS
+        <span id="badge-posts" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-[var(--color-cyan)] text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-box-open mr-2"></i>RECURSOS
+        <span id="badge-recursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('concursos')" id="tab-concursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-trophy mr-2 text-yellow-500"></i>MIS IMAGENES
+        <span id="badge-concursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
+        <span id="badge-eventos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-briefcase mr-2"></i>CHANCES
+        <span id="badge-oportunidades" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-heart mr-2 text-red-500"></i>TUS FAV
+        <span id="badge-favs" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-ticket-alt mr-2 text-fuchsia-500"></i>ENTRADAS
+        <span id="badge-tickets" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('visualeffects')" id="tab-visualeffects" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-wand-magic-sparkles mr-2 text-cyan-400"></i>VISUAL EFFECTS
+        <i class="fas fa-wand-magic-sparkles mr-2 text-cyan-400"></i>SECUENCIAS
+        <span id="badge-visualeffects" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold"></span>
       </button>
       <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="tab-btn hidden px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
         <i class="fas fa-bell mr-2 text-yellow-400"></i>NOTIFICACIONES
@@ -227,18 +235,18 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fas fa-wand-magic-sparkles text-cyan-400"></i> Mis Efectos Visuales
+            <i class="fas fa-wand-magic-sparkles text-cyan-400"></i> Mis Secuencias Guardadas
           </h3>
-          <p class="text-xs text-gray-400 mt-1">Proyectos guardados del Flyer Mode</p>
+          <p class="text-xs text-gray-400 mt-1">Secuencias creadas desde Flyer Mode / Visual Effects</p>
         </div>
         <a href="visualeffects.html" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all">
-          <i class="fas fa-plus"></i> Crear Nuevo Efecto
+          <i class="fas fa-plus"></i> Crear Nueva Secuencia
         </a>
       </div>
       <div id="user-visualeffects" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center text-gray-500 py-10">
           <i class="fas fa-spinner fa-spin text-2xl text-cyan-400 mb-3"></i>
-          <p>Cargando efectos visuales...</p>
+          <p>Cargando secuencias...</p>
         </div>
       </div>
     </div>
@@ -438,6 +446,41 @@
         try { renderUserOportunidades(oportunidades); } catch(e) { console.error('Error in renderUserOportunidades:', e); }
         try { renderUserVisualEffects(visualeffects); } catch(e) { console.error('Error in renderUserVisualEffects:', e); }
         try { renderUserFavorites(favorites); } catch(e) { console.error('Error in renderUserFavorites:', e); }
+
+        // Actualizar badges con conteos de cada pestaña
+        const setBadge = (id, count) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.textContent = count;
+            if (count > 0) {
+              el.classList.remove('hidden');
+              el.style.display = 'inline-block';
+            } else {
+              el.classList.add('hidden');
+              el.style.display = 'none';
+            }
+          }
+        };
+        const activePostsCount = posts.filter(p => !p.isContest).length;
+        const contestPostsCount = posts.filter(p => p.isContest).length;
+        const totalFavsCount = (favorites.posts?.length || 0) + (favorites.recursos?.length || 0) + (favorites.eventos?.length || 0) + (favorites.oportunidades?.length || 0);
+
+        setBadge('badge-posts', activePostsCount);
+        setBadge('badge-recursos', recursos.length);
+        setBadge('badge-concursos', contestPostsCount);
+        setBadge('badge-eventos', eventos.length);
+        setBadge('badge-oportunidades', oportunidades.length);
+        setBadge('badge-favs', totalFavsCount);
+        setBadge('badge-visualeffects', visualeffects.length);
+
+        // Si se especificó un tab por parámetro en URL (ej: ?tab=secuencias o ?tab=visualeffects), activarlo
+        const tabParam = params.get('tab');
+        if (tabParam) {
+          const normalized = (tabParam === 'secuencias' || tabParam === 'visualeffect' || tabParam === 'efectos') ? 'visualeffects' : tabParam;
+          if (document.getElementById('tab-' + normalized)) {
+            switchTab(normalized);
+          }
+        }
 
         // XP level bar (shown for everyone)
         try { renderXPLevel(profile, posts, recursos, eventos); } catch(e) { console.error('Error in renderXPLevel:', e); }
@@ -820,9 +863,9 @@
         container.innerHTML = `
           <div class="col-span-full text-center text-gray-500 py-10">
             <i class="fas fa-wand-magic-sparkles text-4xl text-cyan-400/30 mb-3"></i>
-            <p>No hay efectos visuales guardados aún.</p>
+            <p>No hay secuencias guardadas aún.</p>
             <a href="visualeffects.html" class="inline-block mt-3 px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-all">
-              <i class="fas fa-plus mr-1"></i> Crear primer efecto
+              <i class="fas fa-plus mr-1"></i> Crear primera secuencia
             </a>
           </div>`;
         return;
@@ -831,11 +874,12 @@
         const wordsList = (fx.flyerWords || []).map(w => w.text || w.word).filter(Boolean);
         const sampleWords = wordsList.slice(0, 5).join(', ') + (wordsList.length > 5 ? '...' : '');
         const dateStr = new Date(fx.createdAt).toLocaleDateString();
+        const escapedTitle = (fx.title || 'Secuencia').replace(/'/g, "\\'");
         return `
           <div class="rounded-2xl p-5 border border-cyan-500/10 card-cyber transition-all duration-300 group flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
-                <h3 class="font-bold text-white text-lg line-clamp-1 group-hover:text-cyan-400 transition-colors">${fx.title || 'Proyecto Flyer'}</h3>
+                <h3 class="font-bold text-white text-lg line-clamp-1 group-hover:text-cyan-400 transition-colors">${escapeHTML(fx.title || 'Secuencia Flyer')}</h3>
                 ${(isLoggedIn() && (isOwner || isAdmin())) ? `
                   <button onclick="deleteVisualEffect('${fx._id}')" class="text-gray-500 hover:text-red-500 transition-colors p-1" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                 ` : ''}
@@ -845,16 +889,17 @@
                   <i class="fas fa-layer-group mr-1"></i>${wordsList.length} ${wordsList.length === 1 ? 'capa' : 'capas'}
                 </span>
                 <span class="text-[10px] text-gray-500">${dateStr}</span>
+                ${fx.isDefaultFront ? `<span class="px-2 py-0.5 rounded text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 uppercase font-extrabold"><i class="fas fa-thumbtack mr-1"></i>Front</span>` : ''}
               </div>
               <p class="text-xs text-gray-400 line-clamp-2 mb-4">
-                <span class="text-cyan-400 font-semibold">Palabras:</span> ${sampleWords || 'Sin palabras'}
+                <span class="text-cyan-400 font-semibold">Palabras:</span> ${escapeHTML(sampleWords) || 'Sin palabras'}
               </p>
             </div>
             <div class="flex gap-2 mt-2">
               <a href="visualeffects.html?id=${fx._id}" class="flex-1 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/40 rounded-xl text-center font-bold text-xs transition-all flex items-center justify-center gap-1.5">
                 <i class="fas fa-edit"></i> Abrir Editor
               </a>
-              <a href="outputeffect.html?id=${fx._id}" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl text-center font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5">
+              <a href="outputeffect.html?outputeffect=${fx._id}" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl text-center font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5">
                 <i class="fas fa-play"></i> Ver Output
               </a>
             </div>
@@ -863,18 +908,14 @@
     }
 
     async function deleteVisualEffect(id) {
-      if (!confirm('¿Seguro que querés eliminar este proyecto de efecto visual?')) return;
-      const token = localStorage.getItem('token');
+      if (!confirm('¿Seguro que querés eliminar esta secuencia visual?')) return;
       try {
-        const res = await fetch(`/api/visualeffects/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          loadProfile();
+        const res = await apiRequest(`/visualeffects/${id}`, { method: 'DELETE' });
+        if (res?.ok) {
+          await loadProfile();
         } else {
-          const err = await res.json();
-          alert(err.error || 'Error al eliminar');
+          const err = await res?.json().catch(() => ({}));
+          alert(err?.error || 'Error al eliminar');
         }
       } catch (err) {
         console.error(err);

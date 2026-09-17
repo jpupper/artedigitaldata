@@ -85,24 +85,26 @@ router.get('/:username', async (req: Request, res: Response) => {
     const isOwnerRequest = !!sesionId && sesionId === String(user._id);
     if (!isOwnerRequest) delete userObj.email;
 
-    // Favorites (items liked by this user)
-    const likedPosts = await Post.find({ likes: user._id }).sort({ createdAt: -1 });
-    const likedRecursos = await Recurso.find({ likes: user._id }).sort({ createdAt: -1 });
-    const likedEventos = await Evento.find({ likes: user._id }).sort({ date: 1 });
-    const likedOportunidades = await Oportunidad.find({ likes: user._id }).sort({ createdAt: -1 });
+    const allUserIds = matches.map(u => u._id);
 
-    const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 });
-    const recursos = await Recurso.find({ author: user._id }).sort({ createdAt: -1 });
+    // Favorites (items liked by this user)
+    const likedPosts = await Post.find({ likes: { $in: allUserIds } }).sort({ createdAt: -1 });
+    const likedRecursos = await Recurso.find({ likes: { $in: allUserIds } }).sort({ createdAt: -1 });
+    const likedEventos = await Evento.find({ likes: { $in: allUserIds } }).sort({ date: 1 });
+    const likedOportunidades = await Oportunidad.find({ likes: { $in: allUserIds } }).sort({ createdAt: -1 });
+
+    const posts = await Post.find({ author: { $in: allUserIds } }).sort({ createdAt: -1 });
+    const recursos = await Recurso.find({ author: { $in: allUserIds } }).sort({ createdAt: -1 });
     const eventos = await Evento.find({ 
       $or: [
-        { creator: user._id },
-        { participants: user._id }
+        { creator: { $in: allUserIds } },
+        { participants: { $in: allUserIds } }
       ]
     }).sort({ date: 1 });
-    const oportunidades = await Oportunidad.find({ creador: user._id }).sort({ createdAt: -1 });
-    const visualeffects = await VisualEffect.find({ author: user._id }).sort({ createdAt: -1 });
+    const oportunidades = await Oportunidad.find({ creador: { $in: allUserIds } }).sort({ createdAt: -1 });
+    const visualeffects = await VisualEffect.find({ author: { $in: allUserIds } }).sort({ createdAt: -1 });
 
-    const doorEvents = await Evento.find({ doorUsers: user._id }).sort({ date: 1 });
+    const doorEvents = await Evento.find({ doorUsers: { $in: allUserIds } }).sort({ date: 1 });
 
     return res.json({ 
       user: userObj, 
