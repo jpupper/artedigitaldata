@@ -5,8 +5,17 @@ dist/
 *.d.ts
 /server.js
 src/**/*.js
-
+deploy_scripts/
+deploy_ferozo.py
+ftp_cmds.txt
+public/ftp_cmds.txt
+check_*.js
+patch_*.js
+patch_*.py
+tmp_*
+*.tmp
 # Harness visual (artefactos locales, no versionados)
 tools/visual-harness/snapshots/
 tools/visual-harness/netcache/
 tools/visual-harness/cdn-selectors.json
+

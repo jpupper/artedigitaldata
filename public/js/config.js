@@ -1,12 +1,7 @@
 const VPS_ORIGIN = 'https://vps-4455523-x.dattaweb.com';
 
 window.CONFIG = {
-    // Orígenes que sí ejecutan el backend de Node
-    NODE_HOSTS: [
-        'localhost',
-        '127.0.0.1',
-        'vps-4455523-x.dattaweb.com'
-    ],
+    NODE_HOSTS: ['localhost', '127.0.0.1', 'vps-4455523-x.dattaweb.com'],
 
     get isLocal() {
         return window.location.hostname === 'localhost' || 
@@ -14,7 +9,6 @@ window.CONFIG = {
                window.location.hostname.includes('192.168');
     },
 
-    // Detectamos si el dominio actual sirve el backend o es solo un espejo estático
     get IS_NODE_SERVER() {
         return this.NODE_HOSTS.some(host => window.location.hostname === host) || this.isLocal;
     },
@@ -24,14 +18,17 @@ window.CONFIG = {
         return '';
     },
 
+    // En producción, usar proxy PHP local para evitar problemas de SSL
     get API_URL() {
-        // En LOCAL se usan siempre los datos del VPS (posts, usuarios, eventos, etc.)
-        const origin = (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
-        return origin + '/artedigitaldata/api';
+        if (this.IS_NODE_SERVER || this.isLocal) {
+            return VPS_ORIGIN + '/artedigitaldata/api';
+        }
+        // En artedigitaldata.com, usar el proxy PHP local
+        return '/api-proxy.php?path=';
     },
 
     get SOCKET_URL() {
-        return (this.isLocal || !this.IS_NODE_SERVER) ? VPS_ORIGIN : window.location.origin;
+        return VPS_ORIGIN;
     },
 
     get SOCKET_PATH() {
@@ -57,16 +54,11 @@ window.CONFIG = {
     resolveImage(url) {
         if (!url) return '';
         if (url.startsWith('http')) return url;
-        // Si la URL es relativa y estamos en un espejo estático (como Ferozo),
-        // debemos apuntar al VPS para obtener la imagen.
-        if (url.startsWith('/artedigitaldata')) {
-            return VPS_ORIGIN + url;
-        }
+        if (url.startsWith('/artedigitaldata')) return VPS_ORIGIN + url;
         return url;
     }
 };
 
-// Exponemos también como variable global directa para scripts que no usen window.
 const CONFIG = window.CONFIG;
 
 function escapeHTML(str) {
@@ -84,14 +76,8 @@ function sanitizeUrl(url) {
     const resolved = CONFIG.resolveImage(url);
     try {
         const parsed = new URL(resolved);
-        // Devolvemos parsed.href (normalizado y percent-encoded) en vez del string
-        // crudo: así una URL válida no puede romper el atributo con comillas embebidas.
         return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
     } catch {
-        // Si no es una URL válida (ej: ruta relativa que resolveImage no cambió),
-        // solo permitimos rutas internas de un único slash. Rechazamos las
-        // protocol-relative (//evil.com) y cualquier ruta con caracteres que puedan
-        // romper un atributo HTML (comillas, <, >, espacios).
         const isInternalPath = resolved.startsWith('/') && !resolved.startsWith('//');
         return (isInternalPath && !/["'<>\s]/.test(resolved)) ? resolved : '';
     }
