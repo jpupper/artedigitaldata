@@ -176,7 +176,7 @@ async function syncSession() {
                 // Update profile in background to get roles and fresh data
                 if (typeof apiRequest === 'function') {
                     apiRequest('/auth/me')
-                        .then(res => res && res.json())
+                        .then(res => (res && res.ok) ? res.json() : null)
                         .then(data => {
                             if (data && !data.error) {
                                 const currentUser = getUser();

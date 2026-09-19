@@ -275,6 +275,13 @@ io.on('connection', (socket) => {
             actorAvatar: sender?.avatar || '',
             resourceId: data.roomId,
             message: data.content.substring(0, 100),
+          }).then(notif => {
+            notifyUser(recipientId.toString(), 'newNotification', notif);
+            notifyUser(recipientId.toString(), 'privateMessage', {
+              roomId: data.roomId,
+              message: hydrated,
+              sender: sender,
+            });
           }).catch(() => {});
         }
       }

@@ -4,9 +4,13 @@ window.CONFIG = {
     NODE_HOSTS: ['localhost', '127.0.0.1', 'vps-4455523-x.dattaweb.com'],
 
     get isLocal() {
-        return window.location.hostname === 'localhost' || 
-               window.location.hostname === '127.0.0.1' || 
-               window.location.hostname.includes('192.168');
+        const host = window.location.hostname;
+        return host === 'localhost' || 
+               host === '127.0.0.1' || 
+               host.startsWith('192.168.') ||
+               host.startsWith('10.') ||
+               host.startsWith('172.') ||
+               host.endsWith('.local');
     },
 
     get IS_NODE_SERVER() {
@@ -18,20 +22,25 @@ window.CONFIG = {
         return '';
     },
 
-    // En producción, usar proxy PHP local para evitar problemas de SSL
+    // Siempre conectar directamente al VPS seguro o al backend local activo
     get API_URL() {
-        if (this.IS_NODE_SERVER || this.isLocal) {
-            return VPS_ORIGIN + '/artedigitaldata/api';
+        if (window.location.port === '2494' || window.location.port === '2495') {
+            return window.location.origin + (this.BASE ? this.BASE : '') + '/api';
         }
-        // En artedigitaldata.com, usar el proxy PHP local
-        return '/api-proxy.php?path=';
+        return VPS_ORIGIN + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
+        if (window.location.port === '2494' || window.location.port === '2495') {
+            return window.location.origin;
+        }
         return VPS_ORIGIN;
     },
 
     get SOCKET_PATH() {
+        if (window.location.port === '2494' || window.location.port === '2495') {
+            return '/socket.io';
+        }
         return '/artedigitaldata/socket.io';
     },
 

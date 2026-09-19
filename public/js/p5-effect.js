@@ -71,8 +71,11 @@
     FLYER_MODE_ENABLED: false,
     FLYER_WORDS: [],
     FORMATION_MODE: 'FISICS', // 'FISICS' | 'CODE'
-    CODE_DECODE_FRAMES: 25,
-    CODE_LETTER_DELAY: 3,
+    CODE_CHAR_SPEED: 5,
+    CODE_ENTRY_DURATION: 30,
+    CODE_FINISH_DISPLACE: 0,
+    CODE_DECODE_FRAMES: 30,
+    CODE_LETTER_DELAY: 0,
     CODE_SCRAMBLE_FREQ: 2,
     CODE_GLITCH_CHARS: '01<>{}#*+%$&?XZ7@!',
     CODE_MOUSE_RETRIGGER: true,
@@ -220,7 +223,8 @@
   // Función para obtener URL de la API
   function getApiUrl() {
     if (window.CONFIG && window.CONFIG.API_URL) return window.CONFIG.API_URL;
-    return '/api';
+    if (window.location.port === '2494' || window.location.port === '2495') return '/api';
+    return 'https://vps-4455523-x.dattaweb.com/artedigitaldata/api';
   }
 
   // Cargar configuración desde el backend asincrónicamente
@@ -317,6 +321,19 @@
         CFG.WORDS = [...DEFAULT_CONFIG.WORDS];
       }
       updatePalette();
+
+      if (newConfig.CODE_ENTRY_DURATION !== undefined || newConfig.CODE_FINISH_DISPLACE !== undefined || newConfig.CODE_CHAR_SPEED !== undefined || newConfig.CODE_GLITCH_CHARS !== undefined) {
+        particles.forEach(p => {
+          if (p instanceof WordParticle && p.formationMode === 'CODE' && p.isShowing) {
+            const entryDur = (CFG.CODE_ENTRY_DURATION !== undefined) ? Number(CFG.CODE_ENTRY_DURATION) : 30;
+            const finDisp = (CFG.CODE_FINISH_DISPLACE !== undefined) ? Number(CFG.CODE_FINISH_DISPLACE) : 0;
+            const off = finDisp > 0 ? Math.floor(random(0, finDisp + 0.99)) : 0;
+            p.maxDecodeSteps = Math.max(1, entryDur + off);
+            p.decodeStep = 0;
+            p.isFormed = false;
+          }
+        });
+      }
     },
     save: saveRemoteConfig,
     reset: () => {
@@ -1228,9 +1245,18 @@
         this.acc = createVector(0, 0);
         this.rotAngle = 0;
         this.currentGlitchChar = glitchSet[Math.floor(random(glitchSet.length))];
-        const baseFrames = (CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 25;
-        const letterDelay = (CFG.CODE_LETTER_DELAY !== undefined) ? Number(CFG.CODE_LETTER_DELAY) : 3;
-        this.maxDecodeSteps = baseFrames + (this.letterIndex * letterDelay);
+
+        const entryDuration = (CFG.CODE_ENTRY_DURATION !== undefined)
+          ? Number(CFG.CODE_ENTRY_DURATION)
+          : ((CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 30);
+
+        const finishDisplace = (CFG.CODE_FINISH_DISPLACE !== undefined)
+          ? Number(CFG.CODE_FINISH_DISPLACE)
+          : 0;
+
+        // Si finishDisplace es 0, todas las letras terminan exactamente al mismo tiempo
+        const offset = finishDisplace > 0 ? Math.floor(random(0, finishDisplace + 0.99)) : 0;
+        this.maxDecodeSteps = Math.max(1, entryDuration + offset);
         this.decodeStep = 0;
         this.isFormed = false;
         this.retriggerCooldown = 0;
@@ -1302,9 +1328,17 @@
         this.acc.set(0, 0);
         this.rotAngle = 0;
         this.currentGlitchChar = glitchSet[Math.floor(random(glitchSet.length))];
-        const baseFrames = (CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 25;
-        const letterDelay = (CFG.CODE_LETTER_DELAY !== undefined) ? Number(CFG.CODE_LETTER_DELAY) : 3;
-        this.maxDecodeSteps = baseFrames + (this.letterIndex * letterDelay);
+
+        const entryDuration = (CFG.CODE_ENTRY_DURATION !== undefined)
+          ? Number(CFG.CODE_ENTRY_DURATION)
+          : ((CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 30);
+
+        const finishDisplace = (CFG.CODE_FINISH_DISPLACE !== undefined)
+          ? Number(CFG.CODE_FINISH_DISPLACE)
+          : 0;
+
+        const offset = finishDisplace > 0 ? Math.floor(random(0, finishDisplace + 0.99)) : 0;
+        this.maxDecodeSteps = Math.max(1, entryDuration + offset);
         this.decodeStep = 0;
         this.isFormed = false;
         this.retriggerCooldown = 0;
@@ -1407,11 +1441,13 @@
         this.acc.set(0, 0);
         this.rotAngle = 0;
 
-        const scrambleFreq = (CFG.CODE_SCRAMBLE_FREQ !== undefined) ? Math.max(1, Number(CFG.CODE_SCRAMBLE_FREQ)) : 2;
+        // a) Velocidad de cambio de letra: 1 (lento) a 10 (ultra rápido)
+        const charSpeed = (CFG.CODE_CHAR_SPEED !== undefined) ? Number(CFG.CODE_CHAR_SPEED) : 5;
+        const scrambleInterval = Math.max(1, 11 - Math.min(10, Math.max(1, Math.round(charSpeed))));
 
         if (this.decodeStep < this.maxDecodeSteps) {
           this.decodeStep++;
-          if (this.decodeStep % scrambleFreq === 0) {
+          if (this.decodeStep % scrambleInterval === 0) {
             const glitchSet = (CFG.CODE_GLITCH_CHARS && CFG.CODE_GLITCH_CHARS.length > 0)
               ? Array.from(CFG.CODE_GLITCH_CHARS)
               : (this.glitchChars || ['0', '1', '<', '>', '{', '}']);

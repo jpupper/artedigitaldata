@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import User from '../models/User';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 import Notification from '../models/Notification';
+import { notifyUser } from '../../server';
 
 const router = Router();
 
@@ -230,6 +231,9 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
         resourceId: evento._id.toString(),
         resourceTitle: evento.title,
         resourceType: 'evento',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} le dio like a tu evento "${evento.title}"`,
+      }).then(notif => {
+        notifyUser(evento.creator.toString(), 'newNotification', notif);
       }).catch(() => {});
     }
 
@@ -247,6 +251,24 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     evento.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await evento.save();
+
+    if (evento.creator.toString() !== req.user!.id) {
+      const actor = await User.findById(req.user!.id).select('username displayName avatar');
+      Notification.create({
+        recipient: evento.creator,
+        type: 'comment_evento',
+        actor: req.user!.id as any,
+        actorName: actor?.displayName || actor?.username || '',
+        actorAvatar: actor?.avatar || '',
+        resourceId: evento._id.toString(),
+        resourceTitle: evento.title,
+        resourceType: 'evento',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} comentó tu evento "${evento.title}"`,
+      }).then(notif => {
+        notifyUser(evento.creator.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
+
     const final = await hydrateComments(evento);
     return res.json(final);
   } catch (err: any) {

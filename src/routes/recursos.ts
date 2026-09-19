@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import User from '../models/User';
+import { notifyUser } from '../../server';
 
 const router = Router();
 
@@ -67,6 +68,24 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     recurso.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await recurso.save();
+
+    if (recurso.author.toString() !== req.user!.id) {
+      const actor = await User.findById(req.user!.id).select('username displayName avatar');
+      Notification.create({
+        recipient: recurso.author,
+        type: 'comment_recurso',
+        actor: req.user!.id as any,
+        actorName: actor?.displayName || actor?.username || '',
+        actorAvatar: actor?.avatar || '',
+        resourceId: recurso._id.toString(),
+        resourceTitle: recurso.title,
+        resourceType: 'recurso',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} comentó tu recurso "${recurso.title}"`,
+      }).then(notif => {
+        notifyUser(recurso.author.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
+
     const final = await hydrateComments(recurso);
     return res.json(final);
   } catch (err: any) {
@@ -128,6 +147,9 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
         resourceId: recurso._id.toString(),
         resourceTitle: recurso.title,
         resourceType: 'recurso',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} le dio like a tu recurso "${recurso.title}"`,
+      }).then(notif => {
+        notifyUser(recurso.author.toString(), 'newNotification', notif);
       }).catch(() => {});
     }
 

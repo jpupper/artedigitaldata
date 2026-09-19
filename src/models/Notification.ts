@@ -4,6 +4,14 @@ export type NotificationType =
   | 'like_post'
   | 'like_recurso'
   | 'like_evento'
+  | 'like_oportunidad'
+  | 'comment_post'
+  | 'comment_recurso'
+  | 'comment_evento'
+  | 'comment_oportunidad'
+  | 'postulacion_nueva'
+  | 'postulacion_aceptada'
+  | 'postulacion_rechazada'
   | 'private_message'
   | 'ticket_purchased'
   | 'ticket_sold';
@@ -28,7 +36,22 @@ const NotificationSchema: Schema = new Schema(
     recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     type: {
       type: String,
-      enum: ['like_post', 'like_recurso', 'like_evento', 'private_message', 'ticket_purchased', 'ticket_sold'],
+      enum: [
+        'like_post',
+        'like_recurso',
+        'like_evento',
+        'like_oportunidad',
+        'comment_post',
+        'comment_recurso',
+        'comment_evento',
+        'comment_oportunidad',
+        'postulacion_nueva',
+        'postulacion_aceptada',
+        'postulacion_rechazada',
+        'private_message',
+        'ticket_purchased',
+        'ticket_sold',
+      ],
       required: true,
     },
     read: { type: Boolean, default: false },

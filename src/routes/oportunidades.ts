@@ -3,6 +3,8 @@ import { Oportunidad, Inscripcion } from '../models/Oportunidad';
 import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth';
 import User from '../models/User';
 import Post from '../models/Post';
+import Notification from '../models/Notification';
+import { notifyUser } from '../../server';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
@@ -251,6 +253,25 @@ router.post('/:id/inscripcion', authMiddleware, async (req: AuthRequest, res: Re
     oportunidad.inscripciones.push(inscripcion._id as any);
     await oportunidad.save();
 
+    // Notificar al creador de la oportunidad si no es él mismo
+    if (oportunidad.creador.toString() !== req.user!.id) {
+      const applicantUser = await User.findById(req.user!.id).select('username displayName avatar');
+      const applicantName = applicantUser?.displayName || applicantUser?.username || 'Un artista';
+      Notification.create({
+        recipient: oportunidad.creador,
+        type: 'postulacion_nueva',
+        actor: req.user!.id as any,
+        actorName: applicantName,
+        actorAvatar: applicantUser?.avatar || '',
+        resourceId: oportunidad._id.toString(),
+        resourceTitle: oportunidad.titulo,
+        resourceType: 'oportunidad',
+        message: `${applicantName} se postuló a tu convocatoria "${oportunidad.titulo}"`,
+      }).then(notif => {
+        notifyUser(oportunidad.creador.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
+
     const populated = await Inscripcion.findById(inscripcion._id).populate('obra');
     return res.status(201).json(populated || inscripcion);
   } catch (err: any) {
@@ -325,6 +346,7 @@ router.patch('/:id/inscripciones/:inscripcionId', authMiddleware, async (req: Au
       return res.status(404).json({ error: 'Inscripción no encontrada' });
     }
 
+    const previousState = inscripcion.estado;
     if (req.body.estado) {
       inscripcion.estado = req.body.estado;
     }
@@ -333,6 +355,33 @@ router.patch('/:id/inscripciones/:inscripcionId', authMiddleware, async (req: Au
     }
 
     await inscripcion.save();
+
+    // Notificar al postulante si el estado cambió a aceptada o rechazada
+    if (req.body.estado && req.body.estado !== previousState && inscripcion.usuario.toString() !== req.user!.id) {
+      const isAccepted = req.body.estado === 'aceptada';
+      const notifType = isAccepted ? 'postulacion_aceptada' : (req.body.estado === 'rechazada' ? 'postulacion_rechazada' : null);
+      if (notifType) {
+        const creatorUser = await User.findById(req.user!.id).select('username displayName avatar');
+        const creatorName = creatorUser?.displayName || creatorUser?.username || 'El organizador';
+        const msg = isAccepted
+          ? `¡Tu postulación a "${oportunidad.titulo}" fue ACEPTADA!`
+          : `Tu postulación a "${oportunidad.titulo}" no fue seleccionada esta vez.`;
+
+        Notification.create({
+          recipient: inscripcion.usuario,
+          type: notifType,
+          actor: req.user!.id as any,
+          actorName: creatorName,
+          actorAvatar: creatorUser?.avatar || '',
+          resourceId: oportunidad._id.toString(),
+          resourceTitle: oportunidad.titulo,
+          resourceType: 'oportunidad',
+          message: msg,
+        }).then(notif => {
+          notifyUser(inscripcion.usuario.toString(), 'newNotification', notif);
+        }).catch(() => {});
+      }
+    }
 
     // Hydrate usuario
     const user = await User.findById(inscripcion.usuario)
@@ -400,13 +449,34 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
     if (!oportunidad.likes) oportunidad.likes = [];
     
     const index = oportunidad.likes.findIndex(id => id.toString() === userId.toString());
+    let isAdding = false;
     if (index === -1) {
       oportunidad.likes.push(userId);
+      isAdding = true;
     } else {
       oportunidad.likes.splice(index, 1);
     }
 
     await oportunidad.save();
+
+    if (isAdding && oportunidad.creador.toString() !== userId.toString()) {
+      const actor = await User.findById(userId).select('username displayName avatar');
+      const actorName = actor?.displayName || actor?.username || 'Alguien';
+      Notification.create({
+        recipient: oportunidad.creador,
+        type: 'like_oportunidad',
+        actor: userId,
+        actorName,
+        actorAvatar: actor?.avatar || '',
+        resourceId: oportunidad._id.toString(),
+        resourceTitle: oportunidad.titulo,
+        resourceType: 'oportunidad',
+        message: `${actorName} le dio like a tu convocatoria "${oportunidad.titulo}"`,
+      }).then(notif => {
+        notifyUser(oportunidad.creador.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
+
     return res.json({ likes: oportunidad.likes });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -434,6 +504,24 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
     });
 
     await oportunidad.save();
+
+    if (oportunidad.creador.toString() !== req.user!.id) {
+      const actor = await User.findById(req.user!.id).select('username displayName avatar');
+      const actorName = actor?.displayName || actor?.username || 'Alguien';
+      Notification.create({
+        recipient: oportunidad.creador,
+        type: 'comment_oportunidad',
+        actor: req.user!.id as any,
+        actorName,
+        actorAvatar: actor?.avatar || '',
+        resourceId: oportunidad._id.toString(),
+        resourceTitle: oportunidad.titulo,
+        resourceType: 'oportunidad',
+        message: `${actorName} comentó en tu convocatoria "${oportunidad.titulo}"`,
+      }).then(notif => {
+        notifyUser(oportunidad.creador.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
     const [hydrated] = await hydrate([oportunidad], 'creador');
     const final = await hydrateComments(hydrated);
     return res.status(201).json(final);

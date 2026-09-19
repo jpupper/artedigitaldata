@@ -70,9 +70,14 @@ function renderHeader() {
             <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1 whitespace-nowrap">
               <i class="fas fa-plus-circle text-xs"></i> CREAR
             </a>
+            <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" id="header-notif-btn" class="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all text-xs font-bold shrink-0" title="Ver Notificaciones">
+              <i class="fas fa-bell text-xs"></i>
+              <span class="hidden xl:inline text-[10px] tracking-wide uppercase font-black">Notificaciones</span>
+              <span id="header-notif-badge" class="hidden min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border border-black shadow">0</span>
+            </a>
             <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
               ${user?.avatar ? `
-                <img src="${sanitizeUrl(user.avatar)}" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400">
+                <img src="${sanitizeUrl(user.avatar)}" onerror="this.onerror=null;this.src='${CONFIG.BASE}/img/artedigital.png'" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400">
               ` : `
                 <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/30">
                   <i class="fas fa-user-astronaut"></i>
@@ -140,9 +145,13 @@ function renderHeader() {
           <a href="${CONFIG.BASE}/chat.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
             <i class="fas fa-comments mr-2"></i> CHAT
           </a>
+          <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" class="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20">
+            <span class="flex items-center"><i class="fas fa-bell mr-2"></i> NOTIFICACIONES</span>
+            <span id="mobile-notif-badge" class="hidden min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">0</span>
+          </a>
           <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
             ${user?.avatar ? `
-              <img src="${sanitizeUrl(user.avatar)}" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30">
+              <img src="${sanitizeUrl(user.avatar)}" onerror="this.onerror=null;this.src='${CONFIG.BASE}/img/artedigital.png'" alt="${escapeHTML(user.username)}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/30">
             ` : `
               <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                 <i class="fas fa-user-astronaut text-xs"></i>
@@ -394,8 +403,46 @@ function renderFooter() {
   document.body.appendChild(footerContainer);
 }
 
+async function updateHeaderNotifBadge() {
+  if (typeof isLoggedIn !== 'function' || !isLoggedIn()) return;
+  try {
+    const res = await apiRequest('/notifications/unread-count');
+    if (!res || !res.ok) return;
+    const data = await res.json();
+    const count = data.count || 0;
+    const badges = [
+      document.getElementById('header-notif-badge'),
+      document.getElementById('mobile-notif-badge')
+    ];
+    badges.forEach(b => {
+      if (!b) return;
+      if (count > 0) {
+        b.textContent = count > 99 ? '99+' : count;
+        b.classList.remove('hidden');
+      } else {
+        b.classList.add('hidden');
+      }
+    });
+  } catch(e) {}
+}
+window.updateHeaderNotifBadge = updateHeaderNotifBadge;
+
 document.addEventListener('DOMContentLoaded', () => {
   renderHeader();
   renderFooter();
+  if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+    updateHeaderNotifBadge();
+  }
 });
+
+// Dynamically load floating chat widget on all pages except dedicated chat
+(function loadFloatingChatWidget() {
+  const p = window.location.pathname.toLowerCase();
+  if (p.includes('chat.html') || p.endsWith('/chat')) return;
+  if (document.querySelector('script[src*="floating-chat.js"]')) return;
+  const script = document.createElement('script');
+  script.src = (window.CONFIG ? CONFIG.BASE : '') + '/js/floating-chat.js';
+  script.defer = true;
+  document.head.appendChild(script);
+})();
 

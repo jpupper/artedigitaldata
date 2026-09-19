@@ -46,6 +46,7 @@
 
   <!-- PANEL IZQUIERDO: Parámetros del Sistema y Shaders -->
   <aside id="left-control-panel" class="control-panel left-panel">
+    <div class="panel-resize-handle resize-handle-right" id="left-panel-resize-handle" title="Arrastrar para redimensionar panel izquierdo"></div>
     <div class="panel-header">
       <div class="panel-tabs-group">
         <button id="tab-btn-params-p5" class="tab-btn active" title="Parámetros del sistema de partículas p5.js">
@@ -278,36 +279,40 @@
             <i class="fas fa-chevron-down group-chevron"></i>
           </div>
           <div class="group-content">
+            <!-- a) Velocidad de cambio de letra -->
             <div class="control-row">
               <div class="control-label-wrap">
-                <span>Duración Decodificación (Frames)</span>
+                <span>Velocidad de cambio de letra</span>
               </div>
               <div class="slider-text-combo">
-                <input type="range" id="param-CODE_DECODE_FRAMES" min="5" max="120" step="1" value="25">
-                <input type="number" id="num-CODE_DECODE_FRAMES" class="val-input" min="5" max="120" step="1" value="25">
+                <input type="range" id="param-CODE_CHAR_SPEED" min="1" max="10" step="1" value="5">
+                <input type="number" id="num-CODE_CHAR_SPEED" class="val-input" min="1" max="10" step="1" value="5">
               </div>
             </div>
 
+            <!-- b) Duración entrada -->
             <div class="control-row" style="margin-top: 8px;">
               <div class="control-label-wrap">
-                <span>Retardo por Letra (Stagger)</span>
+                <span>Duración entrada (Frames)</span>
               </div>
               <div class="slider-text-combo">
-                <input type="range" id="param-CODE_LETTER_DELAY" min="0" max="30" step="1" value="3">
-                <input type="number" id="num-CODE_LETTER_DELAY" class="val-input" min="0" max="30" step="1" value="3">
+                <input type="range" id="param-CODE_ENTRY_DURATION" min="5" max="150" step="1" value="30">
+                <input type="number" id="num-CODE_ENTRY_DURATION" class="val-input" min="5" max="150" step="1" value="30">
               </div>
             </div>
 
+            <!-- c) Finish Displace -->
             <div class="control-row" style="margin-top: 8px;">
               <div class="control-label-wrap">
-                <span>Frecuencia de Scramble (Frames)</span>
+                <span>Finish Displace</span>
               </div>
               <div class="slider-text-combo">
-                <input type="range" id="param-CODE_SCRAMBLE_FREQ" min="1" max="10" step="1" value="2">
-                <input type="number" id="num-CODE_SCRAMBLE_FREQ" class="val-input" min="1" max="10" step="1" value="2">
+                <input type="range" id="param-CODE_FINISH_DISPLACE" min="0" max="60" step="1" value="0">
+                <input type="number" id="num-CODE_FINISH_DISPLACE" class="val-input" min="0" max="60" step="1" value="0">
               </div>
             </div>
 
+            <!-- Caracteres de mutación / Glitch -->
             <div class="control-row" style="margin-top: 8px;">
               <div class="control-label-wrap">
                 <span>Caracteres de Glitch / Scramble</span>
@@ -315,6 +320,7 @@
               <input type="text" id="param-CODE_GLITCH_CHARS" class="text-input-field" value="01<>{}#*+%$&?XZ7@!" placeholder="Símbolos de mutación" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-family: monospace; font-size: 11px;">
             </div>
 
+            <!-- Re-scramble con Mouse -->
             <div class="control-row" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <span style="font-size: 11px; color: #cbd5e1;">Re-scramble con Mouse</span>
@@ -326,16 +332,6 @@
                 <input type="checkbox" id="param-CODE_MOUSE_RETRIGGER" checked>
                 <span class="slider-toggle"></span>
               </label>
-            </div>
-
-            <div class="control-row" style="margin-top: 8px;">
-              <div class="control-label-wrap">
-                <span>Radio Interacción Mouse (px)</span>
-              </div>
-              <div class="slider-text-combo">
-                <input type="range" id="param-CODE_MOUSE_RADIUS" min="10" max="200" step="5" value="60">
-                <input type="number" id="num-CODE_MOUSE_RADIUS" class="val-input" min="10" max="200" step="5" value="60">
-              </div>
             </div>
           </div>
         </div>
@@ -690,6 +686,7 @@
 
   <!-- PANEL DERECHO: Modos (COLLABMODE activo por defecto y FLYERMODE) -->
   <aside id="right-control-panel" class="control-panel right-panel">
+    <div class="panel-resize-handle resize-handle-left" id="right-panel-resize-handle" title="Arrastrar para redimensionar panel derecho"></div>
     <div class="panel-header">
       <div class="panel-tabs-group">
         <button id="tab-btn-flyer" class="tab-btn" title="Modo Flyer (Composición tipográfica y Timeline)">

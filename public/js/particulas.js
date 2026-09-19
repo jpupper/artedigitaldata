@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let startLeft = 0, startTop = 0;
 
       const onMouseDown = (e) => {
-        if (e.target.closest('button, input, select, textarea, .tab-btn, .tl-btn')) return;
+        if (e.target.closest('button, input, select, textarea, .tab-btn, .tl-btn, .panel-resize-handle')) return;
 
         isDragging = true;
         handle.style.cursor = 'grabbing';
@@ -90,6 +90,121 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   setupDraggablePanels();
+
+  function initPanelResizeHandlers() {
+    const leftPanel = document.getElementById('left-control-panel');
+    const rightPanel = document.getElementById('right-control-panel');
+    const leftHandle = document.getElementById('left-panel-resize-handle');
+    const rightHandle = document.getElementById('right-panel-resize-handle');
+
+    // Restaurar anchos guardados si existen
+    const savedLeftWidth = localStorage.getItem('artedigital_left_panel_width');
+    if (savedLeftWidth && leftPanel) {
+      const parsed = parseInt(savedLeftWidth, 10);
+      if (parsed >= 280 && parsed <= window.innerWidth * 0.8) {
+        leftPanel.style.width = parsed + 'px';
+      }
+    }
+
+    const savedRightWidth = localStorage.getItem('artedigital_right_panel_width');
+    if (savedRightWidth && rightPanel) {
+      const parsed = parseInt(savedRightWidth, 10);
+      if (parsed >= 280 && parsed <= window.innerWidth * 0.8) {
+        rightPanel.style.width = parsed + 'px';
+      }
+    }
+
+    // Handler Izquierdo (ensancha o achica hacia la derecha)
+    if (leftPanel && leftHandle) {
+      leftHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const startX = e.clientX;
+        const startWidth = leftPanel.getBoundingClientRect().width;
+        leftPanel.classList.add('is-resizing');
+        leftHandle.classList.add('is-active');
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+
+        const onMouseMove = (moveEvt) => {
+          const dx = moveEvt.clientX - startX;
+          const minW = 280;
+          const maxW = Math.round(window.innerWidth * 0.75);
+          const newWidth = Math.max(minW, Math.min(maxW, startWidth + dx));
+          leftPanel.style.width = newWidth + 'px';
+        };
+
+        const onMouseUp = () => {
+          leftPanel.classList.remove('is-resizing');
+          leftHandle.classList.remove('is-active');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          const finalW = parseInt(leftPanel.style.width, 10);
+          if (finalW) {
+            localStorage.setItem('artedigital_left_panel_width', finalW);
+          }
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    // Handler Derecho (ensancha o achica hacia la izquierda)
+    if (rightPanel && rightHandle) {
+      rightHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const startX = e.clientX;
+        const rect = rightPanel.getBoundingClientRect();
+        const startWidth = rect.width;
+        const startLeft = rect.left;
+        const isLeftAnchored = rightPanel.style.right === 'auto' && rightPanel.style.left !== '';
+
+        rightPanel.classList.add('is-resizing');
+        rightHandle.classList.add('is-active');
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+
+        const onMouseMove = (moveEvt) => {
+          const dx = moveEvt.clientX - startX;
+          const minW = 280;
+          const maxW = Math.round(window.innerWidth * 0.75);
+          // Mover hacia la izquierda (dx negativo) aumenta el ancho
+          const newWidth = Math.max(minW, Math.min(maxW, startWidth - dx));
+          rightPanel.style.width = newWidth + 'px';
+
+          // Si el panel fue arrastrado y tiene left fijo, ajustar left para que el borde derecho no se desplace
+          if (isLeftAnchored) {
+            const deltaW = newWidth - startWidth;
+            rightPanel.style.left = Math.max(0, startLeft - deltaW) + 'px';
+          }
+        };
+
+        const onMouseUp = () => {
+          rightPanel.classList.remove('is-resizing');
+          rightHandle.classList.remove('is-active');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          const finalW = parseInt(rightPanel.style.width, 10);
+          if (finalW) {
+            localStorage.setItem('artedigital_right_panel_width', finalW);
+          }
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+    }
+  }
+
+  initPanelResizeHandlers();
 
   const leftPanel = document.getElementById('left-control-panel');
   const rightPanel = document.getElementById('right-control-panel');
@@ -328,6 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'WORD_REPEL_RADIUS',
     'WORD_REPEL_FORCE',
     'COLLAB_WORD_LIFESPAN',
+    'CODE_CHAR_SPEED',
+    'CODE_ENTRY_DURATION',
+    'CODE_FINISH_DISPLACE',
     'CODE_DECODE_FRAMES',
     'CODE_LETTER_DELAY',
     'CODE_SCRAMBLE_FREQ',
@@ -665,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearFlyerWordsBtn = document.getElementById('clear-flyer-words-btn');
   const flyerWordsListEl = document.getElementById('flyer-words-list');
 
+  let flyerWordsExplicitlyManaged = false;
   let flyerWords = [];
   let selectedFlyerWordId = null;
   let timelineLayers = [];
@@ -1034,6 +1153,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWordLettersChips(targetWord);
     renderFlyerWordsList();
 
+    if (targetWord.formationMode) {
+      setFormationMode(targetWord.formationMode, false);
+    }
+
     if (Array.isArray(timelineLayers)) {
       const matchingLayer = timelineLayers.find(l => l.id === targetId || l.word === wordTxt || (l.clips && l.clips.some(c => c.id === targetId)));
       if (matchingLayer) {
@@ -1090,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       keyframes: []
     };
 
+    flyerWordsExplicitlyManaged = true;
     flyerWords.push(wordItem);
     selectedFlyerWordId = wordItem.id;
     window.activeFlyerWordId = wordItem.id;
@@ -1213,6 +1337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function removeFlyerWord(idx) {
     if (idx < 0 || idx >= flyerWords.length) return;
+    flyerWordsExplicitlyManaged = true;
     const removed = flyerWords[idx];
     const removedId = (typeof removed === 'object' && removed.id) ? removed.id : removed;
     const removedText = (typeof removed === 'object' && removed.text) ? removed.text : String(removed);
@@ -1256,6 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function deleteSelectedTimelineWordOrClip() {
     let deletedSomething = false;
     let deletedName = '';
+    flyerWordsExplicitlyManaged = true;
 
     if (selectedClipId && Array.isArray(timelineLayers)) {
       for (let l = 0; l < timelineLayers.length; l++) {
@@ -1315,15 +1441,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function clearAllFlyerWords() {
+    flyerWordsExplicitlyManaged = true;
     flyerWords = [];
+    timelineLayers = [];
     selectedFlyerWordId = null;
     window.activeFlyerWordId = null;
+    selectedClipId = null;
+    selectedLayerId = null;
+    selectedKeyframeIndex = null;
     if (window.clearAllFlyerParticles) {
       window.clearAllFlyerParticles();
     }
     applyConfigChange('FLYER_WORDS', []);
+    applyConfigChange('TIMELINE_LAYERS', []);
     renderFlyerWordsList();
     renderTimelineTracks();
+    updateTimelineReadout();
   }
 
   if (flyerWordInput) {
@@ -3130,6 +3263,21 @@ document.addEventListener('DOMContentLoaded', () => {
       codeGlitchCharsSync.value = cfg.CODE_GLITCH_CHARS;
     }
 
+    const codeCharSpeedSlider = document.getElementById('param-CODE_CHAR_SPEED');
+    const codeCharSpeedNum = document.getElementById('num-CODE_CHAR_SPEED');
+    if (codeCharSpeedSlider && cfg.CODE_CHAR_SPEED !== undefined) codeCharSpeedSlider.value = cfg.CODE_CHAR_SPEED;
+    if (codeCharSpeedNum && cfg.CODE_CHAR_SPEED !== undefined) codeCharSpeedNum.value = cfg.CODE_CHAR_SPEED;
+
+    const codeEntryDurationSlider = document.getElementById('param-CODE_ENTRY_DURATION');
+    const codeEntryDurationNum = document.getElementById('num-CODE_ENTRY_DURATION');
+    if (codeEntryDurationSlider && cfg.CODE_ENTRY_DURATION !== undefined) codeEntryDurationSlider.value = cfg.CODE_ENTRY_DURATION;
+    if (codeEntryDurationNum && cfg.CODE_ENTRY_DURATION !== undefined) codeEntryDurationNum.value = cfg.CODE_ENTRY_DURATION;
+
+    const codeFinishDisplaceSlider = document.getElementById('param-CODE_FINISH_DISPLACE');
+    const codeFinishDisplaceNum = document.getElementById('num-CODE_FINISH_DISPLACE');
+    if (codeFinishDisplaceSlider && cfg.CODE_FINISH_DISPLACE !== undefined) codeFinishDisplaceSlider.value = cfg.CODE_FINISH_DISPLACE;
+    if (codeFinishDisplaceNum && cfg.CODE_FINISH_DISPLACE !== undefined) codeFinishDisplaceNum.value = cfg.CODE_FINISH_DISPLACE;
+
     if (cfg.FORMATION_MODE) {
       setFormationMode(cfg.FORMATION_MODE, false);
     }
@@ -3138,7 +3286,7 @@ document.addEventListener('DOMContentLoaded', () => {
       flyerModeToggle.checked = !!cfg.FLYER_MODE_ENABLED;
     }
 
-    if (Array.isArray(cfg.FLYER_WORDS) && (!flyerWords || flyerWords.length === 0)) {
+    if (!flyerWordsExplicitlyManaged && !currentVisualEffectId && !window.location.search.includes('id=') && Array.isArray(cfg.FLYER_WORDS) && cfg.FLYER_WORDS.length > 0 && (!flyerWords || flyerWords.length === 0)) {
       flyerWords = cfg.FLYER_WORDS.map((w, idx) => {
         if (typeof w === 'object' && w && w.text) {
           return {
@@ -3432,9 +3580,23 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
+        flyerWordsExplicitlyManaged = true;
+
         if (effect.timelineDuration) {
           timelineDuration = Number(effect.timelineDuration);
           window.timelineDuration = timelineDuration;
+        }
+
+        // Limpiar partículas previas y arrays antes de cargar
+        flyerWords = [];
+        timelineLayers = [];
+        selectedFlyerWordId = null;
+        window.activeFlyerWordId = null;
+        selectedClipId = null;
+        selectedLayerId = null;
+        selectedKeyframeIndex = null;
+        if (window.clearAllFlyerParticles) {
+          window.clearAllFlyerParticles();
         }
 
         // 2. Cargar palabras de flyer
@@ -3453,7 +3615,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 letterSpacing: w.letterSpacing !== undefined ? w.letterSpacing : 10,
                 startTime: w.startTime !== undefined ? w.startTime : 0.0,
                 duration: w.duration !== undefined ? w.duration : 2.0,
-                color: w.color || null,
+                formationMode: w.formationMode || 'physics',
+                color: w.color || '#40c4ff',
+                letterColors: Array.isArray(w.letterColors) ? w.letterColors : null,
+                palette: Array.isArray(w.palette) ? w.palette : null,
                 keyframes: Array.isArray(w.keyframes) ? w.keyframes : []
               };
             } else {
@@ -3469,6 +3634,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 letterSpacing: 10,
                 startTime: 0.0,
                 duration: 2.0,
+                formationMode: 'physics',
+                color: '#40c4ff',
+                letterColors: null,
+                palette: null,
                 keyframes: []
               };
             }
@@ -3478,7 +3647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Cargar capas de timeline o reconstruirlas si están vacías
         if (Array.isArray(effect.timelineLayers) && effect.timelineLayers.length > 0 && effect.timelineLayers.some(l => l.clips && l.clips.length > 0)) {
           timelineLayers = effect.timelineLayers;
-          // Sincronizar texto de los clips con flyerWords para mantener coherencia absoluta
+          // Sincronizar texto y modo de los clips con flyerWords para mantener coherencia absoluta
           timelineLayers.forEach(l => {
             if (Array.isArray(l.clips)) {
               l.clips.forEach(c => {
@@ -3486,11 +3655,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (matchingFw) {
                   c.text = matchingFw.text;
                   c.word = matchingFw.word;
+                  if (matchingFw.formationMode) c.formationMode = matchingFw.formationMode;
+                  if (matchingFw.color) c.color = matchingFw.color;
+                  if (matchingFw.letterColors) c.letterColors = matchingFw.letterColors;
                 }
               });
             }
           });
-        } else {
+        } else if (flyerWords.length > 0) {
           // Reconstruir clips a partir de flyerWords
           timelineLayers = [{
             id: 'layer_' + Date.now(),
@@ -3505,22 +3677,30 @@ document.addEventListener('DOMContentLoaded', () => {
               y: w.y,
               fontSize: w.fontSize,
               letterSpacing: w.letterSpacing,
+              formationMode: w.formationMode || 'physics',
+              color: w.color || '#40c4ff',
+              letterColors: w.letterColors || null,
               keyframes: Array.isArray(w.keyframes) ? w.keyframes : []
             }))
           }];
+        } else {
+          timelineLayers = [];
         }
 
         if (flyerWords.length > 0) {
           selectedFlyerWordId = flyerWords[0].id;
           window.activeFlyerWordId = flyerWords[0].id;
+          selectedClipId = flyerWords[0].id;
         }
+
+        applyConfigChange('FLYER_WORDS', [...flyerWords]);
+        applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
 
         renderFlyerWordsList();
         renderTimelineTracks();
         updateTimelineReadout();
 
-        if (window.spawnWordParticles) {
-          window.clearAllFlyerParticles();
+        if (window.spawnWordParticles && flyerWords.length > 0) {
           flyerWords.forEach(w => {
             window.spawnWordParticles(
               w.text || w.word,
@@ -3531,10 +3711,21 @@ document.addEventListener('DOMContentLoaded', () => {
               {
                 fontSize: w.fontSize,
                 letterSpacing: w.letterSpacing,
-                color: w.color
+                color: w.color,
+                letterColors: w.letterColors,
+                formationMode: w.formationMode,
+                palette: w.palette
               }
             );
           });
+        }
+
+        if (flyerWords.length > 0) {
+          updateUIForSelectedLayerProps(flyerWords[0]);
+          renderWordLettersChips(flyerWords[0]);
+          if (flyerWords[0].formationMode) {
+            setFormationMode(flyerWords[0].formationMode, false);
+          }
         }
         showToast(`Proyecto "${effect.title || 'Flyer'}" cargado`, 'info');
 
@@ -3724,18 +3915,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewFlyer = document.getElementById('btn-new-flyer');
   if (btnNewFlyer) {
     btnNewFlyer.addEventListener('click', () => {
+      flyerWordsExplicitlyManaged = true;
       currentVisualEffectId = null;
       flyerWords = [];
       timelineLayers = [];
       selectedFlyerWordId = null;
       selectedLayerId = null;
+      selectedClipId = null;
+      selectedKeyframeIndex = null;
       window.activeFlyerWordId = null;
       if (window.clearAllFlyerParticles) window.clearAllFlyerParticles();
+      applyConfigChange('FLYER_WORDS', []);
+      applyConfigChange('TIMELINE_LAYERS', []);
       renderFlyerWordsList();
       renderTimelineTracks();
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('id');
       newUrl.searchParams.delete('outputeffect');
+      newUrl.searchParams.delete('name');
       window.history.replaceState({}, '', newUrl.toString());
       showToast('Nueva secuencia lista para diseñar', 'info');
     });

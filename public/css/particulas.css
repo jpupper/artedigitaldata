@@ -140,7 +140,8 @@ canvas {
   position: fixed;
   top: 76px;
   width: 440px;
-  max-width: calc(50vw - 32px);
+  min-width: 280px;
+  max-width: calc(75vw - 32px);
   max-height: calc(100vh - 96px);
   background: var(--panel-bg);
   backdrop-filter: blur(18px);
@@ -155,12 +156,55 @@ canvas {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
+.control-panel.is-resizing {
+  transition: none !important;
+  user-select: none !important;
+}
+
+/* Panel Resize Handles */
+.panel-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: ew-resize;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.panel-resize-handle::after {
+  content: '';
+  width: 3px;
+  height: 38px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: all 0.2s ease;
+}
+.panel-resize-handle:hover::after,
+.panel-resize-handle.is-resizing::after {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+  height: 56px;
+}
+.panel-resize-handle:hover,
+.panel-resize-handle.is-resizing {
+  background: rgba(0, 242, 254, 0.18);
+}
+.resize-handle-right {
+  right: 0;
+}
+.resize-handle-left {
+  left: 0;
+}
+
 .control-panel.left-panel {
   left: 20px;
   right: auto;
 }
 .control-panel.left-panel.hidden-panel {
-  transform: translateX(-470px);
+  transform: translateX(-120%);
   opacity: 0;
   pointer-events: none;
 }
@@ -170,7 +214,7 @@ canvas {
   left: auto;
 }
 .control-panel.right-panel.hidden-panel {
-  transform: translateX(470px);
+  transform: translateX(120%);
   opacity: 0;
   pointer-events: none;
 }

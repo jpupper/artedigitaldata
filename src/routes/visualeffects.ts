@@ -75,15 +75,21 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'No tienes permiso para modificar este efecto visual' });
     }
 
-    if (title && typeof title === 'string') effect.title = title.trim();
-    if (flyerWords !== undefined) effect.flyerWords = flyerWords;
-    if (timelineLayers !== undefined) effect.timelineLayers = timelineLayers;
-    if (timelineDuration !== undefined) effect.timelineDuration = Number(timelineDuration);
-    if (hasTimeline !== undefined) effect.hasTimeline = Boolean(hasTimeline);
-    if (config !== undefined) effect.config = config;
+    const updateFields: any = {};
+    if (title && typeof title === 'string') updateFields.title = title.trim();
+    if (flyerWords !== undefined) updateFields.flyerWords = flyerWords;
+    if (timelineLayers !== undefined) updateFields.timelineLayers = timelineLayers;
+    if (timelineDuration !== undefined) updateFields.timelineDuration = Number(timelineDuration);
+    if (hasTimeline !== undefined) updateFields.hasTimeline = Boolean(hasTimeline);
+    if (config !== undefined) updateFields.config = config;
 
-    await effect.save();
-    return res.json({ message: 'Efecto visual actualizado', effect });
+    const updatedEffect = await VisualEffect.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    return res.json({ message: 'Efecto visual actualizado', effect: updatedEffect });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

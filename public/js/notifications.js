@@ -21,6 +21,19 @@ function initNotifications() {
     showBrowserNotification('Entrada Canjeada', data.message);
   });
 
+  notificationSocket.on('newNotification', (data) => {
+    if (document.getElementById('user-notifications')) {
+      loadUserNotifications();
+    }
+    if (typeof window.updateHeaderNotifBadge === 'function') {
+      window.updateHeaderNotifBadge();
+    }
+    showBrowserNotification(
+      'Nueva Notificación',
+      data.message || (data.actorName ? `${data.actorName} interactuó con tu contenido` : 'Tienes una nueva interacción')
+    );
+  });
+
   notificationSocket.on('disconnect', () => {});
 
   notificationInitialized = true;
@@ -75,20 +88,37 @@ function updateNotifBadge(notifications) {
 
 function getNotifMeta(n) {
   const typeMap = {
-    like_post:        { icon: 'fa-heart',          color: 'text-fuchsia-400',  label: 'le dio like a tu obra' },
-    like_recurso:     { icon: 'fa-heart',          color: 'text-orange-400',   label: 'le dio like a tu recurso' },
-    like_evento:      { icon: 'fa-heart',          color: 'text-red-400',      label: 'le dio like a tu evento' },
-    private_message:  { icon: 'fa-envelope',       color: 'text-cyan-400',     label: 'te envió un mensaje privado' },
-    ticket_purchased: { icon: 'fa-ticket-alt',     color: 'text-green-400',    label: 'Entrada confirmada' },
-    ticket_sold:      { icon: 'fa-money-bill-wave', color: 'text-yellow-400',  label: 'Se vendió una entrada' },
+    like_post:              { icon: 'fa-heart',          color: 'text-fuchsia-400',  label: 'le dio like a tu obra' },
+    like_recurso:           { icon: 'fa-heart',          color: 'text-orange-400',   label: 'le dio like a tu recurso' },
+    like_evento:            { icon: 'fa-heart',          color: 'text-red-400',      label: 'le dio like a tu evento' },
+    like_oportunidad:       { icon: 'fa-heart',          color: 'text-amber-400',    label: 'le dio like a tu convocatoria' },
+    comment_post:           { icon: 'fa-comment',        color: 'text-fuchsia-400',  label: 'comentó tu obra' },
+    comment_recurso:        { icon: 'fa-comment',        color: 'text-orange-400',   label: 'comentó tu recurso' },
+    comment_evento:         { icon: 'fa-comment',        color: 'text-red-400',      label: 'comentó tu evento' },
+    comment_oportunidad:    { icon: 'fa-comment',        color: 'text-amber-400',    label: 'comentó en tu convocatoria' },
+    postulacion_nueva:      { icon: 'fa-user-check',     color: 'text-emerald-400',  label: 'se postuló a tu convocatoria' },
+    postulacion_aceptada:   { icon: 'fa-check-circle',   color: 'text-emerald-400',  label: '¡Tu postulación fue ACEPTADA!' },
+    postulacion_rechazada:  { icon: 'fa-times-circle',   color: 'text-rose-400',     label: 'Tu postulación no fue seleccionada' },
+    private_message:        { icon: 'fa-envelope',       color: 'text-cyan-400',     label: 'te envió un mensaje privado' },
+    ticket_purchased:       { icon: 'fa-ticket-alt',     color: 'text-green-400',    label: 'Entrada confirmada' },
+    ticket_sold:            { icon: 'fa-money-bill-wave', color: 'text-yellow-400',  label: 'Se vendió una entrada' },
   };
   return typeMap[n.type] || { icon: 'fa-bell', color: 'text-gray-400', label: 'Notificación' };
 }
 
 function getNotifLink(n) {
-  if (n.type === 'like_post')        return `${CONFIG.BASE}/post.html?id=${n.resourceId}`;
-  if (n.type === 'like_recurso')     return `${CONFIG.BASE}/recurso.html?id=${n.resourceId}`;
-  if (n.type === 'like_evento')      return `${CONFIG.BASE}/evento.html?id=${n.resourceId}`;
+  if (n.type === 'like_post' || n.type === 'comment_post')               return `${CONFIG.BASE}/post.html?id=${n.resourceId}`;
+  if (n.type === 'like_recurso' || n.type === 'comment_recurso')         return `${CONFIG.BASE}/recurso.html?id=${n.resourceId}`;
+  if (n.type === 'like_evento' || n.type === 'comment_evento')           return `${CONFIG.BASE}/evento.html?id=${n.resourceId}`;
+  if (
+    n.type === 'like_oportunidad' ||
+    n.type === 'comment_oportunidad' ||
+    n.type === 'postulacion_nueva' ||
+    n.type === 'postulacion_aceptada' ||
+    n.type === 'postulacion_rechazada'
+  ) {
+    return `${CONFIG.BASE}/oportunidad.html?id=${n.resourceId}`;
+  }
   if (n.type === 'private_message')  return `${CONFIG.BASE}/chat.html`;
   if (n.type === 'ticket_purchased') return `${CONFIG.BASE}/ticket-success.html?ticket=${n.resourceId}`;
   if (n.type === 'ticket_sold')      return `${CONFIG.BASE}/event-tickets.html`;
@@ -112,18 +142,26 @@ function renderNotifications(notifications) {
     const meta = getNotifMeta(n);
     const link = getNotifLink(n);
     const actorAvatar = n.actorAvatar
-      ? `<img src="${n.actorAvatar}" class="w-10 h-10 rounded-full object-cover" alt="">`
-      : `<div class="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 text-gray-400 text-sm font-bold">${(n.actorName || '?')[0].toUpperCase()}</div>`;
+      ? `<img src="${sanitizeUrl(n.actorAvatar)}" onerror="this.onerror=null;this.src='/img/artedigital.png'" class="w-10 h-10 rounded-full object-cover border border-white/10" alt="">`
+      : `<div class="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 text-gray-400 text-sm font-bold">${escapeHTML((n.actorName || '?')[0].toUpperCase())}</div>`;
     const timeAgo = formatTimeAgo(n.createdAt);
     const unreadClass = n.read ? '' : 'border-l-2 border-yellow-400 bg-yellow-400/5';
 
     let bodyText = '';
-    if (['like_post', 'like_recurso', 'like_evento'].includes(n.type)) {
-      bodyText = `<span class="font-semibold text-white">${n.actorName || 'Alguien'}</span> ${meta.label}${n.resourceTitle ? `: <em class="text-gray-300">"${n.resourceTitle}"</em>` : ''}`;
+    if (['like_post', 'like_recurso', 'like_evento', 'like_oportunidad'].includes(n.type)) {
+      bodyText = `<span class="font-semibold text-white">${escapeHTML(n.actorName || 'Alguien')}</span> ${meta.label}${n.resourceTitle ? `: <em class="text-gray-300">"${escapeHTML(n.resourceTitle)}"</em>` : ''}`;
+    } else if (['comment_post', 'comment_recurso', 'comment_evento', 'comment_oportunidad'].includes(n.type)) {
+      bodyText = `<span class="font-semibold text-white">${escapeHTML(n.actorName || 'Alguien')}</span> ${meta.label}${n.resourceTitle ? `: <em class="text-gray-300">"${escapeHTML(n.resourceTitle)}"</em>` : ''}`;
+    } else if (n.type === 'postulacion_nueva') {
+      bodyText = `<span class="font-semibold text-white">${escapeHTML(n.actorName || 'Un artista')}</span> se postuló a tu convocatoria${n.resourceTitle ? ` <em class="text-gray-300">"${escapeHTML(n.resourceTitle)}"</em>` : ''}`;
+    } else if (n.type === 'postulacion_aceptada') {
+      bodyText = `<span class="font-bold text-emerald-400">¡Tu postulación fue ACEPTADA!</span> en${n.resourceTitle ? ` <em class="text-gray-300">"${escapeHTML(n.resourceTitle)}"</em>` : ' la convocatoria'}. ${n.message ? `<div class="mt-1 text-xs text-gray-400">${escapeHTML(n.message)}</div>` : ''}`;
+    } else if (n.type === 'postulacion_rechazada') {
+      bodyText = `<span class="font-semibold text-rose-400">Tu postulación no fue seleccionada</span> en${n.resourceTitle ? ` <em class="text-gray-300">"${escapeHTML(n.resourceTitle)}"</em>` : ' la convocatoria'}. ${n.message ? `<div class="mt-1 text-xs text-gray-400">${escapeHTML(n.message)}</div>` : ''}`;
     } else if (n.type === 'private_message') {
-      bodyText = `<span class="font-semibold text-white">${n.actorName || 'Alguien'}</span> ${meta.label}${n.message ? `: <span class="text-gray-400 italic">"${n.message}"</span>` : ''}`;
+      bodyText = `<span class="font-semibold text-white">${escapeHTML(n.actorName || 'Alguien')}</span> ${meta.label}${n.message ? `: <span class="text-gray-400 italic">"${escapeHTML(n.message)}"</span>` : ''}`;
     } else {
-      bodyText = n.message || meta.label;
+      bodyText = escapeHTML(n.message || meta.label);
     }
 
     return `

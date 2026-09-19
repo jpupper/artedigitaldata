@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { hydrate, hydrateComments, hydrateLikes } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import User from '../models/User';
+import { notifyUser } from '../../server';
 
 const router = Router();
 
@@ -150,6 +151,9 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
         resourceId: post._id.toString(),
         resourceTitle: post.title,
         resourceType: 'post',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} le dio like a tu obra "${post.title}"`,
+      }).then(notif => {
+        notifyUser(post.author.toString(), 'newNotification', notif);
       }).catch(() => {});
     }
 
@@ -169,6 +173,23 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
     post.comments.push({ user: req.user!.id as any, text, createdAt: new Date() });
     await post.save();
+
+    if (post.author.toString() !== req.user!.id) {
+      const actor = await User.findById(req.user!.id).select('username displayName avatar');
+      Notification.create({
+        recipient: post.author,
+        type: 'comment_post',
+        actor: req.user!.id as any,
+        actorName: actor?.displayName || actor?.username || '',
+        actorAvatar: actor?.avatar || '',
+        resourceId: post._id.toString(),
+        resourceTitle: post.title,
+        resourceType: 'post',
+        message: `${actor?.displayName || actor?.username || 'Alguien'} comentó tu obra "${post.title}"`,
+      }).then(notif => {
+        notifyUser(post.author.toString(), 'newNotification', notif);
+      }).catch(() => {});
+    }
     
     const final = await hydrateComments(post);
     return res.json(final);
