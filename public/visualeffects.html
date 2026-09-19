@@ -24,6 +24,7 @@
         <i class="fas fa-arrow-left"></i>
         <span>Inicio</span>
       </a>
+
       <button id="toggle-left-panel-btn" class="btn-toggle-ui" title="Panel de Parámetros de Sistema (Atajo: P)">
         <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i>
         <span>Parámetros</span>
@@ -62,6 +63,28 @@
     <div class="panel-body">
       <!-- Sub-Pestaña 1: Letrasp5 (Parámetros del sistema de partículas) -->
       <div id="tab-pane-params-p5" class="tab-pane active">
+        <!-- Modo de Formación (Card superior de control) -->
+        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 10px 12px; background: rgba(0, 242, 254, 0.04); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-cubes text-[var(--accent-cyan)]"></i> Formación de Palabra
+              </span>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                FISICS (atracción y viaje) o CODE (decodificación estática)
+              </div>
+            </div>
+            <div class="formation-switch-pill">
+              <button type="button" id="panel-btn-mode-fisics" class="formation-btn active" data-mode="FISICS">
+                <i class="fas fa-atom"></i> FISICS
+              </button>
+              <button type="button" id="panel-btn-mode-code" class="formation-btn" data-mode="CODE">
+                <i class="fas fa-code"></i> CODE
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tipografía y Letras -->
         <div class="param-group collapsed">
           <div class="group-title">
@@ -155,6 +178,35 @@
             <i class="fas fa-chevron-down group-chevron"></i>
           </div>
           <div class="group-content">
+            <!-- Selector de Letras de la Palabra Activa -->
+            <div id="word-letters-selector-container" class="letter-selector-wrapper" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
+                  <i class="fas fa-font text-cyan-400"></i> Letra Seleccionada:
+                </span>
+                <span id="selected-letter-badge" style="font-size: 10px; color: var(--accent-cyan); font-weight: 700; background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.3); padding: 2px 8px; border-radius: 6px;">Toda la palabra</span>
+              </div>
+              <div id="word-letters-chips" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <!-- Se llena dinámicamente según la palabra activa -->
+              </div>
+            </div>
+
+            <!-- Color de la Letra o Palabra Seleccionada -->
+            <div id="selected-letter-color-box" class="control-row" style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <span id="letter-color-label" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Letra Seleccionada</span>
+                  <div id="letter-color-subtext" style="font-size: 10px; color: #94a3b8; margin-top: 1px;">Elegí el color para la letra activa</div>
+                </div>
+                <div class="color-input-wrap">
+                  <input type="color" id="param-SELECTED_LETTER_COLOR" value="#40c4ff">
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; color: #cbd5e1; font-weight: 600; margin-bottom: 8px;">
+              <span>Paleta Cromática (Degradado):</span>
+            </div>
             <div class="palette-grid">
               <div class="color-picker-box">
                 <label>Color 1</label>
@@ -218,8 +270,78 @@
           </div>
         </div>
 
+        <!-- Parámetros Modo CODE (Solo visible cuando el modo CODE está activo) -->
+        <div id="group-mode-code" class="param-group group-mode-code collapsed" style="display: none;">
+          <div class="group-title">
+            <i class="fas fa-terminal" style="color: var(--accent-cyan);"></i>
+            <span>Parámetros Modo CODE</span>
+            <i class="fas fa-chevron-down group-chevron"></i>
+          </div>
+          <div class="group-content">
+            <div class="control-row">
+              <div class="control-label-wrap">
+                <span>Duración Decodificación (Frames)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CODE_DECODE_FRAMES" min="5" max="120" step="1" value="25">
+                <input type="number" id="num-CODE_DECODE_FRAMES" class="val-input" min="5" max="120" step="1" value="25">
+              </div>
+            </div>
+
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Retardo por Letra (Stagger)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CODE_LETTER_DELAY" min="0" max="30" step="1" value="3">
+                <input type="number" id="num-CODE_LETTER_DELAY" class="val-input" min="0" max="30" step="1" value="3">
+              </div>
+            </div>
+
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Frecuencia de Scramble (Frames)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CODE_SCRAMBLE_FREQ" min="1" max="10" step="1" value="2">
+                <input type="number" id="num-CODE_SCRAMBLE_FREQ" class="val-input" min="1" max="10" step="1" value="2">
+              </div>
+            </div>
+
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Caracteres de Glitch / Scramble</span>
+              </div>
+              <input type="text" id="param-CODE_GLITCH_CHARS" class="text-input-field" value="01<>{}#*+%$&?XZ7@!" placeholder="Símbolos de mutación" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-family: monospace; font-size: 11px;">
+            </div>
+
+            <div class="control-row" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 11px; color: #cbd5e1;">Re-scramble con Mouse</span>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  Vuelve a mutar al pasar el cursor sobre las letras.
+                </div>
+              </div>
+              <label class="switch-ui" style="transform: scale(0.85);" title="Activar re-scramble reactivo con el cursor">
+                <input type="checkbox" id="param-CODE_MOUSE_RETRIGGER" checked>
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Radio Interacción Mouse (px)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CODE_MOUSE_RADIUS" min="10" max="200" step="5" value="60">
+                <input type="number" id="num-CODE_MOUSE_RADIUS" class="val-input" min="10" max="200" step="5" value="60">
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Físicas y Movimiento -->
-        <div class="param-group collapsed">
+        <div class="param-group group-mode-fisics collapsed">
           <div class="group-title">
             <i class="fas fa-wind"></i>
             <span>Dinámica y Físicas</span>
@@ -309,7 +431,7 @@
         </div>
 
         <!-- Generación y Vida -->
-        <div class="param-group collapsed">
+        <div class="param-group group-mode-fisics collapsed">
           <div class="group-title">
             <i class="fas fa-hourglass-half"></i>
             <span>Generación y Vida</span>
@@ -401,7 +523,7 @@
         </div>
 
         <!-- Flowfield -->
-        <div class="param-group collapsed">
+        <div class="param-group group-mode-fisics collapsed">
           <div class="group-title">
             <i class="fas fa-wind"></i>
             <span>Flowfield (Campo de Flujo)</span>

@@ -132,43 +132,43 @@
       <div id="completion-tasks" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex border-b border-white/10 mb-8 overflow-x-auto scrollbar-hide">
-      <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn active px-6 py-4 text-sm font-bold text-[var(--color-cyan)] border-b-2 border-primary-500 whitespace-nowrap transition-all">
-        <i class="fas fa-palette mr-2"></i>OBRAS
-        <span id="badge-posts" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-[var(--color-cyan)] text-xs font-bold"></span>
+    <!-- Tabs Container (Responsivo y Envolvente) -->
+    <div class="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-white/[0.03] border border-white/10 mb-8 backdrop-blur-md">
+      <button onclick="switchTab('posts')" id="tab-posts" class="tab-btn active px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center border border-cyan-500/30 bg-cyan-500/10 text-[var(--color-cyan)] shadow-[0_0_15px_rgba(0,242,254,0.1)]">
+        <i class="fas fa-palette mr-2 text-cyan-400"></i>OBRAS
+        <span id="badge-posts" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-[var(--color-cyan)] text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-box-open mr-2"></i>RECURSOS
-        <span id="badge-recursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold"></span>
+      <button onclick="switchTab('recursos')" id="tab-recursos" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
+        <i class="fas fa-box-open mr-2 text-orange-400"></i>RECURSOS
+        <span id="badge-recursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('concursos')" id="tab-concursos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-trophy mr-2 text-yellow-500"></i>MIS IMAGENES
-        <span id="badge-concursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold"></span>
+      <button onclick="switchTab('concursos')" id="tab-concursos" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
+        <i class="fas fa-trophy mr-2 text-yellow-500"></i>MIS IMÁGENES
+        <span id="badge-concursos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-calendar-alt mr-2"></i>EVENTOS
-        <span id="badge-eventos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold"></span>
+      <button onclick="switchTab('eventos')" id="tab-eventos" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
+        <i class="fas fa-calendar-alt mr-2 text-blue-400"></i>EVENTOS
+        <span id="badge-eventos" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-briefcase mr-2"></i>CHANCES
-        <span id="badge-oportunidades" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold"></span>
+      <button onclick="switchTab('oportunidades')" id="tab-oportunidades" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
+        <i class="fas fa-briefcase mr-2 text-emerald-400"></i>CHANCES
+        <span id="badge-oportunidades" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+      <button onclick="switchTab('favs')" id="tab-favs" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
         <i class="fas fa-heart mr-2 text-red-500"></i>TUS FAV
-        <span id="badge-favs" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold"></span>
+        <span id="badge-favs" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
-        <i class="fas fa-ticket-alt mr-2 text-fuchsia-500"></i>ENTRADAS
-        <span id="badge-tickets" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-400 text-xs font-bold"></span>
+      <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
+        <i class="fas fa-ticket-alt mr-2 text-fuchsia-400"></i>ENTRADAS
+        <span id="badge-tickets" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('visualeffects')" id="tab-visualeffects" class="tab-btn px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+      <button onclick="switchTab('visualeffects')" id="tab-visualeffects" class="tab-btn px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
         <i class="fas fa-wand-magic-sparkles mr-2 text-cyan-400"></i>SECUENCIAS
-        <span id="badge-visualeffects" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold"></span>
+        <span id="badge-visualeffects" class="hidden ml-1.5 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[11px] font-bold"></span>
       </button>
-      <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="tab-btn hidden px-6 py-4 text-sm font-bold text-gray-500 hover:text-white whitespace-nowrap transition-all">
+      <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="tab-btn hidden px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center">
         <i class="fas fa-bell mr-2 text-yellow-400"></i>NOTIFICACIONES
-        <span id="notif-badge" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black"></span>
+        <span id="notif-badge" class="hidden ml-1.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black"></span>
       </button>
     </div>
 
@@ -604,13 +604,17 @@
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active', 'text-[var(--color-cyan)]', 'border-primary-500');
-        btn.classList.add('text-gray-500');
+        btn.classList.remove('active', 'border-cyan-500/30', 'bg-cyan-500/10', 'text-[var(--color-cyan)]', 'shadow-[0_0_15px_rgba(0,242,254,0.1)]');
+        btn.classList.add('text-gray-400', 'hover:text-white', 'hover:bg-white/5', 'border-transparent');
       });
-      document.getElementById('tab-' + tab).classList.add('active', 'text-[var(--color-cyan)]', 'border-primary-500');
-      document.getElementById('tab-' + tab).classList.remove('text-gray-500');
+      const activeBtn = document.getElementById('tab-' + tab);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-gray-400', 'hover:bg-white/5', 'border-transparent');
+        activeBtn.classList.add('active', 'border-cyan-500/30', 'bg-cyan-500/10', 'text-[var(--color-cyan)]', 'shadow-[0_0_15px_rgba(0,242,254,0.1)]');
+      }
       document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
-      document.getElementById('section-' + tab).classList.remove('hidden');
+      const activeSec = document.getElementById('section-' + tab);
+      if (activeSec) activeSec.classList.remove('hidden');
     }
 
     function renderUserPosts(posts) {

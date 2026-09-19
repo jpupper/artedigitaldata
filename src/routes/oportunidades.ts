@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { Oportunidad, Inscripcion } from '../models/Oportunidad';
 import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth';
 import User from '../models/User';
+import Post from '../models/Post';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 
 const router = Router();
@@ -204,10 +205,44 @@ router.post('/:id/inscripcion', authMiddleware, async (req: AuthRequest, res: Re
       return res.status(400).json({ error: 'Ya estás inscrito en esta oportunidad' });
     }
 
+    const tipoInscripcion = req.body.tipoInscripcion === 'obra' ? 'obra' : 'formulario';
+    const obraId = req.body.obra || req.body.obraId;
+    let obraRef: any = null;
+    let datosFinal = req.body.datos || {};
+
+    if (tipoInscripcion === 'obra') {
+      if (!obraId) {
+        return res.status(400).json({ error: 'Debes seleccionar una obra para postular.' });
+      }
+      const post = await Post.findById(obraId);
+      if (!post) {
+        return res.status(404).json({ error: 'La obra seleccionada no existe.' });
+      }
+      obraRef = post._id;
+
+      // Almacenar snapshot de la obra dentro de datos para resiliencia visual
+      datosFinal = {
+        ...datosFinal,
+        tipoInscripcion: 'obra',
+        obraId: post._id.toString(),
+        obraTitulo: post.title,
+        obraImagen: post.imageUrl || '',
+        obraDescripcion: post.description || '',
+        obraYoutube: post.youtube_video || '',
+      };
+    } else {
+      datosFinal = {
+        ...datosFinal,
+        tipoInscripcion: 'formulario',
+      };
+    }
+
     const inscripcion = await Inscripcion.create({
       usuario: req.user!.id,
       oportunidad: oportunidad._id,
-      datos: req.body.datos || {},
+      datos: datosFinal,
+      tipoInscripcion,
+      obra: obraRef,
       mensaje: req.body.mensaje || '',
       estado: 'pendiente',
     });
@@ -216,7 +251,8 @@ router.post('/:id/inscripcion', authMiddleware, async (req: AuthRequest, res: Re
     oportunidad.inscripciones.push(inscripcion._id as any);
     await oportunidad.save();
 
-    return res.status(201).json(inscripcion);
+    const populated = await Inscripcion.findById(inscripcion._id).populate('obra');
+    return res.status(201).json(populated || inscripcion);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -241,6 +277,7 @@ router.get('/:id/inscripciones', authMiddleware, async (req: AuthRequest, res: R
     }
 
     const inscripciones = await Inscripcion.find({ oportunidad: oportunidad._id })
+      .populate('obra')
       .sort({ createdAt: -1 });
 
     // Hydrate usuario data
@@ -252,7 +289,10 @@ router.get('/:id/inscripciones', authMiddleware, async (req: AuthRequest, res: R
 
     const final = inscripciones.map(insc => {
       const obj: any = insc.toObject();
-      obj.usuario = userMap.get(insc.usuario.toString()) || insc.usuario;
+      obj.usuario = userMap.get(insc.usuario?.toString() || (insc.usuario as any)?._id?.toString()) || insc.usuario;
+      if (!obj.tipoInscripcion) {
+        obj.tipoInscripcion = obj.obra || obj.datos?.tipoInscripcion === 'obra' ? 'obra' : 'formulario';
+      }
       return obj;
     });
 
@@ -312,6 +352,7 @@ router.patch('/:id/inscripciones/:inscripcionId', authMiddleware, async (req: Au
 router.get('/mis-inscripciones/listar', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const inscripciones = await Inscripcion.find({ usuario: req.user!.id })
+      .populate('obra')
       .sort({ createdAt: -1 });
 
     const opoIds = inscripciones.map(i => i.oportunidad);
@@ -321,6 +362,9 @@ router.get('/mis-inscripciones/listar', authMiddleware, async (req: AuthRequest,
     const final = inscripciones.map(insc => {
       const obj: any = insc.toObject();
       obj.oportunidad = opoMap.get(insc.oportunidad.toString()) || insc.oportunidad;
+      if (!obj.tipoInscripcion) {
+        obj.tipoInscripcion = obj.obra || obj.datos?.tipoInscripcion === 'obra' ? 'obra' : 'formulario';
+      }
       return obj;
     });
 

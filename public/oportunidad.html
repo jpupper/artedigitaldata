@@ -125,32 +125,147 @@
           <div class="flex flex-wrap gap-2" id="opo-tags"></div>
         </section>
 
-        <!-- Botón Inscribirse -->
+        <!-- Botón Inscribirse y Estado -->
         <section id="inscripcion-section" class="mb-8">
-          <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-            <i class="fas fa-paper-plane mr-2"></i>Inscribirse a esta Oportunidad
+          <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2">
+            <i class="fas fa-paper-plane"></i>
+            <span>Inscribirse a esta Oportunidad</span>
           </button>
-          <p id="ya-inscrito-msg" class="hidden text-center text-emerald-400 text-sm font-bold mt-3">
-            <i class="fas fa-check-circle mr-2"></i>Ya estás inscrito en esta oportunidad
-          </p>
+          
+          <div id="ya-inscrito-msg" class="hidden text-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30">
+            <i class="fas fa-check-circle text-3xl text-emerald-400 mb-2"></i>
+            <h4 class="text-base font-bold text-white mb-1">¡Ya estás inscrito en esta oportunidad!</h4>
+            <div id="ya-inscrito-detalle" class="text-sm text-gray-300 mt-2"></div>
+          </div>
         </section>
 
-        <!-- Formulario de Inscripción -->
-        <section id="inscripcion-form" class="hidden mb-8 bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-edit text-emerald-400 mr-2"></i>Formulario de Inscripción</h3>
-          
-          <div id="inscripcion-campos-dinamicos" class="space-y-4 mb-6"></div>
-
-          <div class="mb-4">
-            <label class="block text-sm font-bold text-gray-300 mb-2">Mensaje (opcional)</label>
-            <textarea id="insc-mensaje" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="Escribí un mensaje para el creador de la oportunidad..."></textarea>
+        <!-- Formulario de Inscripción con Pestañas -->
+        <section id="inscripcion-form" class="hidden mb-8 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-white/10">
+            <div>
+              <h3 class="text-xl font-black text-white flex items-center gap-2">
+                <i class="fas fa-file-signature text-emerald-400"></i>
+                <span>Postulación a la Oportunidad</span>
+              </h3>
+              <p class="text-xs text-gray-400 mt-0.5">Elegí cómo querés postularte: con una obra existente de tu perfil o llenando el formulario.</p>
+            </div>
+            
+            <!-- Selector de Modo -->
+            <div class="inline-flex p-1 rounded-xl bg-black/40 border border-white/10 shrink-0">
+              <button type="button" id="tab-mode-obra" onclick="switchInscripcionMode('obra')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-cyan-500 text-black shadow-lg">
+                <i class="fas fa-palette"></i>
+                <span>Postular Obra</span>
+              </button>
+              <button type="button" id="tab-mode-form" onclick="switchInscripcionMode('form')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-gray-400 hover:text-white">
+                <i class="fas fa-edit"></i>
+                <span>Formulario Manual</span>
+              </button>
+            </div>
           </div>
 
-          <div class="flex gap-4">
-            <button onclick="submitInscripcion()" class="flex-1 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all">
-              <i class="fas fa-paper-plane mr-2"></i>Enviar Inscripción
+          <!-- MODO 1: POSTULAR OBRA EXISTENTE -->
+          <div id="panel-postular-obra" class="space-y-6">
+            <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-start gap-3">
+              <i class="fas fa-info-circle text-cyan-400 text-lg shrink-0 mt-0.5"></i>
+              <div class="text-xs text-cyan-200 leading-relaxed">
+                <span class="font-bold text-cyan-300">Postulación directa por obra:</span> Seleccioná una de las obras publicadas en tu perfil. 
+                <span class="text-white font-semibold">No es obligatorio que tenga todos los campos requeridos por el formulario tradicional.</span> 
+                El organizador podrá ver tu obra directamente con su imagen, título y detalles.
+              </div>
+            </div>
+
+            <!-- Buscador y selector de obras -->
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-layer-group text-cyan-400"></i>
+                  <span>Tus Obras Publicadas (<span id="mis-obras-count">0</span>)</span>
+                </label>
+                <a href="create.html" target="_blank" class="text-xs text-cyan-400 hover:underline flex items-center gap-1">
+                  <i class="fas fa-plus"></i> Subir nueva obra
+                </a>
+              </div>
+
+              <!-- Input búsqueda rápida de obra -->
+              <div class="relative mb-3">
+                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                <input type="text" id="filtro-mis-obras" oninput="filtrarMisObras()" placeholder="Buscar entre tus obras por título..." class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors">
+              </div>
+
+              <!-- Grid de Obras -->
+              <div id="mis-obras-loading" class="text-center py-10 bg-black/20 rounded-2xl border border-white/5">
+                <i class="fas fa-spinner fa-spin text-2xl text-cyan-400 mb-2"></i>
+                <p class="text-xs text-gray-400">Cargando obras de tu perfil...</p>
+              </div>
+
+              <div id="mis-obras-empty" class="hidden text-center py-8 bg-black/20 rounded-2xl border border-white/5 p-4">
+                <i class="fas fa-paint-brush text-3xl text-gray-600 mb-2"></i>
+                <p class="text-sm text-gray-300 font-bold">No tenés obras publicadas todavía</p>
+                <p class="text-xs text-gray-500 mb-4">Podés publicar una obra artística en tu perfil o postularte completando el formulario manual.</p>
+                <div class="flex justify-center gap-3">
+                  <a href="create.html" target="_blank" class="px-4 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold hover:bg-cyan-500/30 transition-all">
+                    <i class="fas fa-plus mr-1"></i> Publicar una Obra
+                  </a>
+                  <button type="button" onclick="switchInscripcionMode('form')" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 transition-all">
+                    Usar Formulario Manual
+                  </button>
+                </div>
+              </div>
+
+              <div id="mis-obras-grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+            <!-- Preview de la Obra Seleccionada -->
+            <div id="obra-seleccionada-card" class="hidden p-4 rounded-2xl bg-cyan-500/5 border-2 border-cyan-500/50 transition-all">
+              <span class="text-[10px] font-bold tracking-widest uppercase text-cyan-400 block mb-2">
+                <i class="fas fa-check-circle mr-1"></i> Obra Seleccionada para Postular
+              </span>
+              <div class="flex items-center gap-4">
+                <img id="sel-obra-img" src="" alt="" class="w-20 h-20 rounded-xl object-cover border border-white/10 shrink-0 bg-black/40">
+                <div class="flex-1 min-w-0">
+                  <h4 id="sel-obra-titulo" class="text-base font-bold text-white truncate"></h4>
+                  <p id="sel-obra-desc" class="text-xs text-gray-400 line-clamp-2 mt-0.5"></p>
+                  <a id="sel-obra-link" href="#" target="_blank" class="inline-flex items-center gap-1 text-xs text-cyan-400 hover:underline mt-1 font-bold">
+                    <span>Ver publicación</span> <i class="fas fa-external-link-alt text-[10px]"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parámetros Opcionales para Obra -->
+            <div id="obra-campos-opcionales-container" class="space-y-4 pt-2 border-t border-white/10">
+              <button type="button" onclick="toggleObraOptionalFields()" class="text-xs font-bold text-gray-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+                <i id="obra-optional-arrow" class="fas fa-chevron-right text-[10px] transition-transform"></i>
+                <span>Completar datos adicionales de la convocatoria (Opcional)</span>
+              </button>
+              <div id="obra-campos-opcionales" class="hidden space-y-4 p-4 rounded-2xl bg-white/5 border border-white/5 mt-2">
+                <!-- Se clonan los campos dinámicos pero con required desactivado -->
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO 2: FORMULARIO MANUAL -->
+          <div id="panel-completar-form" class="hidden space-y-4">
+            <div id="inscripcion-campos-dinamicos" class="space-y-4"></div>
+          </div>
+
+          <!-- Mensaje Compartido (opcional) -->
+          <div class="pt-4 border-t border-white/10 mt-6">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+              <i class="fas fa-comment-alt text-gray-400 mr-1"></i> Mensaje para el organizador (opcional)
+            </label>
+            <textarea id="insc-mensaje" rows="3" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors text-sm" placeholder="Escribí un mensaje o aclaración para el creador de la oportunidad..."></textarea>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-6">
+            <button id="btn-submit-postulacion" onclick="submitInscripcion()" class="flex-1 px-6 py-3.5 rounded-xl bg-cyan-500 text-black font-black text-sm uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2">
+              <i class="fas fa-palette"></i>
+              <span id="btn-submit-text">Postular Obra Seleccionada</span>
             </button>
-            <button onclick="toggleInscripcionForm()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all">
+            <button type="button" onclick="toggleInscripcionForm()" class="px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all">
               Cancelar
             </button>
           </div>
@@ -353,6 +468,205 @@
       }
     }
 
+    let inscripcionMode = 'obra'; // 'obra' | 'form'
+    let misObras = [];
+    let selectedObraId = null;
+    let obraOptionalRendered = false;
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function switchInscripcionMode(mode) {
+      inscripcionMode = mode;
+      const tabObra = document.getElementById('tab-mode-obra');
+      const tabForm = document.getElementById('tab-mode-form');
+      const panelObra = document.getElementById('panel-postular-obra');
+      const panelForm = document.getElementById('panel-completar-form');
+      const btnSubmit = document.getElementById('btn-submit-postulacion');
+      const btnText = document.getElementById('btn-submit-text');
+
+      if (mode === 'obra') {
+        tabObra.className = 'px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-cyan-500 text-black shadow-lg';
+        tabForm.className = 'px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-gray-400 hover:text-white';
+        panelObra.classList.remove('hidden');
+        panelForm.classList.add('hidden');
+        btnSubmit.className = 'flex-1 px-6 py-3.5 rounded-xl bg-cyan-500 text-black font-black text-sm uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2';
+        btnSubmit.querySelector('i').className = 'fas fa-palette';
+        btnText.textContent = 'Postular Obra Seleccionada';
+
+        if (!misObras.length) {
+          loadMisObras();
+        }
+      } else {
+        tabForm.className = 'px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-emerald-500 text-white shadow-lg';
+        tabObra.className = 'px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-gray-400 hover:text-white';
+        panelForm.classList.remove('hidden');
+        panelObra.classList.add('hidden');
+        btnSubmit.className = 'flex-1 px-6 py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_25px_rgba(16,185,129,0.35)] flex items-center justify-center gap-2';
+        btnSubmit.querySelector('i').className = 'fas fa-paper-plane';
+        btnText.textContent = 'Enviar Formulario de Inscripción';
+        renderCamposDinamicos();
+      }
+    }
+
+    async function loadMisObras() {
+      const loadingEl = document.getElementById('mis-obras-loading');
+      const emptyEl = document.getElementById('mis-obras-empty');
+      const gridEl = document.getElementById('mis-obras-grid');
+      const countEl = document.getElementById('mis-obras-count');
+
+      loadingEl.classList.remove('hidden');
+      emptyEl.classList.add('hidden');
+      gridEl.classList.add('hidden');
+
+      try {
+        let posts = [];
+        const res = await apiRequest('/posts/mis-obras');
+        if (res && res.ok) {
+          posts = await res.json();
+        } else {
+          // Fallback a perfil
+          const username = getUserUsername();
+          if (username) {
+            const resProfile = await fetch(CONFIG.API_URL + '/profile/' + encodeURIComponent(username));
+            if (resProfile.ok) {
+              const dataProfile = await resProfile.json();
+              posts = dataProfile.posts || [];
+            }
+          }
+        }
+
+        misObras = Array.isArray(posts) ? posts : [];
+        countEl.textContent = misObras.length;
+        loadingEl.classList.add('hidden');
+
+        if (!misObras.length) {
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        gridEl.classList.remove('hidden');
+        renderMisObras(misObras);
+
+        // Si no hay obra seleccionada aún, preseleccionar la primera
+        if (!selectedObraId && misObras.length > 0) {
+          selectObra(misObras[0]._id);
+        }
+      } catch (err) {
+        console.error('Error cargando obras:', err);
+        loadingEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+      }
+    }
+
+    function renderMisObras(obras) {
+      const gridEl = document.getElementById('mis-obras-grid');
+      if (!obras.length) {
+        gridEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-6 text-xs">No se encontraron obras con ese criterio.</div>';
+        return;
+      }
+
+      gridEl.innerHTML = obras.map(o => {
+        const isSelected = selectedObraId && (selectedObraId === o._id || selectedObraId === String(o._id));
+        const img = o.imageUrl || 'img/placeholder.png';
+        const title = escapeHTML(o.title || 'Sin título');
+
+        return `
+          <div onclick="selectObra('${o._id}')" 
+               class="relative rounded-2xl overflow-hidden cursor-pointer border-2 transition-all group ${isSelected ? 'border-cyan-400 ring-2 ring-cyan-400/40 bg-cyan-500/10 scale-[1.02]' : 'border-white/10 hover:border-cyan-500/40 bg-black/40'}">
+            <div class="aspect-square relative overflow-hidden bg-black/60">
+              ${o.imageUrl ? `<img src="${img}" alt="${title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">` : `<div class="w-full h-full flex items-center justify-center text-gray-600"><i class="fas fa-palette text-2xl"></i></div>`}
+              ${isSelected ? `
+                <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-cyan-400 text-black flex items-center justify-center shadow-lg text-xs font-bold">
+                  <i class="fas fa-check"></i>
+                </div>
+              ` : ''}
+            </div>
+            <div class="p-2.5">
+              <h5 class="text-xs font-bold text-white truncate ${isSelected ? 'text-cyan-300' : ''}">${title}</h5>
+              <p class="text-[10px] text-gray-500 mt-0.5">${new Date(o.createdAt).toLocaleDateString('es-AR')}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filtrarMisObras() {
+      const q = (document.getElementById('filtro-mis-obras').value || '').toLowerCase().trim();
+      if (!q) {
+        renderMisObras(misObras);
+        return;
+      }
+      const filtradas = misObras.filter(o => (o.title || '').toLowerCase().includes(q) || (o.description || '').toLowerCase().includes(q));
+      renderMisObras(filtradas);
+    }
+
+    function selectObra(obraId) {
+      selectedObraId = obraId;
+      const obra = misObras.find(o => String(o._id) === String(obraId));
+      if (!obra) return;
+
+      const card = document.getElementById('obra-seleccionada-card');
+      card.classList.remove('hidden');
+
+      const imgEl = document.getElementById('sel-obra-img');
+      imgEl.src = obra.imageUrl || 'img/placeholder.png';
+      imgEl.alt = obra.title || '';
+
+      document.getElementById('sel-obra-titulo').textContent = obra.title || 'Sin título';
+      document.getElementById('sel-obra-desc').textContent = obra.description || 'Sin descripción adicional.';
+      document.getElementById('sel-obra-link').href = `post.html?id=${obra._id}`;
+
+      // Actualizar highlight en el grid
+      const q = (document.getElementById('filtro-mis-obras')?.value || '').toLowerCase().trim();
+      const currentList = q ? misObras.filter(o => (o.title || '').toLowerCase().includes(q)) : misObras;
+      renderMisObras(currentList);
+    }
+
+    function toggleObraOptionalFields() {
+      const container = document.getElementById('obra-campos-opcionales');
+      const arrow = document.getElementById('obra-optional-arrow');
+      container.classList.toggle('hidden');
+
+      if (!container.classList.contains('hidden')) {
+        arrow.classList.add('rotate-90');
+        if (!obraOptionalRendered) {
+          renderCamposOpcionalesObra();
+          obraOptionalRendered = true;
+        }
+      } else {
+        arrow.classList.remove('rotate-90');
+      }
+    }
+
+    function renderCamposOpcionalesObra() {
+      const container = document.getElementById('obra-campos-opcionales');
+      container.innerHTML = '';
+
+      if (oportunidadData?.tipo === 'convocatoria_obra' && oportunidadData.parametrosPresentacion && oportunidadData.parametrosPresentacion.length) {
+        oportunidadData.parametrosPresentacion.forEach(param => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label class="block text-xs font-bold text-gray-300 mb-1.5">${escapeHTML(param.label)} <span class="text-gray-500 text-[10px] font-normal">(opcional)</span></label>
+            ${param.type === 'textarea' 
+              ? `<textarea name="opt_${param.key}" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors text-xs" placeholder="${escapeHTML(param.placeholder || '')}"></textarea>`
+              : `<input type="${param.type === 'url' ? 'url' : 'text'}" name="opt_${param.key}" class="w-full px-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors text-xs" placeholder="${escapeHTML(param.placeholder || '')}">`
+            }
+          `;
+          container.appendChild(div);
+        });
+      } else {
+        container.innerHTML = '<p class="text-xs text-gray-500">Esta convocatoria no posee parámetros adicionales.</p>';
+      }
+    }
+
     async function checkInscripcion() {
       if (!isLoggedIn()) return;
       
@@ -360,11 +674,40 @@
         const res = await apiRequest('/oportunidades/mis-inscripciones/listar');
         if (res && res.ok) {
           const inscripciones = await res.json();
-          isInscrito = inscripciones.some(i => i.oportunidad?._id === oportunidadId || i.oportunidad === oportunidadId);
+          const current = inscripciones.find(i => (i.oportunidad?._id === oportunidadId || i.oportunidad === oportunidadId));
           
-          if (isInscrito) {
+          if (current) {
+            isInscrito = true;
             document.getElementById('btn-inscribirse').classList.add('hidden');
-            document.getElementById('ya-inscrito-msg').classList.remove('hidden');
+            const msgBox = document.getElementById('ya-inscrito-msg');
+            msgBox.classList.remove('hidden');
+
+            const detalleEl = document.getElementById('ya-inscrito-detalle');
+            const esObra = current.tipoInscripcion === 'obra' || current.obra || current.datos?.tipoInscripcion === 'obra';
+            
+            if (esObra) {
+              const obraObj = current.obra || {};
+              const obraTitulo = escapeHTML(obraObj.title || current.datos?.obraTitulo || 'Obra postulada');
+              const obraImg = obraObj.imageUrl || current.datos?.obraImagen || '';
+              const obraIdRef = obraObj._id || current.datos?.obraId;
+
+              detalleEl.innerHTML = `
+                <div class="inline-flex items-center gap-3 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-left mt-2">
+                  ${obraImg ? `<img src="${obraImg}" class="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0">` : `<div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0"><i class="fas fa-palette text-cyan-400"></i></div>`}
+                  <div>
+                    <span class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider block"><i class="fas fa-palette mr-1"></i> Postulado con Obra</span>
+                    <a href="post.html?id=${obraIdRef}" target="_blank" class="text-sm font-bold text-white hover:text-cyan-400 transition-colors">${obraTitulo} <i class="fas fa-external-link-alt text-[10px]"></i></a>
+                    <span class="block text-[10px] text-gray-400 mt-0.5">Estado: <span class="capitalize font-semibold text-emerald-400">${current.estado}</span></span>
+                  </div>
+                </div>
+              `;
+            } else {
+              detalleEl.innerHTML = `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-bold">
+                  <i class="fas fa-file-signature"></i> Postulación enviada mediante Formulario Manual (Estado: <span class="capitalize">${current.estado}</span>)
+                </span>
+              `;
+            }
           }
         }
       } catch (err) {
@@ -382,7 +725,12 @@
       form.classList.toggle('hidden');
       
       if (!form.classList.contains('hidden')) {
-        renderCamposDinamicos();
+        // En convocatorias de obra, abrir preferentemente en modo 'obra'
+        if (oportunidadData?.tipo === 'convocatoria_obra') {
+          switchInscripcionMode('obra');
+        } else {
+          switchInscripcionMode('form');
+        }
       }
     }
 
@@ -394,10 +742,10 @@
         oportunidadData.parametrosPresentacion.forEach(param => {
           const div = document.createElement('div');
           div.innerHTML = `
-            <label class="block text-sm font-bold text-gray-300 mb-2">${param.label}${param.required ? ' *' : ''}</label>
+            <label class="block text-sm font-bold text-gray-300 mb-2">${escapeHTML(param.label)}${param.required ? ' *' : ''}</label>
             ${param.type === 'textarea' 
-              ? `<textarea name="${param.key}" data-required="${param.required}" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${param.placeholder || ''}"></textarea>`
-              : `<input type="${param.type === 'url' ? 'url' : 'text'}" name="${param.key}" data-required="${param.required}" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${param.placeholder || ''}">`
+              ? `<textarea name="${param.key}" data-required="${param.required}" rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${escapeHTML(param.placeholder || '')}"></textarea>`
+              : `<input type="${param.type === 'url' ? 'url' : 'text'}" name="${param.key}" data-required="${param.required}" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-emerald-500/50 focus:outline-none transition-colors" placeholder="${escapeHTML(param.placeholder || '')}">`
             }
           `;
           container.appendChild(div);
@@ -432,51 +780,98 @@
     }
 
     async function submitInscripcion() {
-      const datos = {};
-      let hasEmptyRequired = false;
-
-      document.querySelectorAll('#inscripcion-campos-dinamicos [name]').forEach(input => {
-        const key = input.name;
-        const required = input.dataset.required === 'true';
-        const value = input.value.trim();
-        
-        if (required && !value) {
-          hasEmptyRequired = true;
-          input.classList.add('border-red-500/50');
-        } else {
-          input.classList.remove('border-red-500/50');
-        }
-        
-        datos[key] = value;
-      });
-
-      if (hasEmptyRequired) {
-        alert('Por favor, completá todos los campos obligatorios.');
-        return;
-      }
-
       const mensaje = document.getElementById('insc-mensaje').value;
 
-      try {
-        const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripcion`, {
-          method: 'POST',
-          body: JSON.stringify({ datos, mensaje }),
+      if (inscripcionMode === 'obra') {
+        if (!selectedObraId) {
+          alert('Por favor, seleccioná una obra de tu perfil para postular.');
+          return;
+        }
+
+        // Datos opcionales si completó alguno
+        const datos = {};
+        document.querySelectorAll('#obra-campos-opcionales [name]').forEach(input => {
+          const rawKey = input.name.replace(/^opt_/, '');
+          const val = input.value.trim();
+          if (val) datos[rawKey] = val;
         });
 
-        if (res && res.ok) {
-          document.getElementById('inscripcion-form').classList.add('hidden');
-          document.getElementById('inscripcion-success').classList.remove('hidden');
-          document.getElementById('btn-inscribirse').classList.add('hidden');
-          document.getElementById('ya-inscrito-msg').classList.remove('hidden');
-        } else if (res && res.status === 400) {
-          const data = await res.json();
-          alert(data.error || 'Error al inscribirse.');
-        } else {
+        try {
+          const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripcion`, {
+            method: 'POST',
+            body: JSON.stringify({
+              tipoInscripcion: 'obra',
+              obraId: selectedObraId,
+              datos,
+              mensaje
+            }),
+          });
+
+          if (res && res.ok) {
+            document.getElementById('inscripcion-form').classList.add('hidden');
+            document.getElementById('inscripcion-success').classList.remove('hidden');
+            document.getElementById('btn-inscribirse').classList.add('hidden');
+            await checkInscripcion();
+          } else if (res && res.status === 400) {
+            const data = await res.json();
+            alert(data.error || 'Error al inscribirse.');
+          } else {
+            alert('Error al inscribirse. Intentá de nuevo.');
+          }
+        } catch (err) {
+          console.error(err);
           alert('Error al inscribirse. Intentá de nuevo.');
         }
-      } catch (err) {
-        console.error(err);
-        alert('Error al inscribirse. Intentá de nuevo.');
+      } else {
+        // Modo Formulario: se validan campos requeridos
+        const datos = {};
+        let hasEmptyRequired = false;
+
+        document.querySelectorAll('#inscripcion-campos-dinamicos [name]').forEach(input => {
+          const key = input.name;
+          const required = input.dataset.required === 'true';
+          const value = input.value.trim();
+          
+          if (required && !value) {
+            hasEmptyRequired = true;
+            input.classList.add('border-red-500/50');
+          } else {
+            input.classList.remove('border-red-500/50');
+          }
+          
+          datos[key] = value;
+        });
+
+        if (hasEmptyRequired) {
+          alert('Por favor, completá todos los campos obligatorios del formulario.');
+          return;
+        }
+
+        try {
+          const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripcion`, {
+            method: 'POST',
+            body: JSON.stringify({
+              tipoInscripcion: 'formulario',
+              datos,
+              mensaje
+            }),
+          });
+
+          if (res && res.ok) {
+            document.getElementById('inscripcion-form').classList.add('hidden');
+            document.getElementById('inscripcion-success').classList.remove('hidden');
+            document.getElementById('btn-inscribirse').classList.add('hidden');
+            await checkInscripcion();
+          } else if (res && res.status === 400) {
+            const data = await res.json();
+            alert(data.error || 'Error al inscribirse.');
+          } else {
+            alert('Error al inscribirse. Intentá de nuevo.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error al inscribirse. Intentá de nuevo.');
+        }
       }
     }
 
@@ -510,11 +905,44 @@
           };
           const estadoColor = estadoColors[insc.estado] || 'gray';
 
+          const esObra = insc.tipoInscripcion === 'obra' || insc.obra || insc.datos?.tipoInscripcion === 'obra';
+          const obra = insc.obra || null;
+          const obraSnapshot = {
+            id: obra?._id || insc.datos?.obraId,
+            title: obra?.title || insc.datos?.obraTitulo,
+            image: obra?.imageUrl || insc.datos?.obraImagen,
+            description: obra?.description || insc.datos?.obraDescripcion
+          };
+
           let datosHtml = '';
           if (insc.datos && Object.keys(insc.datos).length) {
-            datosHtml = '<div class="mt-3 space-y-2">' + Object.entries(insc.datos).map(([key, val]) => 
-              `<div class="text-xs"><span class="text-gray-500 font-bold">${key}:</span> <span class="text-gray-300">${val}</span></div>`
-            ).join('') + '</div>';
+            const visibleEntries = Object.entries(insc.datos).filter(([k]) => !['tipoInscripcion', 'obraId', 'obraTitulo', 'obraImagen', 'obraDescripcion', 'obraYoutube'].includes(k));
+            if (visibleEntries.length) {
+              datosHtml = '<div class="mt-3 space-y-1 bg-black/30 p-3 rounded-xl border border-white/5">' + visibleEntries.map(([key, val]) => 
+                `<div class="text-xs"><span class="text-gray-500 font-bold">${escapeHTML(key)}:</span> <span class="text-gray-300">${escapeHTML(String(val))}</span></div>`
+              ).join('') + '</div>';
+            }
+          }
+
+          let obraBoxHtml = '';
+          if (esObra) {
+            obraBoxHtml = `
+              <div class="mt-3 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  ${obraSnapshot.image ? `<img src="${escapeHTML(obraSnapshot.image)}" class="w-14 h-14 rounded-lg object-cover border border-white/10 shrink-0">` : `<div class="w-14 h-14 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0"><i class="fas fa-palette text-cyan-400"></i></div>`}
+                  <div>
+                    <span class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider block mb-0.5"><i class="fas fa-palette mr-1"></i> Obra Postulada</span>
+                    <h5 class="text-sm font-bold text-white">${escapeHTML(obraSnapshot.title || 'Obra')}</h5>
+                    ${obraSnapshot.description ? `<p class="text-xs text-gray-400 line-clamp-1">${escapeHTML(obraSnapshot.description)}</p>` : ''}
+                  </div>
+                </div>
+                ${obraSnapshot.id ? `
+                  <a href="post.html?id=${obraSnapshot.id}" target="_blank" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold hover:bg-cyan-500/30 transition-all shrink-0 inline-flex items-center gap-1">
+                    <span>Ver Obra</span> <i class="fas fa-external-link-alt text-[10px]"></i>
+                  </a>
+                ` : ''}
+              </div>
+            `;
           }
 
           return `
@@ -529,10 +957,17 @@
                     <p class="text-xs text-gray-500">${user.email || ''}</p>
                   </div>
                 </div>
-                <span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-${estadoColor}-500/20 text-${estadoColor}-400 border border-${estadoColor}-500/30 uppercase">${insc.estado}</span>
+                <div class="flex items-center gap-2">
+                  ${esObra 
+                    ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase flex items-center gap-1"><i class="fas fa-palette"></i> Obra</span>`
+                    : `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase flex items-center gap-1"><i class="fas fa-file-signature"></i> Formulario</span>`
+                  }
+                  <span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-${estadoColor}-500/20 text-${estadoColor}-400 border border-${estadoColor}-500/30 uppercase">${insc.estado}</span>
+                </div>
               </div>
               
-              ${insc.mensaje ? `<p class="mt-3 text-sm text-gray-400 italic">"${insc.mensaje}"</p>` : ''}
+              ${obraBoxHtml}
+              ${insc.mensaje ? `<p class="mt-3 text-sm text-gray-400 italic">"${escapeHTML(insc.mensaje)}"</p>` : ''}
               ${datosHtml}
               
               ${insc.estado === 'pendiente' ? `

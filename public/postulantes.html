@@ -48,10 +48,25 @@
 
       <!-- Lista de Inscriptos -->
       <section>
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="fas fa-clipboard-list text-emerald-400"></i> Postulaciones (<span id="total-count">0</span>)
           </h2>
+
+          <!-- Filtros por Origen -->
+          <div class="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 shrink-0">
+            <button onclick="filtrarPostulaciones('all')" id="btn-filtro-all" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500 text-white shadow-lg flex items-center gap-1.5">
+              <span>Todas</span> (<span id="count-all">0</span>)
+            </button>
+            <button onclick="filtrarPostulaciones('obra')" id="btn-filtro-obra" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
+              <i class="fas fa-palette text-cyan-400"></i>
+              <span>Obras</span> (<span id="count-obras">0</span>)
+            </button>
+            <button onclick="filtrarPostulaciones('formulario')" id="btn-filtro-formulario" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
+              <i class="fas fa-file-signature text-emerald-400"></i>
+              <span>Formulario</span> (<span id="count-formulario">0</span>)
+            </button>
+          </div>
         </div>
 
         <div id="inscripciones-container" class="space-y-4">
@@ -146,6 +161,25 @@
       badge.textContent = tipoLabels[opo.tipo] || 'Oportunidad';
     }
 
+    let todasLasInscripciones = [];
+    let filtroActual = 'all';
+
+    function filtrarPostulaciones(tipo) {
+      filtroActual = tipo;
+
+      ['all', 'obra', 'formulario'].forEach(t => {
+        const btn = document.getElementById(`btn-filtro-${t}`);
+        if (!btn) return;
+        if (t === tipo) {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500 text-white shadow-lg flex items-center gap-1.5';
+        } else {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white flex items-center gap-1.5';
+        }
+      });
+
+      renderInscripcionesList();
+    }
+
     async function loadInscripciones() {
       const container = document.getElementById('inscripciones-container');
 
@@ -156,35 +190,77 @@
           return;
         }
 
-        const inscripciones = await res.json();
-        document.getElementById('total-count').textContent = inscripciones.length;
+        todasLasInscripciones = await res.json();
 
-        if (!inscripciones.length) {
-          container.innerHTML = `
-            <div class="text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-white/10">
-              <i class="fas fa-inbox text-5xl text-gray-600 mb-3"></i>
-              <p class="text-lg text-gray-300 font-bold">Aún no hay postulaciones recibidas</p>
-              <p class="text-sm text-gray-500">Cuando los artistas se inscriban, sus datos aparecerán acá.</p>
-            </div>`;
-          return;
-        }
+        // Contadores
+        const total = todasLasInscripciones.length;
+        const obrasCount = todasLasInscripciones.filter(i => (i.tipoInscripcion === 'obra' || i.obra || i.datos?.tipoInscripcion === 'obra')).length;
+        const formCount = total - obrasCount;
 
-        container.innerHTML = inscripciones.map(insc => {
-          const user = insc.usuario || {};
-          const estadoColors = {
-            pendiente: 'yellow',
-            aceptada: 'green',
-            rechazada: 'red'
-          };
-          const estadoColor = estadoColors[insc.estado] || 'gray';
+        document.getElementById('total-count').textContent = total;
+        document.getElementById('count-all').textContent = total;
+        document.getElementById('count-obras').textContent = obrasCount;
+        document.getElementById('count-formulario').textContent = formCount;
 
-          let datosHtml = '';
-          if (insc.datos && Object.keys(insc.datos).length) {
-            datosHtml = '<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 bg-black/40 p-4 rounded-xl border border-white/5">';
-            for (const [key, val] of Object.entries(insc.datos)) {
+        renderInscripcionesList();
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p class="text-center text-gray-500 py-10">Error al cargar las postulaciones.</p>';
+      }
+    }
+
+    function renderInscripcionesList() {
+      const container = document.getElementById('inscripciones-container');
+
+      let filtradas = todasLasInscripciones;
+      if (filtroActual === 'obra') {
+        filtradas = todasLasInscripciones.filter(i => (i.tipoInscripcion === 'obra' || i.obra || i.datos?.tipoInscripcion === 'obra'));
+      } else if (filtroActual === 'formulario') {
+        filtradas = todasLasInscripciones.filter(i => (i.tipoInscripcion !== 'obra' && !i.obra && i.datos?.tipoInscripcion !== 'obra'));
+      }
+
+      if (!filtradas.length) {
+        container.innerHTML = `
+          <div class="text-center text-gray-500 py-16 bg-white/5 rounded-3xl border border-white/10">
+            <i class="fas fa-inbox text-5xl text-gray-600 mb-3"></i>
+            <p class="text-lg text-gray-300 font-bold">No hay postulaciones en esta vista</p>
+            <p class="text-sm text-gray-500">Probá cambiando el filtro superior.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = filtradas.map(insc => {
+        const user = insc.usuario || {};
+        const estadoColors = {
+          pendiente: 'yellow',
+          aceptada: 'green',
+          rechazada: 'red'
+        };
+        const estadoColor = estadoColors[insc.estado] || 'gray';
+
+        const esObra = insc.tipoInscripcion === 'obra' || insc.obra || insc.datos?.tipoInscripcion === 'obra';
+        const obra = insc.obra || null;
+        const obraSnapshot = {
+          id: obra?._id || insc.datos?.obraId,
+          title: obra?.title || insc.datos?.obraTitulo,
+          image: obra?.imageUrl || insc.datos?.obraImagen,
+          description: obra?.description || insc.datos?.obraDescripcion
+        };
+
+        // Datos adicionales
+        let datosHtml = '';
+        if (insc.datos && Object.keys(insc.datos).length) {
+          const visibleEntries = Object.entries(insc.datos).filter(([k]) => !['tipoInscripcion', 'obraId', 'obraTitulo', 'obraImagen', 'obraDescripcion', 'obraYoutube', 'respuesta'].includes(k));
+          if (visibleEntries.length) {
+            datosHtml = `
+              <div class="mt-4 ${esObra ? 'bg-cyan-500/5 border-cyan-500/10' : 'bg-black/40 border-white/5'} p-4 rounded-xl border">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">${esObra ? 'Datos adicionales provistos' : 'Respuestas del Formulario'}</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            `;
+            for (const [key, val] of visibleEntries) {
               let valDisplay = escapeHTML(String(val || '-'));
               if (String(val).startsWith('http://') || String(val).startsWith('https://')) {
-                valDisplay = `<a href="${escapeHTML(String(val))}" target="_blank" class="text-emerald-400 hover:underline break-all"><i class="fas fa-external-link-alt mr-1"></i>${escapeHTML(String(val))}</a>`;
+                valDisplay = `<a href="${escapeHTML(String(val))}" target="_blank" class="text-cyan-400 hover:underline break-all"><i class="fas fa-external-link-alt mr-1"></i>${escapeHTML(String(val))}</a>`;
               }
               datosHtml += `
                 <div>
@@ -192,51 +268,86 @@
                   <span class="text-sm text-gray-200">${valDisplay}</span>
                 </div>`;
             }
-            datosHtml += '</div>';
+            datosHtml += `</div></div>`;
           }
+        }
 
-          return `
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-5 md:p-6 transition-all hover:border-white/20">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg font-bold text-emerald-400 shrink-0">
-                    ${(user.username || '?')[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <a href="profile.html?user=${user.username}" target="_blank" class="text-base font-bold text-white hover:text-emerald-400 transition-colors">@${escapeHTML(user.username || 'usuario')}</a>
-                    <p class="text-xs text-gray-400">${escapeHTML(user.email || 'Sin email')}</p>
-                    <p class="text-[10px] text-gray-500 mt-0.5"><i class="far fa-clock mr-1"></i>${new Date(insc.createdAt).toLocaleString('es-AR')}</p>
-                  </div>
+        let obraShowcaseHtml = '';
+        if (esObra) {
+          obraShowcaseHtml = `
+            <div class="mt-4 p-4 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent border-2 border-cyan-500/30 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border border-cyan-500/30 shrink-0 bg-black/60 shadow-lg shadow-cyan-500/10">
+                  ${obraSnapshot.image 
+                    ? `<img src="${escapeHTML(obraSnapshot.image)}" alt="${escapeHTML(obraSnapshot.title || '')}" class="w-full h-full object-cover">` 
+                    : `<div class="w-full h-full flex items-center justify-center text-cyan-400"><i class="fas fa-palette text-3xl"></i></div>`
+                  }
                 </div>
-                <div class="flex items-center gap-2">
-                  <span class="px-3 py-1 rounded-xl text-xs font-bold bg-${estadoColor}-500/20 text-${estadoColor}-400 border border-${estadoColor}-500/30 uppercase tracking-wider">${insc.estado}</span>
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cyan-400 text-black">Obra Postulada</span>
+                    <span class="text-[11px] text-cyan-300 font-semibold">Postulación directa desde perfil</span>
+                  </div>
+                  <h4 class="text-base md:text-lg font-black text-white">${escapeHTML(obraSnapshot.title || 'Obra artística')}</h4>
+                  ${obraSnapshot.description ? `<p class="text-xs text-gray-300 mt-1 line-clamp-2 max-w-xl">${escapeHTML(obraSnapshot.description)}</p>` : ''}
                 </div>
               </div>
-              
-              ${insc.mensaje ? `
-                <div class="mt-4 p-3 bg-white/5 rounded-xl border border-white/5">
-                  <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Mensaje del postulante</span>
-                  <p class="text-sm text-gray-300 italic">"${escapeHTML(insc.mensaje)}"</p>
-                </div>
+              ${obraSnapshot.id ? `
+                <a href="post.html?id=${obraSnapshot.id}" target="_blank" class="shrink-0 px-4 py-2.5 rounded-xl bg-cyan-500 text-black font-black text-xs uppercase tracking-wider hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] inline-flex items-center gap-2">
+                  <span>Ver Obra Completa</span>
+                  <i class="fas fa-external-link-alt text-[10px]"></i>
+                </a>
               ` : ''}
-
-              ${datosHtml}
-              
-              <div class="mt-4 pt-4 border-t border-white/10 flex gap-2 justify-end">
-                <button onclick="actualizarEstado('${insc._id}', 'aceptada')" class="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-all flex items-center gap-1">
-                  <i class="fas fa-check"></i> Aceptar
-                </button>
-                <button onclick="actualizarEstado('${insc._id}', 'rechazada')" class="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-all flex items-center gap-1">
-                  <i class="fas fa-times"></i> Rechazar
-                </button>
-              </div>
             </div>
           `;
-        }).join('');
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<p class="text-center text-gray-500 py-10">Error al cargar las postulaciones.</p>';
-      }
+        }
+
+        return `
+          <div class="bg-white/5 border ${esObra ? 'border-cyan-500/30' : 'border-white/10'} rounded-3xl p-5 md:p-6 transition-all hover:border-white/30">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl ${esObra ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'} border flex items-center justify-center text-lg font-bold shrink-0">
+                  ${(user.username || '?')[0].toUpperCase()}
+                </div>
+                <div>
+                  <a href="profile.html?user=${user.username}" target="_blank" class="text-base font-bold text-white hover:text-cyan-400 transition-colors">@${escapeHTML(user.username || 'usuario')}</a>
+                  <p class="text-xs text-gray-400">${escapeHTML(user.email || 'Sin email')}</p>
+                  <p class="text-[10px] text-gray-500 mt-0.5"><i class="far fa-clock mr-1"></i>${new Date(insc.createdAt).toLocaleString('es-AR')}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                ${esObra 
+                  ? `<span class="px-3 py-1 rounded-xl text-xs font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-palette text-cyan-400"></i> Obra de Perfil</span>`
+                  : `<span class="px-3 py-1 rounded-xl text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-file-signature text-emerald-400"></i> Formulario</span>`
+                }
+                <span class="px-3 py-1 rounded-xl text-xs font-bold bg-${estadoColor}-500/20 text-${estadoColor}-400 border border-${estadoColor}-500/30 uppercase tracking-wider">${insc.estado}</span>
+              </div>
+            </div>
+            
+            ${obraShowcaseHtml}
+
+            ${insc.mensaje ? `
+              <div class="mt-4 p-3.5 bg-black/40 rounded-xl border border-white/5">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  <i class="fas fa-comment-dots mr-1"></i> Mensaje del postulante
+                </span>
+                <p class="text-sm text-gray-300 italic">"${escapeHTML(insc.mensaje)}"</p>
+              </div>
+            ` : ''}
+
+            ${datosHtml}
+            
+            <div class="mt-4 pt-4 border-t border-white/10 flex gap-2 justify-end">
+              <button onclick="actualizarEstado('${insc._id}', 'aceptada')" class="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-all flex items-center gap-1.5">
+                <i class="fas fa-check"></i> Aceptar
+              </button>
+              <button onclick="actualizarEstado('${insc._id}', 'rechazada')" class="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-all flex items-center gap-1.5">
+                <i class="fas fa-times"></i> Rechazar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function actualizarEstado(inscripcionId, estado) {

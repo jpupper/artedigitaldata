@@ -20,6 +20,29 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET /mis-obras: devuelve todas las obras publicadas por el usuario logueado
+router.get('/mis-obras', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.user!.id);
+    let allUserIds: any[] = [req.user!.id];
+    if (user && user.username) {
+      const escaped = user.username.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const matches = await User.find({
+        $or: [
+          { username: new RegExp(`^${escaped}$`, 'i') },
+          { _id: user._id }
+        ]
+      }).select('_id');
+      allUserIds = matches.map(m => m._id);
+    }
+    const posts = await Post.find({ author: { $in: allUserIds } }).sort({ createdAt: -1 });
+    const hydratedPosts = await hydrate(posts);
+    return res.json(hydratedPosts);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const post = await Post.findById(req.params.id);

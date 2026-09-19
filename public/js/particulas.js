@@ -328,6 +328,10 @@ document.addEventListener('DOMContentLoaded', () => {
     'WORD_REPEL_RADIUS',
     'WORD_REPEL_FORCE',
     'COLLAB_WORD_LIFESPAN',
+    'CODE_DECODE_FRAMES',
+    'CODE_LETTER_DELAY',
+    'CODE_SCRAMBLE_FREQ',
+    'CODE_MOUSE_RADIUS',
     'POS_X',
     'POS_Y'
   ];
@@ -405,6 +409,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Controles específicos de Modo CODE
+  const codeMouseRetriggerToggle = document.getElementById('param-CODE_MOUSE_RETRIGGER');
+  if (codeMouseRetriggerToggle) {
+    codeMouseRetriggerToggle.addEventListener('change', () => {
+      applyConfigChange('CODE_MOUSE_RETRIGGER', codeMouseRetriggerToggle.checked);
+    });
+  }
+
+  const codeGlitchCharsInput = document.getElementById('param-CODE_GLITCH_CHARS');
+  if (codeGlitchCharsInput) {
+    codeGlitchCharsInput.addEventListener('input', () => {
+      applyConfigChange('CODE_GLITCH_CHARS', codeGlitchCharsInput.value);
+    });
+  }
+
   // --- RENDERING Y GESTIÓN DINÁMICA DE UNIFORMS Y SHADERS CUSTOM ---
   function renderGenerativeUniformControls(shaderName, uniforms) {
     const container = document.getElementById('generative-uniforms-container');
@@ -439,10 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isColor) {
         let val = currentCfg[u.name];
         if (!val || typeof val !== 'string') {
-          if (u.name === 'u_color1') val = currentCfg.COLOR_1 || '#40c4ff';
-          else if (u.name === 'u_color2') val = currentCfg.COLOR_2 || '#ff9100';
-          else if (u.name === 'u_color3') val = currentCfg.COLOR_3 || '#e040fb';
-          else if (u.name === 'u_color4') val = currentCfg.COLOR_4 || '#00e676';
+          if (u.name === 'u_color1') val = currentCfg.u_color1 || '#40c4ff';
+          else if (u.name === 'u_color2') val = currentCfg.u_color2 || '#ff9100';
+          else if (u.name === 'u_color3') val = currentCfg.u_color3 || '#e040fb';
+          else if (u.name === 'u_color4') val = currentCfg.u_color4 || '#00e676';
           else val = '#00f2fe';
         }
 
@@ -748,7 +767,254 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function selectFlyerWord(targetId) {
+  let selectedFlyerLetterIndex = null;
+
+  function hexToRgbArr(hex) {
+    if (!hex || typeof hex !== 'string') return [64, 196, 255];
+    const clean = hex.replace('#', '');
+    const num = parseInt(clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean, 16);
+    if (isNaN(num)) return [64, 196, 255];
+    return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+  }
+
+  function rgbArrToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+      const h = Math.round(Math.max(0, Math.min(255, x))).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }).join('');
+  }
+
+  function interpolatePalette(paletteColors, t) {
+    if (!paletteColors || !paletteColors.length) return '#40c4ff';
+    if (paletteColors.length === 1) return paletteColors[0];
+    const n = paletteColors.length - 1;
+    const scaled = Math.max(0, Math.min(1, t)) * n;
+    const i = Math.min(Math.floor(scaled), n - 1);
+    const frac = scaled - i;
+    const c1 = hexToRgbArr(paletteColors[i]);
+    const c2 = hexToRgbArr(paletteColors[i + 1]);
+    const r = c1[0] + (c2[0] - c1[0]) * frac;
+    const g = c1[1] + (c2[1] - c1[1]) * frac;
+    const b = c1[2] + (c2[2] - c1[2]) * frac;
+    return rgbArrToHex(r, g, b);
+  }
+
+  function applyWordPaletteGradient(matchingWord) {
+    if (!matchingWord) return;
+    const text = String(matchingWord.text || matchingWord.word || '');
+    const chars = Array.from(text);
+    if (!chars.length) return;
+    matchingWord.letterColors = [];
+    const pal = matchingWord.palette || ['#40c4ff', '#ff9100', '#e040fb', '#00e676'];
+    for (let i = 0; i < chars.length; i++) {
+      const pos = chars.length > 1 ? i / (chars.length - 1) : 0;
+      matchingWord.letterColors[i] = interpolatePalette(pal, pos);
+    }
+    if (window.updateFlyerWordParticles) {
+      window.updateFlyerWordParticles(matchingWord.id, {
+        x: matchingWord.x,
+        y: matchingWord.y,
+        letterColors: matchingWord.letterColors
+      });
+    }
+    renderWordLettersChips(matchingWord);
+  }
+
+  function applyLetterColorChange(newColor) {
+    const activeWordId = window.activeFlyerWordId || selectedFlyerWordId;
+    if (!activeWordId) return;
+    const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === activeWordId);
+    if (!matchingWord) return;
+
+    if (selectedFlyerLetterIndex !== null) {
+      const text = String(matchingWord.text || matchingWord.word || '');
+      const chars = Array.from(text);
+      if (!Array.isArray(matchingWord.letterColors)) {
+        matchingWord.letterColors = new Array(chars.length).fill(matchingWord.color || '#40c4ff');
+      }
+      matchingWord.letterColors[selectedFlyerLetterIndex] = newColor;
+
+      if (window.updateFlyerWordParticles) {
+        window.updateFlyerWordParticles(matchingWord.id, {
+          x: matchingWord.x,
+          y: matchingWord.y,
+          letterColors: matchingWord.letterColors,
+          letterColor: { index: selectedFlyerLetterIndex, color: newColor }
+        });
+      }
+    } else {
+      matchingWord.color = newColor;
+      matchingWord.letterColors = null;
+      if (window.updateFlyerWordParticles) {
+        window.updateFlyerWordParticles(matchingWord.id, {
+          x: matchingWord.x,
+          y: matchingWord.y,
+          color: newColor,
+          letterColors: null
+        });
+      }
+    }
+
+    // Sincronizar en timeline
+    if (Array.isArray(timelineLayers)) {
+      timelineLayers.forEach(l => {
+        if (Array.isArray(l.clips)) {
+          l.clips.forEach(c => {
+            if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
+              if (selectedFlyerLetterIndex !== null) {
+                c.letterColors = matchingWord.letterColors;
+              } else {
+                c.color = newColor;
+                c.letterColors = null;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    renderWordLettersChips(matchingWord);
+  }
+
+  function renderWordLettersChips(wordItem) {
+    const container = document.getElementById('word-letters-chips');
+    const badge = document.getElementById('selected-letter-badge');
+    const letterColorInput = document.getElementById('param-SELECTED_LETTER_COLOR');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!wordItem) {
+      if (badge) badge.textContent = 'Ninguna palabra';
+      return;
+    }
+
+    const text = (typeof wordItem === 'object' && (wordItem.text || wordItem.word)) ? (wordItem.text || wordItem.word) : String(wordItem);
+    const chars = Array.from(String(text).trim().toUpperCase());
+
+    // Chip "Toda la palabra"
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'letter-chip' + (selectedFlyerLetterIndex === null ? ' active' : '');
+    allChip.innerHTML = `<i class="fas fa-layer-group"></i> Toda`;
+    allChip.title = 'Seleccionar y pintar toda la palabra';
+    allChip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedFlyerLetterIndex = null;
+      renderWordLettersChips(wordItem);
+      if (letterColorInput && wordItem.color) {
+        letterColorInput.value = wordItem.color;
+      }
+    });
+    container.appendChild(allChip);
+
+    // Chips individuales de letras
+    chars.forEach((char, idx) => {
+      if (char === ' ') return;
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'letter-chip' + (selectedFlyerLetterIndex === idx ? ' active' : '');
+      const charColor = (wordItem.letterColors && wordItem.letterColors[idx]) ? wordItem.letterColors[idx] : (wordItem.color || '#40c4ff');
+      chip.innerHTML = `
+        <span class="chip-color-dot" style="background-color: ${charColor};"></span>
+        <span>${char}</span>
+        <span style="font-size: 9px; opacity: 0.6;">#${idx + 1}</span>
+      `;
+      chip.title = `Seleccionar letra '${char}' (posición ${idx + 1})`;
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedFlyerLetterIndex = idx;
+        renderWordLettersChips(wordItem);
+        if (letterColorInput) {
+          letterColorInput.value = charColor;
+        }
+      });
+      container.appendChild(chip);
+    });
+
+    if (badge) {
+      if (selectedFlyerLetterIndex === null) {
+        badge.textContent = 'Toda la palabra';
+        badge.style.color = 'var(--accent-cyan)';
+      } else {
+        const selChar = chars[selectedFlyerLetterIndex] || '';
+        badge.textContent = `Letra ${selectedFlyerLetterIndex + 1}: '${selChar}'`;
+        badge.style.color = '#e040fb';
+      }
+    }
+  }
+
+  function setFormationMode(mode, save = true) {
+    const validMode = (mode === 'CODE') ? 'CODE' : 'FISICS';
+
+    document.querySelectorAll('[data-mode="FISICS"]').forEach(b => {
+      if (validMode === 'FISICS') b.classList.add('active');
+      else b.classList.remove('active');
+    });
+    document.querySelectorAll('[data-mode="CODE"]').forEach(b => {
+      if (validMode === 'CODE') b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    // Visibilidad dinámica de parámetros: Físicas solo en FISICS, Code solo en CODE
+    const fisicsGroups = document.querySelectorAll('.group-mode-fisics');
+    const codeGroups = document.querySelectorAll('.group-mode-code');
+
+    if (validMode === 'FISICS') {
+      fisicsGroups.forEach(el => { el.style.display = ''; });
+      codeGroups.forEach(el => { el.style.display = 'none'; });
+    } else {
+      fisicsGroups.forEach(el => { el.style.display = 'none'; });
+      codeGroups.forEach(el => { el.style.display = ''; });
+    }
+
+    if (window.ParticlesConfig) {
+      window.ParticlesConfig.set({ FORMATION_MODE: validMode });
+    }
+
+    if (window.activeFlyerWordId && window.updateFlyerWordParticles) {
+      const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === (window.activeFlyerWordId || selectedFlyerWordId));
+      if (matchingWord) {
+        matchingWord.formationMode = validMode;
+        window.updateFlyerWordParticles(window.activeFlyerWordId, { 
+          x: matchingWord.x,
+          y: matchingWord.y,
+          formationMode: validMode 
+        });
+      } else {
+        window.updateFlyerWordParticles(window.activeFlyerWordId, { formationMode: validMode });
+      }
+    }
+
+    if (save && window.ParticlesConfig && typeof window.ParticlesConfig.save === 'function') {
+      window.ParticlesConfig.save({ FORMATION_MODE: validMode });
+    }
+  }
+  window.setFormationMode = setFormationMode;
+
+  function initFormationModeSwitch() {
+    const fisicsBtn = document.getElementById('panel-btn-mode-fisics');
+    const codeBtn = document.getElementById('panel-btn-mode-code');
+
+    if (fisicsBtn) {
+      fisicsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        setFormationMode('FISICS', true);
+      });
+    }
+
+    if (codeBtn) {
+      codeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        setFormationMode('CODE', true);
+      });
+    }
+
+    const currentMode = (window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS';
+    setFormationMode(currentMode, false);
+  }
+
+  function selectFlyerWord(targetId, targetLetterIndex = null) {
     if (!targetId || !flyerWords || flyerWords.length === 0) return;
     const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId);
     if (!targetWord) return;
@@ -756,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedFlyerWordId = targetWord.id || targetId;
     window.activeFlyerWordId = selectedFlyerWordId;
     selectedClipId = selectedFlyerWordId;
+    selectedFlyerLetterIndex = targetLetterIndex;
 
     const wordTxt = (typeof targetWord === 'object' && (targetWord.text || targetWord.word)) ? (targetWord.text || targetWord.word) : String(targetWord);
 
@@ -764,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateUIForSelectedLayerProps(targetWord);
+    renderWordLettersChips(targetWord);
     renderFlyerWordsList();
 
     if (Array.isArray(timelineLayers)) {
@@ -814,6 +1082,8 @@ document.addEventListener('DOMContentLoaded', () => {
       y: py,
       fontSize: fontSz,
       letterSpacing: spacePx,
+      formationMode: (window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS',
+      color: '#40c4ff',
       startTime: 0.0,
       duration: 2.0,
       clips: [initialClip],
@@ -830,6 +1100,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const layer1 = timelineLayers[0];
     if (!Array.isArray(layer1.clips)) layer1.clips = [];
 
+    const activeFormationMode = (window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS';
+
     const layer1Clip = {
       id: commonId,
       text: cleanWord,
@@ -840,6 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       y: py,
       fontSize: fontSz,
       letterSpacing: spacePx,
+      formationMode: activeFormationMode,
       keyframes: []
     };
     layer1.clips.push(layer1Clip);
@@ -847,14 +1120,19 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedClipId = layer1Clip.id;
 
     if (window.spawnWordParticles) {
-      window.spawnWordParticles(cleanWord, px, py, true, commonId, { fontSize: fontSz, letterSpacing: spacePx });
+      window.spawnWordParticles(cleanWord, px, py, true, commonId, {
+        fontSize: fontSz,
+        letterSpacing: spacePx,
+        formationMode: activeFormationMode
+      });
     }
 
     applyConfigChange('FLYER_WORDS', [...flyerWords]);
     applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
     renderFlyerWordsList();
     renderTimelineTracks();
-    updateUIForSelectedLayerProps({ x: px, y: py, fontSize: fontSz, letterSpacing: spacePx });
+    updateUIForSelectedLayerProps(wordItem);
+    renderWordLettersChips(wordItem);
 
     if (flyerWordInput) {
       flyerWordInput.value = cleanWord;
@@ -1191,6 +1469,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const vs = Math.round(props.letterSpacing);
       if (spaceSlider) spaceSlider.value = vs;
       if (spaceNum) spaceNum.value = vs;
+    }
+
+    if (props.color) {
+      const letterColorInput = document.getElementById('param-SELECTED_LETTER_COLOR');
+      if (letterColorInput) letterColorInput.value = props.color;
+    }
+    if (props.palette && Array.isArray(props.palette)) {
+      ['param-COLOR_1', 'param-COLOR_2', 'param-COLOR_3', 'param-COLOR_4'].forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (el && props.palette[idx]) el.value = props.palette[idx];
+      });
+    }
+    if (props.formationMode) {
+      setFormationMode(props.formationMode, false);
     }
   }
 
@@ -2279,6 +2571,32 @@ document.addEventListener('DOMContentLoaded', () => {
         y: newY
       });
     }
+
+    // Actualizar color de palabra o letra seleccionada si es paleta cromática en FLYERMODE
+    if (['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].includes(key)) {
+      const isFlyerMode = window.appMode ? (window.appMode === 'FLYERMODE') : false;
+      const activeWordId = window.activeFlyerWordId || selectedFlyerWordId;
+      if (isFlyerMode && activeWordId) {
+        const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === activeWordId);
+        if (matchingWord) {
+          if (selectedFlyerLetterIndex !== null) {
+            applyLetterColorChange(val);
+            const letterColorInput = document.getElementById('param-SELECTED_LETTER_COLOR');
+            if (letterColorInput) letterColorInput.value = val;
+          } else {
+            matchingWord.palette = matchingWord.palette || [
+              document.getElementById('param-COLOR_1')?.value || '#40c4ff',
+              document.getElementById('param-COLOR_2')?.value || '#ff9100',
+              document.getElementById('param-COLOR_3')?.value || '#e040fb',
+              document.getElementById('param-COLOR_4')?.value || '#00e676'
+            ];
+            const pIdx = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].indexOf(key);
+            matchingWord.palette[pIdx] = val;
+            applyWordPaletteGradient(matchingWord);
+          }
+        }
+      }
+    }
   }
 
   // Conectar sliders con textfields bidireccionalmente sin restricción de rango en textfields
@@ -2312,7 +2630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Color pickers
+  // Color pickers (Letrasp5)
   colorFields.forEach(key => {
     const el = document.getElementById(`param-${key}`);
     if (!el) return;
@@ -2320,6 +2638,17 @@ document.addEventListener('DOMContentLoaded', () => {
       applyConfigChange(key, el.value);
     });
   });
+
+  // Color picker de Letra Seleccionada
+  const selectedLetterColorEl = document.getElementById('param-SELECTED_LETTER_COLOR');
+  if (selectedLetterColorEl) {
+    selectedLetterColorEl.addEventListener('input', () => {
+      applyLetterColorChange(selectedLetterColorEl.value);
+    });
+  }
+
+  // Inicializar switches de modo de formación FISICS vs CODE
+  initFormationModeSwitch();
 
   // Characters input
   const charInput = document.getElementById('param-CHARACTERS');
@@ -2789,6 +3118,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const asciiFontModeSelectSync = document.getElementById('param-ASCII_FONT_MODE');
     if (asciiFontModeSelectSync && cfg.ASCII_FONT_MODE !== undefined) {
       asciiFontModeSelectSync.value = cfg.ASCII_FONT_MODE;
+    }
+
+    const codeMouseRetriggerSync = document.getElementById('param-CODE_MOUSE_RETRIGGER');
+    if (codeMouseRetriggerSync && cfg.CODE_MOUSE_RETRIGGER !== undefined) {
+      codeMouseRetriggerSync.checked = !!cfg.CODE_MOUSE_RETRIGGER;
+    }
+
+    const codeGlitchCharsSync = document.getElementById('param-CODE_GLITCH_CHARS');
+    if (codeGlitchCharsSync && cfg.CODE_GLITCH_CHARS !== undefined) {
+      codeGlitchCharsSync.value = cfg.CODE_GLITCH_CHARS;
+    }
+
+    if (cfg.FORMATION_MODE) {
+      setFormationMode(cfg.FORMATION_MODE, false);
     }
 
     if (flyerModeToggle && cfg.FLYER_MODE_ENABLED !== undefined) {

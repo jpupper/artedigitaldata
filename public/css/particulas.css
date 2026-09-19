@@ -1399,3 +1399,109 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-bottom-right-radius: 6px;
 }
 
+/* ============================================================
+   Formation Mode Switch (FISICS vs CODE) & Letter Selector UI
+   ============================================================ */
+.formation-mode-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(9, 10, 15, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 8px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.formation-mode-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.formation-switch-pill {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.formation-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #94a3b8;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.formation-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.formation-btn.active[data-mode="FISICS"] {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 242, 254, 0.15));
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);
+}
+
+.formation-btn.active[data-mode="CODE"] {
+  background: linear-gradient(135deg, rgba(224, 64, 251, 0.35), rgba(224, 64, 251, 0.15));
+  color: #e040fb;
+  border: 1px solid rgba(224, 64, 251, 0.5);
+  box-shadow: 0 0 12px rgba(224, 64, 251, 0.4);
+}
+
+/* Letter chips in Paleta Cromática */
+.letter-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.letter-chip:hover {
+  border-color: rgba(0, 242, 254, 0.4);
+  color: #fff;
+  background: rgba(0, 242, 254, 0.1);
+}
+
+.letter-chip.active {
+  background: rgba(0, 242, 254, 0.2);
+  border-color: var(--accent-cyan);
+  color: #00f2fe;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+}
+
+.letter-chip .chip-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: inline-block;
+}
+

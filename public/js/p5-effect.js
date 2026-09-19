@@ -70,6 +70,13 @@
     ASCII_FONT_MODE: 0,
     FLYER_MODE_ENABLED: false,
     FLYER_WORDS: [],
+    FORMATION_MODE: 'FISICS', // 'FISICS' | 'CODE'
+    CODE_DECODE_FRAMES: 25,
+    CODE_LETTER_DELAY: 3,
+    CODE_SCRAMBLE_FREQ: 2,
+    CODE_GLITCH_CHARS: '01<>{}#*+%$&?XZ7@!',
+    CODE_MOUSE_RETRIGGER: true,
+    CODE_MOUSE_RADIUS: 60,
     COLOR_1: '#40c4ff', // Cyan
     COLOR_2: '#ff9100', // Naranja
     COLOR_3: '#e040fb', // Magenta
@@ -396,11 +403,15 @@
     let fontSize = null;
     let letterSpacingPx = null;
     let customColor = null;
+    let letterColors = null;
+    let formationMode = CFG.FORMATION_MODE || 'FISICS';
 
     if (typeof wordConfig === 'object' && wordConfig !== null) {
       fontSize = wordConfig.fontSize;
       letterSpacingPx = wordConfig.letterSpacing;
       customColor = wordConfig.color;
+      letterColors = wordConfig.letterColors || null;
+      if (wordConfig.formationMode) formationMode = wordConfig.formationMode;
     } else if (typeof wordConfig === 'number') {
       fontSize = wordConfig;
       if (arguments.length >= 7) customColor = arguments[6];
@@ -445,12 +456,21 @@
 
       if (ch === ' ') continue;
 
-      const angle = random(TWO_PI);
-      const dist = random(60, 240);
-      const spawnX = targetCenterX + cos(angle) * dist;
-      const spawnY = targetCenterY + sin(angle) * dist;
+      let spawnX, spawnY;
+      if (formationMode === 'CODE') {
+        // En modo CODE: las letras aparecen ya posicionadas en su destino final
+        spawnX = targetX;
+        spawnY = targetY;
+      } else {
+        const angle = random(TWO_PI);
+        const dist = random(60, 240);
+        spawnX = targetCenterX + cos(angle) * dist;
+        spawnY = targetCenterY + sin(angle) * dist;
+      }
 
-      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word, wordFontSize, customColor));
+      const charColor = (letterColors && letterColors[i]) ? letterColors[i] : customColor;
+
+      particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word, wordFontSize, charColor, i, formationMode));
     }
   }
 
@@ -458,11 +478,85 @@
     if (!flyerId) return;
     let flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
 
+    const customColor = newProps.color || null;
+    const letterColors = newProps.letterColors || null;
+    const formationMode = newProps.formationMode || CFG.FORMATION_MODE || 'FISICS';
+
+    // Determinar si hay cambios que modifiquen la geometría/distribución espacial
+    const hasSpatialChange = (newProps.x !== undefined) ||
+                             (newProps.y !== undefined) ||
+                             (newProps.targetCenterX !== undefined) ||
+                             (newProps.targetCenterY !== undefined) ||
+                             (newProps.fontSize !== undefined) ||
+                             (newProps.letterSpacing !== undefined) ||
+                             (newProps.text !== undefined);
+
+    // Si NO hay cambios espaciales (ej. solo cambio de color o visibilidad), actualizar in-situ sin tocar targets
+    if (!hasSpatialChange && flyerParticles.length > 0) {
+      for (let i = 0; i < flyerParticles.length; i++) {
+        const p = flyerParticles[i];
+        const letterIdx = (p.letterIndex !== undefined && p.letterIndex !== null) ? p.letterIndex : i;
+
+        if (newProps.formationMode) {
+          p.formationMode = newProps.formationMode;
+        }
+
+        if (letterColors && Array.isArray(letterColors) && letterColors[letterIdx]) {
+          p.baseColor = color(letterColors[letterIdx]);
+          p.customColor = letterColors[letterIdx];
+        } else if (newProps.letterColor && typeof newProps.letterColor === 'object' && newProps.letterColor.index === letterIdx) {
+          p.baseColor = color(newProps.letterColor.color);
+          p.customColor = newProps.letterColor.color;
+        } else if (customColor && typeof color === 'function') {
+          p.baseColor = color(customColor);
+          p.customColor = customColor;
+        }
+
+        if (newProps.visible !== undefined) {
+          const shouldBeVisible = !!newProps.visible;
+          if (shouldBeVisible) {
+            if (!p.isShowing) {
+              p.respawn(p.target ? p.target.x : undefined, p.target ? p.target.y : undefined);
+            }
+          } else {
+            if (p.isShowing) {
+              p.despawn();
+            }
+          }
+        }
+      }
+      return;
+    }
+
     const wordFontSize = (newProps.fontSize !== undefined) ? Number(newProps.fontSize) : CFG.TEXT_SIZE;
     const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : 4;
-    const targetCenterX = (newProps.x !== undefined) ? Number(newProps.x) : (newProps.targetCenterX !== undefined ? Number(newProps.targetCenterX) : (flyerParticles[0] ? flyerParticles[0].target.x : windowWidth / 2));
-    const targetCenterY = (newProps.y !== undefined) ? Number(newProps.y) : (newProps.targetCenterY !== undefined ? Number(newProps.targetCenterY) : (flyerParticles[0] ? flyerParticles[0].target.y : windowHeight / 2));
-    const customColor = newProps.color || null;
+
+    // Calcular el centro geométrico real de las partículas existentes si no se especificó un nuevo X/Y
+    let fallbackCenterX = windowWidth / 2;
+    let fallbackCenterY = windowHeight / 2;
+    if (flyerParticles.length > 0) {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const p of flyerParticles) {
+        if (p.target) {
+          if (p.target.x < minX) minX = p.target.x;
+          if (p.target.x > maxX) maxX = p.target.x;
+          if (p.target.y < minY) minY = p.target.y;
+          if (p.target.y > maxY) maxY = p.target.y;
+        }
+      }
+      if (minX !== Infinity && maxX !== -Infinity) {
+        fallbackCenterX = (minX + maxX) / 2;
+        fallbackCenterY = (minY + maxY) / 2;
+      }
+    }
+
+    const targetCenterX = (newProps.x !== undefined)
+      ? Number(newProps.x)
+      : (newProps.targetCenterX !== undefined ? Number(newProps.targetCenterX) : fallbackCenterX);
+
+    const targetCenterY = (newProps.y !== undefined)
+      ? Number(newProps.y)
+      : (newProps.targetCenterY !== undefined ? Number(newProps.targetCenterY) : fallbackCenterY);
 
     const rawText = (newProps.text !== undefined) ? String(newProps.text) : ((flyerParticles[0] ? (flyerParticles[0].fullWord || flyerParticles[0].wordText) : '') || '');
     const nonSpaceCount = Array.from(String(rawText)).filter(ch => ch !== ' ').length;
@@ -478,7 +572,9 @@
           spawnWordParticles(rawText, targetCenterX, targetCenterY, true, flyerId, {
             fontSize: wordFontSize,
             letterSpacing: letterSpacingPx,
-            color: customColor
+            color: customColor,
+            letterColors: letterColors,
+            formationMode: formationMode
           });
           flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
         }
@@ -518,8 +614,22 @@
         p.fullWord = rawText;
         p.target.set(targetX, targetY);
         p.baseSize = wordFontSize;
-        if (customColor && typeof color === 'function') {
+        p.letterIndex = i;
+
+        if (newProps.formationMode) {
+          p.formationMode = newProps.formationMode;
+        }
+
+        // Color update: individual letter, array or whole word
+        if (letterColors && Array.isArray(letterColors) && letterColors[i]) {
+          p.baseColor = color(letterColors[i]);
+          p.customColor = letterColors[i];
+        } else if (newProps.letterColor && typeof newProps.letterColor === 'object' && newProps.letterColor.index === i) {
+          p.baseColor = color(newProps.letterColor.color);
+          p.customColor = newProps.letterColor.color;
+        } else if (customColor && typeof color === 'function') {
           p.baseColor = color(customColor);
+          p.customColor = customColor;
         }
         particleIdx++;
       }
@@ -754,18 +864,20 @@
 
       // Si hace click sobre una palabra del flyer en pantalla, seleccionarla
       let clickedFlyerId = null;
+      let clickedLetterIndex = null;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
           const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
           if (d < 45) {
             clickedFlyerId = p.flyerId;
+            clickedLetterIndex = (p.letterIndex !== undefined) ? p.letterIndex : null;
             break;
           }
         }
       }
       if (clickedFlyerId && typeof window.selectFlyerWordById === 'function') {
-        window.selectFlyerWordById(clickedFlyerId);
+        window.selectFlyerWordById(clickedFlyerId, clickedLetterIndex);
         return;
       }
 
@@ -1094,16 +1206,44 @@
 
   // Partícula con atractor para formar palabras
   class WordParticle {
-    constructor(char, x, y, targetX, targetY, isFlyer = false, flyerId = null, fullWord = '', customSize = null, customColor = null) {
+    constructor(char, x, y, targetX, targetY, isFlyer = false, flyerId = null, fullWord = '', customSize = null, customColor = null, letterIndex = 0, formationMode = 'FISICS') {
       this.char = char;
-      this.pos = createVector(x, y);
       this.target = createVector(targetX, targetY);
-      this.vel = p5.Vector.random2D().mult(random(2, 6));
-      this.acc = createVector(0, 0);
-
       this.isFlyer = isFlyer;
       this.flyerId = flyerId;
       this.fullWord = fullWord;
+      this.letterIndex = letterIndex;
+      this.formationMode = formationMode || (CFG.FORMATION_MODE || 'FISICS');
+      this.customColor = customColor;
+
+      const glitchSet = (CFG.CODE_GLITCH_CHARS && CFG.CODE_GLITCH_CHARS.length > 0)
+        ? Array.from(CFG.CODE_GLITCH_CHARS)
+        : ['0', '1', '<', '>', '{', '}', '#', '*', '+', '%', '$', '&', '?', 'X', 'Z', '7', '@', '!'];
+      this.glitchChars = glitchSet;
+
+      if (this.formationMode === 'CODE') {
+        // En modo CODE: las letras aparecen fijas en su coordenada final, sin rotación
+        this.pos = createVector(targetX, targetY);
+        this.vel = createVector(0, 0);
+        this.acc = createVector(0, 0);
+        this.rotAngle = 0;
+        this.currentGlitchChar = glitchSet[Math.floor(random(glitchSet.length))];
+        const baseFrames = (CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 25;
+        const letterDelay = (CFG.CODE_LETTER_DELAY !== undefined) ? Number(CFG.CODE_LETTER_DELAY) : 3;
+        this.maxDecodeSteps = baseFrames + (this.letterIndex * letterDelay);
+        this.decodeStep = 0;
+        this.isFormed = false;
+        this.retriggerCooldown = 0;
+      } else {
+        // En modo FISICS: aparecen dispersas y viajan con atracción física
+        this.pos = createVector(x, y);
+        this.vel = p5.Vector.random2D().mult(random(2, 6));
+        this.acc = createVector(0, 0);
+        this.rotAngle = 0;
+        this.currentGlitchChar = this.char;
+        this.isFormed = true;
+      }
+
       this.isShowing = true;
       this.visible = true;
 
@@ -1149,13 +1289,37 @@
     }
 
     respawn(centerX, centerY) {
-      const angle = random(TWO_PI);
-      const distRadius = random(60, 240);
-      const cx = centerX !== undefined ? centerX : (this.target ? this.target.x : windowWidth / 2);
-      const cy = centerY !== undefined ? centerY : (this.target ? this.target.y : windowHeight / 2);
-      this.pos.set(cx + cos(angle) * distRadius, cy + sin(angle) * distRadius);
-      this.vel = p5.Vector.random2D().mult(random(3, 8));
-      this.acc.set(0, 0);
+      const glitchSet = (CFG.CODE_GLITCH_CHARS && CFG.CODE_GLITCH_CHARS.length > 0)
+        ? Array.from(CFG.CODE_GLITCH_CHARS)
+        : ['0', '1', '<', '>', '{', '}', '#', '*', '+', '%', '$', '&', '?', 'X', 'Z', '7', '@', '!'];
+      this.glitchChars = glitchSet;
+
+      if (this.formationMode === 'CODE') {
+        const cx = (this.target ? this.target.x : (centerX !== undefined ? centerX : windowWidth / 2));
+        const cy = (this.target ? this.target.y : (centerY !== undefined ? centerY : windowHeight / 2));
+        this.pos.set(cx, cy);
+        this.vel.set(0, 0);
+        this.acc.set(0, 0);
+        this.rotAngle = 0;
+        this.currentGlitchChar = glitchSet[Math.floor(random(glitchSet.length))];
+        const baseFrames = (CFG.CODE_DECODE_FRAMES !== undefined) ? Number(CFG.CODE_DECODE_FRAMES) : 25;
+        const letterDelay = (CFG.CODE_LETTER_DELAY !== undefined) ? Number(CFG.CODE_LETTER_DELAY) : 3;
+        this.maxDecodeSteps = baseFrames + (this.letterIndex * letterDelay);
+        this.decodeStep = 0;
+        this.isFormed = false;
+        this.retriggerCooldown = 0;
+      } else {
+        const angle = random(TWO_PI);
+        const distRadius = random(60, 240);
+        const cx = centerX !== undefined ? centerX : (this.target ? this.target.x : windowWidth / 2);
+        const cy = centerY !== undefined ? centerY : (this.target ? this.target.y : windowHeight / 2);
+        this.pos.set(cx + cos(angle) * distRadius, cy + sin(angle) * distRadius);
+        this.vel = p5.Vector.random2D().mult(random(3, 8));
+        this.acc.set(0, 0);
+        this.rotAngle = 0;
+        this.currentGlitchChar = this.char;
+        this.isFormed = true;
+      }
       this.age = 0;
       this.lifespan = 255;
       this.scale = 0;
@@ -1179,6 +1343,7 @@
           this.despawn();
         }
       }
+
       if (this.isShowing) {
         if (this.age < this.scaleInDuration) {
           this.scale = this.age / this.scaleInDuration;
@@ -1189,63 +1354,107 @@
           this.lifespan = Math.min(255, this.lifespan + 25);
         }
       } else {
-        // Despawn: las partículas se dispersan con impulso y se desvanecen
+        // Despawn: se dispersan en física o mutan/desvanecen en code (sin rotación)
         this.lifespan = Math.max(0, this.lifespan - 18);
         this.scale = Math.max(0, this.scale - 0.05);
-        this.vel.add(p5.Vector.random2D().mult(0.6));
-        this.pos.add(this.vel);
+        if (this.formationMode === 'CODE') {
+          if (random() < 0.4 && this.glitchChars && this.glitchChars.length) {
+            this.currentGlitchChar = random(this.glitchChars);
+          }
+        } else {
+          this.vel.add(p5.Vector.random2D().mult(0.6));
+          this.pos.add(this.vel);
+        }
         if (this.lifespan <= 0) {
           this.visible = false;
         }
         return;
       }
 
-      // Repulsor por proximidad del Mouse para Flyer Mode y palabras activas
+      // Interacción reactiva con el puntero del Mouse
       const dMouse = dist(this.pos.x, this.pos.y, mouseX, mouseY);
-      const repelRadius = (CFG.WORD_REPEL_RADIUS !== undefined) ? Number(CFG.WORD_REPEL_RADIUS) : 85;
-      const baseRepelForce = (CFG.WORD_REPEL_FORCE !== undefined) ? Number(CFG.WORD_REPEL_FORCE) : 9.0;
-      const mouseMult = (CFG.MOUSE_FORCE_MULT !== undefined) ? Number(CFG.MOUSE_FORCE_MULT) : 1.1;
-      const maxRepelForce = baseRepelForce * mouseMult;
       let isRepelled = false;
-      if (repelRadius > 0 && maxRepelForce > 0 && dMouse < repelRadius && dMouse > 0) {
-        isRepelled = true;
-        const repelDir = p5.Vector.sub(this.pos, createVector(mouseX, mouseY));
-        const forceMag = map(dMouse, 0, repelRadius, maxRepelForce, 0.2 * mouseMult);
-        repelDir.setMag(forceMag);
-        this.acc.add(repelDir);
-      }
 
-      const desired = p5.Vector.sub(this.target, this.pos);
-      const d = desired.mag();
-
-      const slowRadius = 60;
-      if (d < slowRadius) {
-        const speed = map(d, 0, slowRadius, 0, this.maxSpeed);
-        desired.setMag(speed);
-      } else {
-        desired.setMag(this.maxSpeed);
-      }
-
-      const steer = p5.Vector.sub(desired, this.vel);
-      steer.limit(isRepelled ? this.maxForce * 2.5 : this.maxForce);
-      this.acc.add(steer);
-      this.vel.add(this.acc);
-
-      if (d < 18 && !isRepelled) this.vel.mult(0.85);
-      if (d < 3 && !isRepelled) this.vel.mult(0.35);
-
-      this.pos.add(this.vel);
-      this.acc.mult(0);
-
-      if (this.isFlyer) {
-        if (d < 3 && !isRepelled) {
-          this.pos.set(this.target);
-          this.vel.set(0, 0);
+      if (this.formationMode === 'CODE') {
+        const codeMouseRadius = (CFG.CODE_MOUSE_RADIUS !== undefined) ? Number(CFG.CODE_MOUSE_RADIUS) : 60;
+        const codeMouseRetrigger = (CFG.CODE_MOUSE_RETRIGGER !== undefined) ? !!CFG.CODE_MOUSE_RETRIGGER : true;
+        if (codeMouseRetrigger && dMouse < codeMouseRadius && this.retriggerCooldown <= 0) {
+          // Breve re-scramble reactivo en la letra afectada al pasar el mouse
+          this.decodeStep = Math.max(0, this.maxDecodeSteps - 12);
+          this.isFormed = false;
+          this.retriggerCooldown = 20;
         }
-        this.lifespan = 255;
+        if (this.retriggerCooldown > 0) this.retriggerCooldown--;
       } else {
-        if (d < 3 && !isRepelled) {
-          this.vel.mult(0.35);
+        const repelRadius = (CFG.WORD_REPEL_RADIUS !== undefined) ? Number(CFG.WORD_REPEL_RADIUS) : 85;
+        const baseRepelForce = (CFG.WORD_REPEL_FORCE !== undefined) ? Number(CFG.WORD_REPEL_FORCE) : 9.0;
+        const mouseMult = (CFG.MOUSE_FORCE_MULT !== undefined) ? Number(CFG.MOUSE_FORCE_MULT) : 1.1;
+        const maxRepelForce = baseRepelForce * mouseMult;
+        if (repelRadius > 0 && maxRepelForce > 0 && dMouse < repelRadius && dMouse > 0) {
+          isRepelled = true;
+          const repelDir = p5.Vector.sub(this.pos, createVector(mouseX, mouseY));
+          const forceMag = map(dMouse, 0, repelRadius, maxRepelForce, 0.2 * mouseMult);
+          repelDir.setMag(forceMag);
+          this.acc.add(repelDir);
+        }
+      }
+
+      // Dinámica de formación según el modo seleccionado
+      if (this.formationMode === 'CODE') {
+        // En modo CODE: la posición se mantiene 100% fija en el target, cero rotación
+        this.pos.set(this.target);
+        this.vel.set(0, 0);
+        this.acc.set(0, 0);
+        this.rotAngle = 0;
+
+        const scrambleFreq = (CFG.CODE_SCRAMBLE_FREQ !== undefined) ? Math.max(1, Number(CFG.CODE_SCRAMBLE_FREQ)) : 2;
+
+        if (this.decodeStep < this.maxDecodeSteps) {
+          this.decodeStep++;
+          if (this.decodeStep % scrambleFreq === 0) {
+            const glitchSet = (CFG.CODE_GLITCH_CHARS && CFG.CODE_GLITCH_CHARS.length > 0)
+              ? Array.from(CFG.CODE_GLITCH_CHARS)
+              : (this.glitchChars || ['0', '1', '<', '>', '{', '}']);
+            this.currentGlitchChar = random(glitchSet);
+          }
+        } else {
+          this.currentGlitchChar = this.char;
+          this.isFormed = true;
+        }
+      } else {
+        // Modo FISICS tradicional
+        const desired = p5.Vector.sub(this.target, this.pos);
+        const d = desired.mag();
+
+        const slowRadius = 60;
+        if (d < slowRadius) {
+          const speed = map(d, 0, slowRadius, 0, this.maxSpeed);
+          desired.setMag(speed);
+        } else {
+          desired.setMag(this.maxSpeed);
+        }
+
+        const steer = p5.Vector.sub(desired, this.vel);
+        steer.limit(isRepelled ? this.maxForce * 2.5 : this.maxForce);
+        this.acc.add(steer);
+        this.vel.add(this.acc);
+
+        if (d < 18 && !isRepelled) this.vel.mult(0.85);
+        if (d < 3 && !isRepelled) this.vel.mult(0.35);
+
+        this.pos.add(this.vel);
+        this.acc.mult(0);
+
+        if (this.isFlyer) {
+          if (d < 3 && !isRepelled) {
+            this.pos.set(this.target);
+            this.vel.set(0, 0);
+          }
+          this.lifespan = 255;
+        } else {
+          if (d < 3 && !isRepelled) {
+            this.vel.mult(0.35);
+          }
         }
       }
     }
@@ -1254,12 +1463,20 @@
       if (this.visible === false || this.scale <= 0.01) return;
       const size = this.baseSize * this.scale;
       const d = p5.Vector.dist(this.pos, this.target);
-      const floatY = (!this.isFlyer && d < 5 && this.holdTime > 0) ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 : 0;
+      const floatY = (!this.isFlyer && d < 5 && this.holdTime > 0 && this.formationMode !== 'CODE') 
+        ? sin(frameCount * 0.08 + this.noiseSeed) * 1.5 
+        : 0;
       const posY = this.pos.y + floatY;
 
-      // Dibujar caja contenedora de fondo (bounding box) detras de la letra de la palabra
+      push();
+      translate(this.pos.x, posY);
+
+      if (this.formationMode !== 'CODE' && this.rotAngle && Math.abs(this.rotAngle) > 0.001) {
+        rotate(this.rotAngle);
+      }
+
+      // Dibujar caja contenedora de fondo (bounding box) centrada
       if (CFG.CHAR_BG_ENABLED) {
-        push();
         rectMode(CENTER);
         noStroke();
         const bgCol = color(CFG.CHAR_BG_COLOR || '#000000');
@@ -1269,8 +1486,7 @@
 
         const boxW = size * 0.85;
         const boxH = size * 1.05;
-        rect(this.pos.x, posY, boxW, boxH, 4);
-        pop();
+        rect(0, 0, boxW, boxH, 4);
       }
 
       this.baseColor.setAlpha(this.lifespan);
@@ -1280,7 +1496,14 @@
         const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'sans-serif';
         textFont(fontFam);
       }
-      text(this.char, this.pos.x, posY);
+      textAlign(CENTER, CENTER);
+
+      const displayChar = (this.formationMode === 'CODE' && !this.isFormed && this.currentGlitchChar)
+        ? this.currentGlitchChar
+        : this.char;
+
+      text(displayChar, 0, 0);
+      pop();
     }
 
     isDead() {

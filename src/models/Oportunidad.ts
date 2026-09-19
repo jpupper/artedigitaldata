@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { IPosteoBase, CommentSchema, IComment } from './PosteoBase';
+import './Post';
 
 export { IComment };
 
@@ -31,6 +32,8 @@ export interface IInscripcion {
   usuario: Types.ObjectId;
   oportunidad: Types.ObjectId;
   datos: Record<string, any>;  // datos dinámicos según parámetros
+  tipoInscripcion?: 'formulario' | 'obra';
+  obra?: Types.ObjectId;
   estado: 'pendiente' | 'aceptada' | 'rechazada';
   mensaje?: string;
   createdAt: Date;
@@ -149,6 +152,12 @@ const InscripcionSchema: Schema = new Schema(
     usuario: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     oportunidad: { type: Schema.Types.ObjectId, ref: 'Oportunidad', required: true },
     datos: { type: Schema.Types.Mixed, default: {} },
+    tipoInscripcion: {
+      type: String,
+      enum: ['formulario', 'obra'],
+      default: 'formulario',
+    },
+    obra: { type: Schema.Types.ObjectId, ref: 'Post', default: null },
     estado: {
       type: String,
       enum: ['pendiente', 'aceptada', 'rechazada'],
