@@ -18,6 +18,16 @@ let selectedClipId = null;
 let selectedLayerId = null;
 let selectedFlyerWordId = null;
 let hasTimeline = false;
+let currentVisualEffectId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('outputeffect') || null;
+
+// Exponer inmediatamente para evitar TypeErrors si botones con onclick se invocan temprano
+window.loadVisualEffectById = function(id) {
+  if (typeof window._internalLoadVisualEffectById === 'function') {
+    window._internalLoadVisualEffectById(id);
+  } else {
+    window._pendingVisualEffectId = id;
+  }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   // Estado del Modo Global: 'COLLABMODE' (por defecto) o 'FLYERMODE'
@@ -3424,7 +3434,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Guardar y Cargar Proyectos de Efectos Visuales (Flyer Mode) por Usuario
-  let currentVisualEffectId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('outputeffect') || null;
+  if (!currentVisualEffectId) {
+    currentVisualEffectId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('outputeffect') || null;
+  }
 
   async function saveUserVisualEffect(forceNew = false) {
     const token = getAuthToken();
@@ -3884,9 +3896,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  window._internalLoadVisualEffectById = loadUserVisualEffect;
   window.loadVisualEffectById = (id) => {
     loadUserVisualEffect(id);
   };
+  if (window._pendingVisualEffectId) {
+    loadUserVisualEffect(window._pendingVisualEffectId);
+    window._pendingVisualEffectId = null;
+  }
 
   const btnSaveFx = document.getElementById('btn-save-fx');
   if (btnSaveFx) {

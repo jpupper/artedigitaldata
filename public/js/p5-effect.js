@@ -840,11 +840,21 @@
   };
 
   let lastTouchTimestamp = 0;
+  let lastSpawnPointerTimestamp = 0;
 
-  // Click handler para generar palabras con atractor
-  window.mousePressed = function(e) {
+  // Click handler unificado para generar palabras con atractor
+  function handleGlobalPointerSpawn(e) {
+    // Si no es el botón principal (izquierdo / touch), ignorar
+    if (e && e.button !== undefined && e.button !== 0) return;
+
     // Si fue precedido inmediatamente por un evento touch (emulación de click móvil), ignorar
     if (Date.now() - lastTouchTimestamp < 650) {
+      return;
+    }
+
+    const now = Date.now();
+    // Debounce rápido para evitar duplicación entre pointerdown y mousePressed
+    if (now - lastSpawnPointerTimestamp < 120) {
       return;
     }
 
@@ -854,27 +864,42 @@
       e.target.closest('#left-control-panel') || 
       e.target.closest('#right-control-panel') || 
       e.target.closest('header') || 
+      e.target.closest('#app-header') ||
       e.target.closest('button') || 
       e.target.closest('input') || 
+      e.target.closest('textarea') ||
+      e.target.closest('select') ||
       e.target.closest('a') ||
       e.target.closest('#timeline-panel') ||
-      e.target.closest('#panel-backdrop')
+      e.target.closest('#panel-backdrop') ||
+      e.target.closest('.moon-pill') ||
+      e.target.closest('.filter-switch') ||
+      e.target.closest('nav')
     )) {
       return;
     }
 
-    // Sincronizar sliders POS_X y POS_Y sin mover la palabra previamente activa
+    const clickX = (e && typeof e.clientX === 'number') ? e.clientX : (typeof mouseX !== 'undefined' ? mouseX : (window.innerWidth / 2));
+    const clickY = (e && typeof e.clientY === 'number') ? e.clientY : (typeof mouseY !== 'undefined' ? mouseY : (window.innerHeight / 2));
+
+    // Sincronizar sliders POS_X y POS_Y sin mover la palabra previamente activa (si existe en editor)
     if (window.updatePosSliders) {
-      window.updatePosSliders(Math.round(mouseX), Math.round(mouseY), true);
+      window.updatePosSliders(Math.round(clickX), Math.round(clickY), true);
     }
 
-    const isFlyerMode = window.appMode ? (window.appMode === 'FLYERMODE') : Boolean(CFG && CFG.FLYER_MODE_ENABLED);
+    // Solo estamos en modo edición de Flyer si estamos en visualeffects.html o outputeffect.html
+    const isEditorPage = window.location.pathname.includes('visualeffects.html') || 
+                         window.location.pathname.includes('visualeffects') || 
+                         window.location.pathname.includes('outputeffect.html') ||
+                         window.location.pathname.includes('particulas.html') ||
+                         window.location.pathname.includes('particulas');
+    const isFlyerMode = isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED));
 
     if (isFlyerMode) {
       const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
       if (isCtrlPressed) {
         if (typeof window.moveActiveFlyerWordTo === 'function') {
-          window.moveActiveFlyerWordTo(mouseX, mouseY);
+          window.moveActiveFlyerWordTo(clickX, clickY);
         }
         return;
       }
@@ -885,7 +910,7 @@
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
-          const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
+          const d = dist(clickX, clickY, p.pos.x, p.pos.y);
           if (d < 45) {
             clickedFlyerId = p.flyerId;
             clickedLetterIndex = (p.letterIndex !== undefined) ? p.letterIndex : null;
@@ -899,20 +924,20 @@
       }
 
       if (typeof window.addFlyerWordAt === 'function') {
-        window.addFlyerWordAt(mouseX, mouseY);
+        window.addFlyerWordAt(clickX, clickY);
       } else if (typeof window.addFlyerWordToList === 'function') {
-        window.addFlyerWordToList(null, mouseX, mouseY);
+        window.addFlyerWordToList(null, clickX, clickY);
       }
       return;
     }
 
-    // --- MODO COLABORATIVO (COLLABMODE) ---
+    // --- MODO FRONT Y COLABORATIVO (COLLABMODE): SPAWNEAR PALABRAS AL CLICK ---
     // 1. Si se hace click sobre una palabra colaborativa activa en el lienzo, SE BORRA
     let clickedCollabParticle = null;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       if (p instanceof WordParticle && !p.isFlyer && p.visible && p.isShowing) {
-        const d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
+        const d = dist(clickX, clickY, p.pos.x, p.pos.y);
         if (d < 45) {
           clickedCollabParticle = p;
           break;
@@ -927,6 +952,7 @@
           p.despawn();
         }
       });
+      lastSpawnPointerTimestamp = now;
       return;
     }
 
@@ -941,8 +967,12 @@
     currentWordIndex = nextIdx;
 
     const chosenWord = words[currentWordIndex];
-    spawnWordParticles(chosenWord, mouseX, mouseY, false);
-  };
+    spawnWordParticles(chosenWord, clickX, clickY, false);
+    lastSpawnPointerTimestamp = now;
+  }
+
+  window.mousePressed = handleGlobalPointerSpawn;
+  window.addEventListener('pointerdown', handleGlobalPointerSpawn, { passive: true });
 
   // Soporte Touch para dispositivos móviles sin bloquear el scroll del navegador
   window.touchStarted = function(e) {
@@ -1591,13 +1621,53 @@
         }
       }
 
-      // 2. Si tiene palabras de flyer, instanciarlas y correr la línea de tiempo
-      const flyerWords = Array.isArray(effect.flyerWords) ? effect.flyerWords : [];
-      const timelineLayers = Array.isArray(effect.timelineLayers) ? effect.timelineLayers : [];
-      const timelineDuration = Number(effect.timelineDuration) || 10.0;
-      const hasTimeline = !!effect.hasTimeline;
+      // 2. Extraer palabras de la secuencia tanto de flyerWords como de timelineLayers
+      let sequenceWords = Array.isArray(effect.flyerWords) ? [...effect.flyerWords] : [];
+      const timelineLayers = (Array.isArray(effect.timelineLayers) && effect.timelineLayers.length > 0)
+        ? effect.timelineLayers
+        : (effect.config && Array.isArray(effect.config.TIMELINE_LAYERS) ? effect.config.TIMELINE_LAYERS : []);
 
-      if (flyerWords.length > 0) {
+      if (timelineLayers.length > 0) {
+        timelineLayers.forEach(layer => {
+          if (Array.isArray(layer.clips)) {
+            layer.clips.forEach(clip => {
+              const cid = clip.id || clip.flyerId || ('clip_' + Math.random().toString(36).substr(2, 9));
+              if (!sequenceWords.some(w => w.id === cid)) {
+                sequenceWords.push({
+                  id: cid,
+                  text: clip.text || clip.word || '',
+                  word: clip.word || clip.text || '',
+                  x: clip.x !== undefined ? clip.x : (window.innerWidth / 2),
+                  y: clip.y !== undefined ? clip.y : (window.innerHeight / 2),
+                  fontSize: clip.fontSize || 36,
+                  letterSpacing: clip.letterSpacing || 4,
+                  color: clip.color,
+                  letterColors: clip.letterColors || null,
+                  formationMode: clip.formationMode || 'CODE',
+                  startTime: clip.startTime !== undefined ? clip.startTime : 0.0,
+                  duration: clip.duration !== undefined ? clip.duration : 2.0,
+                  keyframes: Array.isArray(clip.keyframes) ? clip.keyframes : []
+                });
+              }
+            });
+          }
+        });
+      }
+
+      let maxClipEnd = 0;
+      timelineLayers.forEach(layer => {
+        if (Array.isArray(layer.clips)) {
+          layer.clips.forEach(clip => {
+            const end = (Number(clip.startTime) || 0) + (Number(clip.duration) || 2.0);
+            if (end > maxClipEnd) maxClipEnd = end;
+          });
+        }
+      });
+
+      const timelineDuration = Math.max(Number(effect.timelineDuration) || 0, maxClipEnd, 2.0);
+      const hasTimeline = Boolean(effect.hasTimeline || (timelineLayers.length > 0 && maxClipEnd > 0));
+
+      if (sequenceWords.length > 0) {
         const trySpawn = () => {
           if (typeof window.spawnWordParticles !== 'function' || !window.width) {
             setTimeout(trySpawn, 150);
@@ -1605,19 +1675,21 @@
           }
 
           window.clearAllFlyerParticles();
-          flyerWords.forEach(w => {
+          sequenceWords.forEach(w => {
             const wordText = w.text || w.word || '';
             const posX = w.x !== undefined ? w.x : (window.innerWidth / 2);
             const posY = w.y !== undefined ? w.y : (window.innerHeight / 2);
             window.spawnWordParticles(wordText, posX, posY, true, w.id, {
               fontSize: w.fontSize,
               letterSpacing: w.letterSpacing,
-              color: w.color
+              color: w.color,
+              letterColors: w.letterColors,
+              formationMode: w.formationMode || 'CODE'
             });
           });
 
-          // 3. Loop de evaluación de timeline si está activo
-          if (hasTimeline && timelineLayers.length > 0) {
+          // 3. Loop de evaluación de timeline si hay capas
+          if (timelineLayers.length > 0) {
             let frontTimelineTime = 0.0;
             let lastFrontTime = performance.now();
 
@@ -1627,7 +1699,8 @@
                 layerObj.clips.forEach(clipObj => {
                   const s = clipObj.startTime !== undefined ? clipObj.startTime : 0.0;
                   const d = clipObj.duration || 2.0;
-                  const isActive = (t >= s && t <= (s + d));
+                  // Si tiene timeline configurado evalúa el intervalo; si es flyer estático siempre visible
+                  const isActive = !hasTimeline ? true : (t >= s && t <= (s + d));
 
                   let props = {
                     x: clipObj.x !== undefined ? clipObj.x : (window.innerWidth / 2),
@@ -1635,7 +1708,10 @@
                     fontSize: clipObj.fontSize || 36,
                     letterSpacing: clipObj.letterSpacing || 4,
                     visible: isActive,
-                    text: clipObj.text || clipObj.word || 'PALABRA'
+                    text: clipObj.text || clipObj.word || 'PALABRA',
+                    color: clipObj.color,
+                    letterColors: clipObj.letterColors,
+                    formationMode: clipObj.formationMode
                   };
 
                   if (Array.isArray(clipObj.keyframes) && clipObj.keyframes.length > 0 && isActive) {

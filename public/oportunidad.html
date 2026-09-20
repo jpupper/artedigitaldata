@@ -415,7 +415,7 @@
       document.getElementById('opo-fecha').textContent = new Date(opo.createdAt).toLocaleDateString('es-AR');
 
       // Description
-      document.getElementById('opo-descripcion').textContent = opo.descripcion || 'Sin descripción.';
+      document.getElementById('opo-descripcion').innerHTML = (typeof formatMentions === 'function' ? formatMentions(opo.descripcion) : escapeHTML(opo.descripcion)) || 'Sin descripción.';
 
       // Image
       if (opo.imagenUrl) {
@@ -433,7 +433,7 @@
       if (opo.tipo === 'convocatoria_obra') {
         if (opo.basesCondiciones) {
           document.getElementById('opo-bases-section').classList.remove('hidden');
-          document.getElementById('opo-basesCondiciones').textContent = opo.basesCondiciones;
+          document.getElementById('opo-basesCondiciones').innerHTML = typeof formatMentions === 'function' ? formatMentions(opo.basesCondiciones) : escapeHTML(opo.basesCondiciones);
         }
         if (opo.lugarExposicion) {
           document.getElementById('opo-lugar-section').classList.remove('hidden');
@@ -456,7 +456,7 @@
         document.getElementById('opo-productoraEmpresa').textContent = opo.productoraEmpresa || '-';
       } else if (opo.tipo === 'colaboracion') {
         document.getElementById('opo-nombreProyecto').textContent = opo.nombreProyecto || '-';
-        document.getElementById('opo-colaboracionPedida').textContent = opo.colaboracionPedida || '-';
+        document.getElementById('opo-colaboracionPedida').innerHTML = typeof formatMentions === 'function' ? formatMentions(opo.colaboracionPedida || '-') : escapeHTML(opo.colaboracionPedida || '-');
       }
 
       // Tags

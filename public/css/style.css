@@ -248,3 +248,36 @@ select:focus {
 .group:hover .animate-shimmer {
   animation: shimmer 1s ease-out;
 }
+
+/* Enlaces en descripciones y contenido de posteos / oportunidades / recursos / eventos */
+a.text-cyan-400,
+#opo-descripcion a,
+#opo-basesCondiciones a,
+#opo-colaboracionPedida a,
+#post-detail-container a.text-cyan-400,
+.post-content a,
+#event-content a,
+#resource-content a,
+#oportunidad-content a,
+#feed-container a.text-cyan-400 {
+  color: var(--color-cyan, #00f5ff) !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  word-break: break-all;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+a.text-cyan-400:hover,
+#opo-descripcion a:hover,
+#opo-basesCondiciones a:hover,
+#opo-colaboracionPedida a:hover,
+#post-detail-container a.text-cyan-400:hover,
+.post-content a:hover,
+#event-content a:hover,
+#resource-content a:hover,
+#oportunidad-content a:hover,
+#feed-container a.text-cyan-400:hover {
+  color: #7dd3fc !important;
+  opacity: 0.85;
+}

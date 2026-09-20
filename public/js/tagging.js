@@ -28,15 +28,22 @@ function formatMentions(text) {
 
   return segments.map(seg => {
     if (seg.type === 'url') {
-      const safeUrl = escapeHTML(seg.content);
-      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-      if (ytRegex.test(seg.content)) {
-        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600/30 transition-all font-bold text-[10px] uppercase my-1 tracking-wider"><i class="fab fa-youtube text-sm"></i> Ver en YouTube</a>`;
+      let rawUrl = seg.content;
+      let trailingPunct = '';
+      const punctMatch = rawUrl.match(/[.,:;!?)]+$/);
+      if (punctMatch) {
+        trailingPunct = punctMatch[0];
+        rawUrl = rawUrl.slice(0, rawUrl.length - trailingPunct.length);
       }
-      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all">${safeUrl}</a>`;
+      const safeUrl = escapeHTML(rawUrl);
+      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      if (ytRegex.test(rawUrl)) {
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600/30 transition-all font-bold text-[10px] uppercase my-1 tracking-wider"><i class="fab fa-youtube text-sm"></i> Ver en YouTube</a>${escapeHTML(trailingPunct)}`;
+      }
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 underline hover:text-cyan-300 break-all font-medium" style="color: #00f5ff !important; text-decoration: underline !important; cursor: pointer !important; pointer-events: auto !important;">${safeUrl}</a>${escapeHTML(trailingPunct)}`;
     }
     return escapeHTML(seg.content).replace(/@(\w+)/g, (_, username) =>
-      `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline">@${username}</a>`
+      `<a href="profile.html?user=${username}" class="text-cyan-400 font-bold hover:underline" style="color: #00f5ff !important; cursor: pointer !important; pointer-events: auto !important;">@${username}</a>`
     );
   }).join('');
 }

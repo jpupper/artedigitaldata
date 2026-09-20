@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.querySelector('script[src*="floating-chat.js"]')) return;
   const script = document.createElement('script');
   script.src = (window.CONFIG ? CONFIG.BASE : '') + '/js/floating-chat.js';
-  script.defer = true;
-  document.head.appendChild(script);
+  const target = document.head || document.documentElement;
+  if (target) target.appendChild(script);
 })();
 

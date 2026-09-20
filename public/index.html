@@ -92,7 +92,7 @@
       }
     }
 
-    /* Sol Central & Corona */
+    /* Logo Central con Aura Noise Outline */
     .sun-core-wrap {
       position: absolute;
       z-index: 20;
@@ -116,39 +116,28 @@
       }
     }
 
-    .sun-shader-canvas {
+    .logo-aura-canvas {
       position: absolute;
-      inset: -45px;
-      width: calc(100% + 90px);
-      height: calc(100% + 90px);
-      border-radius: 50%;
+      inset: -50px;
+      width: calc(100% + 100px);
+      height: calc(100% + 100px);
       pointer-events: none;
-      z-index: 2;
+      z-index: 1;
     }
 
-    .sun-disc {
+    .logo-pure-img {
       position: relative;
-      z-index: 5;
-      width: 100%;
-      height: 100%;
-      -webkit-mask-image: url("img/artedigital.png");
-      -webkit-mask-size: contain;
-      -webkit-mask-position: center;
-      -webkit-mask-repeat: no-repeat;
-      mask-image: url("img/artedigital.png");
-      mask-size: contain;
-      mask-position: center;
-      mask-repeat: no-repeat;
-      background: radial-gradient(circle at 35% 35%, rgba(255, 240, 180, 0.95), rgba(255, 145, 10, 0.88) 60%, rgba(210, 65, 0, 0.98) 100%);
-      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      z-index: 10;
+      width: 78%;
+      height: 78%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85));
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
+      user-select: none;
     }
-    .sun-disc:hover {
-      transform: scale(1.07);
+    .logo-pure-img:hover {
+      transform: scale(1.06);
     }
 
     /* Anillo Orbital */
@@ -156,8 +145,8 @@
       position: absolute;
       inset: 8px;
       border-radius: 50%;
-      border: 1.5px dashed rgba(255, 195, 80, 0.22);
-      box-shadow: 0 0 30px rgba(255, 175, 0, 0.08), inset 0 0 30px rgba(255, 175, 0, 0.08);
+      border: 1.5px dashed rgba(0, 242, 254, 0.22);
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.08), inset 0 0 30px rgba(224, 64, 251, 0.08);
       pointer-events: none;
     }
 
@@ -252,10 +241,10 @@
       <!-- Solar Orbit Container -->
       <div id="solar-system" class="sun-stage">
         
-        <!-- Sol (Center Logo + WebGL Sol Shader) -->
+        <!-- Logo con Aura Noise Outline (Detrás del Logo) -->
         <div class="sun-core-wrap">
-          <canvas id="sun-shader-canvas" class="sun-shader-canvas"></canvas>
-          <div class="sun-disc" role="img" aria-label="Arte Digital Data"></div>
+          <canvas id="logo-aura-canvas" class="logo-aura-canvas"></canvas>
+          <img src="img/artedigital.png" alt="Arte Digital Data" class="logo-pure-img" />
         </div>
 
         <!-- Anillo Orbital -->
@@ -343,10 +332,10 @@
   <script src="js/auth.js"></script>
   <script src="js/notifications.js"></script>
   <script>
-    async function initSunShader() {
-      const canvas = document.getElementById('sun-shader-canvas');
+    function initLogoAuraShader() {
+      const canvas = document.getElementById('logo-aura-canvas');
       if (!canvas) return;
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const gl = canvas.getContext('webgl', { alpha: true, antialias: true }) || canvas.getContext('experimental-webgl', { alpha: true });
       if (!gl) return;
 
       const vertShaderSrc = `
@@ -356,25 +345,88 @@
         }
       `;
 
-      let fragShaderSrc = '';
-      try {
-        const res = await fetch('shaders/sol.frag?v=' + Date.now());
-        if (res.ok) fragShaderSrc = await res.text();
-      } catch(e){}
-      if (!fragShaderSrc) {
-        try {
-          const res2 = await fetch('sol.frag?v=' + Date.now());
-          if (res2.ok) fragShaderSrc = await res2.text();
-        } catch(e){}
-      }
-      if (!fragShaderSrc) return;
+      const fragShaderSrc = `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+        float snoise(vec2 v) {
+          const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+          vec2 i  = floor(v + dot(v, C.yy) );
+          vec2 x0 = v -   i + dot(i, C.xx);
+          vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+          vec4 x12 = x0.xyxy + C.xxzz;
+          x12.xy -= i1;
+          i = mod289(i);
+          vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+          vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+          m = m*m ;
+          m = m*m ;
+          vec3 x = 2.0 * fract(p * C.www) - 1.0;
+          vec3 h = abs(x) - 0.5;
+          vec3 ox = floor(x + 0.5);
+          vec3 a0 = x - ox;
+          m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+          vec3 g;
+          g.x  = a0.x  * x0.x  + h.x  * x0.y;
+          g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+          return 130.0 * dot(m, g);
+        }
+
+        void main() {
+          vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+          float r = length(uv);
+          float angle = atan(uv.y, uv.x);
+
+          // Radio base del círculo alrededor del logo
+          float baseRadius = 0.355;
+
+          // Displace por noise en el perímetro del círculo
+          float t = u_time * 0.85;
+          vec2 noiseCoord1 = vec2(cos(angle) * 2.2 + t * 0.35, sin(angle) * 2.2 - t * 0.3);
+          vec2 noiseCoord2 = vec2(cos(angle) * 4.4 - t * 0.5, sin(angle) * 4.4 + t * 0.45);
+          float n1 = snoise(noiseCoord1);
+          float n2 = snoise(noiseCoord2) * 0.5;
+          float totalNoise = (n1 + n2) * 0.045;
+
+          float displacedRadius = baseRadius + totalNoise;
+
+          // Outline sin relleno
+          float dist = abs(r - displacedRadius);
+          float line = smoothstep(0.011, 0.001, dist);
+          float glow = smoothstep(0.065, 0.005, dist) * 0.55;
+          float aura = line + glow;
+
+          // Cortar el interior para que el aura esté puramente en el contorno y detrás
+          float innerMask = smoothstep(baseRadius - 0.06, baseRadius - 0.02, r);
+          aura *= innerMask;
+
+          // Colores de Arte Digital Data (Cyan #00f2fe, Magenta #e040fb, Violeta eléctrico)
+          vec3 cyan = vec3(0.0, 0.95, 1.0);
+          vec3 magenta = vec3(0.92, 0.22, 0.98);
+          vec3 violet = vec3(0.45, 0.15, 0.95);
+
+          float colorShift = sin(angle * 2.0 + u_time * 1.3) * 0.5 + 0.5;
+          vec3 color = mix(cyan, magenta, colorShift);
+          color = mix(color, violet, 0.28 * cos(angle * 3.0 - u_time * 0.7));
+
+          vec3 finalColor = color * (line * 1.6 + glow * 0.9);
+          float alpha = clamp(aura, 0.0, 1.0) * 0.95;
+
+          gl_FragColor = vec4(finalColor * alpha, alpha);
+        }
+      `;
 
       function createShader(gl, type, source) {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          console.warn('Shader compile error:', gl.getShaderInfoLog(shader));
+          console.warn('Aura shader error:', gl.getShaderInfoLog(shader));
           gl.deleteShader(shader);
           return null;
         }
@@ -410,8 +462,8 @@
       function resize() {
         const rect = canvas.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.round((rect.width || 300) * dpr);
-        canvas.height = Math.round((rect.height || 300) * dpr);
+        canvas.width = Math.round((rect.width || 340) * dpr);
+        canvas.height = Math.round((rect.height || 340) * dpr);
         gl.viewport(0, 0, canvas.width, canvas.height);
       }
       window.addEventListener('resize', resize);
@@ -425,7 +477,7 @@
       }
       requestAnimationFrame(render);
     }
-    document.addEventListener('DOMContentLoaded', initSunShader);
+    document.addEventListener('DOMContentLoaded', initLogoAuraShader);
   </script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>

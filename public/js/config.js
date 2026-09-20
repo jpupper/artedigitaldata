@@ -22,25 +22,16 @@ window.CONFIG = {
         return '';
     },
 
-    // Siempre conectar directamente al VPS seguro o al backend local activo
+    // En LOCAL y en producción se usan siempre los datos del VPS (posts, usuarios, eventos, etc.)
     get API_URL() {
-        if (window.location.port === '2494' || window.location.port === '2495') {
-            return window.location.origin + (this.BASE ? this.BASE : '') + '/api';
-        }
         return VPS_ORIGIN + '/artedigitaldata/api';
     },
 
     get SOCKET_URL() {
-        if (window.location.port === '2494' || window.location.port === '2495') {
-            return window.location.origin;
-        }
         return VPS_ORIGIN;
     },
 
     get SOCKET_PATH() {
-        if (window.location.port === '2494' || window.location.port === '2495') {
-            return '/socket.io';
-        }
         return '/artedigitaldata/socket.io';
     },
 
