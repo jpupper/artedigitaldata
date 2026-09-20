@@ -186,22 +186,22 @@
       box-shadow: 0 0 12px #e040fb;
     }
 
-    /* Pad Direccional y Botones Quick Action */
-    .quick-btn-grid {
+    /* Botones de Acción HUD */
+    .action-btn-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 14px;
     }
 
     .hud-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: rgba(255, 255, 255, 0.8);
-      padding: 8px;
+      padding: 9px;
       border-radius: 10px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -218,7 +218,6 @@
     }
 
     .hud-btn-primary {
-      grid-column: span 2;
       background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25));
       border-color: rgba(0, 242, 254, 0.4);
       color: #fff;
@@ -228,6 +227,18 @@
       background: linear-gradient(135deg, rgba(0, 242, 254, 0.45), rgba(224, 64, 251, 0.45));
       border-color: #e040fb;
       box-shadow: 0 0 16px rgba(224, 64, 251, 0.4);
+    }
+
+    .hud-btn-save {
+      background: linear-gradient(135deg, rgba(0, 230, 118, 0.3), rgba(0, 242, 254, 0.3));
+      border-color: #00e676;
+      color: #fff;
+    }
+
+    .hud-btn-save:hover {
+      background: linear-gradient(135deg, rgba(0, 230, 118, 0.5), rgba(0, 242, 254, 0.5));
+      border-color: #00e676;
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.4);
     }
 
     /* Botón flotante para Ocultar/Mostrar HUD */
@@ -258,31 +269,33 @@
       box-shadow: 0 0 20px rgba(224, 64, 251, 0.4);
     }
 
-    /* Badge de ayuda interactiva */
-    .gesture-hint {
+    /* Toast Notificación */
+    .toast-msg {
       position: fixed;
-      bottom: 24px;
+      bottom: 30px;
       left: 50%;
-      transform: translateX(-50%);
-      z-index: 90;
-      background: rgba(12, 16, 28, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
-      padding: 8px 18px;
+      transform: translateX(-50%) translateY(50px);
+      z-index: 200;
+      background: rgba(12, 16, 28, 0.9);
+      border: 1px solid #00e676;
+      color: #00e676;
+      padding: 10px 22px;
       border-radius: 9999px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 0 25px rgba(0, 230, 118, 0.3);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
-      gap: 12px;
-      pointer-events: none;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      gap: 8px;
     }
 
-    .gesture-hint span {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
@@ -352,37 +365,24 @@
       <input type="range" class="custom-range" id="range-rot" min="0" max="360" step="1" value="0">
     </div>
 
-    <!-- Botones de Presets y Acciones Rápida -->
-    <div class="quick-btn-grid">
-      <button class="hud-btn" onclick="zoomStep(-0.25)" title="Achicar">
-        <i class="fas fa-search-minus"></i> -25%
+    <!-- Botones de Acción (Guardar, Restablecer, Centrar) -->
+    <div class="action-btn-grid">
+      <button class="hud-btn hud-btn-save" onclick="saveTransform()" title="Guardar configuración actual de transformación">
+        <i class="fas fa-save"></i> Guardar
       </button>
-      <button class="hud-btn" onclick="zoomStep(0.25)" title="Agrandar">
-        <i class="fas fa-search-plus"></i> +25%
+      <button class="hud-btn hud-btn-primary" onclick="resetTransform()" title="Restablecer a valores por defecto">
+        <i class="fas fa-undo"></i> Reset
       </button>
-      <button class="hud-btn" onclick="setPresetScale(0.5)" title="50%">
-        0.5x
-      </button>
-      <button class="hud-btn" onclick="setPresetScale(2.0)" title="200%">
-        2.0x
-      </button>
-      
-      <button class="hud-btn hud-btn-primary" onclick="resetTransform()">
-        <i class="fas fa-undo"></i> Restablecer
-      </button>
-      <button class="hud-btn hud-btn-primary" onclick="centerLogo()">
+      <button class="hud-btn hud-btn-primary" onclick="centerLogo()" title="Centrar posición X e Y">
         <i class="fas fa-crosshairs"></i> Centrar
       </button>
     </div>
   </div>
 
-  <!-- Leyenda de Gestos e Instrucciones -->
-  <div class="gesture-hint">
-    <span><i class="fas fa-hand-rock text-cyan-400"></i> Arrastra para mover</span>
-    <span>•</span>
-    <span><i class="fas fa-mouse text-pink-400"></i> Scroll para zoom</span>
-    <span>•</span>
-    <span><i class="fas fa-mouse-pointer text-purple-400"></i> Doble-click para centrar</span>
+  <!-- Toast Notificación -->
+  <div class="toast-msg" id="toast-msg">
+    <i class="fas fa-check-circle"></i>
+    <span id="toast-text">Transformación guardada</span>
   </div>
 
   <!-- Scripts -->
@@ -442,10 +442,8 @@
           float r = length(uv);
           float angle = atan(uv.y, uv.x);
 
-          // Radio base del aura alrededor del logo
           float baseRadius = 0.355;
 
-          // Deformación con ruido
           float t = u_time * 0.85;
           vec2 noiseCoord1 = vec2(cos(angle) * 2.2 + t * 0.35, sin(angle) * 2.2 - t * 0.3);
           vec2 noiseCoord2 = vec2(cos(angle) * 4.4 - t * 0.5, sin(angle) * 4.4 + t * 0.45);
@@ -455,17 +453,14 @@
 
           float displacedRadius = baseRadius + totalNoise;
 
-          // Trazo y resplandor
           float dist = abs(r - displacedRadius);
           float line = smoothstep(0.011, 0.001, dist);
           float glow = smoothstep(0.065, 0.005, dist) * 0.55;
           float aura = line + glow;
 
-          // Máscara interna
           float innerMask = smoothstep(baseRadius - 0.06, baseRadius - 0.02, r);
           aura *= innerMask;
 
-          // Paleta cromática Arte Digital Data
           vec3 cyan = vec3(0.0, 0.95, 1.0);
           vec3 magenta = vec3(0.92, 0.22, 0.98);
           vec3 violet = vec3(0.45, 0.15, 0.95);
@@ -543,6 +538,8 @@
 
   <!-- Lógica de Control de Traslación, Escala e Interacción -->
   <script>
+    const STORAGE_KEY = 'artedigital_logo_transform';
+
     // Estado global de transformación
     const state = {
       scale: 1.0,
@@ -553,9 +550,10 @@
 
     // Referencias al DOM
     const logoBox = document.getElementById('logo-box');
-    const viewportStage = document.getElementById('viewport-stage');
     const hudPanel = document.getElementById('hud-panel');
     const toggleHudBtn = document.getElementById('toggle-hud-btn');
+    const toastMsg = document.getElementById('toast-msg');
+    const toastText = document.getElementById('toast-text');
 
     // Elementos de Entrada HUD
     const rangeScale = document.getElementById('range-scale');
@@ -569,11 +567,10 @@
     const valY = document.getElementById('val-y');
     const valRot = document.getElementById('val-rot');
 
-    // Aplicar transformación actual al CSS
+    // Aplicar transformación actual al CSS y al HUD
     function updateTransform() {
       logoBox.style.transform = `translate3d(${state.x}px, ${state.y}px, 0px) scale(${state.scale}) rotate(${state.rotation}deg)`;
       
-      // Actualizar HUD
       rangeScale.value = state.scale;
       valScale.textContent = `${state.scale.toFixed(2)}x`;
 
@@ -585,6 +582,48 @@
 
       rangeRot.value = state.rotation;
       valRot.textContent = `${Math.round(state.rotation)}°`;
+    }
+
+    // Mostrar Toast de Notificación
+    let toastTimer = null;
+    function showToast(message) {
+      if (toastText) toastText.textContent = message;
+      if (toastMsg) {
+        toastMsg.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastMsg.classList.remove('show');
+        }, 2500);
+      }
+    }
+
+    // Guardar transformación en LocalStorage
+    function saveTransform() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        showToast('¡Configuración de logo guardada exitosamente!');
+      } catch (err) {
+        console.error('Error guardando en localStorage:', err);
+      }
+    }
+
+    // Cargar transformación guardada de LocalStorage
+    function loadSavedTransform() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            if (typeof parsed.scale === 'number') state.scale = parsed.scale;
+            if (typeof parsed.x === 'number') state.x = parsed.x;
+            if (typeof parsed.y === 'number') state.y = parsed.y;
+            if (typeof parsed.rotation === 'number') state.rotation = parsed.rotation;
+            updateTransform();
+          }
+        }
+      } catch (err) {
+        console.warn('Error leyendo localStorage:', err);
+      }
     }
 
     // Eventos de los Sliders
@@ -608,29 +647,20 @@
       updateTransform();
     });
 
-    // Helper Presets
-    function zoomStep(delta) {
-      state.scale = Math.min(Math.max(0.1, state.scale + delta), 4.0);
-      updateTransform();
-    }
-
-    function setPresetScale(val) {
-      state.scale = val;
-      updateTransform();
-    }
-
     function resetTransform() {
       state.scale = 1.0;
       state.x = 0;
       state.y = 0;
       state.rotation = 0;
       updateTransform();
+      showToast('Transformación restablecida');
     }
 
     function centerLogo() {
       state.x = 0;
       state.y = 0;
       updateTransform();
+      showToast('Logo centrado en pantalla');
     }
 
     function toggleHUD() {
@@ -702,8 +732,8 @@
       updateTransform();
     }, { passive: false });
 
-    // Inicializar estado
-    updateTransform();
+    // Inicializar estado y cargar configuración guardada si existe
+    loadSavedTransform();
   </script>
 </body>
 

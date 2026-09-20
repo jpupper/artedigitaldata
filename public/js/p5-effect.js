@@ -552,8 +552,11 @@
       return;
     }
 
-    const wordFontSize = (newProps.fontSize !== undefined) ? Number(newProps.fontSize) : CFG.TEXT_SIZE;
-    const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : 4;
+    const existingBaseSize = flyerParticles[0] ? flyerParticles[0].baseSize : undefined;
+    const existingSpacing = flyerParticles[0] ? (flyerParticles[0].letterSpacingPx !== undefined ? flyerParticles[0].letterSpacingPx : undefined) : undefined;
+
+    const wordFontSize = (newProps.fontSize !== undefined) ? Number(newProps.fontSize) : (existingBaseSize !== undefined ? existingBaseSize : ((CFG.TEXT_SIZE_MAX !== undefined) ? Number(CFG.TEXT_SIZE_MAX) : (CFG.TEXT_SIZE || 36)));
+    const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : (existingSpacing !== undefined ? existingSpacing : ((CFG.LETTER_SPACING !== undefined) ? Number(CFG.LETTER_SPACING) : 4));
 
     // Calcular el centro geométrico real de las partículas existentes si no se especificó un nuevo X/Y
     let fallbackCenterX = viewW() / 2;
@@ -638,6 +641,7 @@
         p.fullWord = rawText;
         p.target.set(targetX, targetY);
         p.baseSize = wordFontSize;
+        p.letterSpacingPx = letterSpacingPx;
         p.letterIndex = i;
 
         if (newProps.formationMode) {

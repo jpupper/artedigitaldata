@@ -943,10 +943,17 @@ document.addEventListener('DOMContentLoaded', () => {
     timelineLayers.forEach(l => {
       if (!Array.isArray(l.clips)) return;
       l.clips.forEach(c => {
-        if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
+        if (c.id === matchingWord.id || c.flyerId === matchingWord.id || (matchingWord.text && c.text === matchingWord.text)) {
           c.color = matchingWord.color || c.color;
           c.letterColors = Array.isArray(matchingWord.letterColors) ? [...matchingWord.letterColors] : null;
           if (matchingWord.palette) c.palette = [...matchingWord.palette];
+          if (matchingWord.fontSize !== undefined) c.fontSize = matchingWord.fontSize;
+          if (matchingWord.letterSpacing !== undefined) c.letterSpacing = matchingWord.letterSpacing;
+          if (matchingWord.x !== undefined) c.x = matchingWord.x;
+          if (matchingWord.y !== undefined) c.y = matchingWord.y;
+          if (matchingWord.formationMode) c.formationMode = matchingWord.formationMode;
+          if (matchingWord.text) c.text = matchingWord.text;
+          if (matchingWord.word) c.word = matchingWord.word;
         }
       });
     });
@@ -1131,6 +1138,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === (window.activeFlyerWordId || selectedFlyerWordId));
       if (matchingWord) {
         matchingWord.formationMode = validMode;
+        if (Array.isArray(timelineLayers)) {
+          timelineLayers.forEach(l => {
+            if (!Array.isArray(l.clips)) return;
+            l.clips.forEach(c => {
+              if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
+                c.formationMode = validMode;
+              }
+            });
+          });
+        }
         window.updateFlyerWordParticles(window.activeFlyerWordId, { 
           x: matchingWord.x,
           y: matchingWord.y,
@@ -1171,13 +1188,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectFlyerWord(targetId, targetLetterIndex = null) {
     if (!targetId || !flyerWords || flyerWords.length === 0) return;
-    const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId);
+    const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId || (typeof w === 'object' && w.text === targetId));
     if (!targetWord) return;
 
     selectedFlyerWordId = targetWord.id || targetId;
     window.activeFlyerWordId = selectedFlyerWordId;
     selectedClipId = selectedFlyerWordId;
     selectedFlyerLetterIndex = targetLetterIndex;
+
+    syncWordColorsToTimeline(targetWord);
 
     const wordTxt = (typeof targetWord === 'object' && (targetWord.text || targetWord.word)) ? (targetWord.text || targetWord.word) : String(targetWord);
 
@@ -1193,8 +1212,21 @@ document.addEventListener('DOMContentLoaded', () => {
       setFormationMode(targetWord.formationMode, false);
     }
 
+    if (window.updateFlyerWordParticles) {
+      window.updateFlyerWordParticles(targetWord.id, {
+        fontSize: targetWord.fontSize,
+        letterSpacing: targetWord.letterSpacing,
+        x: targetWord.x,
+        y: targetWord.y,
+        color: targetWord.color,
+        letterColors: targetWord.letterColors,
+        formationMode: targetWord.formationMode,
+        visible: true
+      });
+    }
+
     if (Array.isArray(timelineLayers)) {
-      const matchingLayer = timelineLayers.find(l => l.id === targetId || l.word === wordTxt || (l.clips && l.clips.some(c => c.id === targetId)));
+      const matchingLayer = timelineLayers.find(l => l.id === targetId || l.word === wordTxt || (l.clips && l.clips.some(c => c.id === targetId || c.text === wordTxt)));
       if (matchingLayer) {
         selectedLayerId = matchingLayer.id;
         renderTimelineTracks();
@@ -1585,10 +1617,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ? parentLayer.keyframes
         : null;
 
-    const fallbackX = (targetObj && targetObj.x !== undefined) ? targetObj.x : (parentLayer.x !== undefined ? parentLayer.x : Math.round(window.innerWidth / 2));
-    const fallbackY = (targetObj && targetObj.y !== undefined) ? targetObj.y : (parentLayer.y !== undefined ? parentLayer.y : Math.round(window.innerHeight / 2));
-    const fallbackFontSize = (targetObj && targetObj.fontSize !== undefined) ? targetObj.fontSize : (parentLayer.fontSize !== undefined ? parentLayer.fontSize : 36);
-    const fallbackSpacing = (targetObj && targetObj.letterSpacing !== undefined) ? targetObj.letterSpacing : (parentLayer.letterSpacing !== undefined ? parentLayer.letterSpacing : 4);
+    const matchingFw = targetObj ? flyerWords.find(fw => typeof fw === 'object' && (fw.id === targetObj.id || fw.id === targetObj.flyerId || (targetObj.text && fw.text === targetObj.text))) : null;
+
+    const fallbackX = (targetObj && targetObj.x !== undefined) ? targetObj.x : (matchingFw && matchingFw.x !== undefined ? matchingFw.x : (parentLayer.x !== undefined ? parentLayer.x : Math.round(window.innerWidth / 2)));
+    const fallbackY = (targetObj && targetObj.y !== undefined) ? targetObj.y : (matchingFw && matchingFw.y !== undefined ? matchingFw.y : (parentLayer.y !== undefined ? parentLayer.y : Math.round(window.innerHeight / 2)));
+    const fallbackFontSize = (targetObj && targetObj.fontSize !== undefined) ? targetObj.fontSize : (matchingFw && matchingFw.fontSize !== undefined ? matchingFw.fontSize : (parentLayer.fontSize !== undefined ? parentLayer.fontSize : 36));
+    const fallbackSpacing = (targetObj && targetObj.letterSpacing !== undefined) ? targetObj.letterSpacing : (matchingFw && matchingFw.letterSpacing !== undefined ? matchingFw.letterSpacing : (parentLayer.letterSpacing !== undefined ? parentLayer.letterSpacing : 4));
 
     if (!kfs || kfs.length === 0) {
       return {
@@ -1665,6 +1699,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (props.formationMode) {
       setFormationMode(props.formationMode, false);
     }
+
+    if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+      const patch = {};
+      if (props.fontSize !== undefined) { patch.TEXT_SIZE_MAX = props.fontSize; patch.TEXT_SIZE = props.fontSize; }
+      if (props.letterSpacing !== undefined) { patch.LETTER_SPACING = props.letterSpacing; }
+      if (props.x !== undefined) { patch.POS_X = props.x; }
+      if (props.y !== undefined) { patch.POS_Y = props.y; }
+      window.ParticlesConfig.set(patch);
+    }
   }
 
   function evaluateTimelineAtTime(t) {
@@ -1693,7 +1736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         props.text = clipObj.text || clipObj.word || 'PALABRA';
 
-        if (clipObj.id === selectedClipId || clipObj.id === window.activeFlyerWordId) {
+        if (hasTimeline && isTimelinePlaying && (clipObj.id === selectedClipId || clipObj.id === window.activeFlyerWordId)) {
           if (props.visible) {
             updateUIForSelectedLayerProps(props);
           }
@@ -2743,6 +2786,21 @@ document.addEventListener('DOMContentLoaded', () => {
         matchingWord.y = newY;
         matchingWord.fontSize = newFontSize;
         matchingWord.letterSpacing = newSpacing;
+
+        // Sincronizar también en timelineLayers clips
+        if (Array.isArray(timelineLayers)) {
+          timelineLayers.forEach(l => {
+            if (!Array.isArray(l.clips)) return;
+            l.clips.forEach(c => {
+              if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
+                c.x = newX;
+                c.y = newY;
+                c.fontSize = newFontSize;
+                c.letterSpacing = newSpacing;
+              }
+            });
+          });
+        }
       }
 
       window.updateFlyerWordParticles(window.activeFlyerWordId, {
@@ -2905,9 +2963,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Si hace click en la pastilla, probar esa palabra en el centro
+      // Si hace click en la pastilla, probar esa palabra o seleccionarla en Flyer Mode
       pill.addEventListener('click', () => {
-        if (window.ParticlesConfig && window.ParticlesConfig.spawnWordAt) {
+        if (window.appMode === 'FLYERMODE' || (window.ParticlesConfig && window.ParticlesConfig.get().FLYER_MODE_ENABLED)) {
+          const existing = flyerWords.find(fw => typeof fw === 'object' && (fw.text === w || fw.word === w));
+          if (existing) {
+            selectFlyerWord(existing.id);
+          } else {
+            addFlyerWord(w);
+          }
+        } else if (window.ParticlesConfig && window.ParticlesConfig.spawnWordAt) {
           window.ParticlesConfig.spawnWordAt(w, window.innerWidth / 2, window.innerHeight / 2);
         }
       });
@@ -3604,6 +3669,29 @@ document.addEventListener('DOMContentLoaded', () => {
       currentConfig.CHAR_BG_OPACITY = parseFloat(charBgOpacityInput.value);
     }
 
+    // Sincronización completa entre flyerWords y timelineLayers antes de guardar
+    if (Array.isArray(flyerWords) && Array.isArray(timelineLayers)) {
+      flyerWords.forEach(w => {
+        timelineLayers.forEach(l => {
+          if (!Array.isArray(l.clips)) return;
+          l.clips.forEach(c => {
+            if (c.id === w.id || c.flyerId === w.id || c.text === w.text || c.word === w.word) {
+              if (w.x !== undefined) c.x = w.x;
+              if (w.y !== undefined) c.y = w.y;
+              if (w.fontSize !== undefined) c.fontSize = w.fontSize;
+              if (w.letterSpacing !== undefined) c.letterSpacing = w.letterSpacing;
+              if (w.formationMode) c.formationMode = w.formationMode;
+              if (w.color) c.color = w.color;
+              if (w.letterColors) c.letterColors = Array.isArray(w.letterColors) ? [...w.letterColors] : null;
+              if (w.palette) c.palette = Array.isArray(w.palette) ? [...w.palette] : null;
+              if (w.text) c.text = w.text;
+              if (w.word) c.word = w.word;
+            }
+          });
+        });
+      });
+    }
+
     currentConfig.FLYER_WORDS = [...flyerWords];
     currentConfig.TIMELINE_LAYERS = [...timelineLayers];
 
@@ -3777,17 +3865,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Cargar capas de timeline o reconstruirlas si están vacías
         if (Array.isArray(effect.timelineLayers) && effect.timelineLayers.length > 0 && effect.timelineLayers.some(l => l.clips && l.clips.length > 0)) {
           timelineLayers = effect.timelineLayers;
-          // Sincronizar texto y modo de los clips con flyerWords para mantener coherencia absoluta
+          // Sincronizar dimensiones, posición, tipografía y colores de los clips con flyerWords para mantener coherencia absoluta
           timelineLayers.forEach(l => {
             if (Array.isArray(l.clips)) {
               l.clips.forEach(c => {
-                const matchingFw = flyerWords.find(fw => fw.id === c.id || fw.id === c.flyerId);
+                const matchingFw = flyerWords.find(fw => fw.id === c.id || fw.id === c.flyerId || fw.text === c.text);
                 if (matchingFw) {
                   c.text = matchingFw.text;
                   c.word = matchingFw.word;
+                  if (matchingFw.x !== undefined) c.x = matchingFw.x;
+                  if (matchingFw.y !== undefined) c.y = matchingFw.y;
+                  if (matchingFw.fontSize !== undefined) c.fontSize = matchingFw.fontSize;
+                  if (matchingFw.letterSpacing !== undefined) c.letterSpacing = matchingFw.letterSpacing;
                   if (matchingFw.formationMode) c.formationMode = matchingFw.formationMode;
                   if (matchingFw.color) c.color = matchingFw.color;
                   if (matchingFw.letterColors) c.letterColors = matchingFw.letterColors;
+                  if (matchingFw.palette) c.palette = matchingFw.palette;
                 }
               });
             }
