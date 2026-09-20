@@ -478,7 +478,31 @@
       }
       requestAnimationFrame(render);
     }
-    document.addEventListener('DOMContentLoaded', initLogoAuraShader);
+    document.addEventListener('DOMContentLoaded', () => {
+      initLogoAuraShader();
+
+      // Cargar configuración global del logo desde logoconfig.json / Servidor
+      (async function applySavedLogoConfig() {
+        const logoWrap = document.querySelector('.sun-core-wrap');
+        if (!logoWrap) return;
+        try {
+          const t = Date.now();
+          const res = await fetch('logoconfig.json?t=' + t).catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+              const scale = typeof data.scale === 'number' ? data.scale : 1.0;
+              const x = typeof data.x === 'number' ? data.x : 0;
+              const y = typeof data.y === 'number' ? data.y : 0;
+              const rot = typeof data.rotation === 'number' ? data.rotation : 0;
+              if (scale !== 1.0 || x !== 0 || y !== 0 || rot !== 0) {
+                logoWrap.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${scale}) rotate(${rot}deg)`;
+              }
+            }
+          }
+        } catch (e) {}
+      })();
+    });
   </script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>

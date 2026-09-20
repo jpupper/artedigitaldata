@@ -597,32 +597,99 @@
       }
     }
 
-    // Guardar transformación en LocalStorage
-    function saveTransform() {
+    function getLogoApiUrl() {
+      if (window.CONFIG && window.CONFIG.API_URL) return window.CONFIG.API_URL;
+      const path = window.location.pathname;
+      if (path.includes('/artedigitaldata')) {
+        return '/artedigitaldata/api';
+      }
+      return '/api';
+    }
+
+    // Guardar transformación en Servidor (logoconfig.json y DB)
+    async function saveTransform() {
+      const payload = {
+        scale: state.scale,
+        x: state.x,
+        y: state.y,
+        rotation: state.rotation
+      };
+
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        showToast('¡Configuración de logo guardada exitosamente!');
+      } catch (e) {}
+
+      try {
+        const apiBase = getLogoApiUrl();
+        let res = await fetch(`${apiBase}/public/logo-config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => null);
+
+        if (!res || !res.ok) {
+          const altBase = apiBase.includes('/artedigitaldata') ? '/api' : '/artedigitaldata/api';
+          res = await fetch(`${altBase}/public/logo-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => null);
+        }
+
+        if (res && res.ok) {
+          showToast('¡Configuración guardada en logoconfig.json y Servidor!');
+        } else {
+          showToast('Configuración guardada en almacenamiento local');
+        }
       } catch (err) {
-        console.error('Error guardando en localStorage:', err);
+        console.error('Error al guardar transformación:', err);
+        showToast('Guardado en caché local');
       }
     }
 
-    // Cargar transformación guardada de LocalStorage
-    function loadSavedTransform() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object') {
-            if (typeof parsed.scale === 'number') state.scale = parsed.scale;
-            if (typeof parsed.x === 'number') state.x = parsed.x;
-            if (typeof parsed.y === 'number') state.y = parsed.y;
-            if (typeof parsed.rotation === 'number') state.rotation = parsed.rotation;
-            updateTransform();
+    // Cargar transformación guardada desde Servidor (logoconfig.json)
+    async function loadSavedTransform() {
+      let loaded = false;
+      const t = Date.now();
+      const urlsToTry = [
+        'logoconfig.json?t=' + t,
+        './logoconfig.json?t=' + t,
+        '/artedigitaldata/logoconfig.json?t=' + t,
+        getLogoApiUrl() + '/public/logo-config?t=' + t
+      ];
+
+      for (const url of urlsToTry) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+              if (typeof data.scale === 'number') state.scale = data.scale;
+              if (typeof data.x === 'number') state.x = data.x;
+              if (typeof data.y === 'number') state.y = data.y;
+              if (typeof data.rotation === 'number') state.rotation = data.rotation;
+              updateTransform();
+              loaded = true;
+              break;
+            }
           }
-        }
-      } catch (err) {
-        console.warn('Error leyendo localStorage:', err);
+        } catch (e) {}
+      }
+
+      if (!loaded) {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object') {
+              if (typeof parsed.scale === 'number') state.scale = parsed.scale;
+              if (typeof parsed.x === 'number') state.x = parsed.x;
+              if (typeof parsed.y === 'number') state.y = parsed.y;
+              if (typeof parsed.rotation === 'number') state.rotation = parsed.rotation;
+              updateTransform();
+            }
+          }
+        } catch (e) {}
       }
     }
 

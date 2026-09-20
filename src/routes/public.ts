@@ -531,17 +531,47 @@ router.delete('/particles-words/:word', authMiddleware, adminMiddleware, async (
   }
 });
 
-// GET /public/generative-shaders — lista de archivos .frag en /shaders/generative
-router.get('/generative-shaders', async (_req: Request, res: Response) => {
+// GET /public/logo-config — Obtener configuración del logo (logoconfig.json / DB)
+router.get('/logo-config', async (_req: Request, res: Response) => {
   try {
-    const shadersDir = path.join(__dirname, '../../public/shaders/generative');
-    if (fs.existsSync(shadersDir)) {
-      const files = fs.readdirSync(shadersDir).filter(file => file.endsWith('.frag'));
-      return res.json({ shaders: files });
+    const configPath = path.join(__dirname, '../../public/logoconfig.json');
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf-8');
+      return res.json(JSON.parse(data));
     }
-    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
+    const dbConfig = await getBotConfig('logo_config', { scale: 1.0, x: 0, y: 0, rotation: 0 });
+    return res.json(dbConfig);
   } catch (err: any) {
-    return res.json({ shaders: ['noise.frag', 'radial.frag', 'flower.frag', 'starnest.frag'] });
+    return res.json({ scale: 1.0, x: 0, y: 0, rotation: 0 });
+  }
+});
+
+// POST /public/logo-config — Guardar configuración del logo (logoconfig.json y DB)
+router.post('/logo-config', async (req: Request, res: Response) => {
+  try {
+    const { scale, x, y, rotation } = req.body;
+    const newConfig = {
+      scale: typeof scale === 'number' ? scale : 1.0,
+      x: typeof x === 'number' ? x : 0,
+      y: typeof y === 'number' ? y : 0,
+      rotation: typeof rotation === 'number' ? rotation : 0,
+      updatedAt: new Date().toISOString()
+    };
+
+    // 1. Guardar en DB BotConfig
+    await setBotConfig('logo_config', newConfig);
+
+    // 2. Escribir en public/logoconfig.json y raíz
+    const configPath = path.join(__dirname, '../../public/logoconfig.json');
+    const rootConfigPath = path.join(__dirname, '../../logoconfig.json');
+    const jsonStr = JSON.stringify(newConfig, null, 2);
+
+    fs.writeFileSync(configPath, jsonStr, 'utf-8');
+    try { fs.writeFileSync(rootConfigPath, jsonStr, 'utf-8'); } catch (e) {}
+
+    return res.json({ success: true, message: 'Configuración de logo guardada en el servidor', config: newConfig });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
