@@ -61,6 +61,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/generative-avatar.js"></script>
   <script src="js/header.js"></script>
   <script>
     let allArtists = [];
@@ -159,11 +160,16 @@
       if (eventos) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-calendar-alt text-[9px]"></i> ${eventos} ${eventos === 1 ? 'EVENTO' : 'EVENTOS'}</span>`;
 
       // Avatar
+      // Avatar: foto del usuario o su espiral generativa única
+      const spiralAvatar = (window.GenerativeAvatar && window.GenerativeAvatar.dataUri)
+        ? window.GenerativeAvatar.dataUri(artist.username || displayName)
+        : '';
       let avatarHTML;
       if (artist.avatar) {
         avatarHTML = `<img src="${sanitizeUrl(avatarUrl)}" alt="${displayName}" class="artist-avatar" loading="lazy"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div class="avatar-placeholder hidden"><i class="fas fa-user-astronaut"></i></div>`;
+          onerror="this.onerror=null;this.src='${spiralAvatar}'">`;
+      } else if (spiralAvatar) {
+        avatarHTML = `<img src="${spiralAvatar}" alt="${displayName}" class="artist-avatar" loading="lazy" title="Avatar generativo de @${username}">`;
       } else {
         avatarHTML = `<div class="avatar-placeholder"><i class="fas fa-user-astronaut"></i></div>`;
       }

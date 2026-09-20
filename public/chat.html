@@ -13,7 +13,7 @@
 <body class="min-h-screen">
   <div id="app-header"></div>
 
-  <main class="pt-20 pb-4 max-w-7xl mx-auto px-4 h-screen flex flex-col">
+  <main class="relative z-10 pt-20 pb-4 max-w-7xl mx-auto px-4 h-screen flex flex-col">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-black text-white">
         <i class="fas fa-comments text-[var(--color-magenta)] mr-2"></i>Chat en Vivo
@@ -22,7 +22,7 @@
         <button onclick="showUsersModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all font-bold">
           <i class="fas fa-users mr-1"></i>USERS
         </button>
-        <button id="new-room-btn" onclick="showCreateRoom()" class="btn-primary px-4 py-2 rounded-xl text-xs sm:text-sm transition-all hover:scale-105 font-bold">
+        <button id="new-room-btn" onclick="showCreateRoom()" class="hidden btn-primary px-4 py-2 rounded-xl text-xs sm:text-sm transition-all hover:scale-105 font-bold">
           <i class="fas fa-plus mr-1"></i>Nueva Sala
         </button>
       </div>
@@ -31,16 +31,16 @@
     <div class="flex-1 flex gap-4 min-h-0 w-full overflow-hidden">
       <div id="rooms-panel" class="w-full md:w-80 shrink-0 rounded-2xl border border-cyan-500/20 overflow-hidden flex flex-col card-cyber bg-[#0d0d12]">
         <div class="flex border-b border-white/10">
-          <button onclick="setTab('rooms')" id="tab-rooms" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-cyan-500 text-cyan-500">
-            Salas
-          </button>
-          <button onclick="setTab('private')" id="tab-private" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-transparent text-gray-500 hover:text-white">
+          <button onclick="setTab('private')" id="tab-private" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-cyan-500 text-cyan-500">
             Mensajes
+          </button>
+          <button onclick="setTab('rooms')" id="tab-rooms" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-transparent text-gray-500 hover:text-white">
+            Salas
           </button>
         </div>
         
-        <!-- Search User Area (shwon on private tab) -->
-        <div id="search-container" class="hidden p-3 border-b border-white/10 bg-white/5 relative">
+        <!-- Search User Area (shown on private tab, abierto por defecto) -->
+        <div id="search-container" class="p-3 border-b border-white/10 bg-white/5 relative">
           <div class="relative">
             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
             <input type="text" id="user-search" placeholder="Buscar usuario..." 
@@ -127,11 +127,12 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
+  <script src="js/generative-avatar.js"></script>
   <script>
     // Variables globales para que las funciones fuera de DOMContentLoaded puedan acceder
     let socket;
     let currentRoomId = null;
-    let currentTab = 'rooms'; // 'rooms' or 'private'
+    let currentTab = 'private'; // 'private' (Mensajes, abierto por defecto) o 'rooms'
     let userSearchCache = {};
     let privateChatsCache = {};
     let roomsCache = {};
@@ -144,7 +145,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      await loadRooms();
+      // Por defecto abrimos la pestaña de Mensajes (chats privados); Salas queda como segunda
+      if (isLoggedIn()) {
+        setTab('private');
+      } else {
+        await loadRooms();
+      }
 
       if (isLoggedIn()) {
         socket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH });
@@ -234,7 +240,7 @@
           users.forEach(u => { userSearchCache[u._id] = u; });
           results.innerHTML = users.map(u => `
             <button onclick="startPrivateChatById('${u._id}')" class="w-full flex items-center gap-3 p-3 hover:bg-white/10 transition-all text-left border-b border-white/5 last:border-0">
-              <img src="${sanitizeUrl(u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(u.username)}')" class="w-8 h-8 rounded-full border border-cyan-500/30 object-cover shrink-0">
+              ${window.GenerativeAvatar ? window.GenerativeAvatar.markup(u, { className: 'w-8 h-8 rounded-full border border-cyan-500/30 object-cover shrink-0' }) : `<img src="${sanitizeUrl(u.avatar || '')}" class="w-8 h-8 rounded-full border border-cyan-500/30 object-cover shrink-0">`}
               <span class="text-sm text-white font-medium truncate">${escapeHTML(u.displayName || u.username)}</span>
             </button>
           `).join('');
@@ -286,12 +292,11 @@
         list.innerHTML = chats.map(c => {
           const otherUser = c.participants.find(p => p._id !== user.id);
           const name = otherUser?.username || 'Usuario';
-          const avatar = otherUser?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + name;
           privateChatsCache[c._id] = { name };
           return `
             <button onclick="joinPrivateRoom('${c._id}')"
               class="room-btn w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 transition-all flex items-center gap-3 ${currentRoomId === c._id ? 'border border-cyan-500/30 bg-cyan-500/10' : ''}">
-              <img src="${sanitizeUrl(avatar)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(name)}')" class="w-10 h-10 rounded-full border border-white/10 object-cover shrink-0">
+              ${window.GenerativeAvatar ? window.GenerativeAvatar.markup({ username: name, avatar: otherUser?.avatar }, { className: 'w-10 h-10 rounded-full border border-white/10 object-cover shrink-0' }) : `<img src="${sanitizeUrl(otherUser?.avatar || '')}" class="w-10 h-10 rounded-full border border-white/10 object-cover shrink-0">`}
               <div class="flex-1 min-w-0">
                 <div class="font-medium text-white text-sm truncate">${escapeHTML(name)}</div>
                 <div class="text-xs text-gray-500 truncate mt-0.5">Mensaje privado</div>
@@ -385,7 +390,6 @@
       const container = document.getElementById('messages-container');
       const isMe = msg.sender?._id === user?.id || msg.sender === user?.id || msg.sender?._id === user?._id;
       const senderName = msg.sender?.username || 'Anónimo';
-      const senderAvatar = msg.sender?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${senderName}`;
       const time = new Date(msg.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
       const div = document.createElement('div');
@@ -394,7 +398,7 @@
       div.innerHTML = `
         <div class="flex-1 w-full max-w-[98%] rounded-[2rem] px-6 py-4 shadow-2xl transition-all hover:scale-[1.01] ${isMe ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-[#1a1a2e] border border-white/5'}">
           <div class="flex items-center gap-3 mb-3 border-b border-white/5 pb-2 ${isMe ? 'flex-row-reverse' : ''}">
-            <img src="${sanitizeUrl(senderAvatar)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(senderName)}')" class="w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover">
+            ${window.GenerativeAvatar ? window.GenerativeAvatar.markup({ username: senderName, avatar: msg.sender?.avatar }, { className: 'w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover' }) : `<img src="${sanitizeUrl(msg.sender?.avatar || '')}" class="w-8 h-8 rounded-xl border border-white/10 shadow-lg object-cover">`}
             <span class="text-sm font-black uppercase tracking-tighter ${isMe ? 'text-cyan-400' : 'text-magenta-400'}">
               ${isMe ? 'Tú' : escapeHTML(senderName)}
             </span>
@@ -435,9 +439,7 @@
           allUsersCache[u._id] = u;
           return `
           <div class="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-cyan-500/30 transition-all group">
-            <img src="${sanitizeUrl(u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username)}"
-                 onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(u.username)}')"
-                 class="w-12 h-12 rounded-xl object-cover border border-white/10 group-hover:border-cyan-500/50 transition-all">
+            ${window.GenerativeAvatar ? window.GenerativeAvatar.markup(u, { className: 'w-12 h-12 rounded-xl object-cover border border-white/10 group-hover:border-cyan-500/50 transition-all' }) : `<img src="${sanitizeUrl(u.avatar || '')}" class="w-12 h-12 rounded-xl object-cover border border-white/10">`}
             <div class="flex-1 min-w-0">
               <h4 class="font-bold text-white truncate">${escapeHTML(u.displayName || u.username)}</h4>
               <p class="text-[10px] text-gray-500 truncate">@${escapeHTML(u.username)}</p>
@@ -473,5 +475,8 @@
       await startPrivateChat(u._id, u.username);
     }
   </script>
+
+  <!-- Fondo generativo ASCII (Shader GLSL) detrás de la interfaz de chat -->
+  <script src="js/ascii-shader-bg.js"></script>
 </body>
 </html>

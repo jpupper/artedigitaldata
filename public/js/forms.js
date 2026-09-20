@@ -370,7 +370,7 @@ window.addParticipantChip = (prefix, user) => {
   chip.dataset.username = user.username;
   chip.innerHTML = `
     <div class="w-5 h-5 rounded-full bg-magenta-500/20 flex items-center justify-center text-[9px] font-bold text-magenta-400 overflow-hidden">
-      ${user.avatar ? `<img src="${user.avatar}" class="w-full h-full object-cover">` : (user.username || '?')[0].toUpperCase()}
+      ${window.GenerativeAvatar ? window.GenerativeAvatar.markup(user, { className: 'w-full h-full object-cover' }) : (user.avatar ? `<img src="${user.avatar}" class="w-full h-full object-cover">` : (user.username || '?')[0].toUpperCase())}
     </div>
     <span class="font-bold text-xs">${user.username}</span>
     <button type="button" onclick="removeParticipantChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>

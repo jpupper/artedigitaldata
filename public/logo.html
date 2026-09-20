@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Arte Digital Data - Logo Interactive</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+  <style>
+    /* Canvas de p5 de fondo */
+    #p5-canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Stage principal sin overflow */
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    /* Contenedor central del viewport del Logo */
+    .viewport-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Transform Wrapper del Logo */
+    .logo-transform-box {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      will-change: transform;
+      transform-origin: center center;
+      transition: transform 0.05s linear;
+    }
+
+    .logo-transform-box:active {
+      cursor: grabbing;
+    }
+
+    /* Aura WebGL Canvas */
+    .logo-aura-canvas {
+      position: absolute;
+      inset: -60px;
+      width: calc(100% + 120px);
+      height: calc(100% + 120px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Imagen pura del Logo */
+    .logo-pure-img {
+      position: relative;
+      z-index: 10;
+      width: 82%;
+      height: 82%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 22px rgba(0, 0, 0, 0.9));
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* HUD / Panel de Control Flotante */
+    .hud-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      width: 320px;
+      background: rgba(12, 16, 28, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 242, 254, 0.15);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hud-panel.minimized {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-20px) scale(0.95);
+    }
+
+    /* Encabezado HUD */
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hud-title {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #00f2fe 0%, #e040fb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Grupos de Control */
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 600;
+    }
+
+    .control-value {
+      font-family: monospace;
+      color: #00f2fe;
+      background: rgba(0, 242, 254, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    /* Sliders personalizados */
+    .custom-range {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+      transition: background 0.2s;
+    }
+
+    .custom-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #00f2fe;
+      box-shadow: 0 0 10px #00f2fe;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .custom-range::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #e040fb;
+      box-shadow: 0 0 12px #e040fb;
+    }
+
+    /* Pad Direccional y Botones Quick Action */
+    .quick-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .hud-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .hud-btn:hover {
+      background: rgba(0, 242, 254, 0.2);
+      border-color: #00f2fe;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    .hud-btn-primary {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25));
+      border-color: rgba(0, 242, 254, 0.4);
+      color: #fff;
+    }
+
+    .hud-btn-primary:hover {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.45), rgba(224, 64, 251, 0.45));
+      border-color: #e040fb;
+      box-shadow: 0 0 16px rgba(224, 64, 251, 0.4);
+    }
+
+    /* Botón flotante para Ocultar/Mostrar HUD */
+    .toggle-hud-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 101;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(12, 16, 28, 0.85);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: #00f2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .toggle-hud-btn:hover {
+      transform: scale(1.1);
+      border-color: #e040fb;
+      color: #e040fb;
+      box-shadow: 0 0 20px rgba(224, 64, 251, 0.4);
+    }
+
+    /* Badge de ayuda interactiva */
+    .gesture-hint {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 90;
+      background: rgba(12, 16, 28, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .gesture-hint span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Canvas para el Efecto de Fondo de Letras y Partículas p5 -->
+  <div id="p5-canvas"></div>
+
+  <!-- Viewport Stage del Logo -->
+  <div class="viewport-stage" id="viewport-stage">
+    <div class="logo-transform-box" id="logo-box">
+      <canvas id="logo-aura-canvas" class="logo-aura-canvas"></canvas>
+      <img src="img/artedigital.png" alt="Arte Digital Data" class="logo-pure-img" />
+    </div>
+  </div>
+
+  <!-- Botón alternador del HUD -->
+  <button class="toggle-hud-btn" id="toggle-hud-btn" title="Mostrar/Ocultar Controles (H)">
+    <i class="fas fa-sliders-h" id="hud-icon"></i>
+  </button>
+
+  <!-- Panel de Control HUD -->
+  <div class="hud-panel" id="hud-panel">
+    <div class="hud-header">
+      <div class="hud-title">
+        <i class="fas fa-compass"></i>
+        <span>Transformación Logo</span>
+      </div>
+      <button class="hud-btn" style="padding: 4px 8px; border-radius: 6px;" onclick="toggleHUD()" title="Cerrar panel">
+        <i class="fas fa-times text-xs"></i>
+      </button>
+    </div>
+
+    <!-- Escala (Zoom) -->
+    <div class="control-group">
+      <div class="control-label-row">
+        <span><i class="fas fa-expand-alt mr-1 text-cyan-400"></i>Escala (Zoom)</span>
+        <span class="control-value" id="val-scale">1.00x</span>
+      </div>
+      <input type="range" class="custom-range" id="range-scale" min="0.1" max="4.0" step="0.01" value="1.0">
+    </div>
+
+    <!-- Posición X -->
+    <div class="control-group">
+      <div class="control-label-row">
+        <span><i class="fas fa-arrows-alt-h mr-1 text-pink-400"></i>Posición X (Horizontal)</span>
+        <span class="control-value" id="val-x">0 px</span>
+      </div>
+      <input type="range" class="custom-range" id="range-x" min="-1000" max="1000" step="1" value="0">
+    </div>
+
+    <!-- Posición Y -->
+    <div class="control-group">
+      <div class="control-label-row">
+        <span><i class="fas fa-arrows-alt-v mr-1 text-purple-400"></i>Posición Y (Vertical)</span>
+        <span class="control-value" id="val-y">0 px</span>
+      </div>
+      <input type="range" class="custom-range" id="range-y" min="-1000" max="1000" step="1" value="0">
+    </div>
+
+    <!-- Rotación -->
+    <div class="control-group">
+      <div class="control-label-row">
+        <span><i class="fas fa-sync-alt mr-1 text-emerald-400"></i>Rotación</span>
+        <span class="control-value" id="val-rot">0°</span>
+      </div>
+      <input type="range" class="custom-range" id="range-rot" min="0" max="360" step="1" value="0">
+    </div>
+
+    <!-- Botones de Presets y Acciones Rápida -->
+    <div class="quick-btn-grid">
+      <button class="hud-btn" onclick="zoomStep(-0.25)" title="Achicar">
+        <i class="fas fa-search-minus"></i> -25%
+      </button>
+      <button class="hud-btn" onclick="zoomStep(0.25)" title="Agrandar">
+        <i class="fas fa-search-plus"></i> +25%
+      </button>
+      <button class="hud-btn" onclick="setPresetScale(0.5)" title="50%">
+        0.5x
+      </button>
+      <button class="hud-btn" onclick="setPresetScale(2.0)" title="200%">
+        2.0x
+      </button>
+      
+      <button class="hud-btn hud-btn-primary" onclick="resetTransform()">
+        <i class="fas fa-undo"></i> Restablecer
+      </button>
+      <button class="hud-btn hud-btn-primary" onclick="centerLogo()">
+        <i class="fas fa-crosshairs"></i> Centrar
+      </button>
+    </div>
+  </div>
+
+  <!-- Leyenda de Gestos e Instrucciones -->
+  <div class="gesture-hint">
+    <span><i class="fas fa-hand-rock text-cyan-400"></i> Arrastra para mover</span>
+    <span>•</span>
+    <span><i class="fas fa-mouse text-pink-400"></i> Scroll para zoom</span>
+    <span>•</span>
+    <span><i class="fas fa-mouse-pointer text-purple-400"></i> Doble-click para centrar</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
+
+  <!-- Shader del Aura WebGL -->
+  <script>
+    function initLogoAuraShader() {
+      const canvas = document.getElementById('logo-aura-canvas');
+      if (!canvas) return;
+      const gl = canvas.getContext('webgl', { alpha: true, antialias: true }) || canvas.getContext('experimental-webgl', { alpha: true });
+      if (!gl) return;
+
+      const vertShaderSrc = `
+        attribute vec2 position;
+        void main() {
+          gl_Position = vec4(position, 0.0, 1.0);
+        }
+      `;
+
+      const fragShaderSrc = `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+        float snoise(vec2 v) {
+          const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+          vec2 i  = floor(v + dot(v, C.yy) );
+          vec2 x0 = v -   i + dot(i, C.xx);
+          vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+          vec4 x12 = x0.xyxy + C.xxzz;
+          x12.xy -= i1;
+          i = mod289(i);
+          vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+          vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+          m = m*m ;
+          m = m*m ;
+          vec3 x = 2.0 * fract(p * C.www) - 1.0;
+          vec3 h = abs(x) - 0.5;
+          vec3 ox = floor(x + 0.5);
+          vec3 a0 = x - ox;
+          m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+          vec3 g;
+          g.x  = a0.x  * x0.x  + h.x  * x0.y;
+          g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+          return 130.0 * dot(m, g);
+        }
+
+        void main() {
+          vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+          float r = length(uv);
+          float angle = atan(uv.y, uv.x);
+
+          // Radio base del aura alrededor del logo
+          float baseRadius = 0.355;
+
+          // Deformación con ruido
+          float t = u_time * 0.85;
+          vec2 noiseCoord1 = vec2(cos(angle) * 2.2 + t * 0.35, sin(angle) * 2.2 - t * 0.3);
+          vec2 noiseCoord2 = vec2(cos(angle) * 4.4 - t * 0.5, sin(angle) * 4.4 + t * 0.45);
+          float n1 = snoise(noiseCoord1);
+          float n2 = snoise(noiseCoord2) * 0.5;
+          float totalNoise = (n1 + n2) * 0.045;
+
+          float displacedRadius = baseRadius + totalNoise;
+
+          // Trazo y resplandor
+          float dist = abs(r - displacedRadius);
+          float line = smoothstep(0.011, 0.001, dist);
+          float glow = smoothstep(0.065, 0.005, dist) * 0.55;
+          float aura = line + glow;
+
+          // Máscara interna
+          float innerMask = smoothstep(baseRadius - 0.06, baseRadius - 0.02, r);
+          aura *= innerMask;
+
+          // Paleta cromática Arte Digital Data
+          vec3 cyan = vec3(0.0, 0.95, 1.0);
+          vec3 magenta = vec3(0.92, 0.22, 0.98);
+          vec3 violet = vec3(0.45, 0.15, 0.95);
+
+          float colorShift = sin(angle * 2.0 + u_time * 1.3) * 0.5 + 0.5;
+          vec3 color = mix(cyan, magenta, colorShift);
+          color = mix(color, violet, 0.28 * cos(angle * 3.0 - u_time * 0.7));
+
+          vec3 finalColor = color * (line * 1.6 + glow * 0.9);
+          float alpha = clamp(aura, 0.0, 1.0) * 0.95;
+
+          gl_FragColor = vec4(finalColor * alpha, alpha);
+        }
+      `;
+
+      function createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.warn('Aura shader error:', gl.getShaderInfoLog(shader));
+          gl.deleteShader(shader);
+          return null;
+        }
+        return shader;
+      }
+
+      const vert = createShader(gl, gl.VERTEX_SHADER, vertShaderSrc);
+      const frag = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc);
+      if (!vert || !frag) return;
+
+      const program = gl.createProgram();
+      gl.attachShader(program, vert);
+      gl.attachShader(program, frag);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+
+      gl.useProgram(program);
+
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,  1, -1, -1,  1,
+        -1,  1,  1, -1,  1,  1
+      ]), gl.STATIC_DRAW);
+
+      const posLoc = gl.getAttribLocation(program, 'position');
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+      const timeLoc = gl.getUniformLocation(program, 'u_time');
+      const resLoc = gl.getUniformLocation(program, 'u_resolution');
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round((rect.width || 340) * dpr);
+        canvas.height = Math.round((rect.height || 340) * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function render(t) {
+        gl.uniform1f(timeLoc, t * 0.001);
+        gl.uniform2f(resLoc, canvas.width, canvas.height);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
+      }
+      requestAnimationFrame(render);
+    }
+
+    document.addEventListener('DOMContentLoaded', initLogoAuraShader);
+  </script>
+
+  <!-- Lógica de Control de Traslación, Escala e Interacción -->
+  <script>
+    // Estado global de transformación
+    const state = {
+      scale: 1.0,
+      x: 0,
+      y: 0,
+      rotation: 0
+    };
+
+    // Referencias al DOM
+    const logoBox = document.getElementById('logo-box');
+    const viewportStage = document.getElementById('viewport-stage');
+    const hudPanel = document.getElementById('hud-panel');
+    const toggleHudBtn = document.getElementById('toggle-hud-btn');
+
+    // Elementos de Entrada HUD
+    const rangeScale = document.getElementById('range-scale');
+    const rangeX = document.getElementById('range-x');
+    const rangeY = document.getElementById('range-y');
+    const rangeRot = document.getElementById('range-rot');
+
+    // Elementos de Valor HUD
+    const valScale = document.getElementById('val-scale');
+    const valX = document.getElementById('val-x');
+    const valY = document.getElementById('val-y');
+    const valRot = document.getElementById('val-rot');
+
+    // Aplicar transformación actual al CSS
+    function updateTransform() {
+      logoBox.style.transform = `translate3d(${state.x}px, ${state.y}px, 0px) scale(${state.scale}) rotate(${state.rotation}deg)`;
+      
+      // Actualizar HUD
+      rangeScale.value = state.scale;
+      valScale.textContent = `${state.scale.toFixed(2)}x`;
+
+      rangeX.value = state.x;
+      valX.textContent = `${Math.round(state.x)} px`;
+
+      rangeY.value = state.y;
+      valY.textContent = `${Math.round(state.y)} px`;
+
+      rangeRot.value = state.rotation;
+      valRot.textContent = `${Math.round(state.rotation)}°`;
+    }
+
+    // Eventos de los Sliders
+    rangeScale.addEventListener('input', (e) => {
+      state.scale = parseFloat(e.target.value);
+      updateTransform();
+    });
+
+    rangeX.addEventListener('input', (e) => {
+      state.x = parseFloat(e.target.value);
+      updateTransform();
+    });
+
+    rangeY.addEventListener('input', (e) => {
+      state.y = parseFloat(e.target.value);
+      updateTransform();
+    });
+
+    rangeRot.addEventListener('input', (e) => {
+      state.rotation = parseFloat(e.target.value);
+      updateTransform();
+    });
+
+    // Helper Presets
+    function zoomStep(delta) {
+      state.scale = Math.min(Math.max(0.1, state.scale + delta), 4.0);
+      updateTransform();
+    }
+
+    function setPresetScale(val) {
+      state.scale = val;
+      updateTransform();
+    }
+
+    function resetTransform() {
+      state.scale = 1.0;
+      state.x = 0;
+      state.y = 0;
+      state.rotation = 0;
+      updateTransform();
+    }
+
+    function centerLogo() {
+      state.x = 0;
+      state.y = 0;
+      updateTransform();
+    }
+
+    function toggleHUD() {
+      hudPanel.classList.toggle('minimized');
+    }
+    toggleHudBtn.addEventListener('click', toggleHUD);
+
+    // Tecla H para ocultar/mostrar HUD
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h') {
+        toggleHUD();
+      }
+    });
+
+    // === GESTOS DE ARRASTRE Y RUEDA (DRAG & WHEEL) ===
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    function onPointerDown(e) {
+      isDragging = true;
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      
+      startX = clientX;
+      startY = clientY;
+      initialX = state.x;
+      initialY = state.y;
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      state.x = initialX + deltaX;
+      state.y = initialY + deltaY;
+      updateTransform();
+    }
+
+    function onPointerUp() {
+      isDragging = false;
+    }
+
+    // Eventos Mouse y Touch en el Logo Box
+    logoBox.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+
+    logoBox.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
+
+    // Doble click para centrar
+    logoBox.addEventListener('dblclick', () => {
+      resetTransform();
+    });
+
+    // Zoom con Rueda de Ratón (Wheel)
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? -0.08 : 0.08;
+      state.scale = Math.min(Math.max(0.1, state.scale + zoomFactor), 4.0);
+      updateTransform();
+    }, { passive: false });
+
+    // Inicializar estado
+    updateTransform();
+  </script>
+</body>
+
+</html>

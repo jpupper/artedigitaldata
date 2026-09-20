@@ -76,8 +76,10 @@ class EventGallery {
   
   renderSlide(participant, index) {
     const isActive = index === this.currentIndex;
-    const avatar = participant.avatar || '/img/default-avatar.png';
     const name = participant.displayName || participant.username || 'Artista';
+    // Si no hay foto, usamos el avatar generativo (espiral) del usuario
+    const avatar = participant.avatar
+      || ((window.GenerativeAvatar && window.GenerativeAvatar.dataUri) ? window.GenerativeAvatar.dataUri(window.GenerativeAvatar.seedOf(participant)) : '/img/default-avatar.png');
     const bio = participant.bio || participant.description || '';
     const role = participant.role || 'Participante';
     

@@ -56,7 +56,9 @@ window.renderEvent = function(ev) {
 
   const avatarCont = document.getElementById('creator-avatar');
   if (avatarCont) {
-    avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase();
+    avatarCont.innerHTML = (window.GenerativeAvatar && ev.creator)
+      ? window.GenerativeAvatar.markup(ev.creator, { className: 'w-full h-full object-cover' })
+      : (ev.creator?.avatar ? `<img src="${ev.creator.avatar}" class="w-full h-full object-cover">` : (ev.creator?.username || '?')[0].toUpperCase());
   }
 
   // Edit Button
@@ -181,11 +183,9 @@ window.renderEvent = function(ev) {
     commentsList.innerHTML = (ev.comments || []).map(c => `
       <div class="flex gap-4 scroll-mt-24">
         <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-          ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
-            <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <i class="fas fa-user-astronaut text-xs"></i>
-            </div>
-          `}
+          ${window.GenerativeAvatar && c.user
+            ? window.GenerativeAvatar.markup(c.user, { className: 'w-full h-full object-cover' })
+            : `<div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i class="fas fa-user-astronaut text-xs"></i></div>`}
         </div>
         <div class="flex-1">
           <div class="bg-white/5 rounded-2xl px-4 py-3 border border-white/5">

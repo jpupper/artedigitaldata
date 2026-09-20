@@ -17,7 +17,7 @@ function renderLikesUsersList(users) {
   return users.map(u => `
     <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(u.username)}" class="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white/5 transition-colors group">
       <div class="w-7 h-7 rounded-full overflow-hidden bg-cyan-500 text-black flex items-center justify-center text-xs font-bold shrink-0">
-        ${u.avatar ? `<img src="${sanitizeUrl ? sanitizeUrl(u.avatar) : u.avatar}" alt="${u.username}" class="w-full h-full object-cover">` : (u.username || '?')[0].toUpperCase()}
+        ${window.GenerativeAvatar ? window.GenerativeAvatar.markup(u, { className: 'w-full h-full object-cover' }) : (u.avatar ? `<img src="${sanitizeUrl ? sanitizeUrl(u.avatar) : u.avatar}" alt="${u.username}" class="w-full h-full object-cover">` : (u.username || '?')[0].toUpperCase())}
       </div>
       <div class="min-w-0 flex-1">
         <p class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
@@ -165,11 +165,9 @@ window.loadPost = async function(postId) {
                 ${post.comments?.length ? post.comments.map(c => `
                   <div class="flex gap-4">
                     <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-                      ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
-                        <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                          <i class="fas fa-user text-xs"></i>
-                        </div>
-                      `}
+                      ${window.GenerativeAvatar && c.user
+                        ? window.GenerativeAvatar.markup(c.user, { className: 'w-full h-full object-cover' })
+                        : `<div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i class="fas fa-user text-xs"></i></div>`}
                     </div>
                     <div class="flex-1">
                       <div class="bg-white/5 rounded-2xl px-4 py-3">

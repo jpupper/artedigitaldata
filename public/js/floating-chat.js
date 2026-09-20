@@ -13,8 +13,8 @@
 
   let floatSocket = null;
   let floatCurrentRoomId = null;
-  let floatCurrentTab = 'rooms'; // 'rooms' | 'private'
-  let floatUnreadCount = 0;
+  let floatCurrentTab = 'private'; // 'private' (Mensajes, por defecto) | 'rooms'
+  let floatUnreadCount = parseInt(localStorage.getItem('add_floating_chat_unread') || '0', 10) || 0;
   let floatRoomsCache = {};
   let floatPrivateChatsCache = {};
   let floatUserSearchCache = {};
@@ -154,11 +154,11 @@
         <!-- Vista de Lista de Salas / Chats Privados -->
         <div id="float-list-view" style="display: flex; flex: 1; flex-direction: column; min-height: 0;">
           <div style="display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0,0,0,0.25); flex-shrink: 0;">
-            <button id="float-tab-rooms" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid #00f2fe; color: #00f2fe; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;">
-              Salas
-            </button>
-            <button id="float-tab-private" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;">
+            <button id="float-tab-private" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid #00f2fe; color: #00f2fe; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;">
               Mensajes
+            </button>
+            <button id="float-tab-rooms" style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;">
+              Salas
             </button>
           </div>
 
@@ -199,12 +199,9 @@
       </div>
 
       <!-- Dock Bar / Botón Emergente (Cuando la ventana está minimizada) -->
-      <button id="floating-chat-dock" style="display: ${isWindowOpen ? 'none' : 'flex'}; align-items: center; gap: 10px; background: rgba(13, 13, 22, 0.95); border: 1px solid rgba(0, 242, 254, 0.45); border-radius: 9999px; padding: 10px 18px; box-shadow: 0 8px 25px rgba(0,0,0,0.7), 0 0 15px rgba(0,242,254,0.25); color: #fff; cursor: pointer; transition: all 0.25s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);" title="Abrir Chat en Vivo">
-        <div class="float-live-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe;"></div>
-        <i class="fas fa-comments" style="color: #00f2fe; font-size: 14px;"></i>
-        <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Chat en Vivo</span>
-        <span id="floating-chat-badge" style="display: none; background: #e040fb; color: #fff; font-size: 10px; font-weight: 900; border-radius: 9999px; padding: 1px 6px; box-shadow: 0 0 8px rgba(224,64,251,0.6);">0</span>
-        <i class="fas fa-chevron-up" style="color: #94a3b8; font-size: 10px; margin-left: 2px;"></i>
+      <button id="floating-chat-dock" style="display: ${isWindowOpen ? 'none' : 'flex'}; position: relative; align-items: center; justify-content: center; width: 56px; height: 56px; background: rgba(13, 13, 22, 0.95); border: 1px solid rgba(0, 242, 254, 0.45); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.7), 0 0 15px rgba(0,242,254,0.25); color: #fff; cursor: pointer; transition: all 0.25s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);" title="Abrir mensajes" aria-label="Abrir mensajes">
+        <i class="fas fa-comments" style="color: #00f2fe; font-size: 22px;"></i>
+        <span id="floating-chat-badge" style="position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.35); color: #fff; font-size: 10px; font-weight: 900; border-radius: 9999px; padding: 0 5px; box-shadow: none; transition: all 0.2s ease;">0</span>
       </button>
     `;
 
@@ -263,11 +260,13 @@
       msgInput.value = '';
     });
 
+    updateBadge();
+
     // Si el usuario está logueado, conectar socket e inicializar datos
     if (userIsLoggedIn()) {
       ensureSocketIO(initSocketConnection);
       if (isWindowOpen) {
-        loadRoomsList();
+        loadPrivateList();
       }
     } else {
       // Si no está logueado, mostrar la vista informativa para invitados
@@ -413,12 +412,11 @@
       list.innerHTML = chats.map(c => {
         const other = (c.participants || []).find(p => (p._id || p) !== (u.id || u._id)) || {};
         const name = other.username || 'Usuario';
-        const avatar = other.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${name}`;
         floatPrivateChatsCache[c._id] = { name, otherId: other._id };
 
         return `
           <button onclick="window.floatingChatJoinPrivate('${c._id}')" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,242,254,0.08)';this.style.borderColor='rgba(0,242,254,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';">
-            <img src="${sanitizeUrl(avatar)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(name)}')" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;">
+            ${window.GenerativeAvatar ? window.GenerativeAvatar.markup({ username: name, avatar: other.avatar }, { className: 'w-7 h-7 rounded-full object-cover border border-white/15 shrink-0' }) : `<img src="${sanitizeUrl(other.avatar || '')}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">`}
             <div style="min-width: 0; flex: 1;">
               <div style="font-weight: 700; color: #fff; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@${escapeHTML(name)}</div>
               <div style="font-size: 10px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Mensaje directo</div>
@@ -445,7 +443,7 @@
         users.forEach(u => { floatUserSearchCache[u._id] = u; });
         results.innerHTML = users.map(u => `
           <button onclick="window.floatingChatStartPrivate('${u._id}')" style="width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left; cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.08)';" onmouseout="this.style.background='none';">
-            <img src="${sanitizeUrl(u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(u.username)}')" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+            ${window.GenerativeAvatar ? window.GenerativeAvatar.markup(u, { className: 'w-6 h-6 rounded-full object-cover shrink-0' }) : `<img src="${sanitizeUrl(u.avatar || '')}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">`}
             <span style="font-size: 11px; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(u.displayName || u.username)}</span>
           </button>
         `).join('');
@@ -488,7 +486,6 @@
     const myId = u ? (u.id || u._id) : null;
     const isMe = msg.sender?._id === myId || msg.sender === myId;
     const senderName = msg.sender?.username || 'Anónimo';
-    const senderAvatar = msg.sender?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${senderName}`;
     const time = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
 
     const div = document.createElement('div');
@@ -498,7 +495,7 @@
     div.style.alignItems = 'flex-end';
 
     div.innerHTML = `
-      <img src="${sanitizeUrl(senderAvatar)}" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent('${escapeHTML(senderName)}')" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;">
+      ${window.GenerativeAvatar ? window.GenerativeAvatar.markup({ username: senderName, avatar: msg.sender?.avatar }, { className: 'w-6 h-6 rounded-full object-cover border border-white/15 shrink-0' }) : `<img src="${sanitizeUrl(msg.sender?.avatar || '')}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">`}
       <div style="max-width: 76%; border-radius: 14px; padding: 6px 10px; font-size: 11px; line-height: 1.4; ${isMe ? 'background: rgba(0,242,254,0.15); color: #e0f2fe; border: 1px solid rgba(0,242,254,0.3); border-bottom-right-radius: 2px;' : 'background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 2px;'}">
         ${!isMe ? `<div style="font-size: 9px; font-weight: 800; color: #e040fb; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(senderName)}</div>` : ''}
         <div style="word-break: break-word; white-space: pre-wrap;">${escapeHTML(msg.content)}</div>
@@ -567,21 +564,30 @@
     if (toast) toast.style.display = 'none';
   }
 
+  // El contador vive siempre visible sobre el icono: muestra cuántos mensajes nuevos hay.
+  function updateBadge() {
+    const badge = document.getElementById('floating-chat-badge');
+    if (!badge) return;
+    badge.textContent = floatUnreadCount > 99 ? '99+' : String(floatUnreadCount);
+    const hasUnread = floatUnreadCount > 0;
+    badge.style.background = hasUnread ? '#e040fb' : 'rgba(148, 163, 184, 0.35)';
+    badge.style.boxShadow = hasUnread ? '0 0 8px rgba(224,64,251,0.6)' : 'none';
+  }
+
+  function persistUnread() {
+    try { localStorage.setItem('add_floating_chat_unread', String(floatUnreadCount)); } catch (e) {}
+  }
+
   function incrementBadge() {
     floatUnreadCount++;
-    const badge = document.getElementById('floating-chat-badge');
-    if (badge) {
-      badge.textContent = floatUnreadCount > 99 ? '99+' : floatUnreadCount;
-      badge.style.display = 'inline-block';
-    }
+    persistUnread();
+    updateBadge();
   }
 
   function clearBadge() {
     floatUnreadCount = 0;
-    const badge = document.getElementById('floating-chat-badge');
-    if (badge) {
-      badge.style.display = 'none';
-    }
+    persistUnread();
+    updateBadge();
   }
 
   // Funciones globales expuestas para onclicks inline

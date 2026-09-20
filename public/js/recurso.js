@@ -51,7 +51,9 @@ window.renderResource = function(r) {
 
   const avatarCont = document.getElementById('author-avatar');
   if (avatarCont) {
-    avatarCont.innerHTML = r.author?.avatar ? `<img src="${r.author.avatar}" class="w-full h-full object-cover">` : (r.author?.username || '?')[0].toUpperCase();
+    avatarCont.innerHTML = (window.GenerativeAvatar && r.author)
+      ? window.GenerativeAvatar.markup(r.author, { className: 'w-full h-full object-cover' })
+      : (r.author?.avatar ? `<img src="${r.author.avatar}" class="w-full h-full object-cover">` : (r.author?.username || '?')[0].toUpperCase());
   }
 
   // Edit Button
@@ -167,11 +169,9 @@ window.renderResource = function(r) {
     commentsList.innerHTML = (r.comments || []).map(c => `
       <div class="flex gap-4">
         <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-          ${c.user?.avatar ? `<img src="${c.user.avatar}" class="w-full h-full object-cover">` : `
-            <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <i class="fas fa-user text-xs"></i>
-            </div>
-          `}
+          ${window.GenerativeAvatar && c.user
+            ? window.GenerativeAvatar.markup(c.user, { className: 'w-full h-full object-cover' })
+            : `<div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i class="fas fa-user text-xs"></i></div>`}
         </div>
         <div class="flex-1">
           <div class="bg-white/5 rounded-2xl px-4 py-3">

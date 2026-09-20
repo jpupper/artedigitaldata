@@ -115,11 +115,9 @@ function renderPinnedEvents(events) {
           <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
-                ${author.avatar ? `
-                  <img src="${sanitizeUrl(author.avatar)}" alt="${escapeHTML(author.username)}" class="w-full h-full object-cover">
-                ` : `
-                  <span class="text-[10px] font-bold text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</span>
-                `}
+                ${window.GenerativeAvatar
+                  ? window.GenerativeAvatar.markup(author, { className: 'w-full h-full object-cover' })
+                  : `<span class="text-[10px] font-bold text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</span>`}
               </div>
               <span class="text-xs font-bold text-gray-400">${escapeHTML(author.username || 'Anónimo')}</span>
             </div>
@@ -351,13 +349,9 @@ function renderFeed() {
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-inner bg-white/5">
-                ${author.avatar ? `
-                  <img src="${sanitizeUrl(author.avatar)}" alt="${escapeHTML(author.username)}" class="w-full h-full object-cover">
-                ` : `
-                  <div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">
-                    ${escapeHTML((author.username || '?')[0].toUpperCase())}
-                  </div>
-                `}
+                ${window.GenerativeAvatar
+                  ? window.GenerativeAvatar.markup(author, { className: 'w-full h-full object-cover' })
+                  : `<div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</div>`}
               </div>
               <div>
                 <a href="profile.html?user=${encodeURIComponent(author.username)}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">

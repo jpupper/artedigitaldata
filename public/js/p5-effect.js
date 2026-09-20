@@ -227,7 +227,7 @@
     return 'https://vps-4455523-x.dattaweb.com/artedigitaldata/api';
   }
 
-  // Cargar configuración desde el backend asincrónicamente
+  // Cargar configuración desde el backend asincrónicamente. Devuelve true si trajo datos.
   async function loadRemoteConfig() {
     try {
       const res = await fetch(getApiUrl() + '/public/particles-config');
@@ -243,11 +243,13 @@
           if (typeof window.onParticlesConfigLoaded === 'function') {
             window.onParticlesConfigLoaded(CFG);
           }
+          return true;
         }
       }
     } catch (e) {
       // Usar config local si falla la red
     }
+    return false;
   }
 
   // Guardar configuración en backend y localStorage
@@ -411,6 +413,11 @@
     }
   }
 
+  // Accesores seguros a los globales de p5: antes de que setup() cree el canvas,
+  // windowWidth/windowHeight todavía no existen y no deben lanzar ReferenceError.
+  function viewW() { return (typeof windowWidth === 'number') ? windowWidth : window.innerWidth; }
+  function viewH() { return (typeof windowHeight === 'number') ? windowHeight : window.innerHeight; }
+
   // Spawnea una palabra centrada en (targetCenterX, targetCenterY)
   function spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer = false, flyerId = null, wordConfig = {}) {
     if (!word || typeof word !== 'string') return;
@@ -452,7 +459,7 @@
     }
 
     const startX = targetCenterX - totalWidth / 2;
-    const startY = constrain(targetCenterY, 40, windowHeight - 40);
+    const startY = constrain(targetCenterY, 40, viewH() - 40);
     const wordId = flyerId || (word + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
     if (isFlyer) {
       window.activeFlyerWordId = wordId;
@@ -549,8 +556,8 @@
     const letterSpacingPx = (newProps.letterSpacing !== undefined) ? Number(newProps.letterSpacing) : 4;
 
     // Calcular el centro geométrico real de las partículas existentes si no se especificó un nuevo X/Y
-    let fallbackCenterX = windowWidth / 2;
-    let fallbackCenterY = windowHeight / 2;
+    let fallbackCenterX = viewW() / 2;
+    let fallbackCenterY = viewH() / 2;
     if (flyerParticles.length > 0) {
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       for (const p of flyerParticles) {
@@ -1351,8 +1358,8 @@
       this.glitchChars = glitchSet;
 
       if (this.formationMode === 'CODE') {
-        const cx = (this.target ? this.target.x : (centerX !== undefined ? centerX : windowWidth / 2));
-        const cy = (this.target ? this.target.y : (centerY !== undefined ? centerY : windowHeight / 2));
+        const cx = (this.target ? this.target.x : (centerX !== undefined ? centerX : viewW() / 2));
+        const cy = (this.target ? this.target.y : (centerY !== undefined ? centerY : viewH() / 2));
         this.pos.set(cx, cy);
         this.vel.set(0, 0);
         this.acc.set(0, 0);
@@ -1375,8 +1382,8 @@
       } else {
         const angle = random(TWO_PI);
         const distRadius = random(60, 240);
-        const cx = centerX !== undefined ? centerX : (this.target ? this.target.x : windowWidth / 2);
-        const cy = centerY !== undefined ? centerY : (this.target ? this.target.y : windowHeight / 2);
+        const cx = centerX !== undefined ? centerX : (this.target ? this.target.x : viewW() / 2);
+        const cy = centerY !== undefined ? centerY : (this.target ? this.target.y : viewH() / 2);
         this.pos.set(cx + cos(angle) * distRadius, cy + sin(angle) * distRadius);
         this.vel = p5.Vector.random2D().mult(random(3, 8));
         this.acc.set(0, 0);
