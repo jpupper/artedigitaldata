@@ -337,23 +337,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const htmlImg = new Image();
     htmlImg.onload = () => {
-      imgObj.width = htmlImg.width || 280;
-      imgObj.height = htmlImg.height || 280;
+      imgObj.width = htmlImg.naturalWidth || htmlImg.width || 280;
+      imgObj.height = htmlImg.naturalHeight || htmlImg.height || 280;
       imgObj.imgElement = htmlImg;
     };
     htmlImg.src = src;
     imgObj.imgElement = htmlImg;
-
-    if (typeof window.loadImage === 'function') {
-      try {
-        imgObj.p5Img = window.loadImage(src, (loaded) => {
-          if (loaded) {
-            imgObj.width = loaded.width || imgObj.width || 280;
-            imgObj.height = loaded.height || imgObj.height || 280;
-          }
-        });
-      } catch (e) {}
-    }
 
     window.activeImageLayers.push(imgObj);
     window.selectedImageId = id;
@@ -388,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncImageControlsUI();
     showToast(`Imagen "${name}" agregada`, 'success');
   }
+  window.addImageLayer = addImageLayer;
 
   function renderImageLayersList() {
     const listEl = document.getElementById('fx-images-list');
@@ -1106,13 +1096,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!flyerWordsListEl) return;
     flyerWordsListEl.innerHTML = '';
 
+    const selectedIds = (typeof getSelectedFlyerWordIds === 'function') ? getSelectedFlyerWordIds() : [selectedFlyerWordId];
+
     flyerWords.forEach((item, idx) => {
       const itemObj = (typeof item === 'object' && item.text) ? item : { id: 'fw_' + idx + '_' + item, text: String(item) };
-      const isActive = itemObj.id === selectedFlyerWordId || itemObj.id === window.activeFlyerWordId;
+      const isActive = selectedIds.includes(itemObj.id) || itemObj.id === selectedFlyerWordId || itemObj.id === window.activeFlyerWordId;
       const pill = document.createElement('div');
       pill.className = 'word-pill' + (isActive ? ' active' : '');
       pill.setAttribute('draggable', 'true');
-      pill.title = 'Hacé doble click para renombrar, arrastrá al Timeline o click para seleccionar';
+      pill.title = 'Hacé click (o Ctrl+Click para selección múltiple), doble click para renombrar, o arrastrá al Timeline';
 
       pill.innerHTML = `
         <i class="fas fa-grip-vertical" style="color: #64748b; font-size: 11px; margin-right: 4px; cursor: grab;" title="Arrastrar al Timeline"></i>
@@ -1130,7 +1122,6 @@ document.addEventListener('DOMContentLoaded', () => {
           itemObj.word = upper;
           itemObj.name = upper;
 
-          // Sincronizar texto en los clips de timeline que correspondan
           if (Array.isArray(timelineLayers)) {
             timelineLayers.forEach(layer => {
               if (Array.isArray(layer.clips)) {
@@ -1177,8 +1168,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      pill.addEventListener('click', () => {
-        selectFlyerWord(itemObj.id);
+      pill.addEventListener('click', (e) => {
+        const isMulti = Boolean(e.ctrlKey || e.metaKey || e.shiftKey);
+        toggleOrSelectFlyerWord(itemObj.id, isMulti);
       });
 
       flyerWordsListEl.appendChild(pill);
@@ -1427,27 +1419,27 @@ document.addEventListener('DOMContentLoaded', () => {
       window.ParticlesConfig.set({ FORMATION_MODE: validMode });
     }
 
-    if (window.activeFlyerWordId && window.updateFlyerWordParticles) {
-      const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === (window.activeFlyerWordId || selectedFlyerWordId));
-      if (matchingWord) {
-        matchingWord.formationMode = validMode;
-        if (Array.isArray(timelineLayers)) {
-          timelineLayers.forEach(l => {
-            if (!Array.isArray(l.clips)) return;
-            l.clips.forEach(c => {
-              if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
-                c.formationMode = validMode;
-              }
+    const targetWordIds = (typeof getSelectedFlyerWordIds === 'function') ? getSelectedFlyerWordIds() : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []);
+    if (targetWordIds.length > 0 && window.updateFlyerWordParticles) {
+      targetWordIds.forEach(wId => {
+        const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === wId);
+        if (matchingWord) {
+          matchingWord.formationMode = validMode;
+          if (Array.isArray(timelineLayers)) {
+            timelineLayers.forEach(l => {
+              if (!Array.isArray(l.clips)) return;
+              l.clips.forEach(c => {
+                if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
+                  c.formationMode = validMode;
+                }
+              });
             });
-          });
+          }
         }
-        window.updateFlyerWordParticles(window.activeFlyerWordId, { 
-          x: matchingWord.x,
-          y: matchingWord.y,
-          formationMode: validMode 
-        });
-      } else {
-        window.updateFlyerWordParticles(window.activeFlyerWordId, { formationMode: validMode });
+        window.updateFlyerWordParticles(wId, { formationMode: validMode });
+      });
+      if (typeof applyConfigChange === 'function') {
+        applyConfigChange('FLYER_WORDS', [...flyerWords]);
       }
     }
 
@@ -1479,12 +1471,40 @@ document.addEventListener('DOMContentLoaded', () => {
     setFormationMode(currentMode, false);
   }
 
-  function selectFlyerWord(targetId, targetLetterIndex = null) {
+  window.selectedFlyerWordIds = window.selectedFlyerWordIds || [];
+
+  function getSelectedFlyerWordIds() {
+    if (!Array.isArray(window.selectedFlyerWordIds)) {
+      window.selectedFlyerWordIds = [];
+    }
+    if (window.selectedFlyerWordIds.length === 0 && (selectedFlyerWordId || window.activeFlyerWordId)) {
+      window.selectedFlyerWordIds = [selectedFlyerWordId || window.activeFlyerWordId];
+    }
+    return window.selectedFlyerWordIds;
+  }
+  window.getSelectedFlyerWordIds = getSelectedFlyerWordIds;
+
+  function toggleOrSelectFlyerWord(targetId, isMulti = false, targetLetterIndex = null) {
     if (!targetId || !flyerWords || flyerWords.length === 0) return;
     const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId || (typeof w === 'object' && w.text === targetId));
     if (!targetWord) return;
 
-    selectedFlyerWordId = targetWord.id || targetId;
+    const currentIds = getSelectedFlyerWordIds();
+
+    if (isMulti) {
+      if (currentIds.includes(targetWord.id)) {
+        window.selectedFlyerWordIds = currentIds.filter(id => id !== targetWord.id);
+        if (window.selectedFlyerWordIds.length === 0) {
+          window.selectedFlyerWordIds = [targetWord.id];
+        }
+      } else {
+        window.selectedFlyerWordIds.push(targetWord.id);
+      }
+    } else {
+      window.selectedFlyerWordIds = [targetWord.id];
+    }
+
+    selectedFlyerWordId = targetWord.id;
     window.activeFlyerWordId = selectedFlyerWordId;
     selectedClipId = selectedFlyerWordId;
     selectedFlyerLetterIndex = targetLetterIndex;
@@ -1493,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const wordTxt = (typeof targetWord === 'object' && (targetWord.text || targetWord.word)) ? (targetWord.text || targetWord.word) : String(targetWord);
 
-    if (flyerWordInput) {
+    if (flyerWordInput && document.activeElement === flyerWordInput) {
       flyerWordInput.value = wordTxt;
     }
 
@@ -1505,18 +1525,21 @@ document.addEventListener('DOMContentLoaded', () => {
       setFormationMode(targetWord.formationMode, false);
     }
 
-    if (window.updateFlyerWordParticles) {
-      window.updateFlyerWordParticles(targetWord.id, {
-        fontSize: targetWord.fontSize,
-        letterSpacing: targetWord.letterSpacing,
-        x: targetWord.x,
-        y: targetWord.y,
-        color: targetWord.color,
-        letterColors: targetWord.letterColors,
-        formationMode: targetWord.formationMode,
-        visible: true
-      });
-    }
+    getSelectedFlyerWordIds().forEach(wId => {
+      const wObj = flyerWords.find(w => typeof w === 'object' && w.id === wId);
+      if (wObj && window.updateFlyerWordParticles) {
+        window.updateFlyerWordParticles(wObj.id, {
+          fontSize: wObj.fontSize,
+          letterSpacing: wObj.letterSpacing,
+          x: wObj.x,
+          y: wObj.y,
+          color: wObj.color,
+          letterColors: wObj.letterColors,
+          formationMode: wObj.formationMode,
+          visible: true
+        });
+      }
+    });
 
     if (Array.isArray(timelineLayers)) {
       const matchingLayer = timelineLayers.find(l => l.id === targetId || l.word === wordTxt || (l.clips && l.clips.some(c => c.id === targetId || c.text === wordTxt)));
@@ -1526,31 +1549,64 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+
+  function selectFlyerWord(targetId, targetLetterIndex = null) {
+    toggleOrSelectFlyerWord(targetId, false, targetLetterIndex);
+  }
+  window.selectFlyerWord = selectFlyerWord;
   window.selectFlyerWordById = selectFlyerWord;
+  window.toggleOrSelectFlyerWord = toggleOrSelectFlyerWord;
+
+  window.selectAllFlyerWords = function() {
+    if (!flyerWords || flyerWords.length === 0) return;
+    window.selectedFlyerWordIds = flyerWords.map(w => w.id || w);
+    selectedFlyerWordId = window.selectedFlyerWordIds[0];
+    window.activeFlyerWordId = selectedFlyerWordId;
+    const targetWord = flyerWords.find(w => w.id === selectedFlyerWordId);
+    if (targetWord) {
+      updateUIForSelectedLayerProps(targetWord);
+      renderWordLettersChips(targetWord);
+    }
+    renderFlyerWordsList();
+    if (typeof showToast === 'function') {
+      showToast(`Las ${flyerWords.length} palabras del flyer seleccionadas`, 'info');
+    }
+  };
 
   let collabWordIndexCounter = 0;
   function getNextCollabWord() {
-    let pool = null;
+    let pool = [];
     if (typeof words !== 'undefined' && Array.isArray(words) && words.length > 0) {
       pool = words;
-    } else if (typeof getInitialWords === 'function') {
-      pool = getInitialWords();
+    } else if (window.ParticlesConfig) {
+      const activeCfg = window.ParticlesConfig.get();
+      if (Array.isArray(activeCfg.WORDS) && activeCfg.WORDS.length > 0) {
+        pool = activeCfg.WORDS;
+      }
     }
     if (!pool || pool.length === 0) {
-      pool = ["UNITY", "UNREAL", "GODOT", "TOUCHDESIGNER", "PROCESSING", "P5", "THREE", "ARTE", "DIGITAL", "DATA"];
+      if (typeof getInitialWords === 'function') pool = getInitialWords();
+    }
+    if (!pool || pool.length === 0) {
+      pool = ["UNITY", "UNREAL", "GODOT", "TOUCHDESIGNER", "PROCESSING", "P5", "THREE", "SHADERS", "GLSL", "ARTE", "DIGITAL", "DATA"];
     }
     const selected = pool[collabWordIndexCounter % pool.length];
     collabWordIndexCounter++;
     return (selected || 'ARTE').toUpperCase();
   }
+  window.getNextCollabWord = getNextCollabWord;
 
   function addFlyerWord(rawText, x, y) {
     let cleanWord = (rawText || '').trim().toUpperCase();
-    if (!cleanWord && flyerWordInput && flyerWordInput.value.trim() && flyerWordInput.value.trim().toUpperCase() !== 'NUEVA PALABRA') {
+    if (!rawText && flyerWordInput && flyerWordInput.value.trim() && document.activeElement === flyerWordInput) {
       cleanWord = flyerWordInput.value.trim().toUpperCase();
     }
     if (!cleanWord || cleanWord === 'NUEVA PALABRA') {
       cleanWord = getNextCollabWord();
+    }
+
+    if (flyerWordInput) {
+      flyerWordInput.value = '';
     }
 
     const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
@@ -3485,66 +3541,68 @@ document.addEventListener('DOMContentLoaded', () => {
       window.ParticlesConfig.set(patch);
     }
 
-    // Actualizar partículas de la palabra activa en vivo ÚNICAMENTE si el usuario arrastra manualmente los sliders
-    if (['TEXT_SIZE_MAX', 'LETTER_SPACING', 'POS_X', 'POS_Y'].includes(key) && isUserSliderDrag && window.activeFlyerWordId && window.updateFlyerWordParticles) {
-      const cfg = window.ParticlesConfig ? window.ParticlesConfig.get() : {};
-      const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === (window.activeFlyerWordId || selectedFlyerWordId));
-      const newFontSize = key === 'TEXT_SIZE_MAX' ? val : (matchingWord && matchingWord.fontSize !== undefined ? matchingWord.fontSize : (cfg.TEXT_SIZE_MAX !== undefined ? cfg.TEXT_SIZE_MAX : 36));
-      const newSpacing = key === 'LETTER_SPACING' ? val : (matchingWord && matchingWord.letterSpacing !== undefined ? matchingWord.letterSpacing : (cfg.LETTER_SPACING !== undefined ? cfg.LETTER_SPACING : 10));
-      const newX = key === 'POS_X' ? val : (matchingWord && matchingWord.x !== undefined ? matchingWord.x : (cfg.POS_X !== undefined ? cfg.POS_X : (window.innerWidth / 2)));
-      const newY = key === 'POS_Y' ? val : (matchingWord && matchingWord.y !== undefined ? matchingWord.y : (cfg.POS_Y !== undefined ? cfg.POS_Y : (window.innerHeight / 2)));
+    // Actualizar partículas de todas las palabras seleccionadas en vivo (aislando estrictamente el parámetro modificado)
+    const targetWordIds = (typeof getSelectedFlyerWordIds === 'function') ? getSelectedFlyerWordIds() : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []);
+    
+    if (['TEXT_SIZE_MAX', 'LETTER_SPACING', 'POS_X', 'POS_Y'].includes(key) && isUserSliderDrag && targetWordIds.length > 0 && window.updateFlyerWordParticles) {
+      targetWordIds.forEach(wId => {
+        const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === wId);
+        if (!matchingWord) return;
 
-      if (matchingWord) {
-        matchingWord.x = newX;
-        matchingWord.y = newY;
-        matchingWord.fontSize = newFontSize;
-        matchingWord.letterSpacing = newSpacing;
+        const patchWord = {};
+        if (key === 'TEXT_SIZE_MAX') {
+          matchingWord.fontSize = val;
+          patchWord.fontSize = val;
+        } else if (key === 'LETTER_SPACING') {
+          matchingWord.letterSpacing = val;
+          patchWord.letterSpacing = val;
+        } else if (key === 'POS_X') {
+          matchingWord.x = val;
+          patchWord.x = val;
+        } else if (key === 'POS_Y') {
+          matchingWord.y = val;
+          patchWord.y = val;
+        }
 
-        // Sincronizar también en timelineLayers clips
+        // Sincronizar también en timelineLayers clips sin alterar otras propiedades
         if (Array.isArray(timelineLayers)) {
           timelineLayers.forEach(l => {
             if (!Array.isArray(l.clips)) return;
             l.clips.forEach(c => {
               if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
-                c.x = newX;
-                c.y = newY;
-                c.fontSize = newFontSize;
-                c.letterSpacing = newSpacing;
+                if (key === 'POS_X') c.x = val;
+                if (key === 'POS_Y') c.y = val;
+                if (key === 'TEXT_SIZE_MAX') c.fontSize = val;
+                if (key === 'LETTER_SPACING') c.letterSpacing = val;
               }
             });
           });
         }
-      }
 
-      window.updateFlyerWordParticles(window.activeFlyerWordId, {
-        fontSize: newFontSize,
-        letterSpacing: newSpacing,
-        x: newX,
-        y: newY
+        window.updateFlyerWordParticles(wId, patchWord);
       });
+
+      applyConfigChange('FLYER_WORDS', [...flyerWords]);
+      applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
     }
 
-    // Actualizar color de palabra o letra seleccionada desde la paleta cromática.
-    // IMPORTANTE: no depende de estar en FLYERMODE; la paleta del panel Letrasp5 manda
-    // sobre la palabra activa siempre que haya una palabra seleccionada.
-    if (['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].includes(key)) {
-      const activeWordId = window.activeFlyerWordId || selectedFlyerWordId;
-      if (activeWordId) {
-        const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === activeWordId);
+    // Actualizar color de palabra o letra seleccionada desde la paleta cromática sobre todas las palabras seleccionadas
+    if (['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].includes(key) && targetWordIds.length > 0) {
+      const pIdx = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].indexOf(key);
+      targetWordIds.forEach(wId => {
+        const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === wId);
         if (matchingWord) {
-          const pIdx = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4'].indexOf(key);
-          if (selectedFlyerLetterIndex !== null) {
+          if (selectedFlyerLetterIndex !== null && wId === (selectedFlyerWordId || window.activeFlyerWordId)) {
             applyLetterColorChange(val);
             const letterColorInput = document.getElementById('param-SELECTED_LETTER_COLOR');
             if (letterColorInput) letterColorInput.value = val;
           } else {
-            // "Toda la palabra": el degradado de la paleta cromática pinta la palabra completa
-            matchingWord.palette = getChromaticPalette();
+            matchingWord.palette = matchingWord.palette || getChromaticPalette();
             matchingWord.palette[pIdx] = val;
             applyWordPaletteGradient(matchingWord);
           }
         }
-      }
+      });
     }
   }
 

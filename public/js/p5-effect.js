@@ -858,34 +858,30 @@
     window.activeImageLayers.forEach(layer => {
       if (layer.visible === false) return;
 
-      if (!layer.p5Img && !layer.imgElement && layer.src) {
+      if (!layer.imgElement && layer.src) {
         const img = new Image();
+        img.onload = () => {
+          layer.width = layer.width || img.naturalWidth || img.width || 280;
+          layer.height = layer.height || img.naturalHeight || img.height || 280;
+        };
         img.src = layer.src;
         layer.imgElement = img;
       }
 
-      if (!layer.p5Img && layer.src && typeof loadImage === 'function') {
-        try {
-          layer.p5Img = loadImage(layer.src, (loaded) => {
-            if (loaded) {
-              layer.width = loaded.width || layer.width || 280;
-              layer.height = loaded.height || layer.height || 280;
-            }
-          });
-        } catch (e) {}
-      }
-
-      const imgToDraw = layer.p5Img || layer.imgElement;
-      if (!imgToDraw) return;
-      if (imgToDraw instanceof Image && !imgToDraw.complete) return;
+      const rawImg = layer.imgElement || (layer.p5Img ? layer.p5Img.canvas : null);
+      if (!rawImg) return;
+      if (rawImg instanceof Image && (!rawImg.complete || rawImg.naturalWidth === 0)) return;
 
       push();
-      translate(layer.x !== undefined ? layer.x : (width ? width / 2 : 960), layer.y !== undefined ? layer.y : (height ? height / 2 : 540));
+      const posX = layer.x !== undefined ? layer.x : (width ? width / 2 : 960);
+      const posY = layer.y !== undefined ? layer.y : (height ? height / 2 : 540);
+      translate(posX, posY);
       rotate(radians(layer.rotation || 0));
       scale(layer.scale !== undefined ? layer.scale : 1.0);
 
-      const w = layer.width || (imgToDraw.width > 0 ? imgToDraw.width : 280);
-      const h = layer.height || (imgToDraw.height > 0 ? imgToDraw.height : 280);
+      const w = layer.width || rawImg.naturalWidth || rawImg.width || 280;
+      const h = layer.height || rawImg.naturalHeight || rawImg.height || 280;
+      const alphaVal = layer.alpha !== undefined ? layer.alpha : 1.0;
 
       // Dibujar efecto aura de energía alrededor de la imagen
       if (layer.hasAura) {
@@ -894,7 +890,7 @@
         const time = millis() * 0.003;
         rectMode(CENTER);
         for (let r = 0; r < 4; r++) {
-          const glowAlpha = map(sin(time * 2.2 + r * 0.8), -1, 1, 90, 240) * (layer.alpha !== undefined ? layer.alpha : 1.0);
+          const glowAlpha = map(sin(time * 2.2 + r * 0.8), -1, 1, 90, 240) * alphaVal;
           stroke(0, 242, 254, glowAlpha);
           strokeWeight(4 + r * 2);
           rect(0, 0, w + 18 + r * 12, h + 18 + r * 12, 24);
@@ -905,21 +901,20 @@
         pop();
       }
 
-      const alphaVal = layer.alpha !== undefined ? layer.alpha : 1.0;
-      tint(255, alphaVal * 255);
-      imageMode(CENTER);
-      try {
-        image(imgToDraw, 0, 0, w, h);
-      } catch (err) {
-        if (typeof drawingContext !== 'undefined' && drawingContext && (layer.imgElement || imgToDraw)) {
-          try {
-            const raw = layer.imgElement || imgToDraw;
-            drawingContext.save();
-            drawingContext.globalAlpha = alphaVal;
-            drawingContext.drawImage(raw, -w / 2, -h / 2, w, h);
-            drawingContext.restore();
-          } catch (e) {}
-        }
+      // Dibujar la imagen directamente sobre el contexto 2D del canvas de p5
+      if (typeof drawingContext !== 'undefined' && drawingContext) {
+        drawingContext.save();
+        drawingContext.globalAlpha = alphaVal;
+        try {
+          drawingContext.drawImage(rawImg, -w / 2, -h / 2, w, h);
+        } catch(e) {}
+        drawingContext.restore();
+      } else {
+        tint(255, alphaVal * 255);
+        imageMode(CENTER);
+        try {
+          image(rawImg, 0, 0, w, h);
+        } catch(e) {}
       }
       pop();
     });

@@ -723,7 +723,7 @@
             <button type="button" id="btn-fx-upload-image" onclick="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
               <i class="fas fa-upload mr-1"></i> Cargar Imagen Personalizada
             </button>
-            <button type="button" id="btn-fx-add-logo-preset" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25)); border: 1px solid #e040fb; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(224, 64, 251, 0.3);">
+            <button type="button" id="btn-fx-add-logo-preset" onclick="if(window.addImageLayer) window.addImageLayer('img/artedigital.png', 'LOGO con Energía', true);" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25)); border: 1px solid #e040fb; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(224, 64, 251, 0.3);">
               <i class="fas fa-sun mr-1 text-cyan-400"></i> Cargar LOGO con Energía Aura
             </button>
           </div>
@@ -990,9 +990,14 @@
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
-                <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
-                  <i class="fas fa-trash-alt"></i> Limpiar Todo
-                </button>
+                <div style="display: flex; gap: 4px;">
+                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras para modificar simultáneamente">
+                    <i class="fas fa-check-double"></i> Todas
+                  </button>
+                  <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
+                    <i class="fas fa-trash-alt"></i> Limpiar
+                  </button>
+                </div>
               </div>
               <div id="flyer-words-list" class="words-container" style="max-height: 180px; overflow-y: auto;">
                 <!-- Inyectado dinámicamente -->
