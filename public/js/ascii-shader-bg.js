@@ -517,7 +517,7 @@ void main() {
     canvas.style.pointerEvents = 'none';
     canvas.style.touchAction = 'pan-y';
 
-    gl = canvas.getContext('webgl2', { alpha: true, antialias: false, preserveDrawingBuffer: false });
+    gl = canvas.getContext('webgl2', { alpha: true, antialias: false, preserveDrawingBuffer: true }) || canvas.getContext('webgl', { alpha: true, preserveDrawingBuffer: true });
     if (!gl) {
       console.warn('[AsciiShaderBG] WebGL2 no soportado.');
       return false;

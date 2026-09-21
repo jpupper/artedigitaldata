@@ -281,3 +281,22 @@ a.text-cyan-400:hover,
   color: #7dd3fc !important;
   opacity: 0.85;
 }
+
+/* Violet Pin Animation for Featured Content */
+.animated-violet-pin {
+  color: #a855f7 !important;
+  display: inline-block;
+  animation: violetPinPulse 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.7));
+}
+
+@keyframes violetPinPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
+  }
+  50% {
+    transform: scale(1.22) rotate(-12deg);
+    filter: drop-shadow(0 0 16px rgba(192, 132, 252, 0.95));
+  }
+}

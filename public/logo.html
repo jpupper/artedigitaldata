@@ -538,7 +538,7 @@
 
   <!-- Lógica de Control de Traslación, Escala e Interacción -->
   <script>
-    const STORAGE_KEY = 'artedigital_logo_transform';
+    const STORAGE_KEY = 'artedigital_logo_interactive_transform';
 
     // Estado global de transformación
     const state = {
@@ -606,7 +606,7 @@
       return '/api';
     }
 
-    // Guardar transformación en Servidor (logoconfig.json y DB)
+    // Guardar transformación en Servidor (logointeractiveconfig.json y DB)
     async function saveTransform() {
       const payload = {
         scale: state.scale,
@@ -621,7 +621,7 @@
 
       try {
         const apiBase = getLogoApiUrl();
-        let res = await fetch(`${apiBase}/public/logo-config`, {
+        let res = await fetch(`${apiBase}/public/logo-interactive-config`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -629,7 +629,7 @@
 
         if (!res || !res.ok) {
           const altBase = apiBase.includes('/artedigitaldata') ? '/api' : '/artedigitaldata/api';
-          res = await fetch(`${altBase}/public/logo-config`, {
+          res = await fetch(`${altBase}/public/logo-interactive-config`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -637,7 +637,7 @@
         }
 
         if (res && res.ok) {
-          showToast('¡Configuración guardada en logoconfig.json y Servidor!');
+          showToast('¡Configuración guardada en logointeractiveconfig.json y Servidor!');
         } else {
           showToast('Configuración guardada en almacenamiento local');
         }
@@ -647,15 +647,15 @@
       }
     }
 
-    // Cargar transformación guardada desde Servidor (logoconfig.json)
+    // Cargar transformación guardada desde Servidor (logointeractiveconfig.json)
     async function loadSavedTransform() {
       let loaded = false;
       const t = Date.now();
       const urlsToTry = [
-        'logoconfig.json?t=' + t,
-        './logoconfig.json?t=' + t,
-        '/artedigitaldata/logoconfig.json?t=' + t,
-        getLogoApiUrl() + '/public/logo-config?t=' + t
+        'logointeractiveconfig.json?t=' + t,
+        './logointeractiveconfig.json?t=' + t,
+        '/artedigitaldata/logointeractiveconfig.json?t=' + t,
+        getLogoApiUrl() + '/public/logo-interactive-config?t=' + t
       ];
 
       for (const url of urlsToTry) {
@@ -692,6 +692,7 @@
         } catch (e) {}
       }
     }
+    document.addEventListener('DOMContentLoaded', loadSavedTransform);
 
     // Eventos de los Sliders
     rangeScale.addEventListener('input', (e) => {

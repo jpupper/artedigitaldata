@@ -95,6 +95,9 @@
     /* Logo Central con Aura Noise Outline */
     .sun-core-wrap {
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       z-index: 20;
       width: 210px;
       height: 210px;
@@ -302,8 +305,8 @@
 
     <!-- Pinned Events Section -->
     <section id="pinned-section" class="mb-12 hidden">
-      <h2 class="text-2xl font-bold text-white mb-6">
-        <i class="fas fa-thumbtack text-[var(--color-cyan)] mr-2"></i>Pins Destacados
+      <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+        <i class="fas fa-thumbtack animated-violet-pin mr-2.5"></i>Contenido Destacado
       </h2>
       <div id="pinned-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </section>
@@ -496,7 +499,7 @@
               const y = typeof data.y === 'number' ? data.y : 0;
               const rot = typeof data.rotation === 'number' ? data.rotation : 0;
               if (scale !== 1.0 || x !== 0 || y !== 0 || rot !== 0) {
-                logoWrap.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${scale}) rotate(${rot}deg)`;
+                logoWrap.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0px) scale(${scale}) rotate(${rot}deg)`;
               }
             }
           }
@@ -506,6 +509,8 @@
   </script>
   <script src="js/header.js"></script>
   <script src="js/tagging.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/image-cropper.js"></script>
   <script src="js/index.js"></script>
 </body>
 

@@ -272,6 +272,11 @@ const FORM_TEMPLATES = {
 
 window.renderFields = (type, prefix, data = {}) => {
   if (!FORM_TEMPLATES[type]) return 'Tipo no soportado';
+  setTimeout(() => {
+    if (window.ImageCropper && typeof window.ImageCropper.autoAttachAll === 'function') {
+      window.ImageCropper.autoAttachAll();
+    }
+  }, 50);
   return FORM_TEMPLATES[type](prefix, data);
 };
 

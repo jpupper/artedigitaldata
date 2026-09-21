@@ -224,12 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeRightBtn = document.getElementById('close-right-panel-btn');
   const toast = document.getElementById('toast');
 
-  // Pestañas Panel Izquierdo: Letrasp5 vs Shaderfondo
-  const tabBtnParamsP5 = document.getElementById('tab-btn-params-p5');
-  const tabBtnParamsShader = document.getElementById('tab-btn-params-shader');
-  const tabPaneParamsP5 = document.getElementById('tab-pane-params-p5');
-  const tabPaneParamsShader = document.getElementById('tab-pane-params-shader');
-
   // Pestañas Panel Derecho: FLYERMODE vs COLLABMODE (Activo por Defecto)
   const tabBtnFlyer = document.getElementById('tab-btn-flyer');
   const tabBtnCollab = document.getElementById('tab-btn-collab');
@@ -276,12 +270,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.showToast = showToast;
 
-  // Control Pestañas Izquierda (Letrasp5 vs Shaderfondo)
+  // Pestañas Panel Izquierdo: Letrasp5 vs Shaderfondo vs Imagen
+  const tabBtnParamsP5 = document.getElementById('tab-btn-params-p5');
+  const tabBtnParamsShader = document.getElementById('tab-btn-params-shader');
+  const tabBtnParamsImage = document.getElementById('tab-btn-params-image');
+  const tabPaneParamsP5 = document.getElementById('tab-pane-params-p5');
+  const tabPaneParamsShader = document.getElementById('tab-pane-params-shader');
+  const tabPaneParamsImage = document.getElementById('tab-pane-params-image');
+
+  window.activeImageLayers = window.activeImageLayers || [];
+  window.selectedImageId = window.selectedImageId || null;
+  window.activeLeftTab = 'p5';
+
   function switchLeftTab(target) {
+    window.activeLeftTab = target;
     if (tabBtnParamsP5) tabBtnParamsP5.classList.remove('active');
     if (tabBtnParamsShader) tabBtnParamsShader.classList.remove('active');
+    if (tabBtnParamsImage) tabBtnParamsImage.classList.remove('active');
     if (tabPaneParamsP5) tabPaneParamsP5.style.display = 'none';
     if (tabPaneParamsShader) tabPaneParamsShader.style.display = 'none';
+    if (tabPaneParamsImage) tabPaneParamsImage.style.display = 'none';
 
     if (target === 'shader') {
       if (tabBtnParamsShader) tabBtnParamsShader.classList.add('active');
@@ -295,6 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
           window.AsciiShaderBG.getActiveUniforms()
         );
       }
+    } else if (target === 'image') {
+      if (tabBtnParamsImage) tabBtnParamsImage.classList.add('active');
+      if (tabPaneParamsImage) tabPaneParamsImage.style.display = 'block';
+      renderImageLayersList();
     } else {
       if (tabBtnParamsP5) tabBtnParamsP5.classList.add('active');
       if (tabPaneParamsP5) tabPaneParamsP5.style.display = 'block';
@@ -303,6 +315,287 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (tabBtnParamsP5) tabBtnParamsP5.addEventListener('click', () => switchLeftTab('p5'));
   if (tabBtnParamsShader) tabBtnParamsShader.addEventListener('click', () => switchLeftTab('shader'));
+  if (tabBtnParamsImage) tabBtnParamsImage.addEventListener('click', () => switchLeftTab('image'));
+
+  // ================= GESTIÓN DE CAPAS DE IMAGEN Y LOGO CON AURA =================
+  function addImageLayer(src, name = 'Imagen', hasAura = false) {
+    const id = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const imgObj = {
+      id,
+      name,
+      src,
+      x: window.innerWidth ? Math.round(window.innerWidth / 2) : 960,
+      y: window.innerHeight ? Math.round(window.innerHeight / 2) : 540,
+      scale: 1.0,
+      rotation: 0,
+      alpha: 1.0,
+      hasAura: Boolean(hasAura),
+      visible: true,
+      width: 280,
+      height: 280
+    };
+
+    const htmlImg = new Image();
+    htmlImg.onload = () => {
+      imgObj.width = htmlImg.width || 280;
+      imgObj.height = htmlImg.height || 280;
+      imgObj.imgElement = htmlImg;
+    };
+    htmlImg.src = src;
+    imgObj.imgElement = htmlImg;
+
+    if (typeof window.loadImage === 'function') {
+      try {
+        imgObj.p5Img = window.loadImage(src, (loaded) => {
+          if (loaded) {
+            imgObj.width = loaded.width || imgObj.width || 280;
+            imgObj.height = loaded.height || imgObj.height || 280;
+          }
+        });
+      } catch (e) {}
+    }
+
+    window.activeImageLayers.push(imgObj);
+    window.selectedImageId = id;
+
+    // Agregar a timelineLayers
+    if (Array.isArray(timelineLayers)) {
+      const layerId = 'layer_' + id;
+      const clipId = 'clip_' + id;
+      timelineLayers.push({
+        id: layerId,
+        name: 'Imagen: ' + name,
+        type: 'image',
+        imageId: id,
+        clips: [{
+          id: clipId,
+          imageId: id,
+          startTime: 0.0,
+          duration: timelineDuration || 2.0,
+          text: name,
+          x: imgObj.x,
+          y: imgObj.y,
+          scale: imgObj.scale,
+          rotation: imgObj.rotation
+        }]
+      });
+      if (typeof renderTimelineTracksUI === 'function') {
+        renderTimelineTracksUI();
+      }
+    }
+
+    renderImageLayersList();
+    syncImageControlsUI();
+    showToast(`Imagen "${name}" agregada`, 'success');
+  }
+
+  function renderImageLayersList() {
+    const listEl = document.getElementById('fx-images-list');
+    if (!listEl) return;
+    if (!window.activeImageLayers || window.activeImageLayers.length === 0) {
+      listEl.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>';
+      const controls = document.getElementById('fx-image-controls');
+      if (controls) controls.style.display = 'none';
+      return;
+    }
+
+    listEl.innerHTML = window.activeImageLayers.map(img => {
+      const isSelected = img.id === window.selectedImageId;
+      return `
+        <div onclick="window.selectImageLayer('${img.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: ${isSelected ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isSelected ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <img src="${img.src}" style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px; background: rgba(0,0,0,0.5);">
+            <span style="font-size: 11px; font-weight: 700; color: ${isSelected ? '#fff' : '#cbd5e1'}; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${img.name}</span>
+            ${img.hasAura ? '<span style="font-size: 9px; padding: 1px 4px; background: rgba(224,64,251,0.2); color: #e040fb; border-radius: 4px; font-weight: 800;">AURA</span>' : ''}
+          </div>
+          <button onclick="event.stopPropagation(); window.deleteImageLayer('${img.id}')" style="background: none; border: none; color: #ff5252; cursor: pointer; padding: 4px;" title="Eliminar imagen">
+            <i class="fas fa-trash text-xs"></i>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    syncImageControlsUI();
+  }
+
+  window.selectImageLayer = function(id) {
+    window.selectedImageId = id;
+    renderImageLayersList();
+  };
+
+  window.deleteImageLayer = function(id) {
+    window.activeImageLayers = (window.activeImageLayers || []).filter(img => img.id !== id);
+    if (window.selectedImageId === id) {
+      window.selectedImageId = window.activeImageLayers.length > 0 ? window.activeImageLayers[0].id : null;
+    }
+    if (Array.isArray(timelineLayers)) {
+      timelineLayers = timelineLayers.filter(l => l.imageId !== id && !l.clips?.some(c => c.imageId === id));
+      if (typeof renderTimelineTracksUI === 'function') {
+        renderTimelineTracksUI();
+      }
+    }
+    renderImageLayersList();
+    showToast('Imagen eliminada', 'info');
+  };
+
+  function syncImageControlsUI() {
+    const controls = document.getElementById('fx-image-controls');
+    if (!controls) return;
+    const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+    if (!img) {
+      controls.style.display = 'none';
+      return;
+    }
+    controls.style.display = 'block';
+
+    const posXRange = document.getElementById('param-IMG_POS_X');
+    const posXNum = document.getElementById('num-IMG_POS_X');
+    const posYRange = document.getElementById('param-IMG_POS_Y');
+    const posYNum = document.getElementById('num-IMG_POS_Y');
+    const scaleRange = document.getElementById('param-IMG_SCALE');
+    const scaleNum = document.getElementById('num-IMG_SCALE');
+    const rotRange = document.getElementById('param-IMG_ROT');
+    const rotNum = document.getElementById('num-IMG_ROT');
+    const alphaRange = document.getElementById('param-IMG_ALPHA');
+    const alphaNum = document.getElementById('num-IMG_ALPHA');
+    const auraCheckbox = document.getElementById('param-IMG_HAS_AURA');
+
+    if (posXRange) posXRange.value = img.x;
+    if (posXNum) posXNum.value = img.x;
+    if (posYRange) posYRange.value = img.y;
+    if (posYNum) posYNum.value = img.y;
+    if (scaleRange) scaleRange.value = img.scale;
+    if (scaleNum) scaleNum.value = img.scale;
+    if (rotRange) rotRange.value = img.rotation;
+    if (rotNum) rotNum.value = img.rotation;
+    if (alphaRange) alphaRange.value = img.alpha;
+    if (alphaNum) alphaNum.value = img.alpha;
+    if (auraCheckbox) auraCheckbox.checked = !!img.hasAura;
+  }
+
+  function syncImageToTimeline(img) {
+    if (!img || !Array.isArray(timelineLayers)) return;
+    timelineLayers.forEach(layer => {
+      if (layer.imageId === img.id && Array.isArray(layer.clips)) {
+        layer.clips.forEach(clip => {
+          clip.x = img.x;
+          clip.y = img.y;
+          clip.scale = img.scale;
+          clip.rotation = img.rotation;
+        });
+      }
+    });
+  }
+
+  // Event Listeners para Controles de Imagen
+  document.addEventListener('DOMContentLoaded', () => {
+    const bindControl = (rangeId, numId, prop) => {
+      const r = document.getElementById(rangeId);
+      const n = document.getElementById(numId);
+      if (r) {
+        r.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (n) n.value = val;
+          const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+          if (img) {
+            img[prop] = val;
+            syncImageToTimeline(img);
+          }
+        });
+      }
+      if (n) {
+        n.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (r) r.value = val;
+          const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+          if (img) {
+            img[prop] = val;
+            syncImageToTimeline(img);
+          }
+        });
+      }
+    };
+
+    bindControl('param-IMG_POS_X', 'num-IMG_POS_X', 'x');
+    bindControl('param-IMG_POS_Y', 'num-IMG_POS_Y', 'y');
+    bindControl('param-IMG_SCALE', 'num-IMG_SCALE', 'scale');
+    bindControl('param-IMG_ROT', 'num-IMG_ROT', 'rotation');
+    bindControl('param-IMG_ALPHA', 'num-IMG_ALPHA', 'alpha');
+
+    const auraCheckbox = document.getElementById('param-IMG_HAS_AURA');
+    if (auraCheckbox) {
+      auraCheckbox.addEventListener('change', () => {
+        const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+        if (img) {
+          img.hasAura = auraCheckbox.checked;
+          renderImageLayersList();
+        }
+      });
+    }
+
+    const btnCenter = document.getElementById('btn-img-center');
+    if (btnCenter) {
+      btnCenter.addEventListener('click', () => {
+        const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+        if (img) {
+          img.x = window.innerWidth ? Math.round(window.innerWidth / 2) : 960;
+          img.y = window.innerHeight ? Math.round(window.innerHeight / 2) : 540;
+          syncImageControlsUI();
+          syncImageToTimeline(img);
+        }
+      });
+    }
+
+    const btnDelete = document.getElementById('btn-img-delete');
+    if (btnDelete) {
+      btnDelete.addEventListener('click', () => {
+        if (window.selectedImageId) {
+          window.deleteImageLayer(window.selectedImageId);
+        }
+      });
+    }
+
+    window.handleImageUploadFile = function(inputEl) {
+      const file = inputEl && inputEl.files && inputEl.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        addImageLayer(ev.target.result, file.name || 'Imagen', false);
+        if (inputEl) inputEl.value = '';
+      };
+      reader.readAsDataURL(file);
+    };
+
+    const btnUpload = document.getElementById('btn-fx-upload-image');
+    const fileInput = document.getElementById('fx-image-file-input');
+    if (btnUpload && fileInput) {
+      btnUpload.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => window.handleImageUploadFile(fileInput));
+    }
+
+    const btnLogoPreset = document.getElementById('btn-fx-add-logo-preset');
+    if (btnLogoPreset) {
+      btnLogoPreset.addEventListener('click', () => {
+        addImageLayer('img/artedigital.png', 'LOGO con Energía', true);
+      });
+    }
+
+    initImageDropzoneHandlers();
+
+    // Posicionar imagen activa en las coordenadas del clic en el canvas
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('#left-control-panel') || e.target.closest('#right-control-panel') || e.target.closest('.top-bar') || e.target.closest('#timeline-panel')) return;
+      if (window.activeLeftTab === 'image' && window.selectedImageId) {
+        const img = (window.activeImageLayers || []).find(i => i.id === window.selectedImageId);
+        if (img) {
+          img.x = e.clientX;
+          img.y = e.clientY;
+          syncImageControlsUI();
+          syncImageToTimeline(img);
+        }
+      }
+    });
+  });
 
   // Control Pestañas Derecha (FLYERMODE vs COLLABMODE)
   function switchRightTab(targetMode) {
@@ -943,7 +1236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     timelineLayers.forEach(l => {
       if (!Array.isArray(l.clips)) return;
       l.clips.forEach(c => {
-        if (c.id === matchingWord.id || c.flyerId === matchingWord.id || (matchingWord.text && c.text === matchingWord.text)) {
+        if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
           c.color = matchingWord.color || c.color;
           c.letterColors = Array.isArray(matchingWord.letterColors) ? [...matchingWord.letterColors] : null;
           if (matchingWord.palette) c.palette = [...matchingWord.palette];
@@ -1235,13 +1528,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.selectFlyerWordById = selectFlyerWord;
 
+  let collabWordIndexCounter = 0;
+  function getNextCollabWord() {
+    let pool = null;
+    if (typeof words !== 'undefined' && Array.isArray(words) && words.length > 0) {
+      pool = words;
+    } else if (typeof getInitialWords === 'function') {
+      pool = getInitialWords();
+    }
+    if (!pool || pool.length === 0) {
+      pool = ["UNITY", "UNREAL", "GODOT", "TOUCHDESIGNER", "PROCESSING", "P5", "THREE", "ARTE", "DIGITAL", "DATA"];
+    }
+    const selected = pool[collabWordIndexCounter % pool.length];
+    collabWordIndexCounter++;
+    return (selected || 'ARTE').toUpperCase();
+  }
+
   function addFlyerWord(rawText, x, y) {
     let cleanWord = (rawText || '').trim().toUpperCase();
     if (!cleanWord && flyerWordInput && flyerWordInput.value.trim() && flyerWordInput.value.trim().toUpperCase() !== 'NUEVA PALABRA') {
       cleanWord = flyerWordInput.value.trim().toUpperCase();
     }
-    if (!cleanWord) {
-      cleanWord = "NUEVA PALABRA";
+    if (!cleanWord || cleanWord === 'NUEVA PALABRA') {
+      cleanWord = getNextCollabWord();
     }
 
     const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
@@ -1589,14 +1898,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addFlyerWordBtn && flyerWordInput) {
     addFlyerWordBtn.addEventListener('click', () => {
       const txt = flyerWordInput.value.trim();
-      addFlyerWord(txt || 'NUEVA PALABRA');
+      addFlyerWord(txt || getNextCollabWord());
     });
 
     flyerWordInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const txt = flyerWordInput.value.trim();
-        addFlyerWord(txt || 'NUEVA PALABRA');
+        addFlyerWord(txt || getNextCollabWord());
       }
     });
   }
@@ -1617,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? parentLayer.keyframes
         : null;
 
-    const matchingFw = targetObj ? flyerWords.find(fw => typeof fw === 'object' && (fw.id === targetObj.id || fw.id === targetObj.flyerId || (targetObj.text && fw.text === targetObj.text))) : null;
+    const matchingFw = targetObj ? flyerWords.find(fw => typeof fw === 'object' && (fw.id === targetObj.id || fw.id === targetObj.flyerId)) : null;
 
     const fallbackX = (targetObj && targetObj.x !== undefined) ? targetObj.x : (matchingFw && matchingFw.x !== undefined ? matchingFw.x : (parentLayer.x !== undefined ? parentLayer.x : Math.round(window.innerWidth / 2)));
     const fallbackY = (targetObj && targetObj.y !== undefined) ? targetObj.y : (matchingFw && matchingFw.y !== undefined ? matchingFw.y : (parentLayer.y !== undefined ? parentLayer.y : Math.round(window.innerHeight / 2)));
@@ -1990,6 +2299,199 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- BIBLIOTECA DE FUENTES (CAPAS GUARDADAS) ---
+  const SAVED_LAYER_SOURCES_KEY = 'artedigital_saved_layer_sources';
+
+  function getSavedLayerSources() {
+    try {
+      const raw = localStorage.getItem(SAVED_LAYER_SOURCES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (err) {
+      console.error('Error al leer fuentes de capas:', err);
+      return [];
+    }
+  }
+
+  function saveLayerToSources(layerId) {
+    const layerObj = timelineLayers.find(l => l.id === layerId);
+    if (!layerObj) {
+      showToast('No se encontró la capa para guardar', 'error');
+      return;
+    }
+
+    const defaultName = layerObj.name || 'Capa Guardada';
+    const sourceName = prompt('Nombre para esta fuente de capa (Biblioteca de Fuentes):', defaultName);
+    if (!sourceName || !sourceName.trim()) return;
+
+    const cleanName = sourceName.trim();
+    const sources = getSavedLayerSources();
+
+    const newSource = {
+      id: 'source_' + Date.now(),
+      name: cleanName,
+      clips: JSON.parse(JSON.stringify(layerObj.clips || [])),
+      savedAt: new Date().toISOString()
+    };
+
+    sources.push(newSource);
+    try {
+      localStorage.setItem(SAVED_LAYER_SOURCES_KEY, JSON.stringify(sources));
+      showToast(`Capa "${cleanName}" guardada en Fuentes`, 'success');
+      renderLayerSourcesModal();
+    } catch (err) {
+      console.error('Error al guardar fuente de capa:', err);
+      showToast('Error al guardar capa en Fuentes', 'error');
+    }
+  }
+
+  function deleteLayerSource(sourceId) {
+    let sources = getSavedLayerSources();
+    sources = sources.filter(s => s.id !== sourceId);
+    try {
+      localStorage.setItem(SAVED_LAYER_SOURCES_KEY, JSON.stringify(sources));
+      showToast('Fuente eliminada de la biblioteca', 'info');
+      renderLayerSourcesModal();
+    } catch (err) {
+      console.error('Error al eliminar fuente:', err);
+    }
+  }
+
+  function loadLayerSourceIntoComposition(sourceObj) {
+    if (!sourceObj || !Array.isArray(sourceObj.clips)) return;
+
+    const newLayerId = 'layer_' + Date.now();
+    const newClips = sourceObj.clips.map(clip => {
+      const newClipId = 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const clonedClip = JSON.parse(JSON.stringify(clip));
+      clonedClip.id = newClipId;
+      clonedClip.flyerId = newClipId;
+
+      const cleanWord = clonedClip.text || clonedClip.word || 'PALABRA';
+      const newWordObj = {
+        id: newClipId,
+        name: cleanWord,
+        text: cleanWord,
+        word: cleanWord,
+        x: clonedClip.x || Math.round(window.innerWidth / 2),
+        y: clonedClip.y || Math.round(window.innerHeight / 2),
+        fontSize: clonedClip.fontSize || 36,
+        letterSpacing: clonedClip.letterSpacing || 4,
+        formationMode: clonedClip.formationMode || 'FISICS',
+        color: clonedClip.color || '#40c4ff',
+        palette: clonedClip.palette ? [...clonedClip.palette] : getChromaticPalette(),
+        letterColors: clonedClip.letterColors ? [...clonedClip.letterColors] : null,
+        startTime: clonedClip.startTime || 0,
+        duration: clonedClip.duration || 2.0,
+        keyframes: clonedClip.keyframes ? JSON.parse(JSON.stringify(clonedClip.keyframes)) : []
+      };
+      flyerWords.push(newWordObj);
+
+      if (window.spawnWordParticles) {
+        window.spawnWordParticles(cleanWord, newWordObj.x, newWordObj.y, true, newWordObj.id, {
+          fontSize: newWordObj.fontSize,
+          letterSpacing: newWordObj.letterSpacing,
+          color: newWordObj.color,
+          letterColors: newWordObj.letterColors,
+          formationMode: newWordObj.formationMode,
+          palette: newWordObj.palette
+        });
+      }
+
+      return clonedClip;
+    });
+
+    const newLayer = {
+      id: newLayerId,
+      name: sourceObj.name || ('Capa ' + (timelineLayers.length + 1)),
+      clips: newClips
+    };
+
+    timelineLayers.push(newLayer);
+    selectedLayerId = newLayerId;
+
+    applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+    renderFlyerWordsList();
+    renderTimelineTracks();
+    evaluateTimelineAtTime(currentTimelineTime);
+
+    const modal = document.getElementById('layer-sources-modal');
+    if (modal) modal.style.display = 'none';
+
+    showToast(`Fuente "${sourceObj.name}" cargada como nueva capa`, 'success');
+  }
+
+  function renderLayerSourcesModal() {
+    const listEl = document.getElementById('layer-sources-list');
+    if (!listEl) return;
+
+    const sources = getSavedLayerSources();
+    listEl.innerHTML = '';
+
+    if (sources.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; color: #64748b; padding: 24px; font-size: 12px;">
+          <i class="fas fa-bookmark" style="font-size: 28px; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+          No hay capas guardadas en Fuentes todavía.<br>
+          <span style="font-size: 11px; opacity: 0.7;">Podes guardar cualquier capa usando el botón de marcador <i class="fas fa-bookmark" style="color: #ec4899;"></i>.</span>
+        </div>
+      `;
+      return;
+    }
+
+    sources.forEach(src => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background: rgba(255,255,255,0.04); border: 1px solid rgba(0,242,254,0.2); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;';
+
+      const dateStr = src.savedAt ? new Date(src.savedAt).toLocaleDateString() : '';
+      const clipsCount = (src.clips && src.clips.length) ? src.clips.length : 0;
+      const clipsNames = (src.clips && src.clips.length) ? src.clips.map(c => `[${c.formationMode || 'CODE'}: ${c.text || c.word || 'PALABRA'}]`).join(', ') : 'Sin clips';
+
+      card.innerHTML = `
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-layer-group" style="color: var(--accent-cyan);"></i> ${src.name}
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+            ${clipsCount} clip(s): <span style="color: var(--accent-magenta); font-weight: 600;">${clipsNames}</span>
+          </div>
+          ${dateStr ? `<div style="font-size: 9px; color: #64748b; margin-top: 2px;">Guardado: ${dateStr}</div>` : ''}
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn-load-src" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 800; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fas fa-plus-circle"></i> Cargar
+          </button>
+          <button class="btn-del-src" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 6px 8px; font-size: 11px; cursor: pointer;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      `;
+
+      card.querySelector('.btn-load-src').addEventListener('click', () => loadLayerSourceIntoComposition(src));
+      card.querySelector('.btn-del-src').addEventListener('click', () => deleteLayerSource(src.id));
+
+      listEl.appendChild(card);
+    });
+  }
+
+  // Hook up event listeners for Fuentes Modal
+  document.addEventListener('DOMContentLoaded', () => {
+    const openBtn = document.getElementById('tl-btn-open-sources');
+    const closeBtn = document.getElementById('close-layer-sources-modal');
+    const modal = document.getElementById('layer-sources-modal');
+    if (openBtn && modal) {
+      openBtn.addEventListener('click', () => {
+        renderLayerSourcesModal();
+        modal.style.display = 'flex';
+      });
+    }
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+  });
+
   function renderTimelineTracks() {
     const tracksEl = document.getElementById('timeline-tracks');
     if (!tracksEl) return;
@@ -2014,13 +2516,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = document.createElement('div');
       label.className = 'track-label' + (layerObj.id === selectedLayerId ? ' active-track' : '');
 
+      // Resumen de efectos y contenido de la capa
+      let effectSummary = '';
+      if (layerObj.clips.length > 0) {
+        const firstClip = layerObj.clips[0];
+        const mode = (firstClip.formationMode || firstClip.type || 'CODE').toUpperCase();
+        const text = firstClip.text || firstClip.word || 'EFECTO';
+        effectSummary = ` [${mode}: "${text}"]`;
+      }
+
       const spanText = document.createElement('span');
       spanText.className = 'track-label-span';
       spanText.style.cssText = 'pointer-events: auto; cursor: pointer; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-weight: 700;';
-      spanText.textContent = layerObj.name || ('Capa ' + (layerIndex + 1));
+      spanText.textContent = (layerObj.name || ('Capa ' + (layerIndex + 1))) + effectSummary;
       spanText.title = 'Doble click para cambiar el nombre de esta capa';
 
       label.appendChild(spanText);
+
+      // Botón para Guardar Capa en Fuentes
+      const saveLayerBtn = document.createElement('button');
+      saveLayerBtn.className = 'btn-save-layer-source';
+      saveLayerBtn.style.cssText = 'background: none; border: none; color: #ec4899; font-size: 11px; cursor: pointer; padding: 2px 4px; opacity: 0.85; margin-left: 4px; pointer-events: auto;';
+      saveLayerBtn.innerHTML = '<i class="fas fa-bookmark"></i>';
+      saveLayerBtn.title = 'Guardar esta capa en Fuentes (Biblioteca de Capas)';
+      saveLayerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        saveLayerToSources(layerObj.id);
+      });
+      label.appendChild(saveLayerBtn);
 
       // Botón para eliminar capa
       const delLayerBtn = document.createElement('button');
@@ -2116,6 +2639,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         lane.style.background = '';
         const droppedText = e.dataTransfer ? e.dataTransfer.getData('text/plain') : '';
+        const droppedFlyerId = e.dataTransfer ? e.dataTransfer.getData('application/flyer-word-id') : '';
         if (!droppedText || !droppedText.trim()) return;
 
         const cleanDropped = droppedText.trim().toUpperCase();
@@ -2123,30 +2647,91 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
         const dropTime = Number(((offsetX / rect.width) * timelineDuration).toFixed(2));
 
+        let sourceWord = flyerWords.find(w => typeof w === 'object' && (w.id === droppedFlyerId || w.text === cleanDropped || w.word === cleanDropped));
+
+        const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
+        const spaceSlider = document.getElementById('param-LETTER_SPACING');
+        const fontSz = (sourceWord && sourceWord.fontSize !== undefined) ? sourceWord.fontSize : (sizeSlider ? parseFloat(sizeSlider.value) : 36);
+        const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
+        const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
+        const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
+        const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
+        let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
+
+        if (!wordLetterColors) {
+          wordLetterColors = Array.from(cleanDropped).map((ch, i, arr) =>
+            interpolatePalette(wordPalette, arr.length > 1 ? i / (arr.length - 1) : 0)
+          );
+        }
+
+        const commonId = 'flyer_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
+        const newWord = {
+          id: commonId,
+          name: cleanDropped,
+          text: cleanDropped,
+          word: cleanDropped,
+          x: posX,
+          y: posY,
+          fontSize: fontSz,
+          letterSpacing: spacePx,
+          formationMode: wordFormation,
+          color: wordColor,
+          palette: wordPalette,
+          letterColors: wordLetterColors,
+          startTime: dropTime,
+          duration: 2.0,
+          keyframes: []
+        };
+
+        flyerWordsExplicitlyManaged = true;
+        flyerWords.push(newWord);
+
         const newClip = {
-          id: 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          id: newWord.id,
+          flyerId: newWord.id,
           text: cleanDropped,
           word: cleanDropped,
           startTime: dropTime,
           duration: 2.0,
-          x: Math.round(window.innerWidth / 2),
-          y: Math.round(window.innerHeight / 2),
-          fontSize: 36,
-          letterSpacing: 4,
+          x: newWord.x,
+          y: newWord.y,
+          fontSize: newWord.fontSize,
+          letterSpacing: newWord.letterSpacing,
+          color: newWord.color,
+          letterColors: newWord.letterColors ? [...newWord.letterColors] : null,
+          palette: newWord.palette ? [...newWord.palette] : null,
+          formationMode: newWord.formationMode,
           keyframes: []
         };
+
+        if (!Array.isArray(layerObj.clips)) layerObj.clips = [];
         layerObj.clips.push(newClip);
         selectedLayerId = layerObj.id;
         selectedClipId = newClip.id;
-        window.activeFlyerWordId = newClip.id;
+        selectedFlyerWordId = newWord.id;
+        window.activeFlyerWordId = newWord.id;
 
         if (window.spawnWordParticles) {
-          window.spawnWordParticles(cleanDropped, newClip.x, newClip.y, true, newClip.id, { fontSize: newClip.fontSize, letterSpacing: newClip.letterSpacing });
+          window.spawnWordParticles(cleanDropped, newClip.x, newClip.y, true, newClip.id, {
+            fontSize: newClip.fontSize,
+            letterSpacing: newClip.letterSpacing,
+            color: newClip.color,
+            letterColors: newClip.letterColors,
+            formationMode: newClip.formationMode,
+            palette: newClip.palette
+          });
         }
 
+        applyConfigChange('FLYER_WORDS', [...flyerWords]);
+        applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+        renderFlyerWordsList();
         renderTimelineTracks();
+        selectFlyerWord(newWord.id);
         evaluateTimelineAtTime(currentTimelineTime);
-        showToast(`Clip "${cleanDropped}" agregado a "${layerObj.name}" en 00:${dropTime.toFixed(2)}s`, 'success');
+        showToast(`Clip "${cleanDropped}" cargado con sus parámetros a "${layerObj.name}" en 00:${dropTime.toFixed(2)}s`, 'success');
       });
 
       // Doble click en área vacía de la pista agrega un nuevo clip a esta capa
@@ -2162,28 +2747,89 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userText === null) return;
         const activeText = userText.trim().toUpperCase() || 'NUEVA PALABRA';
 
+        let sourceWord = flyerWords.find(w => typeof w === 'object' && (w.text === activeText || w.word === activeText));
+
+        const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
+        const spaceSlider = document.getElementById('param-LETTER_SPACING');
+        const fontSz = (sourceWord && sourceWord.fontSize !== undefined) ? sourceWord.fontSize : (sizeSlider ? parseFloat(sizeSlider.value) : 36);
+        const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
+        const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
+        const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
+        const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
+        let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
+
+        if (!wordLetterColors) {
+          wordLetterColors = Array.from(activeText).map((ch, i, arr) =>
+            interpolatePalette(wordPalette, arr.length > 1 ? i / (arr.length - 1) : 0)
+          );
+        }
+
+        const commonId = 'flyer_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
+        const newWord = {
+          id: commonId,
+          name: activeText,
+          text: activeText,
+          word: activeText,
+          x: posX,
+          y: posY,
+          fontSize: fontSz,
+          letterSpacing: spacePx,
+          formationMode: wordFormation,
+          color: wordColor,
+          palette: wordPalette,
+          letterColors: wordLetterColors,
+          startTime: clickTime,
+          duration: 2.0,
+          keyframes: []
+        };
+
+        flyerWordsExplicitlyManaged = true;
+        flyerWords.push(newWord);
+
         const newClip = {
-          id: 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          id: newWord.id,
+          flyerId: newWord.id,
           text: activeText,
           word: activeText,
           startTime: clickTime,
           duration: 2.0,
-          x: Math.round(window.innerWidth / 2),
-          y: Math.round(window.innerHeight / 2),
-          fontSize: 36,
-          letterSpacing: 4,
+          x: newWord.x,
+          y: newWord.y,
+          fontSize: newWord.fontSize,
+          letterSpacing: newWord.letterSpacing,
+          color: newWord.color,
+          letterColors: newWord.letterColors ? [...newWord.letterColors] : null,
+          palette: newWord.palette ? [...newWord.palette] : null,
+          formationMode: newWord.formationMode,
           keyframes: []
         };
+
+        if (!Array.isArray(layerObj.clips)) layerObj.clips = [];
         layerObj.clips.push(newClip);
         selectedLayerId = layerObj.id;
         selectedClipId = newClip.id;
-        window.activeFlyerWordId = newClip.id;
+        selectedFlyerWordId = newWord.id;
+        window.activeFlyerWordId = newWord.id;
 
         if (window.spawnWordParticles) {
-          window.spawnWordParticles(activeText, newClip.x, newClip.y, true, newClip.id, { fontSize: newClip.fontSize, letterSpacing: newClip.letterSpacing });
+          window.spawnWordParticles(activeText, newClip.x, newClip.y, true, newClip.id, {
+            fontSize: newClip.fontSize,
+            letterSpacing: newClip.letterSpacing,
+            color: newClip.color,
+            letterColors: newClip.letterColors,
+            formationMode: newClip.formationMode,
+            palette: newClip.palette
+          });
         }
 
+        applyConfigChange('FLYER_WORDS', [...flyerWords]);
+        applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+        renderFlyerWordsList();
         renderTimelineTracks();
+        selectFlyerWord(newWord.id);
         evaluateTimelineAtTime(currentTimelineTime);
         showToast(`Nuevo clip "${activeText}" agregado a la capa "${layerObj.name}" en 00:${clickTime.toFixed(2)}s`, 'success');
       });
@@ -2202,8 +2848,12 @@ document.addEventListener('DOMContentLoaded', () => {
         handleLeft.title = 'Arrastrar para recortar tiempo de inicio';
 
         const clipTextSpan = document.createElement('span');
-        clipTextSpan.style.cssText = 'pointer-events:none; flex:1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; padding: 0 4px; font-weight: 700;';
-        clipTextSpan.textContent = clipObj.text || clipObj.word || 'PALABRA';
+        clipTextSpan.style.cssText = 'pointer-events:none; flex:1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; padding: 0 4px; font-weight: 700; display: flex; align-items: center; gap: 4px;';
+        
+        const modeBadge = (clipObj.formationMode || clipObj.type || 'CODE').toUpperCase();
+        const modeColor = (modeBadge === 'IMAGE' || modeBadge === 'IMAGEN') ? '#ec4899' : (modeBadge === 'FISICS' ? '#a855f7' : '#00f2fe');
+        
+        clipTextSpan.innerHTML = `<span style="font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; background: rgba(0,0,0,0.6); color: ${modeColor}; border: 1px solid ${modeColor}66;">${modeBadge}</span> <span>${clipObj.text || clipObj.word || 'PALABRA'}</span>`;
 
         const handleRight = document.createElement('div');
         handleRight.className = 'clip-trim-handle handle-right';
@@ -2490,6 +3140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         el.classList.remove('timeline-drag-hover');
         const droppedText = e.dataTransfer ? e.dataTransfer.getData('text/plain') : '';
+        const droppedFlyerId = e.dataTransfer ? e.dataTransfer.getData('application/flyer-word-id') : '';
         if (!droppedText || !droppedText.trim()) return;
 
         const cleanDropped = droppedText.trim().toUpperCase();
@@ -2499,27 +3150,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         let targetLayer = timelineLayers.find(l => l.id === selectedLayerId) || timelineLayers[0];
 
+        // Buscar si la palabra ya existe en flyerWords por ID o por texto
+        let sourceWord = flyerWords.find(w => typeof w === 'object' && (w.id === droppedFlyerId || w.text === cleanDropped || w.word === cleanDropped));
+
+        const sizeSlider = document.getElementById('param-TEXT_SIZE_MAX');
+        const spaceSlider = document.getElementById('param-LETTER_SPACING');
+        const fontSz = (sourceWord && sourceWord.fontSize !== undefined) ? sourceWord.fontSize : (sizeSlider ? parseFloat(sizeSlider.value) : 36);
+        const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
+        const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
+        const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
+        const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
+        let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
+
+        if (!wordLetterColors) {
+          wordLetterColors = Array.from(cleanDropped).map((ch, i, arr) =>
+            interpolatePalette(wordPalette, arr.length > 1 ? i / (arr.length - 1) : 0)
+          );
+        }
+
+        const commonId = 'flyer_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
+        const newWord = {
+          id: commonId,
+          name: cleanDropped,
+          text: cleanDropped,
+          word: cleanDropped,
+          x: posX,
+          y: posY,
+          fontSize: fontSz,
+          letterSpacing: spacePx,
+          formationMode: wordFormation,
+          color: wordColor,
+          palette: wordPalette,
+          letterColors: wordLetterColors,
+          startTime: Number(currentTimelineTime.toFixed(2)),
+          duration: 2.0,
+          keyframes: []
+        };
+
+        flyerWordsExplicitlyManaged = true;
+        flyerWords.push(newWord);
+
         const newClip = {
-          id: 'clip_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          id: newWord.id,
+          flyerId: newWord.id,
           text: cleanDropped,
           word: cleanDropped,
           startTime: Number(currentTimelineTime.toFixed(2)),
           duration: 2.0,
-          x: Math.round(window.innerWidth / 2),
-          y: Math.round(window.innerHeight / 2),
-          fontSize: 36,
-          letterSpacing: 4,
+          x: newWord.x,
+          y: newWord.y,
+          fontSize: newWord.fontSize,
+          letterSpacing: newWord.letterSpacing,
+          color: newWord.color,
+          letterColors: newWord.letterColors ? [...newWord.letterColors] : null,
+          palette: newWord.palette ? [...newWord.palette] : null,
+          formationMode: newWord.formationMode,
           keyframes: []
         };
         if (!Array.isArray(targetLayer.clips)) targetLayer.clips = [];
         targetLayer.clips.push(newClip);
+        selectedLayerId = targetLayer.id;
         selectedClipId = newClip.id;
-        window.activeFlyerWordId = newClip.id;
+        selectedFlyerWordId = newWord.id;
+        window.activeFlyerWordId = newWord.id;
 
         if (window.spawnWordParticles) {
-          window.spawnWordParticles(cleanDropped, newClip.x, newClip.y, true, newClip.id);
+          window.spawnWordParticles(cleanDropped, newClip.x, newClip.y, true, newClip.id, {
+            fontSize: newClip.fontSize,
+            letterSpacing: newClip.letterSpacing,
+            color: newClip.color,
+            letterColors: newClip.letterColors,
+            formationMode: newClip.formationMode,
+            palette: newClip.palette
+          });
         }
+
+        applyConfigChange('FLYER_WORDS', [...flyerWords]);
+        applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+        renderFlyerWordsList();
         renderTimelineTracks();
+        selectFlyerWord(newWord.id);
         evaluateTimelineAtTime(currentTimelineTime);
         showToast(`Clip "${cleanDropped}" agregado a "${targetLayer.name}"`, 'success');
       });
@@ -3694,6 +4407,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentConfig.FLYER_WORDS = [...flyerWords];
     currentConfig.TIMELINE_LAYERS = [...timelineLayers];
+    currentConfig.IMAGE_LAYERS = (window.activeImageLayers || []).map(img => ({
+      id: img.id,
+      name: img.name,
+      src: img.src,
+      x: img.x,
+      y: img.y,
+      scale: img.scale,
+      rotation: img.rotation,
+      alpha: img.alpha,
+      hasAura: Boolean(img.hasAura)
+    }));
 
     if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
       window.ParticlesConfig.set(currentConfig);
@@ -3808,6 +4532,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Limpiar partículas previas y arrays antes de cargar
         flyerWords = [];
         timelineLayers = [];
+        window.activeImageLayers = [];
+        window.selectedImageId = null;
         selectedFlyerWordId = null;
         window.activeFlyerWordId = null;
         selectedClipId = null;
@@ -3815,6 +4541,25 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedKeyframeIndex = null;
         if (window.clearAllFlyerParticles) {
           window.clearAllFlyerParticles();
+        }
+
+        if (effect.config && Array.isArray(effect.config.IMAGE_LAYERS)) {
+          window.activeImageLayers = effect.config.IMAGE_LAYERS.map(img => {
+            const htmlImg = new Image();
+            htmlImg.src = img.src;
+            return {
+              ...img,
+              imgElement: htmlImg,
+              width: img.width || 280,
+              height: img.height || 280
+            };
+          });
+          if (window.activeImageLayers.length > 0) {
+            window.selectedImageId = window.activeImageLayers[0].id;
+          }
+          if (typeof renderImageLayersList === 'function') {
+            renderImageLayersList();
+          }
         }
 
         // 2. Cargar palabras de flyer
@@ -4701,6 +5446,250 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   refreshGenerativeShadersDropdown();
+
+  // ================= MODULO DE PROPORCIONES DE ASPECTO Y DESCARGA PNG (FLYERMODE) =================
+  const ASPECT_RESOLUTIONS = {
+    '16:9': { w: 1920, h: 1080, label: '16:9 (1920x1080)' },
+    '9:16': { w: 1080, h: 1920, label: '9:16 (1080x1920)' },
+    '1:1': { w: 1080, h: 1080, label: '1:1 (1080x1080)' },
+    '4:5': { w: 1080, h: 1350, label: '4:5 (1080x1350)' }
+  };
+  window.currentFlyerAspectRatio = '16:9';
+
+  window.setFlyerAspectRatio = function(ratio) {
+    if (!ASPECT_RESOLUTIONS[ratio]) ratio = '16:9';
+    window.currentFlyerAspectRatio = ratio;
+
+    const badge = document.getElementById('current-aspect-badge');
+    if (badge) {
+      badge.textContent = ASPECT_RESOLUTIONS[ratio].label;
+    }
+
+    ['169', '916', '11', '45'].forEach(id => {
+      const btn = document.getElementById('btn-aspect-' + id);
+      if (!btn) return;
+      const btnRatio = id === '169' ? '16:9' : id === '916' ? '9:16' : id === '11' ? '1:1' : '4:5';
+      if (btnRatio === ratio) {
+        btn.classList.add('active');
+        btn.style.background = 'rgba(0, 242, 254, 0.25)';
+        btn.style.borderColor = 'var(--accent-cyan)';
+        btn.style.color = '#fff';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = 'rgba(255, 255, 255, 0.05)';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+        btn.style.color = '#cbd5e1';
+      }
+    });
+
+    rearrangeFlyerCompositionForAspect(ratio);
+    if (typeof showToast === 'function') {
+      showToast(`Formato reacomodado a ${ratio}`, 'info');
+    }
+  };
+
+  function rearrangeFlyerCompositionForAspect(ratio) {
+    const screenW = window.innerWidth || 1920;
+    const screenH = window.innerHeight || 1080;
+    const cX = Math.round(screenW / 2);
+    const cY = Math.round(screenH / 2);
+
+    if (Array.isArray(window.flyerWordsList) && window.flyerWordsList.length > 0) {
+      const isPortrait = ratio === '9:16' || ratio === '4:5';
+      const isSquare = ratio === '1:1';
+      const totalWords = window.flyerWordsList.length;
+
+      const vSpacing = isPortrait ? 90 : isSquare ? 75 : 65;
+      const startY = cY - Math.round(((totalWords - 1) * vSpacing) / 2);
+
+      window.flyerWordsList.forEach((wordObj, idx) => {
+        wordObj.x = cX;
+        wordObj.y = startY + idx * vSpacing;
+        if (isPortrait) {
+          wordObj.scale = 0.9;
+        } else if (isSquare) {
+          wordObj.scale = 0.95;
+        } else {
+          wordObj.scale = 1.0;
+        }
+
+        if (window.updateFlyerWordParticles) {
+          window.updateFlyerWordParticles(wordObj.id, {
+            x: wordObj.x,
+            y: wordObj.y,
+            scale: wordObj.scale
+          });
+        }
+      });
+    }
+
+    if (Array.isArray(window.activeImageLayers)) {
+      window.activeImageLayers.forEach(img => {
+        if (img.hasAura) {
+          img.x = cX;
+          img.y = ratio === '9:16' ? cY - 180 : ratio === '4:5' ? cY - 140 : cY;
+        }
+      });
+      if (typeof syncImageControlsUI === 'function') {
+        syncImageControlsUI();
+      }
+    }
+  }
+
+  window.generateFlyerPNGDataUrl = async function(targetRatio) {
+    const ratio = targetRatio || window.currentFlyerAspectRatio || '16:9';
+    const res = ASPECT_RESOLUTIONS[ratio] || ASPECT_RESOLUTIONS['16:9'];
+    const exportW = res.w;
+    const exportH = res.h;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = exportW;
+    exportCanvas.height = exportH;
+    const ctx = exportCanvas.getContext('2d');
+    if (!ctx) return null;
+
+    // 1. Dibujar fondo base radial neón cyber por si el shader está deshabilitado
+    const grad = ctx.createRadialGradient(exportW / 2, exportH / 2, exportW * 0.1, exportW / 2, exportH / 2, exportW * 0.7);
+    grad.addColorStop(0, '#131828');
+    grad.addColorStop(0.5, '#0d0d14');
+    grad.addColorStop(1, '#050608');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, exportW, exportH);
+
+    // 2. Capturar canvas del WebGL ASCII Background Shader (#ascii-bg-canvas)
+    const asciiCanvas = document.getElementById('ascii-bg-canvas') || document.querySelector('canvas#ascii-bg-canvas');
+    if (asciiCanvas && asciiCanvas.width > 0) {
+      try {
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(asciiCanvas, 0, 0, exportW, exportH);
+        ctx.restore();
+      } catch (e) {}
+    }
+
+    // 3. Capturar canvas principal de p5.js (partículas de texto y letras)
+    const allCanvases = Array.from(document.querySelectorAll('canvas'));
+    const p5Canvas = allCanvases.find(c => c.id !== 'ascii-bg-canvas' && c.id !== 'logo-aura-canvas') || document.querySelector('#p5-canvas canvas');
+    if (p5Canvas && p5Canvas.width > 0) {
+      try {
+        ctx.drawImage(p5Canvas, 0, 0, exportW, exportH);
+      } catch (e) {}
+    }
+
+    // 4. Renderizar capas de imágenes activas y logo aura en alta resolución
+    if (window.activeImageLayers && window.activeImageLayers.length) {
+      const scaleX = exportW / (window.innerWidth || 1920);
+      const scaleY = exportH / (window.innerHeight || 1080);
+
+      window.activeImageLayers.forEach(layer => {
+        if (layer.visible === false) return;
+        const img = layer.imgElement || layer.p5Img;
+        if (!img) return;
+
+        ctx.save();
+        const posX = (layer.x !== undefined ? layer.x : window.innerWidth / 2) * scaleX;
+        const posY = (layer.y !== undefined ? layer.y : window.innerHeight / 2) * scaleY;
+        const layerScale = (layer.scale !== undefined ? layer.scale : 1.0) * Math.min(scaleX, scaleY);
+        const w = (layer.width || 280) * layerScale;
+        const h = (layer.height || 280) * layerScale;
+        const alpha = layer.alpha !== undefined ? layer.alpha : 1.0;
+
+        ctx.translate(posX, posY);
+        if (layer.rotation) {
+          ctx.rotate((layer.rotation * Math.PI) / 180);
+        }
+
+        if (layer.hasAura) {
+          ctx.save();
+          ctx.lineWidth = 5 * layerScale;
+          ctx.strokeStyle = 'rgba(0, 242, 254, 0.9)';
+          ctx.shadowColor = '#00f2fe';
+          ctx.shadowBlur = 24;
+          ctx.strokeRect(-w / 2 - 12, -h / 2 - 12, w + 24, h + 24);
+          ctx.strokeStyle = 'rgba(224, 64, 251, 0.9)';
+          ctx.shadowColor = '#e040fb';
+          ctx.strokeRect(-w / 2 - 20, -h / 2 - 20, w + 40, h + 40);
+          ctx.restore();
+        }
+
+        ctx.globalAlpha = alpha;
+        try {
+          ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        } catch (e) {}
+        ctx.restore();
+      });
+    }
+
+    return exportCanvas.toDataURL('image/png');
+  };
+
+  window.downloadFlyerPNG = async function(targetRatio) {
+    const ratio = targetRatio || window.currentFlyerAspectRatio || '16:9';
+    const dataUrl = await generateFlyerPNGDataUrl(ratio);
+    if (!dataUrl) return;
+
+    const safeRatioName = ratio.replace(':', 'x');
+    const filename = `flyer-artedigital-${safeRatioName}-${Date.now()}.png`;
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (typeof showToast === 'function') {
+      showToast(`Descargado "${filename}"`, 'success');
+    }
+  };
+
+  window.downloadFlyerAllFormats = async function() {
+    if (typeof showToast === 'function') {
+      showToast('Generando paquete ZIP en todos los formatos (16:9, 9:16, 1:1, 4:5)...', 'info');
+    }
+
+    if (typeof JSZip !== 'undefined') {
+      try {
+        const zip = new JSZip();
+        const folder = zip.folder("flyers-artedigital");
+        const ratios = ['16:9', '9:16', '1:1', '4:5'];
+
+        for (const r of ratios) {
+          const dataUrl = await generateFlyerPNGDataUrl(r);
+          if (dataUrl) {
+            const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+            const safeRatio = r.replace(':', 'x');
+            folder.file(`flyer-artedigital-${safeRatio}.png`, base64Data, { base64: true });
+          }
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const zipFilename = `flyers-artedigital-pack-${Date.now()}.zip`;
+        const url = URL.createObjectURL(content);
+        const link = document.createElement('a');
+        link.download = zipFilename;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        if (typeof showToast === 'function') {
+          showToast(`¡Paquete ZIP descargado! (${zipFilename})`, 'success');
+        }
+        return;
+      } catch (err) {
+        console.warn('Error al empaquetar ZIP:', err);
+      }
+    }
+
+    // Fallback descarga secuencial si JSZip no está disponible
+    const ratios = ['16:9', '9:16', '1:1', '4:5'];
+    for (let i = 0; i < ratios.length; i++) {
+      window.downloadFlyerPNG(ratios[i]);
+      await new Promise(res => setTimeout(res, 500));
+    }
+  };
 
   if (window.location.pathname.includes('outputeffect.html')) {
     window.addEventListener('click', () => {

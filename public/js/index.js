@@ -66,8 +66,8 @@ function renderPinnedEvents(events) {
           </div>
         ` : `
           <div class="absolute top-3 right-3 z-20">
-            <span class="px-2 py-1 rounded-full bg-${accentColor}-500/20 text-${accentColor}-400 text-[10px] font-black uppercase tracking-wider border border-${accentColor}-500/30">
-              <i class="fas fa-thumbtack mr-1"></i>${badgeText}
+            <span class="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase tracking-wider border border-purple-500/40 backdrop-blur-md">
+              <i class="fas fa-thumbtack animated-violet-pin mr-1"></i>${badgeText}
             </span>
           </div>
         `}

@@ -57,6 +57,9 @@
         <button id="tab-btn-params-shader" class="tab-btn" title="Parámetros del fondo Shader ASCII GLSL">
           <i class="fas fa-terminal"></i> Shaderfondo
         </button>
+        <button id="tab-btn-params-image" class="tab-btn" title="Añadir y manipular capas de imágenes / logo">
+          <i class="fas fa-image"></i> Imagen
+        </button>
       </div>
       <button id="close-left-panel-btn" class="btn-close-header" title="Cerrar panel de parámetros">
         <i class="fas fa-times"></i>
@@ -696,6 +699,133 @@
           </div>
         </div>
       </div> <!-- fin tab-pane-params-shader -->
+
+      <!-- Sub-Pestaña 3: Imagen (Gestión y manipulación de imágenes/logo en la composición) -->
+      <div id="tab-pane-params-image" class="tab-pane" style="display: none;">
+        <!-- Card de Carga & Presets -->
+        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 12px; background: rgba(224, 64, 251, 0.05); border: 1px solid rgba(224, 64, 251, 0.25); border-radius: 12px;">
+          <div style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <i class="fas fa-image text-[var(--accent-magenta)]"></i> Añadir Imagen a la Composición
+          </div>
+          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">
+            Subí tu propia imagen, arrastrala hacia la pantalla o usá el LOGO oficial con su aura neón.
+          </div>
+
+          <!-- DropZone para arrastrar y soltar imágenes -->
+          <div id="fx-image-dropzone" onclick="document.getElementById('fx-image-file-input').click()" style="border: 2px dashed rgba(0, 242, 254, 0.4); border-radius: 10px; padding: 14px 10px; text-align: center; background: rgba(0, 242, 254, 0.05); cursor: pointer; transition: all 0.25s ease; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+            <i class="fas fa-cloud-upload-alt text-xl text-cyan-400"></i>
+            <div style="font-size: 11px; font-weight: 800; color: #fff;">Arrastrá tu imagen acá</div>
+            <div style="font-size: 9px; color: #94a3b8;">o hacé click para explorar tus archivos</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <input type="file" id="fx-image-file-input" accept="image/*" style="display: none;" onchange="if(window.handleImageUploadFile) window.handleImageUploadFile(this);">
+            <button type="button" id="btn-fx-upload-image" onclick="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
+              <i class="fas fa-upload mr-1"></i> Cargar Imagen Personalizada
+            </button>
+            <button type="button" id="btn-fx-add-logo-preset" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25)); border: 1px solid #e040fb; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(224, 64, 251, 0.3);">
+              <i class="fas fa-sun mr-1 text-cyan-400"></i> Cargar LOGO con Energía Aura
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de Capas de Imágenes -->
+        <div class="param-group">
+          <div class="group-title">
+            <i class="fas fa-layer-group"></i>
+            <span>Capas de Imágenes Activas</span>
+            <i class="fas fa-chevron-down group-chevron"></i>
+          </div>
+          <div class="group-content">
+            <div id="fx-images-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;">
+              <div style="font-size: 11px; color: #64748b; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>
+            </div>
+
+            <!-- Controles de Transformación de la Capa de Imagen Seleccionada -->
+            <div id="fx-image-controls" style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 10px; display: none;">
+              <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); margin-bottom: 8px;">
+                <i class="fas fa-sliders-h mr-1"></i> Controles de Imagen Seleccionada
+              </div>
+
+              <!-- Posición X -->
+              <div class="control-row">
+                <div class="control-label-wrap">
+                  <span>Posición X (px)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-IMG_POS_X" min="-1000" max="2500" step="1" value="960">
+                  <input type="number" id="num-IMG_POS_X" class="val-input" min="-1000" max="2500" step="1" value="960">
+                </div>
+              </div>
+
+              <!-- Posición Y -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Posición Y (px)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-IMG_POS_Y" min="-1000" max="2500" step="1" value="540">
+                  <input type="number" id="num-IMG_POS_Y" class="val-input" min="-1000" max="2500" step="1" value="540">
+                </div>
+              </div>
+
+              <!-- Escala / Zoom -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Escala (Zoom)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-IMG_SCALE" min="0.05" max="5.0" step="0.05" value="1.0">
+                  <input type="number" id="num-IMG_SCALE" class="val-input" min="0.05" max="5.0" step="0.05" value="1.0">
+                </div>
+              </div>
+
+              <!-- Rotación -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Rotación (0° - 360°)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-IMG_ROT" min="0" max="360" step="1" value="0">
+                  <input type="number" id="num-IMG_ROT" class="val-input" min="0" max="360" step="1" value="0">
+                </div>
+              </div>
+
+              <!-- Opacidad / Alpha -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Opacidad (0.0 - 1.0)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-IMG_ALPHA" min="0" max="1.0" step="0.05" value="1.0">
+                  <input type="number" id="num-IMG_ALPHA" class="val-input" min="0" max="1.0" step="0.05" value="1.0">
+                </div>
+              </div>
+
+              <!-- Conmutador Efecto Aura Energía (para Logo u otras imágenes) -->
+              <div class="control-row" style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 11px; font-weight: 700; color: #fff;">Efecto Aura Energía Neón</span>
+                  <label class="switch-ui" style="transform: scale(0.85);" title="Activar aura de energía WebGL para esta imagen">
+                    <input type="checkbox" id="param-IMG_HAS_AURA">
+                    <span class="slider-toggle"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Botones de Acción para la Imagen -->
+              <div style="display: flex; gap: 6px; margin-top: 12px;">
+                <button type="button" id="btn-img-center" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(255, 255, 255, 0.08); border-color: rgba(255,255,255,0.2); color: #fff; font-size: 11px;">
+                  <i class="fas fa-crosshairs mr-1"></i> Centrar
+                </button>
+                <button type="button" id="btn-img-delete" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(255, 82, 82, 0.2); border-color: #ff5252; color: #ff5252; font-size: 11px;">
+                  <i class="fas fa-trash mr-1"></i> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- fin tab-pane-params-image -->
     </div>
 
     <div class="panel-footer">
@@ -869,6 +999,46 @@
               </div>
             </div>
 
+            <!-- Módulo Proporción de Aspecto (Aspect Ratio Layout) -->
+            <div style="margin-top: 14px; padding: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px;">
+              <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span><i class="fas fa-shapes mr-1"></i> Formato y Proporción</span>
+                <span id="current-aspect-badge" style="font-size: 9px; padding: 2px 6px; background: rgba(0, 242, 254, 0.2); color: #00f2fe; border-radius: 4px; font-weight: 800;">16:9 (1920x1080)</span>
+              </div>
+              <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">
+                Elegí la proporción para reacomodar automáticamente la secuencia de texto, imágenes y logo.
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <button type="button" id="btn-aspect-169" class="aspect-btn active" onclick="setFlyerAspectRatio('16:9')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.25); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-desktop text-cyan-400"></i> 16:9 (Horizontal)
+                </button>
+                <button type="button" id="btn-aspect-916" class="aspect-btn" onclick="setFlyerAspectRatio('9:16')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-mobile-alt text-magenta-400"></i> 9:16 (Celu/Story)
+                </button>
+                <button type="button" id="btn-aspect-11" class="aspect-btn" onclick="setFlyerAspectRatio('1:1')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-square text-emerald-400"></i> 1:1 (Cuadrado)
+                </button>
+                <button type="button" id="btn-aspect-45" class="aspect-btn" onclick="setFlyerAspectRatio('4:5')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-portrait text-amber-400"></i> 4:5 (Feed)
+                </button>
+              </div>
+            </div>
+
+            <!-- Módulo de Descarga (Exportación PNG) -->
+            <div style="margin-top: 10px; margin-bottom: 14px; padding: 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px;">
+              <div style="font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                <i class="fas fa-download"></i> Descargar Composición PNG
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" id="btn-download-flyer-png" onclick="downloadFlyerPNG()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; padding: 10px; font-size: 12px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-download"></i> DOWNLOAD (Formato Actual)
+                </button>
+                <button type="button" id="btn-download-flyer-all-png" onclick="downloadFlyerAllFormats()" style="width: 100%; justify-content: center; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <i class="fas fa-layer-group text-cyan-400"></i> Descargar Todos los Formatos (16:9, 9:16, 1:1, 4:5)
+                </button>
+              </div>
+            </div>
+
             <!-- Botones Guardar Flyer -->
             <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
               <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
@@ -1013,6 +1183,9 @@
             <i class="fas fa-magic"></i> Shift + T
           </button>
         </div>
+        <button id="tl-btn-open-sources" class="tl-btn" style="background: rgba(236, 72, 153, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta);" title="Biblioteca de Fuentes / Capas Guardadas">
+          <i class="fas fa-bookmark"></i> Fuentes
+        </button>
         <button id="tl-btn-add-layer" class="tl-btn tl-btn-accent" title="Agregar una nueva capa vacía a la línea de tiempo">
           <i class="fas fa-plus"></i> + Agregar Capa
         </button>
@@ -1049,6 +1222,21 @@
     </div>
   </div>
 
+  <!-- Modal de Fuentes / Capas Guardadas -->
+  <div id="layer-sources-modal" class="layer-sources-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 99999; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: #0f172a; border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 16px; width: 100%; max-width: 560px; box-shadow: 0 0 30px rgba(0, 242, 254, 0.25); overflow: hidden; display: flex; flex-direction: column; max-height: 80vh;">
+      <div style="padding: 14px 18px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Biblioteca de Fuentes (Capas Guardadas)
+        </h3>
+        <button id="close-layer-sources-modal" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer;"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="layer-sources-list" style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; flex: 1; max-height: 60vh;">
+        <!-- Se inyectan las fuentes dinámicamente -->
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts Base, Auth y p5 -->
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
@@ -1056,6 +1244,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="js/ascii-shader-bg.js"></script>
   <script src="js/p5-effect.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/particulas.js"></script>
 </body>
 </html>
