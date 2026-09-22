@@ -270,13 +270,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.showToast = showToast;
 
-  // Pestañas Panel Izquierdo: Letrasp5 vs Shaderfondo vs Imagen
+  // Pestañas Panel Izquierdo: Letrasp5 vs Shaderfondo vs Imagen vs Puntero
   const tabBtnParamsP5 = document.getElementById('tab-btn-params-p5');
   const tabBtnParamsShader = document.getElementById('tab-btn-params-shader');
   const tabBtnParamsImage = document.getElementById('tab-btn-params-image');
+  const tabBtnParamsPointer = document.getElementById('tab-btn-params-pointer');
   const tabPaneParamsP5 = document.getElementById('tab-pane-params-p5');
   const tabPaneParamsShader = document.getElementById('tab-pane-params-shader');
   const tabPaneParamsImage = document.getElementById('tab-pane-params-image');
+  const tabPaneParamsPointer = document.getElementById('tab-pane-params-pointer');
 
   window.activeImageLayers = window.activeImageLayers || [];
   window.selectedImageId = window.selectedImageId || null;
@@ -287,9 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabBtnParamsP5) tabBtnParamsP5.classList.remove('active');
     if (tabBtnParamsShader) tabBtnParamsShader.classList.remove('active');
     if (tabBtnParamsImage) tabBtnParamsImage.classList.remove('active');
+    if (tabBtnParamsPointer) tabBtnParamsPointer.classList.remove('active');
     if (tabPaneParamsP5) tabPaneParamsP5.style.display = 'none';
     if (tabPaneParamsShader) tabPaneParamsShader.style.display = 'none';
     if (tabPaneParamsImage) tabPaneParamsImage.style.display = 'none';
+    if (tabPaneParamsPointer) tabPaneParamsPointer.style.display = 'none';
 
     if (target === 'shader') {
       if (tabBtnParamsShader) tabBtnParamsShader.classList.add('active');
@@ -307,15 +311,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tabBtnParamsImage) tabBtnParamsImage.classList.add('active');
       if (tabPaneParamsImage) tabPaneParamsImage.style.display = 'block';
       renderImageLayersList();
+    } else if (target === 'pointer') {
+      if (tabBtnParamsPointer) tabBtnParamsPointer.classList.add('active');
+      if (tabPaneParamsPointer) tabPaneParamsPointer.style.display = 'block';
     } else {
       if (tabBtnParamsP5) tabBtnParamsP5.classList.add('active');
       if (tabPaneParamsP5) tabPaneParamsP5.style.display = 'block';
     }
   }
+  window.switchLeftTab = switchLeftTab;
+  window.switchLeftSubTab = switchLeftTab;
 
   if (tabBtnParamsP5) tabBtnParamsP5.addEventListener('click', () => switchLeftTab('p5'));
   if (tabBtnParamsShader) tabBtnParamsShader.addEventListener('click', () => switchLeftTab('shader'));
   if (tabBtnParamsImage) tabBtnParamsImage.addEventListener('click', () => switchLeftTab('image'));
+  if (tabBtnParamsPointer) tabBtnParamsPointer.addEventListener('click', () => switchLeftTab('pointer'));
 
   // ================= GESTIÓN DE CAPAS DE IMAGEN Y LOGO CON AURA =================
   function addImageLayer(src, name = 'Imagen', hasAura = false) {
@@ -375,6 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderImageLayersList();
     syncImageControlsUI();
+    if (typeof switchLeftSubTab === 'function') {
+      switchLeftSubTab('image');
+    }
+    applyConfigChange('IMAGE_LAYERS', [...(window.activeImageLayers || [])]);
     showToast(`Imagen "${name}" agregada`, 'success');
   }
   window.addImageLayer = addImageLayer;
@@ -475,10 +489,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
+    applyConfigChange('IMAGE_LAYERS', [...(window.activeImageLayers || [])]);
   }
 
-  // Event Listeners para Controles de Imagen
-  document.addEventListener('DOMContentLoaded', () => {
+
+
+  function initImageDropzoneHandlers() {
+    const dropzone = document.getElementById('fx-image-dropzone');
+    if (!dropzone) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => {
+        dropzone.style.borderColor = 'var(--accent-magenta)';
+        dropzone.style.background = 'rgba(224, 64, 251, 0.15)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => {
+        dropzone.style.borderColor = 'rgba(0, 242, 254, 0.4)';
+        dropzone.style.background = 'rgba(0, 242, 254, 0.05)';
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt && dt.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            addImageLayer(ev.target.result, file.name || 'Imagen Personalizada', false);
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }, false);
+  }
+
+  function setupImageControls() {
     const bindControl = (rangeId, numId, prop) => {
       const r = document.getElementById(rangeId);
       const n = document.getElementById(numId);
@@ -519,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (img) {
           img.hasAura = auraCheckbox.checked;
           renderImageLayersList();
+          syncImageToTimeline(img);
         }
       });
     }
@@ -585,7 +643,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupImageControls);
+  } else {
+    setupImageControls();
+  }
 
   // Control Pestañas Derecha (FLYERMODE vs COLLABMODE)
   function switchRightTab(targetMode) {
@@ -686,6 +750,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const isFlyerMode = window.appMode === 'FLYERMODE' || Boolean(window.ParticlesConfig && window.ParticlesConfig.get().FLYER_MODE_ENABLED);
+
+    if (isFlyerMode && (e.ctrlKey || e.metaKey)) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (typeof window.selectNextFlyerWord === 'function') {
+          window.selectNextFlyerWord();
+        }
+        return;
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (typeof window.selectPrevFlyerWord === 'function') {
+          window.selectPrevFlyerWord();
+        }
+        return;
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        if (typeof window.selectAllFlyerWords === 'function') {
+          window.selectAllFlyerWords();
+        }
+        return;
+      }
+    }
+
     if (e.key === 'f' || e.key === 'F') {
       e.preventDefault();
       document.body.classList.toggle('ui-hidden');
@@ -744,7 +832,12 @@ document.addEventListener('DOMContentLoaded', () => {
     'CODE_SCRAMBLE_FREQ',
     'CODE_MOUSE_RADIUS',
     'POS_X',
-    'POS_Y'
+    'POS_Y',
+    'WORD_BOX_PADDING_X',
+    'WORD_BOX_PADDING_Y',
+    'WORD_BOX_STROKE_WIDTH',
+    'WORD_BOX_FILL_OPACITY',
+    'WORD_BOX_HANDLE_SIZE'
   ];
 
   const autoModeToggle = document.getElementById('param-AUTO_MODE');
@@ -1429,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timelineLayers.forEach(l => {
               if (!Array.isArray(l.clips)) return;
               l.clips.forEach(c => {
-                if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
+                if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
                   c.formationMode = validMode;
                 }
               });
@@ -1486,7 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function toggleOrSelectFlyerWord(targetId, isMulti = false, targetLetterIndex = null) {
     if (!targetId || !flyerWords || flyerWords.length === 0) return;
-    const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId || (typeof w === 'object' && w.text === targetId));
+    const targetWord = flyerWords.find(w => (typeof w === 'object' && w.id === targetId) || w === targetId);
     if (!targetWord) return;
 
     const currentIds = getSelectedFlyerWordIds();
@@ -1542,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (Array.isArray(timelineLayers)) {
-      const matchingLayer = timelineLayers.find(l => l.id === targetId || l.word === wordTxt || (l.clips && l.clips.some(c => c.id === targetId || c.text === wordTxt)));
+      const matchingLayer = timelineLayers.find(l => l.id === targetId || (l.clips && l.clips.some(c => c.id === targetId)));
       if (matchingLayer) {
         selectedLayerId = matchingLayer.id;
         renderTimelineTracks();
@@ -1573,6 +1666,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  function selectNextFlyerWord() {
+    if (!flyerWords || flyerWords.length === 0) return;
+    const currentId = selectedFlyerWordId || window.activeFlyerWordId;
+    let idx = flyerWords.findIndex(w => (typeof w === 'object' && w.id === currentId) || w === currentId);
+    if (idx === -1) {
+      idx = 0;
+    } else {
+      idx = (idx + 1) % flyerWords.length;
+    }
+    const target = flyerWords[idx];
+    const targetId = (typeof target === 'object' && target.id) ? target.id : target;
+    toggleOrSelectFlyerWord(targetId, false);
+  }
+
+  function selectPrevFlyerWord() {
+    if (!flyerWords || flyerWords.length === 0) return;
+    const currentId = selectedFlyerWordId || window.activeFlyerWordId;
+    let idx = flyerWords.findIndex(w => (typeof w === 'object' && w.id === currentId) || w === currentId);
+    if (idx === -1) {
+      idx = flyerWords.length - 1;
+    } else {
+      idx = (idx - 1 + flyerWords.length) % flyerWords.length;
+    }
+    const target = flyerWords[idx];
+    const targetId = (typeof target === 'object' && target.id) ? target.id : target;
+    toggleOrSelectFlyerWord(targetId, false);
+  }
+
+  window.selectNextFlyerWord = selectNextFlyerWord;
+  window.selectPrevFlyerWord = selectPrevFlyerWord;
+
   let collabWordIndexCounter = 0;
   function getNextCollabWord() {
     let pool = [];
@@ -1590,9 +1714,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!pool || pool.length === 0) {
       pool = ["UNITY", "UNREAL", "GODOT", "TOUCHDESIGNER", "PROCESSING", "P5", "THREE", "SHADERS", "GLSL", "ARTE", "DIGITAL", "DATA"];
     }
-    const selected = pool[collabWordIndexCounter % pool.length];
-    collabWordIndexCounter++;
-    return (selected || 'ARTE').toUpperCase();
+
+    let targetIdx;
+    if (typeof window.getWordIndex === 'function') {
+      targetIdx = window.getWordIndex();
+    } else {
+      targetIdx = collabWordIndexCounter;
+    }
+
+    if (isNaN(targetIdx) || targetIdx < 0 || targetIdx >= pool.length) {
+      targetIdx = 0;
+    }
+
+    const selectedWord = pool[targetIdx];
+    let nextIdx;
+    const isLinear = (window.ParticlesConfig && window.ParticlesConfig.get().WORD_SPAWN_MODE === 'linear');
+
+    if (isLinear) {
+      nextIdx = (targetIdx + 1) % pool.length;
+    } else {
+      nextIdx = Math.floor(Math.random() * pool.length);
+      if (pool.length > 1 && nextIdx === targetIdx) {
+        nextIdx = (nextIdx + 1) % pool.length;
+      }
+    }
+
+    collabWordIndexCounter = nextIdx;
+    if (typeof window.setWordIndex === 'function') {
+      window.setWordIndex(nextIdx);
+    } else if (typeof window.updateWordIndexDisplay === 'function') {
+      window.updateWordIndexDisplay(nextIdx);
+    }
+
+    return (selectedWord || 'ARTE').toUpperCase();
   }
   window.getNextCollabWord = getNextCollabWord;
 
@@ -1601,8 +1755,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rawText && flyerWordInput && flyerWordInput.value.trim() && document.activeElement === flyerWordInput) {
       cleanWord = flyerWordInput.value.trim().toUpperCase();
     }
+
     if (!cleanWord || cleanWord === 'NUEVA PALABRA') {
       cleanWord = getNextCollabWord();
+    } else {
+      if (typeof window.getWordIndex === 'function' && typeof window.setWordIndex === 'function') {
+        const pool = (window.ParticlesConfig && window.ParticlesConfig.get().WORDS) || [];
+        const poolLen = pool.length || 1;
+        window.setWordIndex((window.getWordIndex() + 1) % poolLen);
+      }
     }
 
     if (flyerWordInput) {
@@ -1718,8 +1879,80 @@ document.addEventListener('DOMContentLoaded', () => {
     addFlyerWord(text, x, y);
   };
 
+  let flyerDragLastPos = null;
+  function resetFlyerDrag() {
+    flyerDragLastPos = null;
+  }
+  window.resetFlyerDrag = resetFlyerDrag;
+  window.addEventListener('mouseup', resetFlyerDrag);
+  window.addEventListener('pointerup', resetFlyerDrag);
+  window.addEventListener('touchend', resetFlyerDrag);
+
   function moveActiveFlyerWordTo(x, y) {
     if (!flyerWords || flyerWords.length === 0) return;
+
+    const selectedIds = (typeof getSelectedFlyerWordIds === 'function') ? getSelectedFlyerWordIds() : (window.selectedFlyerWordIds || []);
+
+    if (selectedIds && selectedIds.length > 1) {
+      const currentPos = { x: Math.round(x), y: Math.round(y) };
+      if (!flyerDragLastPos) {
+        flyerDragLastPos = currentPos;
+        return;
+      }
+      const dx = currentPos.x - flyerDragLastPos.x;
+      const dy = currentPos.y - flyerDragLastPos.y;
+      flyerDragLastPos = currentPos;
+
+      if (dx === 0 && dy === 0) return;
+
+      selectedIds.forEach(wId => {
+        const wObj = flyerWords.find(w => typeof w === 'object' && w.id === wId);
+        if (wObj) {
+          wObj.x = Math.round((wObj.x || 0) + dx);
+          wObj.y = Math.round((wObj.y || 0) + dy);
+
+          if (Array.isArray(timelineLayers)) {
+            timelineLayers.forEach(layer => {
+              if (Array.isArray(layer.clips)) {
+                layer.clips.forEach(clip => {
+                  if (clip.id === wId || clip.text === wObj.text) {
+                    clip.x = wObj.x;
+                    clip.y = wObj.y;
+                  }
+                });
+              }
+            });
+          }
+
+          if (window.updateFlyerWordParticles) {
+            window.updateFlyerWordParticles(wObj.id, {
+              x: wObj.x,
+              y: wObj.y,
+              fontSize: wObj.fontSize,
+              letterSpacing: wObj.letterSpacing
+            });
+          }
+        }
+      });
+
+      const primaryWord = flyerWords.find(w => typeof w === 'object' && w.id === (selectedFlyerWordId || window.activeFlyerWordId)) || flyerWords[0];
+      if (primaryWord) {
+        const posXSlider = document.getElementById('param-POS_X');
+        const posYSlider = document.getElementById('param-POS_Y');
+        const posXNum = document.getElementById('num-POS_X');
+        const posYNum = document.getElementById('num-POS_Y');
+        if (posXSlider) posXSlider.value = primaryWord.x;
+        if (posYSlider) posYSlider.value = primaryWord.y;
+        if (posXNum) posXNum.value = primaryWord.x;
+        if (posYNum) posYNum.value = primaryWord.y;
+      }
+
+      applyConfigChange('FLYER_WORDS', [...flyerWords]);
+      applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+      return;
+    }
+
+    flyerDragLastPos = null;
 
     let targetWord = flyerWords.find(w => typeof w === 'object' && w.id === (selectedFlyerWordId || window.activeFlyerWordId));
     if (!targetWord && selectedClipId) {
@@ -1842,7 +2075,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           layer.clips.splice(cIdx, 1);
 
-          const wIdx = flyerWords.findIndex(w => (typeof w === 'object' && (w.id === clip.id || w.text === clip.text)) || w === clip.text);
+          const wIdx = flyerWords.findIndex(w => typeof w === 'object' && w.id === clip.id);
           if (wIdx !== -1) {
             const removedWord = flyerWords[wIdx];
             const rId = (typeof removedWord === 'object' && removedWord.id) ? removedWord.id : removedWord;
@@ -2065,15 +2298,156 @@ document.addEventListener('DOMContentLoaded', () => {
       setFormationMode(props.formationMode, false);
     }
 
+    // Sincronización de UI para Efecto Bounding Box por Palabra
+    const boxEnabledToggle = document.getElementById('param-WORD_BOX_ENABLED');
+    if (boxEnabledToggle) boxEnabledToggle.checked = Boolean(props.boxEffectEnabled);
+
+    const boxFillColorInput = document.getElementById('param-WORD_BOX_FILL_COLOR');
+    if (boxFillColorInput && props.boxFillColor) boxFillColorInput.value = props.boxFillColor;
+
+    const boxFillOpacitySlider = document.getElementById('param-WORD_BOX_FILL_OPACITY');
+    const boxFillOpacityNum = document.getElementById('num-WORD_BOX_FILL_OPACITY');
+    if (props.boxFillOpacity !== undefined) {
+      if (boxFillOpacitySlider) boxFillOpacitySlider.value = props.boxFillOpacity;
+      if (boxFillOpacityNum) boxFillOpacityNum.value = props.boxFillOpacity;
+    }
+
+    const boxStrokeColorInput = document.getElementById('param-WORD_BOX_STROKE_COLOR');
+    if (boxStrokeColorInput && props.boxStrokeColor) boxStrokeColorInput.value = props.boxStrokeColor;
+
+    const boxStrokeWidthSlider = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
+    const boxStrokeWidthNum = document.getElementById('num-WORD_BOX_STROKE_WIDTH');
+    if (props.boxStrokeWidth !== undefined) {
+      if (boxStrokeWidthSlider) boxStrokeWidthSlider.value = props.boxStrokeWidth;
+      if (boxStrokeWidthNum) boxStrokeWidthNum.value = props.boxStrokeWidth;
+    }
+
+    const boxRoundingSlider = document.getElementById('param-WORD_BOX_ROUNDING');
+    const boxRoundingNum = document.getElementById('num-WORD_BOX_ROUNDING');
+    if (props.boxRounding !== undefined) {
+      if (boxRoundingSlider) boxRoundingSlider.value = props.boxRounding;
+      if (boxRoundingNum) boxRoundingNum.value = props.boxRounding;
+    }
+
+    const boxPaddingSlider = document.getElementById('param-WORD_BOX_PADDING');
+    const boxPaddingNum = document.getElementById('num-WORD_BOX_PADDING');
+    if (props.boxPadding !== undefined) {
+      if (boxPaddingSlider) boxPaddingSlider.value = props.boxPadding;
+      if (boxPaddingNum) boxPaddingNum.value = props.boxPadding;
+    }
+
+    const boxSpeedSlider = document.getElementById('param-WORD_BOX_SPEED');
+    const boxSpeedNum = document.getElementById('num-WORD_BOX_SPEED');
+    if (props.boxSpeed !== undefined) {
+      if (boxSpeedSlider) boxSpeedSlider.value = props.boxSpeed;
+      if (boxSpeedNum) boxSpeedNum.value = props.boxSpeed;
+    }
+
+    const boxLinePatternSelect = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+    if (boxLinePatternSelect && props.boxLinePattern) boxLinePatternSelect.value = props.boxLinePattern;
+
     if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
       const patch = {};
       if (props.fontSize !== undefined) { patch.TEXT_SIZE_MAX = props.fontSize; patch.TEXT_SIZE = props.fontSize; }
       if (props.letterSpacing !== undefined) { patch.LETTER_SPACING = props.letterSpacing; }
       if (props.x !== undefined) { patch.POS_X = props.x; }
       if (props.y !== undefined) { patch.POS_Y = props.y; }
+      if (props.boxEffectEnabled !== undefined) { patch.WORD_BOX_ENABLED = props.boxEffectEnabled; }
+      if (props.boxFillColor) { patch.WORD_BOX_FILL_COLOR = props.boxFillColor; }
+      if (props.boxFillOpacity !== undefined) { patch.WORD_BOX_FILL_OPACITY = props.boxFillOpacity; }
+      if (props.boxStrokeColor) { patch.WORD_BOX_STROKE_COLOR = props.boxStrokeColor; }
+      if (props.boxStrokeWidth !== undefined) { patch.WORD_BOX_STROKE_WIDTH = props.boxStrokeWidth; }
+      if (props.boxRounding !== undefined) { patch.WORD_BOX_ROUNDING = props.boxRounding; }
+      if (props.boxPadding !== undefined) { patch.WORD_BOX_PADDING = props.boxPadding; }
+      if (props.boxSpeed !== undefined) { patch.WORD_BOX_SPEED = props.boxSpeed; }
+      if (props.boxLinePattern) { patch.WORD_BOX_LINE_PATTERN = props.boxLinePattern; }
       window.ParticlesConfig.set(patch);
     }
   }
+
+  function applySelectionPropChange(propName, value) {
+    applyConfigChange(propName, value);
+
+    const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+      ? window.getSelectedFlyerWordIds()
+      : (window.selectedFlyerWordId ? [window.selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+
+    if (Array.isArray(flyerWords) && selectedIds.length > 0) {
+      flyerWords.forEach(w => {
+        if (selectedIds.includes(w.id)) {
+          if (propName === 'WORD_BOX_FILL_COLOR') w.boxFillColor = value;
+          if (propName === 'WORD_BOX_FILL_OPACITY') w.boxFillOpacity = value;
+          if (propName === 'WORD_BOX_STROKE_COLOR') w.boxStrokeColor = value;
+          if (propName === 'WORD_BOX_STROKE_WIDTH') w.boxStrokeWidth = value;
+          if (propName === 'WORD_BOX_LINE_PATTERN') w.boxLinePattern = value;
+          if (propName === 'WORD_BOX_ROUNDING') w.boxRounding = value;
+          if (propName === 'WORD_BOX_PADDING_X') w.boxPaddingX = value;
+          if (propName === 'WORD_BOX_PADDING_Y') w.boxPaddingY = value;
+          if (propName === 'WORD_BOX_ENABLED') w.boxEffectEnabled = value;
+
+          if (window.updateFlyerWordParticles) {
+            window.updateFlyerWordParticles(w.id, { [propName]: value });
+          }
+        }
+      });
+    }
+
+    if (typeof window.redraw === 'function') {
+      window.redraw();
+    }
+  }
+
+  function initSelectionSubtabListeners() {
+    const bindControl = (id, propName, eventType = 'input', parseFn = null) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener(eventType, () => {
+        const val = parseFn ? parseFn(el.value) : el.value;
+        applySelectionPropChange(propName, val);
+      });
+    };
+
+    const bindCombo = (sliderId, numId, propName, parseFn = parseFloat) => {
+      const slider = document.getElementById(sliderId);
+      const num = document.getElementById(numId);
+      if (slider) {
+        slider.addEventListener('input', () => {
+          const val = parseFn(slider.value);
+          if (num) num.value = slider.value;
+          applySelectionPropChange(propName, val);
+        });
+      }
+      if (num) {
+        num.addEventListener('input', () => {
+          const val = parseFn(num.value);
+          if (!isNaN(val)) {
+            if (slider) slider.value = num.value;
+            applySelectionPropChange(propName, val);
+          }
+        });
+      }
+    };
+
+    bindControl('param-WORD_BOX_FILL_COLOR', 'WORD_BOX_FILL_COLOR', 'input');
+    bindControl('param-WORD_BOX_STROKE_COLOR', 'WORD_BOX_STROKE_COLOR', 'input');
+    bindControl('param-WORD_BOX_LINE_PATTERN', 'WORD_BOX_LINE_PATTERN', 'change');
+
+    bindCombo('param-WORD_BOX_FILL_OPACITY', 'num-WORD_BOX_FILL_OPACITY', 'WORD_BOX_FILL_OPACITY', parseFloat);
+    bindCombo('param-WORD_BOX_STROKE_WIDTH', 'num-WORD_BOX_STROKE_WIDTH', 'WORD_BOX_STROKE_WIDTH', parseFloat);
+    bindCombo('param-WORD_BOX_ROUNDING', 'num-WORD_BOX_ROUNDING', 'WORD_BOX_ROUNDING', parseFloat);
+    bindCombo('param-WORD_BOX_PADDING_X', 'num-WORD_BOX_PADDING_X', 'WORD_BOX_PADDING_X', parseFloat);
+    bindCombo('param-WORD_BOX_PADDING_Y', 'num-WORD_BOX_PADDING_Y', 'WORD_BOX_PADDING_Y', parseFloat);
+
+    const effectToggle = document.getElementById('param-WORD_BOX_EFFECT_ENABLED');
+    if (effectToggle) {
+      effectToggle.addEventListener('change', () => {
+        applySelectionPropChange('WORD_BOX_ENABLED', effectToggle.checked);
+      });
+    }
+  }
+
+  setTimeout(initSelectionSubtabListeners, 100);
+  setTimeout(initSelectionSubtabListeners, 500);
 
   function evaluateTimelineAtTime(t) {
     if (!Array.isArray(timelineLayers)) return;
@@ -3505,7 +3879,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4', 'CHAR_BG_COLOR'];
+  const colorFields = ['COLOR_1', 'COLOR_2', 'COLOR_3', 'COLOR_4', 'CHAR_BG_COLOR', 'WORD_BOX_STROKE_COLOR', 'WORD_BOX_FILL_COLOR'];
 
   // Aplicar cambio reactivo a p5
   function applyConfigChange(key, val, isUserSliderDrag = false) {
@@ -3569,7 +3943,7 @@ document.addEventListener('DOMContentLoaded', () => {
           timelineLayers.forEach(l => {
             if (!Array.isArray(l.clips)) return;
             l.clips.forEach(c => {
-              if (c.id === matchingWord.id || c.flyerId === matchingWord.id || c.text === matchingWord.text) {
+              if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
                 if (key === 'POS_X') c.x = val;
                 if (key === 'POS_Y') c.y = val;
                 if (key === 'TEXT_SIZE_MAX') c.fontSize = val;
@@ -3653,6 +4027,273 @@ document.addEventListener('DOMContentLoaded', () => {
       applyLetterColorChange(selectedLetterColorEl.value);
     });
   }
+
+  // Selector de Patrón de Línea para Recuadro de Selección
+  const wordBoxLinePatternEl = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+  if (wordBoxLinePatternEl) {
+    wordBoxLinePatternEl.addEventListener('change', () => {
+      applyConfigChange('WORD_BOX_LINE_PATTERN', wordBoxLinePatternEl.value);
+    });
+  }
+
+  // Switch de Modo de Adición de Palabras (Lineal vs Random) - Sincronizado Flyer & Collab
+  const wordSpawnModeToggle = document.getElementById('param-WORD_SPAWN_MODE');
+  const wordSpawnModeCollabToggle = document.getElementById('param-WORD_SPAWN_MODE_COLLAB');
+  const wordSpawnModeLabel = document.getElementById('label-word-spawn-mode');
+  const wordSpawnModeCollabLabel = document.getElementById('label-word-spawn-mode-collab');
+
+  function syncWordSpawnMode(isLinear) {
+    const mode = isLinear ? 'linear' : 'random';
+    applyConfigChange('WORD_SPAWN_MODE', mode);
+    if (wordSpawnModeToggle) wordSpawnModeToggle.checked = isLinear;
+    if (wordSpawnModeCollabToggle) wordSpawnModeCollabToggle.checked = isLinear;
+    if (wordSpawnModeLabel) {
+      wordSpawnModeLabel.textContent = isLinear ? 'Lineal' : 'Random';
+      wordSpawnModeLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#00f2fe';
+    }
+    if (wordSpawnModeCollabLabel) {
+      wordSpawnModeCollabLabel.textContent = isLinear ? 'Lineal' : 'Random';
+      wordSpawnModeCollabLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#00f2fe';
+    }
+  }
+
+  if (wordSpawnModeToggle) {
+    wordSpawnModeToggle.addEventListener('change', () => {
+      syncWordSpawnMode(wordSpawnModeToggle.checked);
+    });
+  }
+  if (wordSpawnModeCollabToggle) {
+    wordSpawnModeCollabToggle.addEventListener('change', () => {
+      syncWordSpawnMode(wordSpawnModeCollabToggle.checked);
+    });
+  }
+
+  // Input de Índice de 3 Dígitos - Sincronizado Flyer & Collab
+  const wordSpawnIndexInput = document.getElementById('num-WORD_SPAWN_INDEX');
+  const wordSpawnIndexCollabInput = document.getElementById('num-WORD_SPAWN_INDEX_COLLAB');
+
+  function handleIndexInputChange(el) {
+    let val = parseInt(el.value, 10);
+    if (isNaN(val) || val < 0) val = 0;
+    if (typeof window.setWordIndex === 'function') {
+      window.setWordIndex(val);
+    } else {
+      window.updateWordIndexDisplay(val);
+    }
+  }
+
+  if (wordSpawnIndexInput) {
+    wordSpawnIndexInput.addEventListener('change', () => handleIndexInputChange(wordSpawnIndexInput));
+  }
+  if (wordSpawnIndexCollabInput) {
+    wordSpawnIndexCollabInput.addEventListener('change', () => handleIndexInputChange(wordSpawnIndexCollabInput));
+  }
+
+  window.updateWordIndexDisplay = function(idx) {
+    const numVal = parseInt(idx, 10);
+    const safeIdx = isNaN(numVal) ? 0 : Math.max(0, numVal);
+    const formattedStr = String(safeIdx).padStart(3, '0');
+
+    const inputFlyer = document.getElementById('num-WORD_SPAWN_INDEX');
+    const inputCollab = document.getElementById('num-WORD_SPAWN_INDEX_COLLAB');
+    if (inputFlyer) inputFlyer.value = formattedStr;
+    if (inputCollab) inputCollab.value = formattedStr;
+  };
+
+  window.syncSelectionSubtabValues = function() {
+    const activeWords = flyerWords || [];
+    const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+      ? window.getSelectedFlyerWordIds()
+      : (selectedFlyerWordId ? [selectedFlyerWordId] : []);
+    
+    let sourceObj = null;
+    if (selectedIds.length > 0) {
+      sourceObj = activeWords.find(w => typeof w === 'object' && w.id === selectedIds[0]);
+    }
+
+    const cfg = (window.ParticlesConfig && window.ParticlesConfig.get) ? window.ParticlesConfig.get() : {};
+
+    const elEnabled = document.getElementById('param-WORD_BOX_EFFECT_ENABLED');
+    const elFill = document.getElementById('param-WORD_BOX_FILL_COLOR');
+    const elFillOpacity = document.getElementById('param-WORD_BOX_FILL_OPACITY');
+    const elNumFillOpacity = document.getElementById('num-WORD_BOX_FILL_OPACITY');
+    const elStroke = document.getElementById('param-WORD_BOX_STROKE_COLOR');
+    const elStrokeWidth = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
+    const elNumStrokeWidth = document.getElementById('num-WORD_BOX_STROKE_WIDTH');
+    const elPattern = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+    const elRounding = document.getElementById('param-WORD_BOX_ROUNDING');
+    const elNumRounding = document.getElementById('num-WORD_BOX_ROUNDING');
+    const elPadX = document.getElementById('param-WORD_BOX_PADDING_X');
+    const elNumPadX = document.getElementById('num-WORD_BOX_PADDING_X');
+    const elPadY = document.getElementById('param-WORD_BOX_PADDING_Y');
+    const elNumPadY = document.getElementById('num-WORD_BOX_PADDING_Y');
+
+    if (sourceObj) {
+      if (elEnabled) elEnabled.checked = (sourceObj.boxEffectEnabled !== undefined) ? Boolean(sourceObj.boxEffectEnabled) : true;
+      if (elFill) elFill.value = sourceObj.boxFillColor || cfg.WORD_BOX_FILL_COLOR || '#0f172a';
+      if (elFillOpacity) elFillOpacity.value = (sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
+      if (elNumFillOpacity) elNumFillOpacity.value = (sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
+      if (elStroke) elStroke.value = sourceObj.boxStrokeColor || cfg.WORD_BOX_STROKE_COLOR || '#00f2fe';
+      if (elStrokeWidth) elStrokeWidth.value = (sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
+      if (elNumStrokeWidth) elNumStrokeWidth.value = (sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
+      if (elPattern) elPattern.value = sourceObj.boxLinePattern || cfg.WORD_BOX_LINE_PATTERN || 'solid';
+      if (elRounding) elRounding.value = (sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
+      if (elNumRounding) elNumRounding.value = (sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
+      if (elPadX) elPadX.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16);
+      if (elNumPadX) elNumPadX.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16);
+      if (elPadY) elPadY.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16);
+      if (elNumPadY) elNumPadY.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16);
+    } else {
+      if (elEnabled) elEnabled.checked = true;
+      if (elFill) elFill.value = cfg.WORD_BOX_FILL_COLOR || '#0f172a';
+      if (elFillOpacity) elFillOpacity.value = (cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2;
+      if (elNumFillOpacity) elNumFillOpacity.value = (cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2;
+      if (elStroke) elStroke.value = cfg.WORD_BOX_STROKE_COLOR || '#00f2fe';
+      if (elStrokeWidth) elStrokeWidth.value = (cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2;
+      if (elNumStrokeWidth) elNumStrokeWidth.value = (cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2;
+      if (elPattern) elPattern.value = cfg.WORD_BOX_LINE_PATTERN || 'solid';
+      if (elRounding) elRounding.value = (cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8;
+      if (elNumRounding) elNumRounding.value = (cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8;
+      if (elPadX) elPadX.value = (cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16;
+      if (elNumPadX) elNumPadX.value = (cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16;
+      if (elPadY) elPadY.value = (cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16;
+      if (elNumPadY) elNumPadY.value = (cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16;
+    }
+  };
+
+  function applySelectionPropChange(propName, value, globalPropName) {
+    const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+      ? window.getSelectedFlyerWordIds()
+      : (selectedFlyerWordId ? [selectedFlyerWordId] : []);
+
+    if (selectedIds.length > 0) {
+      selectedIds.forEach(wId => {
+        if (window.updateFlyerWordParticles) {
+          const props = {};
+          props[propName] = value;
+          window.updateFlyerWordParticles(wId, props);
+        }
+      });
+    }
+    if (globalPropName) {
+      applyConfigChange(globalPropName, value);
+    }
+  }
+
+  // Bind Listeners del Subtab SELECCIÓN
+  const boxEnabledToggle = document.getElementById('param-WORD_BOX_EFFECT_ENABLED');
+  if (boxEnabledToggle) {
+    boxEnabledToggle.addEventListener('change', () => {
+      applySelectionPropChange('boxEffectEnabled', boxEnabledToggle.checked, null);
+    });
+  }
+
+  const boxFillColorInput = document.getElementById('param-WORD_BOX_FILL_COLOR');
+  if (boxFillColorInput) {
+    boxFillColorInput.addEventListener('input', () => {
+      applySelectionPropChange('boxFillColor', boxFillColorInput.value, 'WORD_BOX_FILL_COLOR');
+    });
+  }
+
+  const boxFillOpacitySlider = document.getElementById('param-WORD_BOX_FILL_OPACITY');
+  const boxFillOpacityNum = document.getElementById('num-WORD_BOX_FILL_OPACITY');
+  if (boxFillOpacitySlider) {
+    boxFillOpacitySlider.addEventListener('input', () => {
+      const val = parseFloat(boxFillOpacitySlider.value);
+      if (boxFillOpacityNum) boxFillOpacityNum.value = val;
+      applySelectionPropChange('boxFillOpacity', val, 'WORD_BOX_FILL_OPACITY');
+    });
+  }
+  if (boxFillOpacityNum) {
+    boxFillOpacityNum.addEventListener('input', () => {
+      const val = parseFloat(boxFillOpacityNum.value);
+      if (boxFillOpacitySlider) boxFillOpacitySlider.value = val;
+      applySelectionPropChange('boxFillOpacity', val, 'WORD_BOX_FILL_OPACITY');
+    });
+  }
+
+  const boxStrokeColorInput = document.getElementById('param-WORD_BOX_STROKE_COLOR');
+  if (boxStrokeColorInput) {
+    boxStrokeColorInput.addEventListener('input', () => {
+      applySelectionPropChange('boxStrokeColor', boxStrokeColorInput.value, 'WORD_BOX_STROKE_COLOR');
+    });
+  }
+
+  const boxStrokeWidthSlider = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
+  const boxStrokeWidthNum = document.getElementById('num-WORD_BOX_STROKE_WIDTH');
+  if (boxStrokeWidthSlider) {
+    boxStrokeWidthSlider.addEventListener('input', () => {
+      const val = parseInt(boxStrokeWidthSlider.value, 10);
+      if (boxStrokeWidthNum) boxStrokeWidthNum.value = val;
+      applySelectionPropChange('boxStrokeWidth', val, 'WORD_BOX_STROKE_WIDTH');
+    });
+  }
+  if (boxStrokeWidthNum) {
+    boxStrokeWidthNum.addEventListener('input', () => {
+      const val = parseInt(boxStrokeWidthNum.value, 10);
+      if (boxStrokeWidthSlider) boxStrokeWidthSlider.value = val;
+      applySelectionPropChange('boxStrokeWidth', val, 'WORD_BOX_STROKE_WIDTH');
+    });
+  }
+
+  const boxLinePatternSelect = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+  if (boxLinePatternSelect) {
+    boxLinePatternSelect.addEventListener('change', () => {
+      applySelectionPropChange('boxLinePattern', boxLinePatternSelect.value, 'WORD_BOX_LINE_PATTERN');
+    });
+  }
+
+  const boxRoundingSlider = document.getElementById('param-WORD_BOX_ROUNDING');
+  const boxRoundingNum = document.getElementById('num-WORD_BOX_ROUNDING');
+  if (boxRoundingSlider) {
+    boxRoundingSlider.addEventListener('input', () => {
+      const val = parseInt(boxRoundingSlider.value, 10);
+      if (boxRoundingNum) boxRoundingNum.value = val;
+      applySelectionPropChange('boxRounding', val, 'WORD_BOX_ROUNDING');
+    });
+  }
+  if (boxRoundingNum) {
+    boxRoundingNum.addEventListener('input', () => {
+      const val = parseInt(boxRoundingNum.value, 10);
+      if (boxRoundingSlider) boxRoundingSlider.value = val;
+      applySelectionPropChange('boxRounding', val, 'WORD_BOX_ROUNDING');
+    });
+  }
+
+  const boxPadXSlider = document.getElementById('param-WORD_BOX_PADDING_X');
+  const boxPadXNum = document.getElementById('num-WORD_BOX_PADDING_X');
+  if (boxPadXSlider) {
+    boxPadXSlider.addEventListener('input', () => {
+      const val = parseInt(boxPadXSlider.value, 10);
+      if (boxPadXNum) boxPadXNum.value = val;
+      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_X');
+    });
+  }
+  if (boxPadXNum) {
+    boxPadXNum.addEventListener('input', () => {
+      const val = parseInt(boxPadXNum.value, 10);
+      if (boxPadXSlider) boxPadXSlider.value = val;
+      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_X');
+    });
+  }
+
+  const boxPadYSlider = document.getElementById('param-WORD_BOX_PADDING_Y');
+  const boxPadYNum = document.getElementById('num-WORD_BOX_PADDING_Y');
+  if (boxPadYSlider) {
+    boxPadYSlider.addEventListener('input', () => {
+      const val = parseInt(boxPadYSlider.value, 10);
+      if (boxPadYNum) boxPadYNum.value = val;
+      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_Y');
+    });
+  }
+  if (boxPadYNum) {
+    boxPadYNum.addEventListener('input', () => {
+      const val = parseInt(boxPadYNum.value, 10);
+      if (boxPadYSlider) boxPadYSlider.value = val;
+      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_Y');
+    });
+  }
+
 
   // Inicializar switches de modo de formación FISICS vs CODE
   initFormationModeSwitch();
@@ -4247,6 +4888,11 @@ document.addEventListener('DOMContentLoaded', () => {
       asciiFontModeSelectSync.value = cfg.ASCII_FONT_MODE;
     }
 
+    const wordBoxLinePatternSync = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+    if (wordBoxLinePatternSync && cfg.WORD_BOX_LINE_PATTERN !== undefined) {
+      wordBoxLinePatternSync.value = cfg.WORD_BOX_LINE_PATTERN;
+    }
+
     const codeMouseRetriggerSync = document.getElementById('param-CODE_MOUSE_RETRIGGER');
     if (codeMouseRetriggerSync && cfg.CODE_MOUSE_RETRIGGER !== undefined) {
       codeMouseRetriggerSync.checked = !!cfg.CODE_MOUSE_RETRIGGER;
@@ -4305,9 +4951,105 @@ document.addEventListener('DOMContentLoaded', () => {
     loadContributors();
   };
 
+  function updateSelectedFlyerWordsBoxProps(propKey, val) {
+    const targetWordIds = (typeof getSelectedFlyerWordIds === 'function') ? getSelectedFlyerWordIds() : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []);
+    if (!targetWordIds || targetWordIds.length === 0) {
+      if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+        window.ParticlesConfig.set({ [propKey]: val });
+      }
+      return;
+    }
+
+    targetWordIds.forEach(wId => {
+      const matchingWord = flyerWords.find(w => typeof w === 'object' && w.id === wId);
+      if (!matchingWord) return;
+      matchingWord[propKey] = val;
+
+      if (Array.isArray(timelineLayers)) {
+        timelineLayers.forEach(l => {
+          if (!Array.isArray(l.clips)) return;
+          l.clips.forEach(c => {
+            if (c.id === matchingWord.id || c.flyerId === matchingWord.id) {
+              c[propKey] = val;
+            }
+          });
+        });
+      }
+
+      if (window.updateFlyerWordParticles) {
+        window.updateFlyerWordParticles(wId, { [propKey]: val });
+      }
+    });
+
+    applyConfigChange('FLYER_WORDS', [...flyerWords]);
+    applyConfigChange('TIMELINE_LAYERS', [...timelineLayers]);
+
+    if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+      window.ParticlesConfig.set({ [propKey]: val });
+    }
+  }
+
+  function initWordBoxControlListeners() {
+    const boxToggle = document.getElementById('param-WORD_BOX_ENABLED');
+    if (boxToggle) {
+      boxToggle.addEventListener('change', () => {
+        updateSelectedFlyerWordsBoxProps('boxEffectEnabled', boxToggle.checked);
+      });
+    }
+
+    const boxFillColor = document.getElementById('param-WORD_BOX_FILL_COLOR');
+    if (boxFillColor) {
+      boxFillColor.addEventListener('input', () => {
+        updateSelectedFlyerWordsBoxProps('boxFillColor', boxFillColor.value);
+      });
+    }
+
+    const bindSliderNumCombo = (sliderId, numId, propKey, isFloat = false) => {
+      const slider = document.getElementById(sliderId);
+      const numInput = document.getElementById(numId);
+      if (!slider || !numInput) return;
+
+      slider.addEventListener('input', () => {
+        const val = isFloat ? parseFloat(slider.value) : parseInt(slider.value, 10);
+        numInput.value = val;
+        updateSelectedFlyerWordsBoxProps(propKey, val);
+      });
+
+      numInput.addEventListener('input', () => {
+        const val = isFloat ? parseFloat(numInput.value) : parseInt(numInput.value, 10);
+        if (!isNaN(val)) {
+          slider.value = val;
+          updateSelectedFlyerWordsBoxProps(propKey, val);
+        }
+      });
+    };
+
+    bindSliderNumCombo('param-WORD_BOX_FILL_OPACITY', 'num-WORD_BOX_FILL_OPACITY', 'boxFillOpacity', true);
+
+    const boxStrokeColor = document.getElementById('param-WORD_BOX_STROKE_COLOR');
+    if (boxStrokeColor) {
+      boxStrokeColor.addEventListener('input', () => {
+        updateSelectedFlyerWordsBoxProps('boxStrokeColor', boxStrokeColor.value);
+      });
+    }
+
+    bindSliderNumCombo('param-WORD_BOX_STROKE_WIDTH', 'num-WORD_BOX_STROKE_WIDTH', 'boxStrokeWidth', false);
+    bindSliderNumCombo('param-WORD_BOX_ROUNDING', 'num-WORD_BOX_ROUNDING', 'boxRounding', false);
+    bindSliderNumCombo('param-WORD_BOX_PADDING', 'num-WORD_BOX_PADDING', 'boxPadding', false);
+    bindSliderNumCombo('param-WORD_BOX_SPEED', 'num-WORD_BOX_SPEED', 'boxSpeed', true);
+
+    const boxPatternSelect = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+    if (boxPatternSelect) {
+      boxPatternSelect.addEventListener('change', () => {
+        updateSelectedFlyerWordsBoxProps('boxLinePattern', boxPatternSelect.value);
+      });
+    }
+  }
+
   // Sincronizar de inmediato
   syncInputsFromConfig();
   loadContributors();
+  initWordBoxControlListeners();
   setTimeout(syncInputsFromConfig, 200);
   setTimeout(syncInputsFromConfig, 600);
 
@@ -4388,8 +5130,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Guardar y Cargar Proyectos de Efectos Visuales (Flyer Mode) por Usuario
+  // Guardar y Cargar Proyectos de Efectos Visuales (Flyer Mode) por Usuario
   if (!currentVisualEffectId) {
     currentVisualEffectId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('outputeffect') || null;
+  }
+
+  let currentVisualEffectTitle = 'Sin Guardar (Nuevo Proyecto)';
+  let currentVisualEffectOwner = false;
+
+  function updateActiveSequenceUI() {
+    const bannerName = document.getElementById('active-sequence-name');
+    const bannerBadge = document.getElementById('active-sequence-badge');
+    const statusDot = document.getElementById('active-seq-status-dot');
+
+    const titleText = currentVisualEffectTitle || 'Sin Guardar (Nuevo Proyecto)';
+    if (bannerName) bannerName.textContent = titleText;
+
+    if (bannerBadge && statusDot) {
+      if (!currentVisualEffectId) {
+        bannerBadge.textContent = 'NUEVO PROYECTO';
+        bannerBadge.style.background = 'rgba(0, 242, 254, 0.15)';
+        bannerBadge.style.color = 'var(--accent-cyan)';
+        bannerBadge.style.borderColor = 'rgba(0, 242, 254, 0.4)';
+        statusDot.style.background = '#00f2fe';
+        statusDot.style.boxShadow = '0 0 8px #00f2fe';
+      } else if (currentVisualEffectOwner) {
+        bannerBadge.textContent = 'MI SECUENCIA (CARGADA)';
+        bannerBadge.style.background = 'rgba(0, 230, 118, 0.2)';
+        bannerBadge.style.color = '#00e676';
+        bannerBadge.style.borderColor = 'rgba(0, 230, 118, 0.5)';
+        statusDot.style.background = '#00e676';
+        statusDot.style.boxShadow = '0 0 8px #00e676';
+      } else {
+        bannerBadge.textContent = 'PRESET / RECURSO';
+        bannerBadge.style.background = 'rgba(234, 179, 8, 0.2)';
+        bannerBadge.style.color = '#facc15';
+        bannerBadge.style.borderColor = 'rgba(234, 179, 8, 0.5)';
+        statusDot.style.background = '#facc15';
+        statusDot.style.boxShadow = '0 0 8px #facc15';
+      }
+    }
   }
 
   async function saveUserVisualEffect(forceNew = false) {
@@ -4401,52 +5181,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let defaultTitle = 'Mi Proyecto Flyer';
-    if (flyerWords.length > 0) {
+    if (currentVisualEffectTitle && currentVisualEffectTitle !== 'Sin Guardar (Nuevo Proyecto)') {
+      defaultTitle = forceNew ? (currentVisualEffectTitle + ' (Copia)') : currentVisualEffectTitle;
+    } else if (flyerWords.length > 0) {
       defaultTitle = flyerWords.map(w => w.text || w.word).filter(Boolean).slice(0, 3).join(' ');
     }
 
-    const isUpdate = !forceNew && !!currentVisualEffectId;
-    let title = null;
+    const isUpdate = !forceNew && !!currentVisualEffectId && currentVisualEffectOwner;
+    let title = isUpdate ? currentVisualEffectTitle : null;
     if (!isUpdate || forceNew) {
       title = prompt(forceNew ? 'Nombre de la nueva secuencia:' : 'Nombre de este proyecto de efecto visual:', defaultTitle);
       if (!title || !title.trim()) return;
+      title = title.trim();
     }
 
     const currentConfig = window.ParticlesConfig ? window.ParticlesConfig.get() : {};
 
-    // Asegurar que la fuente p5 actual, el shader de fondo y los parámetros clave queden capturados en config
     const p5FontSelect = document.getElementById('param-P5_FONT');
-    if (p5FontSelect && p5FontSelect.value) {
-      currentConfig.P5_FONT = p5FontSelect.value;
-    }
+    if (p5FontSelect && p5FontSelect.value) currentConfig.P5_FONT = p5FontSelect.value;
     const genShaderSelect = document.getElementById('param-GENERATIVE_SHADER');
-    if (genShaderSelect && genShaderSelect.value) {
-      currentConfig.GENERATIVE_SHADER = genShaderSelect.value;
-    }
+    if (genShaderSelect && genShaderSelect.value) currentConfig.GENERATIVE_SHADER = genShaderSelect.value;
     const asciiFontModeSelect = document.getElementById('param-ASCII_FONT_MODE');
-    if (asciiFontModeSelect && asciiFontModeSelect.value !== undefined) {
-      currentConfig.ASCII_FONT_MODE = Number(asciiFontModeSelect.value);
-    }
+    if (asciiFontModeSelect && asciiFontModeSelect.value !== undefined) currentConfig.ASCII_FONT_MODE = Number(asciiFontModeSelect.value);
     const charBgToggle = document.getElementById('param-CHAR_BG_ENABLED');
-    if (charBgToggle) {
-      currentConfig.CHAR_BG_ENABLED = charBgToggle.checked;
-    }
+    if (charBgToggle) currentConfig.CHAR_BG_ENABLED = charBgToggle.checked;
     const charBgColorInput = document.getElementById('param-CHAR_BG_COLOR');
-    if (charBgColorInput) {
-      currentConfig.CHAR_BG_COLOR = charBgColorInput.value;
-    }
+    if (charBgColorInput) currentConfig.CHAR_BG_COLOR = charBgColorInput.value;
     const charBgOpacityInput = document.getElementById('param-CHAR_BG_OPACITY');
-    if (charBgOpacityInput) {
-      currentConfig.CHAR_BG_OPACITY = parseFloat(charBgOpacityInput.value);
-    }
+    if (charBgOpacityInput) currentConfig.CHAR_BG_OPACITY = parseFloat(charBgOpacityInput.value);
 
-    // Sincronización completa entre flyerWords y timelineLayers antes de guardar
+    const boxPatternSelect = document.getElementById('param-WORD_BOX_LINE_PATTERN');
+    if (boxPatternSelect && boxPatternSelect.value) currentConfig.WORD_BOX_LINE_PATTERN = boxPatternSelect.value;
+    const boxPadXInput = document.getElementById('param-WORD_BOX_PADDING_X');
+    if (boxPadXInput) currentConfig.WORD_BOX_PADDING_X = parseFloat(boxPadXInput.value);
+    const boxPadYInput = document.getElementById('param-WORD_BOX_PADDING_Y');
+    if (boxPadYInput) currentConfig.WORD_BOX_PADDING_Y = parseFloat(boxPadYInput.value);
+    const boxStrokeColorInput = document.getElementById('param-WORD_BOX_STROKE_COLOR');
+    if (boxStrokeColorInput) currentConfig.WORD_BOX_STROKE_COLOR = boxStrokeColorInput.value;
+    const boxStrokeWidthInput = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
+    if (boxStrokeWidthInput) currentConfig.WORD_BOX_STROKE_WIDTH = parseFloat(boxStrokeWidthInput.value);
+    const boxFillColorInput = document.getElementById('param-WORD_BOX_FILL_COLOR');
+    if (boxFillColorInput) currentConfig.WORD_BOX_FILL_COLOR = boxFillColorInput.value;
+    const boxFillOpacityInput = document.getElementById('param-WORD_BOX_FILL_OPACITY');
+    if (boxFillOpacityInput) currentConfig.WORD_BOX_FILL_OPACITY = parseFloat(boxFillOpacityInput.value);
+    const boxHandleSizeInput = document.getElementById('param-WORD_BOX_HANDLE_SIZE');
+    if (boxHandleSizeInput) currentConfig.WORD_BOX_HANDLE_SIZE = parseFloat(boxHandleSizeInput.value);
+
     if (Array.isArray(flyerWords) && Array.isArray(timelineLayers)) {
       flyerWords.forEach(w => {
         timelineLayers.forEach(l => {
           if (!Array.isArray(l.clips)) return;
           l.clips.forEach(c => {
-            if (c.id === w.id || c.flyerId === w.id || c.text === w.text || c.word === w.word) {
+            if (c.id === w.id || c.flyerId === w.id) {
               if (w.x !== undefined) c.x = w.x;
               if (w.y !== undefined) c.y = w.y;
               if (w.fontSize !== undefined) c.fontSize = w.fontSize;
@@ -4482,7 +5268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const payload = {
-      title: title ? title.trim() : undefined,
+      title: title || currentVisualEffectTitle || 'Mi Proyecto Flyer',
       flyerWords: flyerWords,
       timelineLayers: timelineLayers,
       timelineDuration: timelineDuration,
@@ -4507,12 +5293,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const savedEffect = data.effect || data;
       currentVisualEffectId = savedEffect._id || currentVisualEffectId;
+      currentVisualEffectTitle = savedEffect.title || title || 'Mi Proyecto Flyer';
+      currentVisualEffectOwner = true;
 
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('id', currentVisualEffectId);
       window.history.replaceState({}, '', newUrl.toString());
 
-      showToast(isUpdate ? '¡Secuencia actualizada!' : '¡Nueva secuencia guardada!', 'success');
+      updateActiveSequenceUI();
+      showToast(isUpdate ? `¡Secuencia "${currentVisualEffectTitle}" actualizada!` : `¡Secuencia "${currentVisualEffectTitle}" guardada!`, 'success');
       loadSavedFlyerSequences();
     } catch (err) {
       console.error('[Save Visual Effect Error]', err);
@@ -4528,9 +5317,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const effect = await res.json();
       if (effect) {
         currentVisualEffectId = effect._id || id;
+        currentVisualEffectTitle = effect.title || 'Secuencia';
+
+        const myUserId = (typeof getUserId === 'function') ? String(getUserId() || '') : null;
+        const effectAuthorId = (typeof effect.author === 'object' && effect.author) ? String(effect.author._id || effect.author.id || '') : String(effect.author || '');
+        currentVisualEffectOwner = Boolean(myUserId && effectAuthorId && (myUserId === effectAuthorId));
+
         if (typeof switchRightTab === 'function') {
           switchRightTab('FLYERMODE');
         }
+
+        updateActiveSequenceUI();
 
         // Actualizar URL en la barra de direcciones con el ID y el nombre/slug de la secuencia
         const newUrl = new URL(window.location.href);
@@ -4551,7 +5348,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 1. Restaurar la configuración completa de parámetros de p5, tipografía y shader de fondo guardados
-        // IMPORTANTE: evitar que FLYER_WORDS o TIMELINE_LAYERS en config sobreescriban effect.flyerWords
         if (effect.config && typeof effect.config === 'object') {
           const cfgToApply = { ...effect.config };
           delete cfgToApply.FLYER_WORDS;
@@ -4561,12 +5357,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.ParticlesConfig.set(cfgToApply);
           }
 
-          // Cargar el shader generativo de fondo si viene especificado
           if (effect.config.GENERATIVE_SHADER && window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
             window.AsciiShaderBG.loadGenerativeShader(effect.config.GENERATIVE_SHADER);
           }
 
-          // Cargar el modo de fuente ASCII si viene especificado
           if (effect.config.ASCII_FONT_MODE !== undefined && window.AsciiShaderBG) {
             const fontMode = Number(effect.config.ASCII_FONT_MODE);
             if (typeof window.AsciiShaderBG.setFontMode === 'function') {
@@ -4574,7 +5368,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // Sincronizar los controles gráficos de la UI si existen en pantalla
           if (typeof syncInputsFromConfig === 'function') {
             syncInputsFromConfig();
           }
@@ -4587,7 +5380,6 @@ document.addEventListener('DOMContentLoaded', () => {
           window.timelineDuration = timelineDuration;
         }
 
-        // Limpiar partículas previas y arrays antes de cargar
         flyerWords = [];
         timelineLayers = [];
         window.activeImageLayers = [];
@@ -4620,7 +5412,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        // 2. Cargar palabras de flyer
         if (Array.isArray(effect.flyerWords) && effect.flyerWords.length > 0) {
           flyerWords = effect.flyerWords.map((w, idx) => {
             if (typeof w === 'object' && w && (w.text || w.word)) {
@@ -4665,14 +5456,12 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        // 3. Cargar capas de timeline o reconstruirlas si están vacías
         if (Array.isArray(effect.timelineLayers) && effect.timelineLayers.length > 0 && effect.timelineLayers.some(l => l.clips && l.clips.length > 0)) {
           timelineLayers = effect.timelineLayers;
-          // Sincronizar dimensiones, posición, tipografía y colores de los clips con flyerWords para mantener coherencia absoluta
           timelineLayers.forEach(l => {
             if (Array.isArray(l.clips)) {
               l.clips.forEach(c => {
-                const matchingFw = flyerWords.find(fw => fw.id === c.id || fw.id === c.flyerId || fw.text === c.text);
+                const matchingFw = flyerWords.find(fw => fw.id === c.id || fw.id === c.flyerId);
                 if (matchingFw) {
                   c.text = matchingFw.text;
                   c.word = matchingFw.word;
@@ -4689,7 +5478,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
         } else if (flyerWords.length > 0) {
-          // Reconstruir clips a partir de flyerWords
           timelineLayers = [{
             id: 'layer_' + Date.now(),
             name: 'Capa 1',
@@ -4726,24 +5514,34 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTimelineTracks();
         updateTimelineReadout();
 
-        if (window.spawnWordParticles && flyerWords.length > 0) {
-          flyerWords.forEach(w => {
-            window.spawnWordParticles(
-              w.text || w.word,
-              w.x || window.innerWidth / 2,
-              w.y || window.innerHeight / 2,
-              true,
-              w.id,
-              {
-                fontSize: w.fontSize,
-                letterSpacing: w.letterSpacing,
-                color: w.color,
-                letterColors: w.letterColors,
-                formationMode: w.formationMode,
-                palette: w.palette
-              }
-            );
-          });
+        if (flyerWords.length > 0) {
+          const trySpawn = () => {
+            if (typeof window.spawnWordParticles !== 'function' || !window.width) {
+              setTimeout(trySpawn, 100);
+              return;
+            }
+            if (window.clearAllFlyerParticles) {
+              window.clearAllFlyerParticles();
+            }
+            flyerWords.forEach(w => {
+              window.spawnWordParticles(
+                w.text || w.word,
+                w.x || window.innerWidth / 2,
+                w.y || window.innerHeight / 2,
+                true,
+                w.id,
+                {
+                  fontSize: w.fontSize,
+                  letterSpacing: w.letterSpacing,
+                  color: w.color,
+                  letterColors: w.letterColors,
+                  formationMode: w.formationMode,
+                  palette: w.palette
+                }
+              );
+            });
+          };
+          trySpawn();
         }
 
         if (flyerWords.length > 0) {
@@ -4768,6 +5566,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           evaluateTimelineAtTime(currentTimelineTime);
         }
+
+        loadSavedFlyerSequences();
       }
     } catch (err) {
       console.error('[Load Visual Effect Error]', err);
@@ -4844,39 +5644,65 @@ document.addEventListener('DOMContentLoaded', () => {
       const userIsAdmin = (typeof checkAdminStatus === 'function' ? checkAdminStatus() : false) || (typeof isAdmin === 'function' ? isAdmin() : false);
 
       container.innerHTML = effects.map(fx => {
-        const wordCount = (fx.flyerWords || []).length;
+        const wordList = fx.flyerWords || [];
+        const wordCount = wordList.length;
         const dateStr = new Date(fx.createdAt).toLocaleDateString();
         const outputUrl = `outputeffect.html?outputeffect=${fx._id}`;
         const escapedTitle = (fx.title || 'Secuencia').replace(/'/g, "\\'");
         const isPinned = !!fx.isDefaultFront;
+        const isActive = (currentVisualEffectId && String(fx._id) === String(currentVisualEffectId));
+
+        const savedWordTexts = wordList.map(w => (w && w.text) ? String(w.text).trim() : '').filter(Boolean);
+        const wordsBadgeHtml = savedWordTexts.length > 0
+          ? `<div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding: 6px 8px; background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-size: 9px; color: #94a3b8; font-weight: 700; width: 100%; text-transform: uppercase; margin-bottom: 2px;">
+                <i class="fas fa-font mr-1" style="color: var(--accent-magenta);"></i>Palabras guardadas (${savedWordTexts.length}):
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${savedWordTexts.map(w => `<span style="background: rgba(0, 242, 254, 0.12); color: #e2e8f0; border: 1px solid rgba(0, 242, 254, 0.25); padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.3px;">${w.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`).join('')}
+              </div>
+            </div>`
+          : `<div style="font-size: 9px; color: #64748b; font-style: italic; margin-top: 4px;"><i class="fas fa-info-circle mr-1"></i>Sin palabras guardadas en esta secuencia</div>`;
+
         return `
-          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.4); border: 1px solid ${isPinned ? 'rgba(234, 179, 8, 0.4)' : 'rgba(255,255,255,0.08)'}; padding: 8px 10px; border-radius: 10px; font-size: 11px; cursor: pointer; transition: all 0.2s;" title="Doble click para renombrar esta secuencia">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <strong style="color: #fff; font-size: 12px; display: block;" title="Doble click para modificar el nombre">${fx.title}</strong>
+          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 6px; background: ${isActive ? 'rgba(0, 242, 254, 0.12)' : 'rgba(0,0,0,0.4)'}; border: ${isActive ? '2px solid var(--accent-cyan)' : (isPinned ? '1px solid rgba(234, 179, 8, 0.4)' : '1px solid rgba(255,255,255,0.08)')}; box-shadow: ${isActive ? '0 0 16px rgba(0, 242, 254, 0.35)' : 'none'}; padding: 10px 12px; border-radius: 10px; font-size: 11px; cursor: pointer; transition: all 0.2s;" title="Doble click para renombrar esta secuencia">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 140px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+                  <strong style="color: ${isActive ? 'var(--accent-cyan)' : '#fff'}; font-size: 13px; font-weight: 800; word-break: break-word; white-space: normal; line-height: 1.3;" title="Doble click para modificar el nombre">${fx.title}</strong>
+                  ${isActive ? `<span style="background: rgba(0, 242, 254, 0.3); color: #00f2fe; border: 1px solid var(--accent-cyan); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-play-circle mr-1"></i>CARGADO</span>` : ''}
                   ${isPinned ? `<span style="background: rgba(234, 179, 8, 0.25); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.5); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-thumbtack mr-1"></i>Default Front</span>` : ''}
                 </div>
-                <div style="font-size: 10px; color: #94a3b8;"><i class="fas fa-layer-group mr-1"></i>${wordCount} ${wordCount === 1 ? 'capa' : 'capas'} • ${dateStr}</div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;"><i class="fas fa-layer-group mr-1"></i>${wordCount} ${wordCount === 1 ? 'capa' : 'capas'} • ${dateStr}</div>
               </div>
-              <div style="display: flex; gap: 4px;" onclick="event.stopPropagation();" ondblclick="event.stopPropagation();">
+              <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;" onclick="event.stopPropagation();" ondblclick="event.stopPropagation();">
                 ${userIsAdmin ? `
                   <button onclick="window.togglePinDefaultEffect('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: ${isPinned ? 'rgba(234, 179, 8, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-color: ${isPinned ? '#facc15' : 'rgba(255,255,255,0.2)'}; color: ${isPinned ? '#facc15' : '#94a3b8'}; cursor: pointer;" title="${isPinned ? 'Secuencia activa en el FRONT de todas las páginas (Click para desfijar)' : 'Fijar esta secuencia como template por defecto en el FRONT de todas las páginas'}">
                     <i class="fas fa-thumbtack ${isPinned ? 'text-amber-400' : ''}"></i> ${isPinned ? 'Front Activo' : 'Pinear Front'}
                   </button>
                 ` : ''}
-                <button onclick="window.loadVisualEffectById('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(224, 64, 251, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta); cursor: pointer;" title="Cargar en el editor">
-                  <i class="fas fa-play"></i> Cargar
-                </button>
+                ${isActive ? `
+                  <span class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.3); border-color: var(--accent-cyan); color: #fff; cursor: default; font-weight: 800;" title="Secuencia cargada actualmente en el editor">
+                    <i class="fas fa-check"></i> Activa
+                  </span>
+                ` : `
+                  <button onclick="window.loadVisualEffectById('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(224, 64, 251, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta); cursor: pointer;" title="Cargar en el editor">
+                    <i class="fas fa-play"></i> Cargar
+                  </button>
+                `}
                 <a href="${outputUrl}" target="_blank" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;" title="Abrir reproducción independiente en loop">
                   <i class="fas fa-external-link-alt"></i> Output
                 </a>
                 <button onclick="window.copyOutputLink('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.2); color: #fff; cursor: pointer;" title="Copiar enlace ?outputeffect=${fx._id}">
                   <i class="fas fa-copy"></i>
                 </button>
+                <button onclick="window.deleteVisualEffect('${fx._id}', '${escapedTitle}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); color: #f87171; cursor: pointer;" title="Eliminar esta secuencia guardada">
+                  <i class="fas fa-trash-alt"></i> Borrar
+                </button>
               </div>
             </div>
-            <div style="font-size: 9px; color: #64748b; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${wordsBadgeHtml}
+            <div style="font-size: 9px; color: #64748b; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">
               ?outputeffect=${fx._id}
             </div>
           </div>`;
@@ -4886,6 +5712,36 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = `<div style="font-size: 11px; color: #ff5252; text-align: center; padding: 6px;">${err.message || 'Error al cargar secuencias.'}</div>`;
     }
   }
+
+  window.deleteVisualEffect = async function(id, title) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar la secuencia "${title || 'seleccionada'}"? Esta acción no se puede deshacer.`)) return;
+    const token = getAuthToken();
+    if (!token) {
+      alert('Debes iniciar sesión para eliminar secuencias.');
+      return;
+    }
+    try {
+      const res = await fetchWithApiFallback(`/visualeffects/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar secuencia');
+      showToast(`Secuencia "${title || 'Efecto'}" eliminada correctamente`, 'success');
+      if (currentVisualEffectId === id) {
+        currentVisualEffectId = null;
+        currentVisualEffectOwner = false;
+        currentVisualEffectTitle = 'Sin Guardar (Nuevo Proyecto)';
+        updateActiveSequenceUI();
+      }
+      loadSavedFlyerSequences();
+    } catch (err) {
+      console.error('[Delete Visual Effect Error]', err);
+      showToast(err.message || 'Error al eliminar la secuencia', 'error');
+    }
+  };
 
   window.togglePinDefaultEffect = async function(id) {
     const token = getAuthToken();
@@ -4948,6 +5804,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNewFlyer.addEventListener('click', () => {
       flyerWordsExplicitlyManaged = true;
       currentVisualEffectId = null;
+      currentVisualEffectTitle = 'Sin Guardar (Nuevo Proyecto)';
+      currentVisualEffectOwner = false;
       flyerWords = [];
       timelineLayers = [];
       selectedFlyerWordId = null;
@@ -4965,50 +5823,64 @@ document.addEventListener('DOMContentLoaded', () => {
       newUrl.searchParams.delete('outputeffect');
       newUrl.searchParams.delete('name');
       window.history.replaceState({}, '', newUrl.toString());
+      updateActiveSequenceUI();
+      loadSavedFlyerSequences();
       showToast('Nueva secuencia lista para diseñar', 'info');
     });
   }
 
-  // --- SUBTABS DE FLYER MODE (EDITOR / IMPORT) ---
-  const btnSubtabEditor = document.getElementById('btn-flyer-subtab-editor');
-  const btnSubtabImport = document.getElementById('btn-flyer-subtab-import');
-  const contentSubtabEditor = document.getElementById('flyer-subtab-content-editor');
-  const contentSubtabImport = document.getElementById('flyer-subtab-content-import');
+  // --- SUBTABS DE FLYER MODE (WORDLIST / SECUENCIAS / SELECCION / EXPORT / IMPORT) ---
+  const flyerSubtabs = [
+    { name: 'WORDLIST', btnId: 'btn-flyer-subtab-wordlist', contentId: 'flyer-subtab-content-wordlist' },
+    { name: 'SECUENCIAS', btnId: 'btn-flyer-subtab-secuencias', contentId: 'flyer-subtab-content-secuencias' },
+    { name: 'SELECCION', btnId: 'btn-flyer-subtab-seleccion', contentId: 'flyer-subtab-content-seleccion' },
+    { name: 'EXPORT', btnId: 'btn-flyer-subtab-export', contentId: 'flyer-subtab-content-export' },
+    { name: 'IMPORT', btnId: 'btn-flyer-subtab-import', contentId: 'flyer-subtab-content-import' }
+  ];
 
-  function switchFlyerSubtab(tabName) {
-    if (tabName === 'IMPORT') {
-      if (contentSubtabEditor) contentSubtabEditor.style.display = 'none';
-      if (contentSubtabImport) contentSubtabImport.style.display = 'block';
+  function switchFlyerSubtab(activeTabName) {
+    const targetName = (activeTabName === 'EDITOR') ? 'WORDLIST' : activeTabName;
+    flyerSubtabs.forEach(tab => {
+      const btn = document.getElementById(tab.btnId);
+      const content = document.getElementById(tab.contentId);
+      const isActive = (tab.name === targetName);
 
-      if (btnSubtabEditor) {
-        btnSubtabEditor.classList.remove('active');
-        btnSubtabEditor.style.background = 'transparent';
-        btnSubtabEditor.style.color = '#94a3b8';
+      if (content) {
+        content.style.display = isActive ? 'block' : 'none';
       }
-      if (btnSubtabImport) {
-        btnSubtabImport.classList.add('active');
-        btnSubtabImport.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
-        btnSubtabImport.style.color = '#fff';
+      if (btn) {
+        if (isActive) {
+          btn.classList.add('active');
+          btn.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
+          btn.style.color = '#fff';
+        } else {
+          btn.classList.remove('active');
+          btn.style.background = 'transparent';
+          btn.style.color = '#94a3b8';
+        }
       }
-    } else {
-      if (contentSubtabEditor) contentSubtabEditor.style.display = 'block';
-      if (contentSubtabImport) contentSubtabImport.style.display = 'none';
+    });
 
-      if (btnSubtabEditor) {
-        btnSubtabEditor.classList.add('active');
-        btnSubtabEditor.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
-        btnSubtabEditor.style.color = '#fff';
-      }
-      if (btnSubtabImport) {
-        btnSubtabImport.classList.remove('active');
-        btnSubtabImport.style.background = 'transparent';
-        btnSubtabImport.style.color = '#94a3b8';
+    if (targetName === 'SECUENCIAS') {
+      loadSavedFlyerSequences();
+    } else if (targetName === 'SELECCION') {
+      if (typeof window.syncSelectionSubtabValues === 'function') {
+        window.syncSelectionSubtabValues();
       }
     }
   }
 
-  if (btnSubtabEditor) btnSubtabEditor.addEventListener('click', () => switchFlyerSubtab('EDITOR'));
-  if (btnSubtabImport) btnSubtabImport.addEventListener('click', () => switchFlyerSubtab('IMPORT'));
+  flyerSubtabs.forEach(tab => {
+    const btn = document.getElementById(tab.btnId);
+    if (btn) {
+      btn.addEventListener('click', () => switchFlyerSubtab(tab.name));
+    }
+  });
+
+  const btnSubtabEditorLegacy = document.getElementById('btn-flyer-subtab-editor');
+  if (btnSubtabEditorLegacy) {
+    btnSubtabEditorLegacy.addEventListener('click', () => switchFlyerSubtab('WORDLIST'));
+  }
 
   // Sincronización bidireccional de sliders y textfields en Configuración de Importación
   const importParamsList = [
@@ -5750,8 +6622,16 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   if (window.location.pathname.includes('outputeffect.html')) {
+    window.appMode = 'FLYERMODE';
+    if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
+      window.ParticlesConfig.set({ FLYER_MODE_ENABLED: true });
+    }
+    const paramId = new URLSearchParams(window.location.search).get('outputeffect') || new URLSearchParams(window.location.search).get('id');
+    if (paramId) {
+      loadUserVisualEffect(paramId);
+    }
     window.addEventListener('click', () => {
-      togglePlayTimeline();
+      if (typeof togglePlayTimeline === 'function') togglePlayTimeline();
     });
   }
 });

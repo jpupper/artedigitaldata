@@ -60,6 +60,9 @@
         <button id="tab-btn-params-image" class="tab-btn" title="Añadir y manipular capas de imágenes / logo">
           <i class="fas fa-image"></i> Imagen
         </button>
+        <button id="tab-btn-params-pointer" class="tab-btn" title="Configuración del puntero y radio de influencia">
+          <i class="fas fa-mouse-pointer"></i> Puntero
+        </button>
       </div>
       <button id="close-left-panel-btn" class="btn-close-header" title="Cerrar panel de parámetros">
         <i class="fas fa-times"></i>
@@ -294,7 +297,107 @@
                 </div>
               </div>
             </div>
+
+            </div>
           </div>
+        </div>
+
+        <!-- Efecto Bounding Box por Palabra (Grupo Independiente Principal) -->
+        <div class="param-group collapsed" style="margin-top: 10px; border: 1px solid rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.04);">
+          <div class="group-title">
+            <i class="fas fa-vector-square" style="color: var(--accent-cyan);"></i>
+            <span style="color: var(--accent-cyan);">Efecto Bounding Box por Palabra</span>
+            <i class="fas fa-chevron-down group-chevron"></i>
+          </div>
+          <div class="group-content">
+            <div class="control-row">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <span style="font-size: 11px; font-weight: 700; color: #fff;">Activar Bounding Box</span>
+                  <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Dibuja un fondo/borde a nivel de la palabra seleccionada</div>
+                </div>
+                <label class="switch-ui" style="transform: scale(0.85);" title="Activar/Desactivar Bounding Box por palabra">
+                  <input type="checkbox" id="param-WORD_BOX_ENABLED">
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Fill Color & Opacity -->
+            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+              <div class="color-picker-box" style="flex: 1;">
+                <label style="font-size: 10px; color: #94a3b8;">Color Relleno (Fill)</label>
+                <div class="color-input-wrap">
+                  <input type="color" id="param-GLOBAL_WORD_BOX_FILL_COLOR" value="#0f172a">
+                </div>
+              </div>
+              <div style="flex: 2;">
+                <div class="control-label-wrap"><span>Opacidad Relleno</span></div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_FILL_OPACITY" min="0" max="1.0" step="0.05" value="0.7">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_FILL_OPACITY" class="val-input" min="0" max="1.0" step="0.05" value="0.7">
+                </div>
+              </div>
+            </div>
+
+            <!-- Stroke Color & Width -->
+            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+              <div class="color-picker-box" style="flex: 1;">
+                <label style="font-size: 10px; color: #94a3b8;">Color Borde (Stroke)</label>
+                <div class="color-input-wrap">
+                  <input type="color" id="param-GLOBAL_WORD_BOX_STROKE_COLOR" value="#00f2fe">
+                </div>
+              </div>
+              <div style="flex: 2;">
+                <div class="control-label-wrap"><span>Grosor Borde (px)</span></div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_STROKE_WIDTH" min="0" max="20" step="1" value="2">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_STROKE_WIDTH" class="val-input" min="0" max="20" step="1" value="2">
+                </div>
+              </div>
+            </div>
+
+            <!-- Rounding & Padding -->
+            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px;">
+              <div style="flex: 1;">
+                <div class="control-label-wrap"><span>Redondeado (px)</span></div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_ROUNDING" min="0" max="50" step="1" value="8">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_ROUNDING" class="val-input" min="0" max="50" step="1" value="8">
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <div class="control-label-wrap"><span>Padding / Margen (px)</span></div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_PADDING" min="0" max="80" step="1" value="16">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_PADDING" class="val-input" min="0" max="80" step="1" value="16">
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Pattern & Speed -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap"><span>Patrón de Línea Experimental</span></div>
+              <select id="param-GLOBAL_WORD_BOX_LINE_PATTERN" class="select-ui" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 11px;">
+                <option value="solid">Línea Sólida (Continua)</option>
+                <option value="marching-ants">Marcha de Hormigas (Animated Ants)</option>
+                <option value="neon-pulse">Pulso Neón (Animated Neon Glow)</option>
+                <option value="cyber-dots">Puntos Ciber (Animated Dots)</option>
+                <option value="glitch-dash">Glitch Ciber (Animated Glitch Dash)</option>
+                <option value="morse-code">Código Morse (Animated Morse Code)</option>
+                <option value="double-line">Doble Borde Paralelo (Double Stroke)</option>
+              </select>
+            </div>
+
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap"><span>Velocidad de Animación de Trazo</span></div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-WORD_BOX_SPEED" min="0" max="10" step="0.5" value="3">
+                <input type="number" id="num-WORD_BOX_SPEED" class="val-input" min="0" max="10" step="0.5" value="3">
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
 
         <!-- Parámetros Modo CODE (Solo visible cuando el modo CODE está activo) -->
@@ -837,6 +940,82 @@
           <i class="fas fa-folder-open"></i> Cargar
         </button>
       </div>
+      <!-- Sub-Pestaña 4: PUNTERO (Configuración del Puntero y Radios de Influencia) -->
+      <div id="tab-pane-params-pointer" class="tab-pane">
+        <div style="padding: 10px 12px; background: rgba(0, 242, 254, 0.04); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px; margin-bottom: 12px;">
+          <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <i class="fas fa-mouse-pointer text-[var(--accent-cyan)]"></i> Radio e Interacción del Puntero
+          </span>
+          <div style="font-size: 10px; color: #94a3b8; line-height: 1.3;">
+            Ajustá el radio de repulsión e interacción que afecta a las palabras al pasar el mouse por encima en modo FISICS y CODE.
+          </div>
+        </div>
+
+        <div class="param-group">
+          <div class="group-title">
+            <i class="fas fa-sliders-h"></i>
+            <span>Parámetros del Cursor</span>
+            <i class="fas fa-chevron-down group-chevron"></i>
+          </div>
+          <div class="group-content">
+            <!-- Switch Mostrar Radio de Puntero -->
+            <div class="control-row">
+              <div class="control-label-wrap">
+                <span>Mostrar Radio Visual del Puntero</span>
+              </div>
+              <label class="switch-ui" title="Mostrar u ocultar el círculo indicador del radio de repulsión">
+                <input type="checkbox" id="param-SHOW_MOUSE_RADIUS">
+                <span class="slider-ui"></span>
+              </label>
+            </div>
+
+            <!-- Radio de Repulsión FISICS -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Radio Repulsión (Fisics)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-REPULSION_RADIUS" min="10" max="400" value="120" step="5">
+                <input type="number" id="num-REPULSION_RADIUS" value="120" min="5" max="1000" step="5" class="val-input">
+              </div>
+            </div>
+
+            <!-- Multiplicador de Fuerza Fisics -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Fuerza Puntero (Fisics)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-MOUSE_FORCE_MULT" min="0.1" max="10" value="1.5" step="0.1">
+                <input type="number" id="num-MOUSE_FORCE_MULT" value="1.5" min="0.1" max="50" step="0.1" class="val-input">
+              </div>
+            </div>
+
+            <!-- Radio de Influencia en Modo CODE -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Radio Puntero (Code)</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-CODE_MOUSE_RADIUS" min="10" max="300" value="100" step="5">
+                <input type="number" id="num-CODE_MOUSE_RADIUS" value="100" min="5" max="800" step="5" class="val-input">
+              </div>
+            </div>
+
+            <!-- Radio de Repulsión entre Palabras -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap">
+                <span>Repulsión entre Palabras</span>
+              </div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-WORD_REPEL_RADIUS" min="0" max="250" value="60" step="5">
+                <input type="number" id="num-WORD_REPEL_RADIUS" value="60" min="0" max="600" step="5" class="val-input">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="buttons-row">
         <button id="reset-defaults-btn" class="btn-reset" title="Restablecer a valores iniciales">
           <i class="fas fa-undo"></i> Reset
@@ -850,11 +1029,11 @@
     <div class="panel-resize-handle resize-handle-left" id="right-panel-resize-handle" title="Arrastrar para redimensionar panel derecho"></div>
     <div class="panel-header">
       <div class="panel-tabs-group">
-        <button id="tab-btn-flyer" class="tab-btn" title="Modo Flyer (Composición tipográfica y Timeline)">
-          <i class="fas fa-layer-group"></i> FLYERMODE
+        <button id="tab-btn-collab" class="tab-btn active" title="Modo colaborativo global con palabras flotantes">
+          <i class="fas fa-users"></i> Collab Mode
         </button>
-        <button id="tab-btn-collab" class="tab-btn active" title="Modo Colaborativo (Palabras dinámicas e interactivas)">
-          <i class="fas fa-users"></i> COLLABMODE
+        <button id="tab-btn-flyer" class="tab-btn" title="Modo Flyer con línea de tiempo y composición tipográfica">
+          <i class="fas fa-file-image"></i> Flyer Mode
         </button>
       </div>
       <button id="close-right-panel-btn" class="btn-close-header" title="Cerrar panel de modos">
@@ -863,25 +1042,16 @@
     </div>
 
     <div class="panel-body">
-      <!-- Pestaña Modo Colaborativo (COLLABMODE - Activo por Defecto) -->
+      <!-- Pestaña Modo Colaborativo (COLLABMODE) -->
       <div id="tab-pane-collab" class="tab-pane active">
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-users"></i> Modo Colaborativo</div>
-            <span id="words-count-badge" class="words-count-badge">0 palabras</span>
+        <!-- Duración de palabras colaborativas -->
+        <div class="param-group" style="margin-bottom: 14px;">
+          <div class="group-title">
+            <i class="fas fa-clock"></i> Duración de Palabras (s)
           </div>
-
-          <button id="btn-save-collab-top" class="btn-save" style="width: 100%; margin-bottom: 12px; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer; border: none; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px;">
-            <i class="fas fa-save"></i> Guardar Parámetros P5 en Servidor
-          </button>
-          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">
-            Hacé click en la pantalla para formarlas. <strong>Al hacer click sobre una palabra en el lienzo, esta se BORRA.</strong>
-          </p>
-
-          <!-- Slider Timer de Vida / Lifespan -->
-          <div class="control-row" style="background: rgba(0, 242, 254, 0.05); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(0, 242, 254, 0.15); margin-bottom: 12px;">
+          <div class="control-row">
             <div class="control-label-wrap">
-              <span style="color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-clock mr-1"></i> Timer de Vida (Segundos)</span>
+              <span>Permanencia en Pantalla</span>
             </div>
             <div class="slider-text-combo">
               <input type="range" id="param-COLLAB_WORD_LIFESPAN" min="1" max="60" step="1" value="8">
@@ -891,55 +1061,71 @@
               Tiempo que permanece cada palabra antes de desvanecerse (en segundos).
             </div>
           </div>
-
-          <!-- Input Agregar Palabras -->
-          <div class="add-word-row">
-            <input type="text" id="new-word-input" class="text-input" placeholder="Escribí palabras o frases (ej: HOLA, MUNDO)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
-            <button id="add-word-btn" class="btn-add-word">
-              <i class="fas fa-plus"></i> Agregar
-            </button>
-          </div>
-
-          <div class="words-filter-row" style="margin-top: 8px;">
-            <input type="text" id="filter-word-input" class="text-input" placeholder="Buscar palabra..." spellcheck="false" style="padding: 5px 8px; font-size: 11px; background: rgba(0,0,0,0.3);">
-          </div>
-
-          <!-- Unificación de Palabras Colaborativas -->
-          <div id="words-list" class="words-container" style="margin-top: 8px; max-height: 240px; overflow-y: auto;">
-            <!-- Inyectado dinámicamente -->
-          </div>
-
-          <!-- Stats colaborativas -->
-          <div class="contributors-stats-bar" style="margin-top: 14px;">
-            <div class="stat-card">
-              <span id="stat-total-words" class="stat-card-val">0</span>
-              <span class="stat-card-lbl">Palabras Totales</span>
-            </div>
-            <div class="stat-card">
-              <span id="stat-total-contributors" class="stat-card-val">0</span>
-              <span class="stat-card-lbl">Colaboradores</span>
-            </div>
-          </div>
-
-          <!-- Lista de Usuarios y Colaboraciones -->
-          <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-            <div class="group-title"><i class="fas fa-user-friends"></i> Usuarios y Palabras de la Comunidad</div>
-            <input type="text" id="filter-contributors-input" class="text-input" placeholder="Buscar por usuario o palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 11px; margin-bottom: 8px;">
-            <div id="contributors-list" class="contributors-list" style="max-height: 200px; overflow-y: auto;">
-              <div style="text-align: center; color: #64748b; font-size: 11px; padding: 15px;">
-                <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Botón Guardar Collab -->
-        <div style="margin-top: 16px;">
-          <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
-            <i class="fas fa-save"></i> Guardar Palabras Collab
+        <!-- Input Agregar Palabras -->
+        <div class="add-word-row">
+          <input type="text" id="new-word-input" class="text-input" placeholder="Escribí palabras o frases (ej: HOLA, MUNDO)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+          <button id="add-word-btn" class="btn-add-word">
+            <i class="fas fa-plus"></i> Agregar
           </button>
         </div>
+
+        <!-- Modo de Selección e Índice de Palabras (CollabMode) -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 8px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Modo:</span>
+            <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
+              <input type="checkbox" id="param-WORD_SPAWN_MODE_COLLAB">
+              <span class="slider-ui"></span>
+            </label>
+            <span id="label-word-spawn-mode-collab" style="font-size: 10px; color: #00f2fe; font-weight: 700;">Random</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Índice:</span>
+            <input type="text" id="num-WORD_SPAWN_INDEX_COLLAB" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+          </div>
+        </div>
+
+        <div class="words-filter-row" style="margin-top: 8px;">
+          <input type="text" id="filter-word-input" class="text-input" placeholder="Buscar palabra..." spellcheck="false" style="padding: 5px 8px; font-size: 11px; background: rgba(0,0,0,0.3);">
+        </div>
+
+        <!-- Unificación de Palabras Colaborativas -->
+        <div id="words-list" class="words-container" style="margin-top: 8px; max-height: 240px; overflow-y: auto;">
+          <!-- Inyectado dinámicamente -->
+        </div>
+
+        <!-- Stats colaborativas -->
+        <div class="contributors-stats-bar" style="margin-top: 14px;">
+          <div class="stat-card">
+            <span id="stat-total-words" class="stat-card-val">0</span>
+            <span class="stat-card-lbl">Palabras Totales</span>
+          </div>
+          <div class="stat-card">
+            <span id="stat-total-contributors" class="stat-card-val">0</span>
+            <span class="stat-card-lbl">Colaboradores</span>
+          </div>
+        </div>
+
+        <!-- Lista de Usuarios y Colaboraciones -->
+        <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+          <div class="group-title"><i class="fas fa-user-friends"></i> Usuarios y Palabras de la Comunidad</div>
+          <input type="text" id="filter-contributors-input" class="text-input" placeholder="Buscar por usuario o palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 11px; margin-bottom: 8px;">
+          <div id="contributors-list" class="contributors-list" style="max-height: 200px; overflow-y: auto;">
+            <div style="text-align: center; color: #64748b; font-size: 11px; padding: 15px;">
+              <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+            </div>
+          </div>
+        </div>
       </div> <!-- fin tab-pane-collab -->
+
+      <!-- Botón Guardar Collab -->
+      <div style="margin-top: 16px;">
+        <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
+          <i class="fas fa-save"></i> Guardar Palabras Collab
+        </button>
+      </div>
 
       <!-- Pestaña Modo Flyer (FLYERMODE) -->
       <div id="tab-pane-flyer" class="tab-pane" style="display: none;">
@@ -959,20 +1145,27 @@
             Diseñá composiciones tipográficas animadas con la línea de tiempo.
           </p>
 
-
-
-          <!-- Subtabs de Flyer Mode: EDITOR e IMPORT -->
-          <div class="flyer-subtabs" style="display: flex; background: rgba(0, 0, 0, 0.4); padding: 3px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <button id="btn-flyer-subtab-editor" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 10px; border: none; background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); color: #fff; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-              <i class="fas fa-edit"></i> EDITOR
+          <!-- Subtabs de Flyer Mode: WORDLIST, SECUENCIAS, SELECCION, EXPORT, IMPORT -->
+          <div class="flyer-subtabs" style="display: flex; background: rgba(0, 0, 0, 0.4); padding: 3px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1); gap: 2px;">
+            <button id="btn-flyer-subtab-wordlist" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 3px; border: none; background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); color: #fff; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Gestión de palabras del flyer">
+              <i class="fas fa-font"></i> WORDLIST
             </button>
-            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 10px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <button id="btn-flyer-subtab-secuencias" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Secuencias y proyectos guardados">
+              <i class="fas fa-bookmark"></i> SECUENCIAS
+            </button>
+            <button id="btn-flyer-subtab-seleccion" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Configuración visual del recuadro de selección">
+              <i class="fas fa-vector-square"></i> SELECCIÓN
+            </button>
+            <button id="btn-flyer-subtab-export" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Formatos y exportación PNG/ZIP">
+              <i class="fas fa-file-export"></i> EXPORT
+            </button>
+            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Importar publicación por ID">
               <i class="fas fa-file-import"></i> IMPORT
             </button>
           </div>
 
-          <!-- SUBTAB CONTENT 1: EDITOR -->
-          <div id="flyer-subtab-content-editor">
+          <!-- SUBTAB CONTENT 1: WORDLIST -->
+          <div id="flyer-subtab-content-wordlist">
             <!-- Input de texto para Flyer -->
             <div style="margin-bottom: 14px;">
               <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
@@ -986,12 +1179,34 @@
               </div>
             </div>
 
+            <!-- Modo de Selección e Índice de Palabras -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Modo:</span>
+                <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
+                  <input type="checkbox" id="param-WORD_SPAWN_MODE">
+                  <span class="slider-ui"></span>
+                </label>
+                <span id="label-word-spawn-mode" style="font-size: 10px; color: #00f2fe; font-weight: 700;">Random</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Índice:</span>
+                <input type="text" id="num-WORD_SPAWN_INDEX" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+              </div>
+            </div>
+
             <!-- Lista de Palabras del Flyer -->
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
                 <div style="display: flex; gap: 4px;">
-                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras para modificar simultáneamente">
+                  <button type="button" id="btn-select-prev-flyer-word" onclick="if(window.selectPrevFlyerWord) window.selectPrevFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #cbd5e1;" title="Palabra anterior (Ctrl + Flecha Izquierda)">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <button type="button" id="btn-select-next-flyer-word" onclick="if(window.selectNextFlyerWord) window.selectNextFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #cbd5e1;" title="Palabra siguiente (Ctrl + Flecha Derecha)">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras (Ctrl + E)">
                     <i class="fas fa-check-double"></i> Todas
                   </button>
                   <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
@@ -999,13 +1214,157 @@
                   </button>
                 </div>
               </div>
-              <div id="flyer-words-list" class="words-container" style="max-height: 180px; overflow-y: auto;">
+              <div id="flyer-words-list" class="words-container" style="max-height: 280px; overflow-y: auto;">
                 <!-- Inyectado dinámicamente -->
               </div>
             </div>
+          </div> <!-- fin flyer-subtab-content-wordlist -->
 
+          <!-- SUBTAB CONTENT 2: SECUENCIAS -->
+          <div id="flyer-subtab-content-secuencias" style="display: none;">
+            <!-- Banner Indicador de Secuencia / Proyecto Activo -->
+            <div id="active-sequence-banner" style="margin-bottom: 12px; padding: 10px 12px; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
+              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; max-width: 70%;">
+                <div id="active-seq-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe; flex-shrink: 0;"></div>
+                <div style="overflow: hidden;">
+                  <div style="font-size: 9px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Secuencia en Editor</div>
+                  <div id="active-sequence-name" style="font-size: 12px; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sin Guardar (Nuevo Proyecto)</div>
+                </div>
+              </div>
+              <span id="active-sequence-badge" style="font-size: 9px; padding: 3px 8px; background: rgba(0, 242, 254, 0.2); color: var(--accent-cyan); border-radius: 6px; font-weight: 800; border: 1px solid rgba(0, 242, 254, 0.4); text-transform: uppercase;">NUEVO</span>
+            </div>
+
+            <!-- Botones Guardar Flyer -->
+            <div style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
+                <i class="fas fa-save"></i> Guardar / Actualizar Secuencia
+              </button>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
+                  <i class="fas fa-copy"></i> Guardar como Nuevo
+                </button>
+                <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
+                  <i class="fas fa-file"></i> + Nuevo Proyecto
+                </button>
+              </div>
+            </div>
+
+            <!-- Secuencias / Proyectos Guardados del Usuario -->
+            <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+              <div class="group-title" style="margin-bottom: 8px;"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
+              <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto;">
+                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+                  Cargando secuencias guardadas...
+                </div>
+              </div>
+            </div>
+          </div> <!-- fin flyer-subtab-content-secuencias -->
+
+          <!-- SUBTAB CONTENT 3: SELECCIÓN -->
+          <div id="flyer-subtab-content-seleccion" style="display: none;">
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
+              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-vector-square" style="color: var(--accent-magenta);"></i> Estilo Bounding Box / Selección</span>
+                <label class="switch-ui" title="Activar/Desactivar efecto de Bounding Box">
+                  <input type="checkbox" id="param-WORD_BOX_EFFECT_ENABLED">
+                  <span class="slider-ui"></span>
+                </label>
+              </div>
+
+              <!-- Color de Relleno -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Color de Relleno (Fill)</span>
+                </div>
+                <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#0f172a" style="width: 40px; height: 26px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: none; cursor: pointer;">
+              </div>
+
+              <!-- Opacidad de Relleno -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Opacidad de Relleno</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-WORD_BOX_FILL_OPACITY" min="0" max="1" step="0.05" value="0.2">
+                  <input type="number" id="num-WORD_BOX_FILL_OPACITY" class="val-input" min="0" max="1" step="0.05" value="0.2">
+                </div>
+              </div>
+
+              <!-- Color de Borde -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Color de Borde (Stroke)</span>
+                </div>
+                <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#00f2fe" style="width: 40px; height: 26px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: none; cursor: pointer;">
+              </div>
+
+              <!-- Grosor de Borde -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Grosor de Borde (px)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-WORD_BOX_STROKE_WIDTH" min="0" max="10" step="1" value="2">
+                  <input type="number" id="num-WORD_BOX_STROKE_WIDTH" class="val-input" min="0" max="10" step="1" value="2">
+                </div>
+              </div>
+
+              <!-- Patrón de Línea Animado -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Patrón de Línea</span>
+                </div>
+                <select id="param-WORD_BOX_LINE_PATTERN" class="text-input" style="padding: 4px 8px; font-size: 11px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px;">
+                  <option value="solid">Línea Sólida</option>
+                  <option value="dashed">Punteado Discontinuo</option>
+                  <option value="marching-ants">Hormigas Marchantes</option>
+                  <option value="neon-pulse">Pulso Neón Animado</option>
+                  <option value="cyber-dots">Puntos Cyberpunk</option>
+                  <option value="glitch-dash">Glitch Dash Experimental</option>
+                  <option value="double-line">Doble Línea Paralela</option>
+                  <option value="morse-code">Código Morse Animado</option>
+                </select>
+              </div>
+
+              <!-- Redondeado de Esquinas -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Redondeado (Border Radius)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-WORD_BOX_ROUNDING" min="0" max="30" step="1" value="8">
+                  <input type="number" id="num-WORD_BOX_ROUNDING" class="val-input" min="0" max="30" step="1" value="8">
+                </div>
+              </div>
+
+              <!-- Margen Interno (Padding X) -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Margen Ancho X (Padding)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-WORD_BOX_PADDING_X" min="0" max="60" step="1" value="16">
+                  <input type="number" id="num-WORD_BOX_PADDING_X" class="val-input" min="0" max="60" step="1" value="16">
+                </div>
+              </div>
+
+              <!-- Margen Interno (Padding Y) -->
+              <div class="control-row" style="margin-top: 8px;">
+                <div class="control-label-wrap">
+                  <span>Margen Alto Y (Padding)</span>
+                </div>
+                <div class="slider-text-combo">
+                  <input type="range" id="param-WORD_BOX_PADDING_Y" min="0" max="60" step="1" value="16">
+                  <input type="number" id="num-WORD_BOX_PADDING_Y" class="val-input" min="0" max="60" step="1" value="16">
+                </div>
+              </div>
+            </div>
+          </div> <!-- fin flyer-subtab-content-seleccion -->
+
+          <!-- SUBTAB CONTENT 3: EXPORT -->
+          <div id="flyer-subtab-content-export" style="display: none;">
             <!-- Módulo Proporción de Aspecto (Aspect Ratio Layout) -->
-            <div style="margin-top: 14px; padding: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px;">
+            <div style="margin-bottom: 14px; padding: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px;">
               <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <span><i class="fas fa-shapes mr-1"></i> Formato y Proporción</span>
                 <span id="current-aspect-badge" style="font-size: 9px; padding: 2px 6px; background: rgba(0, 242, 254, 0.2); color: #00f2fe; border-radius: 4px; font-weight: 800;">16:9 (1920x1080)</span>
@@ -1039,36 +1398,11 @@
                   <i class="fas fa-download"></i> DOWNLOAD (Formato Actual)
                 </button>
                 <button type="button" id="btn-download-flyer-all-png" onclick="downloadFlyerAllFormats()" style="width: 100%; justify-content: center; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fas fa-layer-group text-cyan-400"></i> Descargar Todos los Formatos (16:9, 9:16, 1:1, 4:5)
+                  <i class="fas fa-layer-group text-cyan-400"></i> Descargar Todos los Formatos (ZIP Pack)
                 </button>
               </div>
             </div>
-
-            <!-- Botones Guardar Flyer -->
-            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
-                <i class="fas fa-save"></i> Guardar / Actualizar
-              </button>
-              <div style="display: flex; gap: 8px;">
-                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
-                  <i class="fas fa-copy"></i> Guardar como Nuevo
-                </button>
-                <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
-                  <i class="fas fa-file"></i> + Nuevo Proyecto
-                </button>
-              </div>
-            </div>
-
-            <!-- Secuencias / Proyectos Guardados del Usuario -->
-            <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
-              <div class="group-title"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
-              <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-top: 6px;">
-                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
-                  Cargando secuencias guardadas...
-                </div>
-              </div>
-            </div>
-          </div> <!-- fin flyer-subtab-content-editor -->
+          </div> <!-- fin flyer-subtab-content-export -->
 
           <!-- SUBTAB CONTENT 2: IMPORT -->
           <div id="flyer-subtab-content-import" style="display: none;">

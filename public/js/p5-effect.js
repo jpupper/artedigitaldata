@@ -459,7 +459,8 @@
     }
 
     const startX = targetCenterX - totalWidth / 2;
-    const startY = constrain(targetCenterY, 40, viewH() - 40);
+    const safeConstrain = (v, minV, maxV) => (typeof constrain === 'function' ? constrain(v, minV, maxV) : Math.min(Math.max(v, minV), maxV));
+    const startY = safeConstrain(targetCenterY, 40, viewH() - 40);
     const wordId = flyerId || (word + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
     if (isFlyer) {
       window.activeFlyerWordId = wordId;
@@ -759,23 +760,11 @@
 
       if (autoTimer >= targetFrames) {
         autoTimer = 0;
-        const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
-        if (words.length > 0) {
-          let nextIdx = floor(random(words.length));
-          if (words.length > 1 && nextIdx === currentWordIndex) {
-            nextIdx = (nextIdx + 1) % words.length;
-          }
-          currentWordIndex = nextIdx;
-          const chosenWord = words[currentWordIndex];
-
-          // Posición aleatoria dentro de márgenes seguros de pantalla
-          const padX = constrain(windowWidth * 0.2, 80, 260);
-          const padY = constrain(windowHeight * 0.2, 80, 220);
-          const randX = random(padX, windowWidth - padX);
-          const randY = random(padY, windowHeight - padY);
-
-          spawnWordParticles(chosenWord, randX, randY);
-        }
+        const padX = constrain(windowWidth * 0.2, 80, 260);
+        const padY = constrain(windowHeight * 0.2, 80, 220);
+        const randX = random(padX, windowWidth - padX);
+        const randY = random(padY, windowHeight - padY);
+        spawnWordFromPool(randX, randY);
       }
 
       // Spawneo de letras distribuidas desde todos lados (no un walker)
@@ -841,6 +830,9 @@
     // Dibujar capas de imágenes (si existen)
     drawActiveImageLayers();
 
+    // Dibujar Efectos de Bounding Box por Palabra e Indicador de Selección Activa
+    drawWordBoundingBoxesAndSelection(particles);
+
     // Dibujar indicador visual del puntero de repulsión del mouse si está activo
     if (CFG.SHOW_MOUSE_RADIUS) {
       push();
@@ -852,6 +844,216 @@
       pop();
     }
   };
+
+  function drawWordBoundingBoxesAndSelection(particlesList) {
+    if (!particlesList || !particlesList.length) return;
+
+    const isEditorPage = window.location.pathname.includes('visualeffects.html') || 
+                         window.location.pathname.includes('visualeffects') || 
+                         window.location.pathname.includes('outputeffect.html') ||
+                         window.location.pathname.includes('particulas.html') ||
+                         window.location.pathname.includes('particulas');
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
+
+    const boundsMap = new Map();
+    for (let i = 0; i < particlesList.length; i++) {
+      const p = particlesList[i];
+      if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
+        const pSize = p.baseSize || p.size || p.fontSize || 36;
+        const halfW = pSize * 0.45;
+        const halfH = pSize * 0.8; // Doble de alto para que abarque ascendentes/descendentes sin cortar
+
+        let b = boundsMap.get(p.flyerId);
+        if (!b) {
+          b = {
+            minX: p.pos.x - halfW,
+            maxX: p.pos.x + halfW,
+            minY: p.pos.y - halfH,
+            maxY: p.pos.y + halfH,
+            flyerId: p.flyerId,
+            fontSize: pSize
+          };
+          boundsMap.set(p.flyerId, b);
+        } else {
+          b.minX = Math.min(b.minX, p.pos.x - halfW);
+          b.maxX = Math.max(b.maxX, p.pos.x + halfW);
+          b.minY = Math.min(b.minY, p.pos.y - halfH);
+          b.maxY = Math.max(b.maxY, p.pos.y + halfH);
+          b.fontSize = Math.max(b.fontSize, pSize);
+        }
+      }
+    }
+
+    if (boundsMap.size === 0) return;
+
+    const activeFlyerWords = (Array.isArray(CFG && CFG.FLYER_WORDS) && CFG.FLYER_WORDS.length > 0) ? CFG.FLYER_WORDS : (Array.isArray(window.flyerWordsList) ? window.flyerWordsList : []);
+    const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+      ? window.getSelectedFlyerWordIds()
+      : (window.selectedFlyerWordId ? [window.selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+
+    // 1. DIBUJAR EFECTO BOUNDING BOX POR PALABRA (Efecto estético de tarjeta por palabra)
+    boundsMap.forEach((b, fId) => {
+      const wordObj = activeFlyerWords.find(w => typeof w === 'object' && w.id === fId);
+      const enabled = Boolean(wordObj && wordObj.boxEffectEnabled);
+
+      if (!enabled) return;
+
+      const fillColor = (wordObj && wordObj.boxFillColor) || '#0f172a';
+      const fillOpacity = (wordObj && wordObj.boxFillOpacity !== undefined) ? Number(wordObj.boxFillOpacity) : 0.7;
+      const strokeColor = (wordObj && wordObj.boxStrokeColor) || '#00f2fe';
+      const strokeWidth = (wordObj && wordObj.boxStrokeWidth !== undefined) ? Number(wordObj.boxStrokeWidth) : 2;
+      const rounding = (wordObj && wordObj.boxRounding !== undefined) ? Number(wordObj.boxRounding) : 8;
+      const pattern = (wordObj && wordObj.boxLinePattern) || 'solid';
+      const padding = (wordObj && wordObj.boxPadding !== undefined) ? Number(wordObj.boxPadding) : 16;
+      const speed = (wordObj && wordObj.boxSpeed !== undefined) ? Number(wordObj.boxSpeed) : 1;
+
+      const x = b.minX - padding;
+      const y = b.minY - padding;
+      const w = (b.maxX - b.minX) + padding * 2;
+      const h = (b.maxY - b.minY) + padding * 2;
+      const dashAnim = (millis() * 0.005 * speed);
+
+      push();
+      if (fillOpacity > 0) {
+        const c = color(fillColor);
+        c.setAlpha(fillOpacity * 255);
+        fill(c);
+      } else {
+        noFill();
+      }
+
+      if (strokeWidth > 0) {
+        stroke(strokeColor);
+        strokeWeight(strokeWidth);
+      } else {
+        noStroke();
+      }
+
+      if (typeof drawingContext !== 'undefined' && drawingContext) {
+        let dashes = [];
+        if (pattern === 'marching-ants' || pattern === 'dashed') {
+          dashes = [8, 6];
+          drawingContext.lineDashOffset = -dashAnim;
+        } else if (pattern === 'neon-pulse') {
+          dashes = [16, 8];
+          drawingContext.lineDashOffset = -dashAnim * 1.5;
+        } else if (pattern === 'cyber-dots' || pattern === 'dotted') {
+          dashes = [3, 8];
+          drawingContext.lineDashOffset = -dashAnim * 0.8;
+        } else if (pattern === 'glitch-dash') {
+          dashes = [24, 4, 4, 4, 8, 4];
+          drawingContext.lineDashOffset = -dashAnim * 2;
+        } else if (pattern === 'morse-code' || pattern === 'dash-dot') {
+          dashes = [16, 4, 4, 4, 4, 4];
+          drawingContext.lineDashOffset = -dashAnim;
+        } else {
+          dashes = [];
+          drawingContext.lineDashOffset = 0;
+        }
+        drawingContext.setLineDash(dashes);
+      }
+
+      rect(x, y, w, h, rounding);
+
+      if (pattern === 'double-line' && strokeWidth > 0) {
+        const inset = Math.max(4, strokeWidth + 2);
+        rect(x + inset, y + inset, Math.max(1, w - inset * 2), Math.max(1, h - inset * 2), Math.max(0, rounding - 2));
+      }
+
+      if (typeof drawingContext !== 'undefined' && drawingContext) {
+        drawingContext.setLineDash([]);
+        drawingContext.lineDashOffset = 0;
+      }
+      pop();
+    });
+
+    // 2. DIBUJAR INDICADOR VISUAL DE SELECCIÓN ACTIVA (Marco de Selección)
+    if (!isFlyerMode || !selectedIds || selectedIds.length === 0) return;
+
+    selectedIds.forEach(sId => {
+      const b = boundsMap.get(sId);
+      if (!b) return;
+
+      const flyerWordsArr = Array.isArray(window.flyerWordsList) ? window.flyerWordsList : (Array.isArray(window.flyerWords) ? window.flyerWords : []);
+      const matchingWord = flyerWordsArr.find(fw => fw && (fw.id === sId || fw.word === sId));
+
+      const padX = (matchingWord && matchingWord.boxPaddingX !== undefined) ? Number(matchingWord.boxPaddingX) : ((matchingWord && matchingWord.boxPadding !== undefined) ? Number(matchingWord.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_X !== undefined) ? Number(CFG.WORD_BOX_PADDING_X) : 16));
+      const padY = (matchingWord && matchingWord.boxPaddingY !== undefined) ? Number(matchingWord.boxPaddingY) : ((matchingWord && matchingWord.boxPadding !== undefined) ? Number(matchingWord.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_Y !== undefined) ? Number(CFG.WORD_BOX_PADDING_Y) : 16));
+      const strokeColor = (matchingWord && matchingWord.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#00f2fe');
+      const strokeWidth = (matchingWord && matchingWord.boxStrokeWidth !== undefined) ? Number(matchingWord.boxStrokeWidth) : ((CFG && CFG.WORD_BOX_STROKE_WIDTH !== undefined) ? Number(CFG.WORD_BOX_STROKE_WIDTH) : 2);
+      const fillColor = (matchingWord && matchingWord.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#0f172a');
+      const fillOpacity = (matchingWord && matchingWord.boxFillOpacity !== undefined) ? Number(matchingWord.boxFillOpacity) : ((CFG && CFG.WORD_BOX_FILL_OPACITY !== undefined) ? Number(CFG.WORD_BOX_FILL_OPACITY) : 0.2);
+      const pattern = (matchingWord && matchingWord.boxLinePattern) || ((CFG && CFG.WORD_BOX_LINE_PATTERN) || 'solid');
+      const rounding = (matchingWord && matchingWord.boxRounding !== undefined) ? Number(matchingWord.boxRounding) : ((CFG && CFG.WORD_BOX_ROUNDING !== undefined) ? Number(CFG.WORD_BOX_ROUNDING) : 8);
+      const hSize = (CFG && CFG.WORD_BOX_HANDLE_SIZE !== undefined) ? Number(CFG.WORD_BOX_HANDLE_SIZE) : 10;
+
+      const sx = b.minX - padX;
+      const sy = b.minY - padY;
+      const sw = (b.maxX - b.minX) + padX * 2;
+      const sh = (b.maxY - b.minY) + padY * 2;
+
+      push();
+      if (fillOpacity > 0) {
+        const c = color(fillColor);
+        c.setAlpha(fillOpacity * 255);
+        fill(c);
+      } else {
+        noFill();
+      }
+
+      if (strokeWidth > 0) {
+        stroke(strokeColor);
+        strokeWeight(strokeWidth);
+      } else {
+        noStroke();
+      }
+
+      if (typeof drawingContext !== 'undefined' && drawingContext) {
+        let dashes = [];
+        const dashAnim = millis() * 0.006;
+        if (pattern === 'marching-ants' || pattern === 'dashed') {
+          dashes = [8, 6];
+          drawingContext.lineDashOffset = -dashAnim;
+        } else if (pattern === 'neon-pulse') {
+          dashes = [16, 8];
+          drawingContext.lineDashOffset = -dashAnim * 1.5;
+        } else if (pattern === 'cyber-dots' || pattern === 'dotted') {
+          dashes = [3, 8];
+          drawingContext.lineDashOffset = -dashAnim * 0.8;
+        } else if (pattern === 'glitch-dash') {
+          dashes = [24, 4, 4, 4, 8, 4];
+          drawingContext.lineDashOffset = -dashAnim * 2;
+        } else {
+          dashes = [];
+          drawingContext.lineDashOffset = 0;
+        }
+        drawingContext.setLineDash(dashes);
+      }
+
+      rect(sx, sy, sw, sh, rounding);
+
+      if (pattern === 'double-line' && strokeWidth > 0) {
+        const inset = Math.max(4, strokeWidth + 2);
+        rect(sx + inset, sy + inset, Math.max(1, sw - inset * 2), Math.max(1, sh - inset * 2), 4);
+      }
+
+      if (typeof drawingContext !== 'undefined' && drawingContext) {
+        drawingContext.setLineDash([]);
+        drawingContext.lineDashOffset = 0;
+      }
+
+      // Esquinas / Handles destacados (Tiradores para cambiar escala)
+      fill(strokeColor);
+      noStroke();
+      rect(sx - hSize / 2, sy - hSize / 2, hSize, hSize);
+      rect(sx + sw - hSize / 2, sy - hSize / 2, hSize, hSize);
+      rect(sx - hSize / 2, sy + sh - hSize / 2, hSize, hSize);
+      rect(sx + sw - hSize / 2, sy + sh - hSize / 2, hSize, hSize);
+
+      pop();
+    });
+  }
 
   function drawActiveImageLayers() {
     if (!window.activeImageLayers || !window.activeImageLayers.length) return;
@@ -883,21 +1085,63 @@
       const h = layer.height || rawImg.naturalHeight || rawImg.height || 280;
       const alphaVal = layer.alpha !== undefined ? layer.alpha : 1.0;
 
-      // Dibujar efecto aura de energía alrededor de la imagen
+      // Dibujar efecto aura de energía (igual que en index.html con rayos neón y displace de ruido)
       if (layer.hasAura) {
         push();
-        noFill();
-        const time = millis() * 0.003;
-        rectMode(CENTER);
-        for (let r = 0; r < 4; r++) {
-          const glowAlpha = map(sin(time * 2.2 + r * 0.8), -1, 1, 90, 240) * alphaVal;
-          stroke(0, 242, 254, glowAlpha);
-          strokeWeight(4 + r * 2);
-          rect(0, 0, w + 18 + r * 12, h + 18 + r * 12, 24);
-          stroke(224, 64, 251, glowAlpha * 0.85);
-          strokeWeight(2.5);
-          rect(0, 0, w + 28 + r * 14, h + 28 + r * 14, 28);
+        const time = millis() * 0.0022;
+        const numRays = 64;
+        const radiusX = w / 2 + 10;
+        const radiusY = h / 2 + 10;
+
+        // 1. Capas Neón con ruido Simplex/Perlin
+        for (let pass = 0; pass < 3; pass++) {
+          const passOffset = pass * 14;
+          const alphaMult = (pass === 0 ? 1.0 : (pass === 1 ? 0.75 : 0.5)) * alphaVal;
+
+          beginShape();
+          noFill();
+          strokeWeight(3.5 - pass * 0.8);
+
+          for (let i = 0; i <= numRays; i++) {
+            const angle = (TWO_PI / numRays) * i;
+            const cosA = cos(angle);
+            const sinA = sin(angle);
+
+            // Deformación por ruido perlin alrededor del borde
+            const n1 = noise(cosA * 2.2 + time * 0.85 + pass, sinA * 2.2 - time * 0.7);
+            const n2 = noise(cosA * 4.4 - time * 1.2, sinA * 4.4 + time * 1.1) * 0.5;
+            const displace = (n1 + n2 - 0.7) * (30 + passOffset);
+
+            const rx = (radiusX + displace) * cosA;
+            const ry = (radiusY + displace) * sinA;
+
+            const colorShift = sin(angle * 2.0 + time * 2.5) * 0.5 + 0.5;
+            if (colorShift > 0.5) {
+              stroke(0, 242, 254, 230 * alphaMult);
+            } else {
+              stroke(224, 64, 251, 230 * alphaMult);
+            }
+
+            vertex(rx, ry);
+          }
+          endShape(CLOSE);
         }
+
+        // 2. Rayos de energía salientes (Electric Rays)
+        strokeWeight(1.8);
+        for (let r = 0; r < 20; r++) {
+          const rAngle = (TWO_PI / 20) * r + time * 0.6;
+          const nR = noise(r * 0.4, time * 2.2);
+          const rayLen = 15 + nR * 40;
+          const startX = (radiusX + 4) * cos(rAngle);
+          const startY = (radiusY + 4) * sin(rAngle);
+          const endX = (radiusX + 4 + rayLen) * cos(rAngle);
+          const endY = (radiusY + 4 + rayLen) * sin(rAngle);
+
+          stroke(r % 2 === 0 ? color(0, 242, 254, 190 * alphaVal) : color(224, 64, 251, 190 * alphaVal));
+          line(startX, startY, endX, endY);
+        }
+
         pop();
       }
 
@@ -923,23 +1167,41 @@
   let lastTouchTimestamp = 0;
   let lastSpawnPointerTimestamp = 0;
 
-  // Click handler unificado para generar palabras con atractor
+  let isDraggingFlyerWord = false;
+  let isRescalingFlyerWord = false;
+  let flyerWordDragStart = { startX: 0, startY: 0, wordPositions: new Map() };
+  let flyerWordScaleStart = { startX: 0, startY: 0, center: { x: 0, y: 0 }, initialDist: 1, initialFontSize: 32, wordObj: null };
+
+  function getCanvasMouseCoords(e) {
+    const p5Canvas = document.querySelector('#p5-canvas canvas') || document.querySelector('canvas:not(#ascii-bg-canvas)');
+    if (p5Canvas) {
+      const rect = p5Canvas.getBoundingClientRect();
+      const scaleX = p5Canvas.width / (rect.width || 1);
+      const scaleY = p5Canvas.height / (rect.height || 1);
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      return { x, y };
+    }
+    return {
+      x: typeof mouseX !== 'undefined' ? mouseX : (window.innerWidth / 2),
+      y: typeof mouseY !== 'undefined' ? mouseY : (window.innerHeight / 2)
+    };
+  }
+
+  // Click handler unificado para generar palabras con atractor, arrastrar y escalar
   function handleGlobalPointerSpawn(e) {
-    // Si no es el botón principal (izquierdo / touch), ignorar
     if (e && e.button !== undefined && e.button !== 0) return;
 
-    // Si fue precedido inmediatamente por un evento touch (emulación de click móvil), ignorar
     if (Date.now() - lastTouchTimestamp < 650) {
       return;
     }
 
     const now = Date.now();
-    // Debounce rápido para evitar duplicación entre pointerdown y mousePressed
     if (now - lastSpawnPointerTimestamp < 120) {
       return;
     }
 
-    // Si el click fue sobre un input, botón, panel o elementos interactivos, no spawnear palabra
+    // Si el click fue sobre un input, botón, panel o elementos interactivos, no spawnear ni arrastrar
     if (e && e.target && (
       e.target.closest('#control-panel') || 
       e.target.closest('#left-control-panel') || 
@@ -960,21 +1222,17 @@
       return;
     }
 
-    const clickX = (e && typeof e.clientX === 'number') ? e.clientX : (typeof mouseX !== 'undefined' ? mouseX : (window.innerWidth / 2));
-    const clickY = (e && typeof e.clientY === 'number') ? e.clientY : (typeof mouseY !== 'undefined' ? mouseY : (window.innerHeight / 2));
+    const coords = getCanvasMouseCoords(e);
+    const clickX = coords.x;
+    const clickY = coords.y;
 
-    // Sincronizar sliders POS_X y POS_Y sin mover la palabra previamente activa (si existe en editor)
-    if (window.updatePosSliders) {
-      window.updatePosSliders(Math.round(clickX), Math.round(clickY), true);
-    }
-
-    // Solo estamos en modo edición de Flyer si estamos en visualeffects.html o outputeffect.html
     const isEditorPage = window.location.pathname.includes('visualeffects.html') || 
                          window.location.pathname.includes('visualeffects') || 
                          window.location.pathname.includes('outputeffect.html') ||
                          window.location.pathname.includes('particulas.html') ||
                          window.location.pathname.includes('particulas');
-    const isFlyerMode = isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED));
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
 
     if (isFlyerMode) {
       const isCtrlPressed = (e && (e.ctrlKey || e.metaKey)) || (typeof keyIsDown === 'function' && keyIsDown(CONTROL));
@@ -985,25 +1243,157 @@
         return;
       }
 
-      // Si hace click sobre una palabra del flyer en pantalla, seleccionarla
-      let clickedFlyerId = null;
-      let clickedLetterIndex = null;
+      // Calcular mapa de bounding boxes de todas las palabras en pantalla
+      const flyerBoundsMap = new Map();
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
-          const d = dist(clickX, clickY, p.pos.x, p.pos.y);
-          if (d < 45) {
-            clickedFlyerId = p.flyerId;
-            clickedLetterIndex = (p.letterIndex !== undefined) ? p.letterIndex : null;
-            break;
+          let b = flyerBoundsMap.get(p.flyerId);
+          if (!b) {
+            b = { minX: p.pos.x, maxX: p.pos.x, minY: p.pos.y, maxY: p.pos.y, flyerId: p.flyerId };
+            flyerBoundsMap.set(p.flyerId, b);
           }
+          b.minX = Math.min(b.minX, p.pos.x);
+          b.maxX = Math.max(b.maxX, p.pos.x);
+          b.minY = Math.min(b.minY, p.pos.y);
+          b.maxY = Math.max(b.maxY, p.pos.y);
         }
       }
-      if (clickedFlyerId && typeof window.selectFlyerWordById === 'function') {
-        window.selectFlyerWordById(clickedFlyerId, clickedLetterIndex);
+
+      const activeWords = Array.isArray(CFG.FLYER_WORDS) ? CFG.FLYER_WORDS : [];
+      const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+        ? window.getSelectedFlyerWordIds()
+        : (window.selectedFlyerWordId ? [window.selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+
+      const padX = (CFG && CFG.WORD_BOX_PADDING_X !== undefined) ? Number(CFG.WORD_BOX_PADDING_X) : 16;
+      const padY = (CFG && CFG.WORD_BOX_PADDING_Y !== undefined) ? Number(CFG.WORD_BOX_PADDING_Y) : 16;
+      const hSize = (CFG && CFG.WORD_BOX_HANDLE_SIZE !== undefined) ? Number(CFG.WORD_BOX_HANDLE_SIZE) : 10;
+      const hitMargin = Math.max(12, hSize + 6);
+
+      // 1. CHEQUEAR SI HIZO CLICK SOBRE UN TIRADOR DE ESQUINA DE UNA PALABRA SELECCIONADA
+      let scaleWordId = null;
+      selectedIds.forEach(sId => {
+        const b = flyerBoundsMap.get(sId);
+        if (!b) return;
+        const sx = b.minX - padX;
+        const sy = b.minY - padY;
+        const sw = (b.maxX - b.minX) + padX * 2;
+        const sh = (b.maxY - b.minY) + padY * 2;
+
+        const corners = [
+          { x: sx, y: sy },
+          { x: sx + sw, y: sy },
+          { x: sx, y: sy + sh },
+          { x: sx + sw, y: sy + sh }
+        ];
+
+        corners.forEach(c => {
+          if (Math.abs(clickX - c.x) <= hitMargin && Math.abs(clickY - c.y) <= hitMargin) {
+            scaleWordId = sId;
+          }
+        });
+      });
+
+      if (scaleWordId) {
+        const targetWord = activeWords.find(w => typeof w === 'object' && w.id === scaleWordId);
+        if (targetWord) {
+          const b = flyerBoundsMap.get(scaleWordId);
+          const centerX = (b.minX + b.maxX) / 2;
+          const centerY = (b.minY + b.maxY) / 2;
+          const initialDist = Math.max(10, Math.hypot(clickX - centerX, clickY - centerY));
+
+          isRescalingFlyerWord = true;
+          flyerWordScaleStart = {
+            startX: clickX,
+            startY: clickY,
+            center: { x: centerX, y: centerY },
+            initialDist: initialDist,
+            initialFontSize: targetWord.fontSize || CFG.TEXT_SIZE_MAX || 32,
+            wordObj: targetWord
+          };
+          lastSpawnPointerTimestamp = now;
+          return;
+        }
+      }
+
+      // 2. CHEQUEAR SI HIZO CLICK DENTRO DE LA CAJA DE SELECCIÓN O BOUNDING BOX
+      let clickedFlyerId = null;
+      let clickedLetterIndex = null;
+
+      selectedIds.forEach(sId => {
+        const b = flyerBoundsMap.get(sId);
+        if (!b) return;
+        const sx = b.minX - padX;
+        const sy = b.minY - padY;
+        const sw = (b.maxX - b.minX) + padX * 2;
+        const sh = (b.maxY - b.minY) + padY * 2;
+        if (clickX >= sx && clickX <= sx + sw && clickY >= sy && clickY <= sy + sh) {
+          clickedFlyerId = sId;
+        }
+      });
+
+      if (!clickedFlyerId) {
+        const hitPadding = 25;
+        let minDistToCenter = Infinity;
+        flyerBoundsMap.forEach((b, fId) => {
+          if (clickX >= b.minX - padX - hitPadding && clickX <= b.maxX + padX + hitPadding &&
+              clickY >= b.minY - padY - hitPadding && clickY <= b.maxY + padY + hitPadding) {
+            const centerX = (b.minX + b.maxX) / 2;
+            const centerY = (b.minY + b.maxY) / 2;
+            const d = dist(clickX, clickY, centerX, centerY);
+            if (d < minDistToCenter) {
+              minDistToCenter = d;
+              clickedFlyerId = fId;
+            }
+          }
+        });
+      }
+
+      if (clickedFlyerId) {
+        const isShiftPressed = Boolean(e && e.shiftKey) || (typeof keyIsDown === 'function' && keyIsDown(SHIFT));
+        if (isShiftPressed) {
+          let currentSelected = Array.isArray(window.selectedFlyerWordIds) ? [...window.selectedFlyerWordIds] : [];
+          if (currentSelected.includes(clickedFlyerId)) {
+            if (currentSelected.length > 1) {
+              currentSelected = currentSelected.filter(id => id !== clickedFlyerId);
+            }
+          } else {
+            currentSelected.push(clickedFlyerId);
+          }
+          window.selectedFlyerWordIds = currentSelected;
+          window.selectedFlyerWordId = clickedFlyerId;
+          window.activeFlyerWordId = clickedFlyerId;
+          if (typeof renderFlyerWordsList === 'function') renderFlyerWordsList();
+        } else {
+          if (typeof window.selectFlyerWordById === 'function') {
+            window.selectFlyerWordById(clickedFlyerId, clickedLetterIndex);
+          }
+        }
+
+        // Iniciar Arrastre Directo con el Mouse
+        const currentSelectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+          ? window.getSelectedFlyerWordIds()
+          : [clickedFlyerId];
+
+        const wordPositions = new Map();
+        currentSelectedIds.forEach(sId => {
+          const wObj = activeWords.find(w => typeof w === 'object' && w.id === sId);
+          if (wObj) {
+            wordPositions.set(sId, { x: wObj.x, y: wObj.y, wordObj: wObj });
+          }
+        });
+
+        isDraggingFlyerWord = true;
+        flyerWordDragStart = {
+          startX: clickX,
+          startY: clickY,
+          wordPositions: wordPositions
+        };
+        lastSpawnPointerTimestamp = now;
         return;
       }
 
+      // Si hace click fuera de todas las cajas, agregar palabra
       if (typeof window.addFlyerWordAt === 'function') {
         window.addFlyerWordAt(clickX, clickY);
       } else if (typeof window.addFlyerWordToList === 'function') {
@@ -1013,7 +1403,6 @@
     }
 
     // --- MODO FRONT Y COLABORATIVO (COLLABMODE): SPAWNEAR PALABRAS AL CLICK ---
-    // 1. Si se hace click sobre una palabra colaborativa activa en el lienzo, SE BORRA
     let clickedCollabParticle = null;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -1037,23 +1426,212 @@
       return;
     }
 
-    // 2. Si se hace click en el lienzo, se instancia una palabra aleatoria de la lista de COLLABMODE
+    spawnWordFromPool(clickX, clickY);
+    lastSpawnPointerTimestamp = now;
+  }
+
+  function spawnWordFromPool(x, y) {
     const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
     if (!words.length) return;
 
-    let nextIdx = floor(random(words.length));
-    if (words.length > 1 && nextIdx === currentWordIndex) {
-      nextIdx = (nextIdx + 1) % words.length;
-    }
-    currentWordIndex = nextIdx;
+    let targetIdx;
+    const isLinear = (CFG && CFG.WORD_SPAWN_MODE === 'linear');
 
-    const chosenWord = words[currentWordIndex];
-    spawnWordParticles(chosenWord, clickX, clickY, false);
-    lastSpawnPointerTimestamp = now;
+    if (isLinear) {
+      if (currentWordIndex < 0 || currentWordIndex >= words.length) {
+        currentWordIndex = 0;
+      }
+      targetIdx = currentWordIndex;
+      currentWordIndex = (currentWordIndex + 1) % words.length;
+    } else {
+      targetIdx = floor(random(words.length));
+      if (words.length > 1 && targetIdx === currentWordIndex) {
+        targetIdx = (targetIdx + 1) % words.length;
+      }
+      currentWordIndex = targetIdx;
+    }
+
+    if (typeof window.updateWordIndexDisplay === 'function') {
+      window.updateWordIndexDisplay(isLinear ? currentWordIndex : targetIdx);
+    }
+
+    const chosenWord = words[targetIdx];
+    spawnWordParticles(chosenWord, x, y, false);
+  }
+
+  window.getWordIndex = function() {
+    return currentWordIndex < 0 ? 0 : currentWordIndex;
+  };
+
+  window.setWordIndex = function(idx) {
+    const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
+    if (!words.length) return;
+    const numVal = parseInt(idx, 10);
+    if (isNaN(numVal) || numVal < 0) return;
+    currentWordIndex = numVal % words.length;
+    if (typeof window.updateWordIndexDisplay === 'function') {
+      window.updateWordIndexDisplay(currentWordIndex);
+    }
+  };
+
+
+  function handleGlobalPointerMove(e) {
+    const coords = getCanvasMouseCoords(e);
+    const moveX = coords.x;
+    const moveY = coords.y;
+
+    const isEditorPage = window.location.pathname.includes('visualeffects.html') || 
+                         window.location.pathname.includes('visualeffects') || 
+                         window.location.pathname.includes('outputeffect.html') ||
+                         window.location.pathname.includes('particulas.html') ||
+                         window.location.pathname.includes('particulas');
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
+
+    if (isRescalingFlyerWord && flyerWordScaleStart.wordObj) {
+      document.body.style.cursor = 'nwse-resize';
+      const { center, initialDist, initialFontSize, wordObj } = flyerWordScaleStart;
+      const currentDist = Math.max(10, Math.hypot(moveX - center.x, moveY - center.y));
+      const ratio = currentDist / initialDist;
+      const newFontSize = Math.max(8, Math.min(250, Math.round(initialFontSize * ratio)));
+
+      wordObj.fontSize = newFontSize;
+
+      if (typeof window.updateFlyerWordParticles === 'function') {
+        window.updateFlyerWordParticles(wordObj.id, { fontSize: newFontSize });
+      }
+
+      const activeId = window.selectedFlyerWordId || window.activeFlyerWordId;
+      if (activeId === wordObj.id) {
+        const sliderFont = document.getElementById('param-TEXT_SIZE_MAX');
+        const numFont = document.getElementById('num-TEXT_SIZE_MAX');
+        if (sliderFont) sliderFont.value = newFontSize;
+        if (numFont) numFont.value = newFontSize;
+      }
+      return;
+    }
+
+    if (isDraggingFlyerWord && flyerWordDragStart.wordPositions.size > 0) {
+      document.body.style.cursor = 'grabbing';
+      const dx = Math.round(moveX - flyerWordDragStart.startX);
+      const dy = Math.round(moveY - flyerWordDragStart.startY);
+
+      flyerWordDragStart.wordPositions.forEach((startPos, wId) => {
+        const newX = startPos.x + dx;
+        const newY = startPos.y + dy;
+        startPos.wordObj.x = newX;
+        startPos.wordObj.y = newY;
+
+        const layers = Array.isArray(CFG.TIMELINE_LAYERS) ? CFG.TIMELINE_LAYERS : [];
+        layers.forEach(l => {
+          if (!Array.isArray(l.clips)) return;
+          l.clips.forEach(c => {
+            if (c.id === wId || c.flyerId === wId) {
+              c.x = newX;
+              c.y = newY;
+            }
+          });
+        });
+
+        if (typeof window.updateFlyerWordParticles === 'function') {
+          window.updateFlyerWordParticles(wId, { x: newX, y: newY });
+        }
+      });
+
+      const activeId = window.selectedFlyerWordId || window.activeFlyerWordId;
+      if (activeId && flyerWordDragStart.wordPositions.has(activeId)) {
+        const primaryPos = flyerWordDragStart.wordPositions.get(activeId);
+        if (window.updatePosSliders) {
+          window.updatePosSliders(primaryPos.wordObj.x, primaryPos.wordObj.y, true);
+        }
+      }
+      return;
+    }
+
+    // HOVER EFFECT sobre tiradores y recuadros de selección en Flyer Mode
+    if (isFlyerMode) {
+      const flyerBoundsMap = new Map();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (p instanceof WordParticle && p.isFlyer && p.visible && p.isShowing && p.flyerId) {
+          let b = flyerBoundsMap.get(p.flyerId);
+          if (!b) {
+            b = { minX: p.pos.x, maxX: p.pos.x, minY: p.pos.y, maxY: p.pos.y, flyerId: p.flyerId };
+            flyerBoundsMap.set(p.flyerId, b);
+          }
+          b.minX = Math.min(b.minX, p.pos.x);
+          b.maxX = Math.max(b.maxX, p.pos.x);
+          b.minY = Math.min(b.minY, p.pos.y);
+          b.maxY = Math.max(b.maxY, p.pos.y);
+        }
+      }
+
+      const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
+        ? window.getSelectedFlyerWordIds()
+        : (window.selectedFlyerWordId ? [window.selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+
+      const padX = (CFG && CFG.WORD_BOX_PADDING_X !== undefined) ? Number(CFG.WORD_BOX_PADDING_X) : 16;
+      const padY = (CFG && CFG.WORD_BOX_PADDING_Y !== undefined) ? Number(CFG.WORD_BOX_PADDING_Y) : 16;
+      const hSize = (CFG && CFG.WORD_BOX_HANDLE_SIZE !== undefined) ? Number(CFG.WORD_BOX_HANDLE_SIZE) : 10;
+      const hitMargin = Math.max(12, hSize + 6);
+
+      let isOverCorner = false;
+      let isOverBox = false;
+
+      selectedIds.forEach(sId => {
+        const b = flyerBoundsMap.get(sId);
+        if (!b) return;
+        const sx = b.minX - padX;
+        const sy = b.minY - padY;
+        const sw = (b.maxX - b.minX) + padX * 2;
+        const sh = (b.maxY - b.minY) + padY * 2;
+
+        const corners = [
+          { x: sx, y: sy },
+          { x: sx + sw, y: sy },
+          { x: sx, y: sy + sh },
+          { x: sx + sw, y: sy + sh }
+        ];
+
+        corners.forEach(c => {
+          if (Math.abs(moveX - c.x) <= hitMargin && Math.abs(moveY - c.y) <= hitMargin) {
+            isOverCorner = true;
+          }
+        });
+
+        if (moveX >= sx && moveX <= sx + sw && moveY >= sy && moveY <= sy + sh) {
+          isOverBox = true;
+        }
+      });
+
+      if (isOverCorner) {
+        document.body.style.cursor = 'nwse-resize';
+      } else if (isOverBox) {
+        document.body.style.cursor = 'grab';
+      } else {
+        document.body.style.cursor = 'default';
+      }
+    }
+  }
+
+  function handleGlobalPointerUp() {
+    if (isDraggingFlyerWord || isRescalingFlyerWord) {
+      isDraggingFlyerWord = false;
+      isRescalingFlyerWord = false;
+      document.body.style.cursor = 'default';
+      const activeWords = Array.isArray(CFG.FLYER_WORDS) ? CFG.FLYER_WORDS : [];
+      const layers = Array.isArray(CFG.TIMELINE_LAYERS) ? CFG.TIMELINE_LAYERS : [];
+      if (typeof window.applyConfigChange === 'function') {
+        window.applyConfigChange('FLYER_WORDS', [...activeWords]);
+        window.applyConfigChange('TIMELINE_LAYERS', [...layers]);
+      }
+    }
   }
 
   window.mousePressed = handleGlobalPointerSpawn;
   window.addEventListener('pointerdown', handleGlobalPointerSpawn, { passive: true });
+  window.addEventListener('pointermove', handleGlobalPointerMove, { passive: true });
+  window.addEventListener('pointerup', handleGlobalPointerUp, { passive: true });
 
   // Soporte Touch para dispositivos móviles sin bloquear el scroll del navegador
   window.touchStarted = function(e) {
@@ -1121,16 +1699,7 @@
       return true;
     }
 
-    const words = Array.isArray(CFG.WORDS) && CFG.WORDS.length ? CFG.WORDS : DEFAULT_CONFIG.WORDS;
-    if (!words.length) return true;
-
-    let nextIdx = floor(random(words.length));
-    if (words.length > 1 && nextIdx === currentWordIndex) {
-      nextIdx = (nextIdx + 1) % words.length;
-    }
-    currentWordIndex = nextIdx;
-
-    spawnWordParticles(words[currentWordIndex], tx, ty, false);
+    spawnWordFromPool(tx, ty);
     return true;
   };
 
