@@ -899,19 +899,20 @@
 
       if (!enabled) return;
 
-      const fillColor = (wordObj && wordObj.boxFillColor) || '#0f172a';
-      const fillOpacity = (wordObj && wordObj.boxFillOpacity !== undefined) ? Number(wordObj.boxFillOpacity) : 0.7;
-      const strokeColor = (wordObj && wordObj.boxStrokeColor) || '#00f2fe';
-      const strokeWidth = (wordObj && wordObj.boxStrokeWidth !== undefined) ? Number(wordObj.boxStrokeWidth) : 2;
-      const rounding = (wordObj && wordObj.boxRounding !== undefined) ? Number(wordObj.boxRounding) : 8;
-      const pattern = (wordObj && wordObj.boxLinePattern) || 'solid';
-      const padding = (wordObj && wordObj.boxPadding !== undefined) ? Number(wordObj.boxPadding) : 16;
-      const speed = (wordObj && wordObj.boxSpeed !== undefined) ? Number(wordObj.boxSpeed) : 1;
+      const fillColor = (wordObj && wordObj.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#0f172a');
+      const fillOpacity = (wordObj && wordObj.boxFillOpacity !== undefined) ? Number(wordObj.boxFillOpacity) : ((CFG && CFG.WORD_BOX_FILL_OPACITY !== undefined) ? Number(CFG.WORD_BOX_FILL_OPACITY) : 0.7);
+      const strokeColor = (wordObj && wordObj.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#00f2fe');
+      const strokeWidth = (wordObj && wordObj.boxStrokeWidth !== undefined) ? Number(wordObj.boxStrokeWidth) : ((CFG && CFG.WORD_BOX_STROKE_WIDTH !== undefined) ? Number(CFG.WORD_BOX_STROKE_WIDTH) : 2);
+      const rounding = (wordObj && wordObj.boxRounding !== undefined) ? Number(wordObj.boxRounding) : ((CFG && CFG.WORD_BOX_ROUNDING !== undefined) ? Number(CFG.WORD_BOX_ROUNDING) : 8);
+      const pattern = (wordObj && wordObj.boxLinePattern) || ((CFG && CFG.WORD_BOX_LINE_PATTERN) || 'solid');
+      const padX = (wordObj && wordObj.boxPaddingX !== undefined) ? Number(wordObj.boxPaddingX) : ((wordObj && wordObj.boxPadding !== undefined) ? Number(wordObj.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_X !== undefined) ? Number(CFG.WORD_BOX_PADDING_X) : 16));
+      const padY = (wordObj && wordObj.boxPaddingY !== undefined) ? Number(wordObj.boxPaddingY) : ((wordObj && wordObj.boxPadding !== undefined) ? Number(wordObj.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_Y !== undefined) ? Number(CFG.WORD_BOX_PADDING_Y) : 16));
+      const speed = (wordObj && wordObj.boxSpeed !== undefined) ? Number(wordObj.boxSpeed) : ((CFG && CFG.WORD_BOX_SPEED !== undefined) ? Number(CFG.WORD_BOX_SPEED) : 1);
 
-      const x = b.minX - padding;
-      const y = b.minY - padding;
-      const w = (b.maxX - b.minX) + padding * 2;
-      const h = (b.maxY - b.minY) + padding * 2;
+      const x = b.minX - padX;
+      const y = b.minY - padY;
+      const w = (b.maxX - b.minX) + padX * 2;
+      const h = (b.maxY - b.minY) + padY * 2;
       const dashAnim = (millis() * 0.005 * speed);
 
       push();
@@ -968,8 +969,8 @@
       pop();
     });
 
-    // 2. DIBUJAR INDICADOR VISUAL DE SELECCIÓN ACTIVA (Marco de Selección)
-    if (!isFlyerMode || !selectedIds || selectedIds.length === 0) return;
+    // 2. DIBUJAR INDICADOR VISUAL DE SELECCIÓN ACTIVA (Marco de Selección - omitir en página limpia de output)
+    if (isOutputPage || !isFlyerMode || !selectedIds || selectedIds.length === 0) return;
 
     selectedIds.forEach(sId => {
       const b = boundsMap.get(sId);

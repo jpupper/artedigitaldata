@@ -107,11 +107,31 @@
                 <input type="text" id="edit-social-tiktok" placeholder="@usuario_tiktok" 
                   class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-white/50 focus:outline-none transition-all">
               </div>
+          </div>
+
+          <!-- GDPR Data Protection Rights Section -->
+          <div class="pt-6 border-t border-white/10 mt-6">
+            <h3 class="text-xs font-black text-cyan-400 uppercase mb-2 tracking-widest flex items-center gap-2">
+              <i class="fas fa-shield-alt"></i> Privacidad y Protección de Datos (GDPR)
+            </h3>
+            <p class="text-xs text-gray-400 mb-4">
+              Tenés derecho a acceder a tus datos almacenados o a solicitar la eliminación permanente de tu cuenta conforme al Art. 17 y 20 del GDPR.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" onclick="exportMyData()" class="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-bold flex items-center gap-2">
+                <i class="fas fa-download"></i> Descargar Mis Datos (JSON)
+              </button>
+              <button type="button" onclick="confirmDeleteAccount()" class="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all text-xs font-bold flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i> Eliminar Cuenta
+              </button>
             </div>
           </div>
-          <button type="submit" class="btn-primary px-6 py-3 rounded-xl transition-all hover:scale-105">
-            <i class="fas fa-save mr-2"></i>Guardar Cambios
-          </button>
+
+          <div class="pt-4">
+            <button type="submit" class="btn-primary px-6 py-3 rounded-xl transition-all hover:scale-105">
+              <i class="fas fa-save mr-2"></i>Guardar Cambios
+            </button>
+          </div>
         </form>
       </div>
     </div>

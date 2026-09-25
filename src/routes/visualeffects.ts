@@ -28,8 +28,27 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
 // GET /api/visualeffects/:id - Obtener un efecto por ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const effect = await VisualEffect.findById(req.params.id).populate('author', 'username displayName avatar');
+    let effect = await VisualEffect.findById(req.params.id).populate('author', 'username displayName avatar');
     if (!effect) {
+      // Si no existe localmente, intentar obtenerlo del VPS de producción
+      try {
+        const vpsRes = await fetch(`https://vps-4455523-x.dattaweb.com/artedigitaldata/api/visualeffects/${req.params.id}`);
+        if (vpsRes.ok) {
+          const vpsData: any = await vpsRes.json();
+          if (vpsData && vpsData._id) {
+            // Guardar localmente para disponibilidad inmediata y offline
+            try {
+              const toSave = { ...vpsData };
+              if (toSave.author && typeof toSave.author === 'object') {
+                toSave.author = toSave.author._id || toSave.author.id;
+              }
+              await VisualEffect.findByIdAndUpdate(vpsData._id, toSave, { upsert: true, new: true });
+            } catch (saveErr) {}
+            return res.json(vpsData);
+          }
+        }
+      } catch (proxyErr) {}
+
       return res.status(404).json({ error: 'Efecto visual no encontrado' });
     }
     return res.json(effect);

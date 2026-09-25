@@ -357,20 +357,28 @@
               </div>
             </div>
 
-            <!-- Rounding & Padding -->
+            <!-- Rounding & Padding X/Y -->
+            <div class="control-row" style="margin-top: 8px;">
+              <div class="control-label-wrap"><span>Redondeado (px)</span></div>
+              <div class="slider-text-combo">
+                <input type="range" id="param-GLOBAL_WORD_BOX_ROUNDING" min="0" max="50" step="1" value="8">
+                <input type="number" id="num-GLOBAL_WORD_BOX_ROUNDING" class="val-input" min="0" max="50" step="1" value="8">
+              </div>
+            </div>
+
             <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px;">
               <div style="flex: 1;">
-                <div class="control-label-wrap"><span>Redondeado (px)</span></div>
+                <div class="control-label-wrap"><span>Margen Ancho X (px)</span></div>
                 <div class="slider-text-combo">
-                  <input type="range" id="param-GLOBAL_WORD_BOX_ROUNDING" min="0" max="50" step="1" value="8">
-                  <input type="number" id="num-GLOBAL_WORD_BOX_ROUNDING" class="val-input" min="0" max="50" step="1" value="8">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_PADDING_X" min="0" max="80" step="1" value="16">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_PADDING_X" class="val-input" min="0" max="80" step="1" value="16">
                 </div>
               </div>
               <div style="flex: 1;">
-                <div class="control-label-wrap"><span>Padding / Margen (px)</span></div>
+                <div class="control-label-wrap"><span>Margen Alto Y (px)</span></div>
                 <div class="slider-text-combo">
-                  <input type="range" id="param-GLOBAL_WORD_BOX_PADDING" min="0" max="80" step="1" value="16">
-                  <input type="number" id="num-GLOBAL_WORD_BOX_PADDING" class="val-input" min="0" max="80" step="1" value="16">
+                  <input type="range" id="param-GLOBAL_WORD_BOX_PADDING_Y" min="0" max="80" step="1" value="16">
+                  <input type="number" id="num-GLOBAL_WORD_BOX_PADDING_Y" class="val-input" min="0" max="80" step="1" value="16">
                 </div>
               </div>
             </div>
@@ -929,19 +937,9 @@
           </div>
         </div>
       </div> <!-- fin tab-pane-params-image -->
-    </div>
 
-    <div class="panel-footer">
-      <div class="buttons-row">
-        <button id="btn-save-p5-params" class="btn-save" title="Guardar la configuración de Letrasp5 en el servidor">
-          <i class="fas fa-save"></i> Guardar
-        </button>
-        <button id="btn-load-p5-params" class="btn-reset" title="Cargar la última configuración guardada de Letrasp5">
-          <i class="fas fa-folder-open"></i> Cargar
-        </button>
-      </div>
       <!-- Sub-Pestaña 4: PUNTERO (Configuración del Puntero y Radios de Influencia) -->
-      <div id="tab-pane-params-pointer" class="tab-pane">
+      <div id="tab-pane-params-pointer" class="tab-pane" style="display: none;">
         <div style="padding: 10px 12px; background: rgba(0, 242, 254, 0.04); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px; margin-bottom: 12px;">
           <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
             <i class="fas fa-mouse-pointer text-[var(--accent-cyan)]"></i> Radio e Interacción del Puntero
@@ -1014,9 +1012,17 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> <!-- fin tab-pane-params-pointer -->
+    </div> <!-- fin panel-body -->
 
+    <div class="panel-footer">
       <div class="buttons-row">
+        <button id="btn-save-p5-params" class="btn-save" title="Guardar la configuración de Letrasp5 en el servidor">
+          <i class="fas fa-save"></i> Guardar
+        </button>
+        <button id="btn-load-p5-params" class="btn-reset" title="Cargar la última configuración guardada de Letrasp5">
+          <i class="fas fa-folder-open"></i> Cargar
+        </button>
         <button id="reset-defaults-btn" class="btn-reset" title="Restablecer a valores iniciales">
           <i class="fas fa-undo"></i> Reset
         </button>
@@ -1273,10 +1279,12 @@
 
               <!-- Color de Relleno -->
               <div class="control-row" style="margin-top: 8px;">
-                <div class="control-label-wrap">
-                  <span>Color de Relleno (Fill)</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Relleno (Fill)</span>
+                  <div class="color-input-wrap">
+                    <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#0f172a">
+                  </div>
                 </div>
-                <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#0f172a" style="width: 40px; height: 26px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: none; cursor: pointer;">
               </div>
 
               <!-- Opacidad de Relleno -->
@@ -1292,10 +1300,12 @@
 
               <!-- Color de Borde -->
               <div class="control-row" style="margin-top: 8px;">
-                <div class="control-label-wrap">
-                  <span>Color de Borde (Stroke)</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Borde (Stroke)</span>
+                  <div class="color-input-wrap">
+                    <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#00f2fe">
+                  </div>
                 </div>
-                <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#00f2fe" style="width: 40px; height: 26px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: none; cursor: pointer;">
               </div>
 
               <!-- Grosor de Borde -->

@@ -2,10 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Output Effect - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <!-- Tipografías extra para Letrasp5 y Shader: terminal, pixel-art retro y monospace de código -->
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;700&family=Fira+Code:wght@400;700&family=Anonymous+Pro:wght@400;700&family=Inconsolata:wght@400;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;700&family=Jersey+10&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/particulas.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body, html {
       margin: 0;
@@ -14,25 +19,54 @@
       height: 100%;
       overflow: hidden;
       background: #000000;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #ascii-bg-canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 0 !important;
+      pointer-events: none !important;
     }
     #p5-canvas {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 10;
+      z-index: 1;
+      pointer-events: auto;
+      background: transparent !important;
     }
+    #p5-canvas canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      pointer-events: none;
+    }
+    /* Título discreto si se desea visualizar en pantalla completa */
+    #output-title {
+      display: none;
+    }
+  </style>
 </head>
 <body class="ui-hidden">
   <div id="p5-canvas"></div>
+  <div id="output-title"></div>
 
+  <!-- Scripts Base, Auth, Shaders y p5 -->
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="js/ascii-shader-bg.js"></script>
   <script src="js/p5-effect.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/particulas.js"></script>
 </body>
 </html>

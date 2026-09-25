@@ -7,6 +7,8 @@ import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { Server as SocketServer } from 'socket.io';
 import bcrypt from 'bcryptjs';
 import User from './src/models/User';
@@ -60,7 +62,14 @@ export function notifyUser(userId: string, event: string, data: any) {
 // Favicon local (silenciar error 404)
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
 
-// Middleware
+// Helmet para cabeceras HTTP de seguridad internacional (HSTS, X-Frame-Options, X-Content-Type-Options)
+app.use(helmet({
+  contentSecurityPolicy: false, // CSP personalizada explícita abajo
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+
+// Middleware CORS
 app.use(cors({
   origin: ["https://fullscreencode.com", "https://artedigitaldata.com", "https://www.artedigitaldata.com", "http://localhost:2495", "http://localhost:5173", "http://localhost:3000", "https://vps-4455523-x.dattaweb.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

@@ -1081,6 +1081,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
   .color-input-wrap {
     height: 42px;
+    display: flex;
+    align-items: center;
   }
 
   /* Botonera de pie de página */

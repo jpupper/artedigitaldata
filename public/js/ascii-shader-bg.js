@@ -641,10 +641,10 @@ void main() {
           else if (u.name === 'saturation') val = 0.85;
           else if (u.name === 'ma1') val = 0.5;
           else if (u.name === 'ma2') val = 0.8;
-          else if (u.name === 'u_color1') val = cfg.u_color1 || '#40c4ff';
-          else if (u.name === 'u_color2') val = cfg.u_color2 || '#ff9100';
-          else if (u.name === 'u_color3') val = cfg.u_color3 || '#e040fb';
-          else if (u.name === 'u_color4') val = cfg.u_color4 || '#00e676';
+          else if (u.name === 'u_color1') val = cfg.u_color1 || cfg.COLOR_1 || '#40c4ff';
+          else if (u.name === 'u_color2') val = cfg.u_color2 || cfg.COLOR_2 || '#ff9100';
+          else if (u.name === 'u_color3') val = cfg.u_color3 || cfg.COLOR_3 || '#e040fb';
+          else if (u.name === 'u_color4') val = cfg.u_color4 || cfg.COLOR_4 || '#00e676';
           else val = u.defaultValueStr ? Number(u.defaultValueStr) || 0.5 : 0.5;
         }
 

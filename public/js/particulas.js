@@ -2365,31 +2365,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function applySelectionPropChange(propName, value) {
-    applyConfigChange(propName, value);
-
+  function applySelectionPropChange(propName, value, globalPropName) {
     const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
       ? window.getSelectedFlyerWordIds()
-      : (window.selectedFlyerWordId ? [window.selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+      : (selectedFlyerWordId ? [selectedFlyerWordId] : (window.activeFlyerWordId ? [window.activeFlyerWordId] : []));
+
+    const keyMap = {
+      'WORD_BOX_FILL_COLOR': 'boxFillColor',
+      'WORD_BOX_FILL_OPACITY': 'boxFillOpacity',
+      'WORD_BOX_STROKE_COLOR': 'boxStrokeColor',
+      'WORD_BOX_STROKE_WIDTH': 'boxStrokeWidth',
+      'WORD_BOX_LINE_PATTERN': 'boxLinePattern',
+      'WORD_BOX_ROUNDING': 'boxRounding',
+      'WORD_BOX_PADDING_X': 'boxPaddingX',
+      'WORD_BOX_PADDING_Y': 'boxPaddingY',
+      'WORD_BOX_PADDING': 'boxPadding',
+      'WORD_BOX_ENABLED': 'boxEffectEnabled',
+      'WORD_BOX_SPEED': 'boxSpeed'
+    };
+
+    const camelKey = keyMap[propName] || propName;
+    const configKey = globalPropName || (Object.keys(keyMap).find(k => keyMap[k] === propName) || propName);
 
     if (Array.isArray(flyerWords) && selectedIds.length > 0) {
       flyerWords.forEach(w => {
         if (selectedIds.includes(w.id)) {
-          if (propName === 'WORD_BOX_FILL_COLOR') w.boxFillColor = value;
-          if (propName === 'WORD_BOX_FILL_OPACITY') w.boxFillOpacity = value;
-          if (propName === 'WORD_BOX_STROKE_COLOR') w.boxStrokeColor = value;
-          if (propName === 'WORD_BOX_STROKE_WIDTH') w.boxStrokeWidth = value;
-          if (propName === 'WORD_BOX_LINE_PATTERN') w.boxLinePattern = value;
-          if (propName === 'WORD_BOX_ROUNDING') w.boxRounding = value;
-          if (propName === 'WORD_BOX_PADDING_X') w.boxPaddingX = value;
-          if (propName === 'WORD_BOX_PADDING_Y') w.boxPaddingY = value;
-          if (propName === 'WORD_BOX_ENABLED') w.boxEffectEnabled = value;
-
+          w[camelKey] = value;
+          if (camelKey === 'boxPaddingX' || camelKey === 'boxPaddingY') {
+            w.boxPadding = value;
+          }
           if (window.updateFlyerWordParticles) {
-            window.updateFlyerWordParticles(w.id, { [propName]: value });
+            window.updateFlyerWordParticles(w.id, { [camelKey]: value });
           }
         }
       });
+    }
+
+    if (configKey) {
+      applyConfigChange(configKey, value);
     }
 
     if (typeof window.redraw === 'function') {
@@ -4113,186 +4126,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cfg = (window.ParticlesConfig && window.ParticlesConfig.get) ? window.ParticlesConfig.get() : {};
 
-    const elEnabled = document.getElementById('param-WORD_BOX_EFFECT_ENABLED');
-    const elFill = document.getElementById('param-WORD_BOX_FILL_COLOR');
-    const elFillOpacity = document.getElementById('param-WORD_BOX_FILL_OPACITY');
-    const elNumFillOpacity = document.getElementById('num-WORD_BOX_FILL_OPACITY');
-    const elStroke = document.getElementById('param-WORD_BOX_STROKE_COLOR');
-    const elStrokeWidth = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
-    const elNumStrokeWidth = document.getElementById('num-WORD_BOX_STROKE_WIDTH');
-    const elPattern = document.getElementById('param-WORD_BOX_LINE_PATTERN');
-    const elRounding = document.getElementById('param-WORD_BOX_ROUNDING');
-    const elNumRounding = document.getElementById('num-WORD_BOX_ROUNDING');
-    const elPadX = document.getElementById('param-WORD_BOX_PADDING_X');
-    const elNumPadX = document.getElementById('num-WORD_BOX_PADDING_X');
-    const elPadY = document.getElementById('param-WORD_BOX_PADDING_Y');
-    const elNumPadY = document.getElementById('num-WORD_BOX_PADDING_Y');
+    const syncCheck = (id1, id2, checkedVal) => {
+      [id1, id2].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = Boolean(checkedVal);
+      });
+    };
 
-    if (sourceObj) {
-      if (elEnabled) elEnabled.checked = (sourceObj.boxEffectEnabled !== undefined) ? Boolean(sourceObj.boxEffectEnabled) : true;
-      if (elFill) elFill.value = sourceObj.boxFillColor || cfg.WORD_BOX_FILL_COLOR || '#0f172a';
-      if (elFillOpacity) elFillOpacity.value = (sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
-      if (elNumFillOpacity) elNumFillOpacity.value = (sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
-      if (elStroke) elStroke.value = sourceObj.boxStrokeColor || cfg.WORD_BOX_STROKE_COLOR || '#00f2fe';
-      if (elStrokeWidth) elStrokeWidth.value = (sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
-      if (elNumStrokeWidth) elNumStrokeWidth.value = (sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
-      if (elPattern) elPattern.value = sourceObj.boxLinePattern || cfg.WORD_BOX_LINE_PATTERN || 'solid';
-      if (elRounding) elRounding.value = (sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
-      if (elNumRounding) elNumRounding.value = (sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
-      if (elPadX) elPadX.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16);
-      if (elNumPadX) elNumPadX.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16);
-      if (elPadY) elPadY.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16);
-      if (elNumPadY) elNumPadY.value = (sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16);
-    } else {
-      if (elEnabled) elEnabled.checked = true;
-      if (elFill) elFill.value = cfg.WORD_BOX_FILL_COLOR || '#0f172a';
-      if (elFillOpacity) elFillOpacity.value = (cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2;
-      if (elNumFillOpacity) elNumFillOpacity.value = (cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2;
-      if (elStroke) elStroke.value = cfg.WORD_BOX_STROKE_COLOR || '#00f2fe';
-      if (elStrokeWidth) elStrokeWidth.value = (cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2;
-      if (elNumStrokeWidth) elNumStrokeWidth.value = (cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2;
-      if (elPattern) elPattern.value = cfg.WORD_BOX_LINE_PATTERN || 'solid';
-      if (elRounding) elRounding.value = (cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8;
-      if (elNumRounding) elNumRounding.value = (cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8;
-      if (elPadX) elPadX.value = (cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16;
-      if (elNumPadX) elNumPadX.value = (cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16;
-      if (elPadY) elPadY.value = (cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16;
-      if (elNumPadY) elNumPadY.value = (cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16;
-    }
+    const syncVal = (id1, id2, val) => {
+      [id1, id2].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+    };
+
+    const isEnabled = sourceObj ? ((sourceObj.boxEffectEnabled !== undefined) ? sourceObj.boxEffectEnabled : true) : true;
+    const fillColor = sourceObj ? (sourceObj.boxFillColor || cfg.WORD_BOX_FILL_COLOR || '#0f172a') : (cfg.WORD_BOX_FILL_COLOR || '#0f172a');
+    const fillOpacity = sourceObj ? ((sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2)) : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
+    const strokeColor = sourceObj ? (sourceObj.boxStrokeColor || cfg.WORD_BOX_STROKE_COLOR || '#00f2fe') : (cfg.WORD_BOX_STROKE_COLOR || '#00f2fe');
+    const strokeWidth = sourceObj ? ((sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2)) : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
+    const linePattern = sourceObj ? (sourceObj.boxLinePattern || cfg.WORD_BOX_LINE_PATTERN || 'solid') : (cfg.WORD_BOX_LINE_PATTERN || 'solid');
+    const rounding = sourceObj ? ((sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8)) : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
+    const padX = sourceObj ? ((sourceObj.boxPaddingX !== undefined) ? sourceObj.boxPaddingX : ((sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16))) : ((cfg.WORD_BOX_PADDING_X !== undefined) ? cfg.WORD_BOX_PADDING_X : 16);
+    const padY = sourceObj ? ((sourceObj.boxPaddingY !== undefined) ? sourceObj.boxPaddingY : ((sourceObj.boxPadding !== undefined) ? sourceObj.boxPadding : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16))) : ((cfg.WORD_BOX_PADDING_Y !== undefined) ? cfg.WORD_BOX_PADDING_Y : 16);
+    const speed = sourceObj ? ((sourceObj.boxSpeed !== undefined) ? sourceObj.boxSpeed : ((cfg.WORD_BOX_SPEED !== undefined) ? cfg.WORD_BOX_SPEED : 3)) : ((cfg.WORD_BOX_SPEED !== undefined) ? cfg.WORD_BOX_SPEED : 3);
+
+    syncCheck('param-WORD_BOX_EFFECT_ENABLED', 'param-WORD_BOX_ENABLED', isEnabled);
+    syncVal('param-WORD_BOX_FILL_COLOR', 'param-GLOBAL_WORD_BOX_FILL_COLOR', fillColor);
+    syncVal('param-WORD_BOX_FILL_OPACITY', 'param-GLOBAL_WORD_BOX_FILL_OPACITY', fillOpacity);
+    syncVal('num-WORD_BOX_FILL_OPACITY', 'num-GLOBAL_WORD_BOX_FILL_OPACITY', fillOpacity);
+    syncVal('param-WORD_BOX_STROKE_COLOR', 'param-GLOBAL_WORD_BOX_STROKE_COLOR', strokeColor);
+    syncVal('param-WORD_BOX_STROKE_WIDTH', 'param-GLOBAL_WORD_BOX_STROKE_WIDTH', strokeWidth);
+    syncVal('num-WORD_BOX_STROKE_WIDTH', 'num-GLOBAL_WORD_BOX_STROKE_WIDTH', strokeWidth);
+    syncVal('param-WORD_BOX_LINE_PATTERN', 'param-GLOBAL_WORD_BOX_LINE_PATTERN', linePattern);
+    syncVal('param-WORD_BOX_ROUNDING', 'param-GLOBAL_WORD_BOX_ROUNDING', rounding);
+    syncVal('num-WORD_BOX_ROUNDING', 'num-GLOBAL_WORD_BOX_ROUNDING', rounding);
+    syncVal('param-WORD_BOX_PADDING_X', 'param-GLOBAL_WORD_BOX_PADDING_X', padX);
+    syncVal('num-WORD_BOX_PADDING_X', 'num-GLOBAL_WORD_BOX_PADDING_X', padX);
+    syncVal('param-WORD_BOX_PADDING_Y', 'param-GLOBAL_WORD_BOX_PADDING_Y', padY);
+    syncVal('num-WORD_BOX_PADDING_Y', 'num-GLOBAL_WORD_BOX_PADDING_Y', padY);
+    syncVal('param-WORD_BOX_SPEED', 'param-WORD_BOX_SPEED', speed);
+    syncVal('num-WORD_BOX_SPEED', 'num-WORD_BOX_SPEED', speed);
   };
 
-  function applySelectionPropChange(propName, value, globalPropName) {
-    const selectedIds = (typeof window.getSelectedFlyerWordIds === 'function')
-      ? window.getSelectedFlyerWordIds()
-      : (selectedFlyerWordId ? [selectedFlyerWordId] : []);
-
-    if (selectedIds.length > 0) {
-      selectedIds.forEach(wId => {
-        if (window.updateFlyerWordParticles) {
-          const props = {};
-          props[propName] = value;
-          window.updateFlyerWordParticles(wId, props);
-        }
+  const bindDualControl = (ids, propName, globalPropName, eventType = 'input', parseFn = null) => {
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener(eventType, () => {
+        const val = parseFn ? parseFn(el.value) : el.value;
+        ids.forEach(otherId => {
+          const otherEl = document.getElementById(otherId);
+          if (otherEl && otherEl !== el) otherEl.value = el.value;
+        });
+        applySelectionPropChange(propName, val, globalPropName);
       });
-    }
-    if (globalPropName) {
-      applyConfigChange(globalPropName, value);
-    }
-  }
+    });
+  };
 
-  // Bind Listeners del Subtab SELECCIÓN
-  const boxEnabledToggle = document.getElementById('param-WORD_BOX_EFFECT_ENABLED');
-  if (boxEnabledToggle) {
-    boxEnabledToggle.addEventListener('change', () => {
-      applySelectionPropChange('boxEffectEnabled', boxEnabledToggle.checked, null);
-    });
-  }
+  const bindDualCombo = (sliderIds, numIds, propName, globalPropName, parseFn = parseFloat) => {
+    const handleInput = (val, sourceEl) => {
+      sliderIds.concat(numIds).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el !== sourceEl) el.value = val;
+      });
+      applySelectionPropChange(propName, val, globalPropName);
+    };
 
-  const boxFillColorInput = document.getElementById('param-WORD_BOX_FILL_COLOR');
-  if (boxFillColorInput) {
-    boxFillColorInput.addEventListener('input', () => {
-      applySelectionPropChange('boxFillColor', boxFillColorInput.value, 'WORD_BOX_FILL_COLOR');
+    sliderIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => handleInput(parseFn(el.value), el));
+      }
     });
-  }
 
-  const boxFillOpacitySlider = document.getElementById('param-WORD_BOX_FILL_OPACITY');
-  const boxFillOpacityNum = document.getElementById('num-WORD_BOX_FILL_OPACITY');
-  if (boxFillOpacitySlider) {
-    boxFillOpacitySlider.addEventListener('input', () => {
-      const val = parseFloat(boxFillOpacitySlider.value);
-      if (boxFillOpacityNum) boxFillOpacityNum.value = val;
-      applySelectionPropChange('boxFillOpacity', val, 'WORD_BOX_FILL_OPACITY');
+    numIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => {
+          const val = parseFn(el.value);
+          if (!isNaN(val)) handleInput(val, el);
+        });
+      }
     });
-  }
-  if (boxFillOpacityNum) {
-    boxFillOpacityNum.addEventListener('input', () => {
-      const val = parseFloat(boxFillOpacityNum.value);
-      if (boxFillOpacitySlider) boxFillOpacitySlider.value = val;
-      applySelectionPropChange('boxFillOpacity', val, 'WORD_BOX_FILL_OPACITY');
-    });
-  }
+  };
 
-  const boxStrokeColorInput = document.getElementById('param-WORD_BOX_STROKE_COLOR');
-  if (boxStrokeColorInput) {
-    boxStrokeColorInput.addEventListener('input', () => {
-      applySelectionPropChange('boxStrokeColor', boxStrokeColorInput.value, 'WORD_BOX_STROKE_COLOR');
+  const bindDualToggles = (toggleIds, propName, globalPropName) => {
+    toggleIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        toggleIds.forEach(otherId => {
+          const otherEl = document.getElementById(otherId);
+          if (otherEl && otherEl !== el) otherEl.checked = el.checked;
+        });
+        applySelectionPropChange(propName, el.checked, globalPropName);
+      });
     });
-  }
+  };
 
-  const boxStrokeWidthSlider = document.getElementById('param-WORD_BOX_STROKE_WIDTH');
-  const boxStrokeWidthNum = document.getElementById('num-WORD_BOX_STROKE_WIDTH');
-  if (boxStrokeWidthSlider) {
-    boxStrokeWidthSlider.addEventListener('input', () => {
-      const val = parseInt(boxStrokeWidthSlider.value, 10);
-      if (boxStrokeWidthNum) boxStrokeWidthNum.value = val;
-      applySelectionPropChange('boxStrokeWidth', val, 'WORD_BOX_STROKE_WIDTH');
-    });
-  }
-  if (boxStrokeWidthNum) {
-    boxStrokeWidthNum.addEventListener('input', () => {
-      const val = parseInt(boxStrokeWidthNum.value, 10);
-      if (boxStrokeWidthSlider) boxStrokeWidthSlider.value = val;
-      applySelectionPropChange('boxStrokeWidth', val, 'WORD_BOX_STROKE_WIDTH');
-    });
-  }
-
-  const boxLinePatternSelect = document.getElementById('param-WORD_BOX_LINE_PATTERN');
-  if (boxLinePatternSelect) {
-    boxLinePatternSelect.addEventListener('change', () => {
-      applySelectionPropChange('boxLinePattern', boxLinePatternSelect.value, 'WORD_BOX_LINE_PATTERN');
-    });
-  }
-
-  const boxRoundingSlider = document.getElementById('param-WORD_BOX_ROUNDING');
-  const boxRoundingNum = document.getElementById('num-WORD_BOX_ROUNDING');
-  if (boxRoundingSlider) {
-    boxRoundingSlider.addEventListener('input', () => {
-      const val = parseInt(boxRoundingSlider.value, 10);
-      if (boxRoundingNum) boxRoundingNum.value = val;
-      applySelectionPropChange('boxRounding', val, 'WORD_BOX_ROUNDING');
-    });
-  }
-  if (boxRoundingNum) {
-    boxRoundingNum.addEventListener('input', () => {
-      const val = parseInt(boxRoundingNum.value, 10);
-      if (boxRoundingSlider) boxRoundingSlider.value = val;
-      applySelectionPropChange('boxRounding', val, 'WORD_BOX_ROUNDING');
-    });
-  }
-
-  const boxPadXSlider = document.getElementById('param-WORD_BOX_PADDING_X');
-  const boxPadXNum = document.getElementById('num-WORD_BOX_PADDING_X');
-  if (boxPadXSlider) {
-    boxPadXSlider.addEventListener('input', () => {
-      const val = parseInt(boxPadXSlider.value, 10);
-      if (boxPadXNum) boxPadXNum.value = val;
-      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_X');
-    });
-  }
-  if (boxPadXNum) {
-    boxPadXNum.addEventListener('input', () => {
-      const val = parseInt(boxPadXNum.value, 10);
-      if (boxPadXSlider) boxPadXSlider.value = val;
-      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_X');
-    });
-  }
-
-  const boxPadYSlider = document.getElementById('param-WORD_BOX_PADDING_Y');
-  const boxPadYNum = document.getElementById('num-WORD_BOX_PADDING_Y');
-  if (boxPadYSlider) {
-    boxPadYSlider.addEventListener('input', () => {
-      const val = parseInt(boxPadYSlider.value, 10);
-      if (boxPadYNum) boxPadYNum.value = val;
-      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_Y');
-    });
-  }
-  if (boxPadYNum) {
-    boxPadYNum.addEventListener('input', () => {
-      const val = parseInt(boxPadYNum.value, 10);
-      if (boxPadYSlider) boxPadYSlider.value = val;
-      applySelectionPropChange('boxPadding', val, 'WORD_BOX_PADDING_Y');
-    });
-  }
+  bindDualToggles(['param-WORD_BOX_EFFECT_ENABLED', 'param-WORD_BOX_ENABLED'], 'boxEffectEnabled', 'WORD_BOX_ENABLED');
+  bindDualControl(['param-WORD_BOX_FILL_COLOR', 'param-GLOBAL_WORD_BOX_FILL_COLOR'], 'boxFillColor', 'WORD_BOX_FILL_COLOR', 'input');
+  bindDualCombo(['param-WORD_BOX_FILL_OPACITY', 'param-GLOBAL_WORD_BOX_FILL_OPACITY'], ['num-WORD_BOX_FILL_OPACITY', 'num-GLOBAL_WORD_BOX_FILL_OPACITY'], 'boxFillOpacity', 'WORD_BOX_FILL_OPACITY', parseFloat);
+  bindDualControl(['param-WORD_BOX_STROKE_COLOR', 'param-GLOBAL_WORD_BOX_STROKE_COLOR'], 'boxStrokeColor', 'WORD_BOX_STROKE_COLOR', 'input');
+  bindDualCombo(['param-WORD_BOX_STROKE_WIDTH', 'param-GLOBAL_WORD_BOX_STROKE_WIDTH'], ['num-WORD_BOX_STROKE_WIDTH', 'num-GLOBAL_WORD_BOX_STROKE_WIDTH'], 'boxStrokeWidth', 'WORD_BOX_STROKE_WIDTH', parseFloat);
+  bindDualControl(['param-WORD_BOX_LINE_PATTERN', 'param-GLOBAL_WORD_BOX_LINE_PATTERN'], 'boxLinePattern', 'WORD_BOX_LINE_PATTERN', 'change');
+  bindDualCombo(['param-WORD_BOX_ROUNDING', 'param-GLOBAL_WORD_BOX_ROUNDING'], ['num-WORD_BOX_ROUNDING', 'num-GLOBAL_WORD_BOX_ROUNDING'], 'boxRounding', 'WORD_BOX_ROUNDING', parseFloat);
+  bindDualCombo(['param-WORD_BOX_PADDING_X', 'param-GLOBAL_WORD_BOX_PADDING_X'], ['num-WORD_BOX_PADDING_X', 'num-GLOBAL_WORD_BOX_PADDING_X'], 'boxPaddingX', 'WORD_BOX_PADDING_X', parseFloat);
+  bindDualCombo(['param-WORD_BOX_PADDING_Y', 'param-GLOBAL_WORD_BOX_PADDING_Y'], ['num-WORD_BOX_PADDING_Y', 'num-GLOBAL_WORD_BOX_PADDING_Y'], 'boxPaddingY', 'WORD_BOX_PADDING_Y', parseFloat);
+  bindDualCombo(['param-WORD_BOX_SPEED'], ['num-WORD_BOX_SPEED'], 'boxSpeed', 'WORD_BOX_SPEED', parseFloat);
 
 
   // Inicializar switches de modo de formación FISICS vs CODE
@@ -5097,36 +5039,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper de conexión API con tolerancia a fallas de ruta e inspección de contenido JSON
   async function fetchWithApiFallback(relPath, options = {}) {
-    const base = getApiUrl();
-    let url = relPath.startsWith('http') ? relPath : (base.endsWith('/') ? base.slice(0, -1) : base) + (relPath.startsWith('/') ? relPath : '/' + relPath);
-    let res;
-    try {
-      res = await fetch(url, options);
-    } catch (e) {
-      console.warn('[Fetch Warning] Falló URL primaria:', url, e);
+    const candidateBases = [];
+    const cfgApi = getApiUrl();
+    if (cfgApi) candidateBases.push(cfgApi);
+
+    // Si estamos en localhost o 127.0.0.1, probar local y VPS
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      candidateBases.push(window.location.origin + '/artedigitaldata/api');
+      candidateBases.push(window.location.origin + '/api');
+      candidateBases.push('https://vps-4455523-x.dattaweb.com/artedigitaldata/api');
+      candidateBases.push('https://vps-4455523-x.dattaweb.com/api');
+    } else {
+      // Producción o VPS
+      candidateBases.push('/artedigitaldata/api');
+      candidateBases.push('/api');
+      candidateBases.push('https://vps-4455523-x.dattaweb.com/artedigitaldata/api');
     }
 
-    if (!res || (res.status === 404 && url.includes('/artedigitaldata/api'))) {
-      const altUrl = url.replace('/artedigitaldata/api', '/api');
-      try { res = await fetch(altUrl, options); } catch (e) {}
-    } else if (!res || (res.status === 404 && url.includes('/api') && !url.includes('/artedigitaldata/api'))) {
-      const altUrl = url.replace('/api', '/artedigitaldata/api');
-      try { res = await fetch(altUrl, options); } catch (e) {}
-    }
+    const uniqueBases = Array.from(new Set(candidateBases.filter(Boolean)));
+    const cleanRel = relPath.startsWith('/') ? relPath : '/' + relPath;
 
-    if (!res) {
-      throw new Error('No se pudo establecer conexión con el servidor API.');
-    }
+    let res = null;
+    let lastErr = null;
 
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      if (res.status === 404) {
-        throw new Error(`La ruta de la API (${relPath}) no está activa en el servidor o devuelve 404.`);
+    for (const base of uniqueBases) {
+      const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+      const url = cleanBase + cleanRel;
+      try {
+        const candidateRes = await fetch(url, options);
+        if (candidateRes && candidateRes.ok) {
+          const contentType = candidateRes.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            return candidateRes;
+          }
+        } else if (candidateRes && candidateRes.status !== 404) {
+          res = candidateRes;
+        }
+      } catch (err) {
+        lastErr = err;
       }
-      throw new Error(`El servidor devolvió una respuesta no esperada (${res.status}).`);
     }
 
-    return res;
+    if (res) return res;
+
+    throw lastErr || new Error(`No se pudo cargar recurso API (${relPath}) desde ningún servidor disponible.`);
   }
 
   // Guardar y Cargar Proyectos de Efectos Visuales (Flyer Mode) por Usuario
@@ -5540,6 +5496,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               );
             });
+            if (!hasTimeline && typeof evaluateTimelineAtTime === 'function') {
+              evaluateTimelineAtTime(currentTimelineTime);
+            }
           };
           trySpawn();
         }
@@ -6621,7 +6580,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  if (window.location.pathname.includes('outputeffect.html')) {
+  const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+  if (isOutputPage) {
     window.appMode = 'FLYERMODE';
     if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
       window.ParticlesConfig.set({ FLYER_MODE_ENABLED: true });

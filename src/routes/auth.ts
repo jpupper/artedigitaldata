@@ -1,9 +1,27 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import User from '../models/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 const FSC_AUTH_API = process.env.FSC_AUTH_API || 'http://localhost:3027/fscauth/api';
+
+// Rate Limiter para peticiones de autenticación enviadas a FSCAuth SSO
+const fscAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 15, // Máximo 15 peticiones por IP en 15 minutos
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Demasiados intentos de autenticación desde esta IP hacia FSCAuth. Por favor reintente en 15 minutos.'
+  }
+});
+
+// Proteger endpoints de login/registro contra ataques de fuerza bruta
+router.use('/login', fscAuthLimiter);
+router.use('/register', fscAuthLimiter);
+router.use('/forgot-password', fscAuthLimiter);
+router.use('/reset-password', fscAuthLimiter);
 
 // Auxiliar para parsear errores de fetch
 const handleProxyError = (res: Response, err: any) => {

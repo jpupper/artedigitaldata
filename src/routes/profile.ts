@@ -6,6 +6,7 @@ import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import Oportunidad from '../models/Oportunidad';
 import VisualEffect from '../models/VisualEffect';
+import Ticket from '../models/Ticket';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { hydrate } from '../utils/userHydration';
 
@@ -124,6 +125,74 @@ router.get('/:username', async (req: Request, res: Response) => {
 
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// Exportación de Datos Personales (Portabilidad GDPR - Art. 20)
+router.get('/me/export', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await User.findById(userId).select('-password');
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const posts = await Post.find({ author: userId });
+    const recursos = await Recurso.find({ author: userId });
+    const eventos = await Evento.find({ creator: userId });
+    const oportunidades = await Oportunidad.find({ creador: userId });
+    const visualeffects = await VisualEffect.find({ author: userId });
+    const tickets = await Ticket.find({ user: userId });
+
+    const exportData = {
+      exportMetadata: {
+        application: 'Arte Digital Data',
+        exportDate: new Date().toISOString(),
+        gdprArticle: 'Article 20 - Right to data portability'
+      },
+      userProfile: user.toObject(),
+      posts: posts.map(p => p.toObject()),
+      recursos: recursos.map(r => r.toObject()),
+      eventos: eventos.map(e => e.toObject()),
+      oportunidades: oportunidades.map(o => o.toObject()),
+      visualeffects: visualeffects.map(v => v.toObject()),
+      tickets: tickets.map(t => t.toObject())
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="artedigital_data_export_${user.username}_${Date.now()}.json"`);
+    return res.status(200).send(JSON.stringify(exportData, null, 2));
+  } catch (err: any) {
+    console.error('[GDPR Data Export Error]', err);
+    return res.status(500).json({ error: 'Error al exportar datos personales' });
+  }
+});
+
+// Derecho al Olvido / Eliminación de Cuenta (Art. 17 GDPR)
+router.delete('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    console.log(`[GDPR Right to be Forgotten] Deleting user data for ${user.username} (${userId})`);
+
+    // Eliminar o anonimizar publicaciones asociadas
+    await Post.deleteMany({ author: userId });
+    await Recurso.deleteMany({ author: userId });
+    await Evento.deleteMany({ creator: userId });
+    await Oportunidad.deleteMany({ creador: userId });
+    await VisualEffect.deleteMany({ author: userId });
+    await Ticket.deleteMany({ user: userId });
+
+    // Eliminar registro del usuario
+    await User.findByIdAndDelete(userId);
+
+    return res.json({ 
+      success: true, 
+      message: 'Cuenta y datos personales eliminados permanentemente conforme al Art. 17 del GDPR.' 
+    });
+  } catch (err: any) {
+    console.error('[GDPR Account Erasure Error]', err);
+    return res.status(500).json({ error: 'Error al procesar la eliminación de la cuenta' });
   }
 });
 

@@ -427,3 +427,53 @@ window.closeGlobalEdit = function() {
     modal.classList.remove('flex');
   }
 };
+
+// --- GDPR DATA PRIVACY RIGHTS (Export & Erasure) ---
+window.exportMyData = async function() {
+  try {
+    const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('token');
+    if (!token) return alert('Debés iniciar sesión para exportar tus datos.');
+    
+    const res = await fetch(CONFIG.API_URL + '/profile/me/export', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) throw new Error('Error en el servidor al exportar datos.');
+    
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `artedigital_data_export_${currentUser?.username || 'usuario'}_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    alert(err.message || 'No se pudo descargar la copia de datos.');
+  }
+};
+
+window.confirmDeleteAccount = async function() {
+  const confirmFirst = confirm('⚠️ ATENCIÓN: ¿Estás seguro de que querés eliminar tu cuenta y todos tus datos personales de Arte Digital Data?\n\nEsta acción es PERMANENTE e IRREVERSIBLE conforme al Art. 17 del GDPR (Derecho al Olvido).');
+  if (!confirmFirst) return;
+
+  const doubleConfirm = prompt('Para confirmar la eliminación, escribí tu nombre de usuario exactamente como figura en tu perfil:');
+  if (!doubleConfirm || doubleConfirm.trim().toLowerCase() !== (currentUser?.username || '').toLowerCase()) {
+    return alert('Nombre de usuario incorrecto. Cancelando eliminación de cuenta.');
+  }
+
+  try {
+    const res = await apiRequest('/profile/me', { method: 'DELETE' });
+    if (res?.ok) {
+      alert('Tu cuenta y datos personales han sido eliminados correctamente.');
+      if (typeof logout === 'function') logout();
+    } else {
+      const data = await res.json();
+      alert(data?.error || 'Error al eliminar la cuenta.');
+    }
+  } catch (err) {
+    alert('Ocurrió un error al procesar la eliminación de tu cuenta.');
+  }
+};
+

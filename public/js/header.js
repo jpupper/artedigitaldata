@@ -384,8 +384,8 @@ function renderFooter() {
       <div class="flex flex-col items-center md:items-end gap-2 text-gray-600">
         <a href="https://fullscreencode.com" target="_blank" class="text-[10px] font-black uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Desarrollado por FullScreenCode</a>
         <div class="flex gap-4 text-sm">
-          <a href="#" class="hover:text-cyan-500 transition-colors">Terminos</a>
-          <a href="#" class="hover:text-magenta-500 transition-colors">Privacidad</a>
+          <a href="${CONFIG.BASE}/terminos" class="hover:text-cyan-500 transition-colors">Términos</a>
+          <a href="${CONFIG.BASE}/privacidad" class="hover:text-magenta-500 transition-colors">Privacidad</a>
         </div>
       </div>
     </div>
@@ -427,14 +427,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Dynamically load floating chat widget on all pages except dedicated chat
-(function loadFloatingChatWidget() {
+// Dynamically load floating chat widget and cookie consent banner on all pages
+(function loadGlobalWidgets() {
   const p = window.location.pathname.toLowerCase();
-  if (p.includes('chat.html') || p.endsWith('/chat')) return;
-  if (document.querySelector('script[src*="floating-chat.js"]')) return;
-  const script = document.createElement('script');
-  script.src = (window.CONFIG ? CONFIG.BASE : '') + '/js/floating-chat.js';
-  const target = document.head || document.documentElement;
-  if (target) target.appendChild(script);
+  
+  // Floating Chat
+  if (!p.includes('chat.html') && !p.endsWith('/chat') && !document.querySelector('script[src*="floating-chat.js"]')) {
+    const scriptChat = document.createElement('script');
+    scriptChat.src = (window.CONFIG ? CONFIG.BASE : '') + '/js/floating-chat.js';
+    (document.head || document.documentElement).appendChild(scriptChat);
+  }
+
+  // Cookie Consent Banner
+  if (!document.querySelector('script[src*="cookie-banner.js"]')) {
+    const scriptCookie = document.createElement('script');
+    scriptCookie.src = (window.CONFIG ? CONFIG.BASE : '') + '/js/cookie-banner.js';
+    (document.head || document.documentElement).appendChild(scriptCookie);
+  }
 })();
 
