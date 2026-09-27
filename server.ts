@@ -31,6 +31,7 @@ import notificationRoutes from './src/routes/notifications';
 import publicRoutes from './src/routes/public';
 import visualeffectsRoutes from './src/routes/visualeffects';
 import posteosRoutes from './src/routes/posteos';
+import fscAssetsRoutes from './src/routes/fscAssets';
 import { runAutobot } from './src/scripts/cronbot';
 import { hydrate } from './src/utils/userHydration';
 import { getBotConfig } from './src/models/BotConfig';
@@ -141,6 +142,7 @@ apiRouter.use('/tickets', ticketRoutes);
 apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/public', publicRoutes);
 apiRouter.use('/visualeffects', visualeffectsRoutes);
+apiRouter.use('/fsc', fscAssetsRoutes);   // 🗂️ índice universal de assets (perfil de fscauth)
 
 // Registrar API en ambos paths (con y sin prefijo) para máxima compatibilidad
 // IMPORTANTE: Registrar ANTES de los recursos estáticos para evitar colisiones
