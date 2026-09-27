@@ -68,6 +68,8 @@ export interface IOportunidad extends IPosteoBase {
   
   // Compartidos
   activa: boolean;
+  sistemaInterno: boolean; // Si es true, usa el sistema de inscripción interno de ADD. Si es false, usa linkExterno.
+  linkExterno?: string;    // Enlace directo a la convocatoria externa
   inscripciones: Types.ObjectId[];
 }
 
@@ -116,6 +118,8 @@ const OportunidadSchema: Schema = new Schema(
     
     // Compartidos & PosteoBase
     activa: { type: Boolean, default: true },
+    sistemaInterno: { type: Boolean, default: true },
+    linkExterno: { type: String, default: '' },
     inscripciones: [{ type: Schema.Types.ObjectId, ref: 'Inscripcion' }],
     tags: { type: [String], default: [] },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },

@@ -220,6 +220,11 @@
                 <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-${color}-500/20 text-${color}-400 border border-${color}-500/30 uppercase tracking-widest">
                   <i class="${icon} mr-1"></i>${label}
                 </span>
+                ${opo.tipo === 'convocatoria_obra' && opo.sistemaInterno === false ? `
+                  <span class="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-wider flex items-center gap-1">
+                    <i class="fas fa-external-link-alt text-[8px]"></i> Link Externo
+                  </span>
+                ` : ''}
               </div>
               <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${opo.titulo}</h3>
               <p class="text-gray-400 text-sm mb-3 line-clamp-2">${typeof formatMentions === 'function' ? formatMentions(opo.descripcion) : (opo.descripcion || '')}</p>
@@ -233,13 +238,19 @@
                   </div>
                   <span class="text-xs text-gray-500 font-medium">@${opo.creador?.username || 'anónimo'}</span>
                 </div>
-                <span class="text-xs text-gray-500">
-                  <i class="fas fa-users mr-1"></i>${opo.inscripciones?.length || 0}
-                </span>
+                ${opo.tipo === 'convocatoria_obra' && opo.sistemaInterno === false ? `
+                  <span class="text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
+                    <i class="fas fa-external-link-alt text-[9px]"></i> Externo
+                  </span>
+                ` : `
+                  <span class="text-xs text-gray-500">
+                    <i class="fas fa-users mr-1"></i>${opo.inscripciones?.length || 0}
+                  </span>
+                `}
               </div>
             </div>
             <a href="oportunidad.html?id=${opo._id}" class="block p-3 bg-${color}-500/10 text-${color}-400 hover:bg-${color}-500 hover:text-white transition-all text-xs font-bold w-full text-center">
-              VER OPORTUNIDAD <i class="fas fa-arrow-right ml-1"></i>
+              VER CONVOCATORIA <i class="fas fa-arrow-right ml-1"></i>
             </a>
           </div>
         `;

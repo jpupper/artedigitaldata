@@ -8,7 +8,25 @@ const router = Router();
 // GET /api/visualeffects/default-front - Obtener el efecto predeterminado fijado para el front
 router.get('/default-front', async (req: Request, res: Response) => {
   try {
-    const defaultEffect = await VisualEffect.findOne({ isDefaultFront: true });
+    let defaultEffect = await VisualEffect.findOne({ isDefaultFront: true });
+    if (!defaultEffect) {
+      try {
+        const vpsRes = await fetch('https://vps-4455523-x.dattaweb.com/artedigitaldata/api/visualeffects/default-front');
+        if (vpsRes.ok) {
+          const vpsData: any = await vpsRes.json();
+          if (vpsData && vpsData._id) {
+            try {
+              const toSave = { ...vpsData };
+              if (toSave.author && typeof toSave.author === 'object') {
+                toSave.author = toSave.author._id || toSave.author.id;
+              }
+              await VisualEffect.findByIdAndUpdate(vpsData._id, toSave, { upsert: true, new: true });
+            } catch (saveErr) {}
+            return res.json(vpsData);
+          }
+        }
+      } catch (proxyErr) {}
+    }
     return res.json(defaultEffect || null);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

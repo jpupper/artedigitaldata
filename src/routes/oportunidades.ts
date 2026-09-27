@@ -74,6 +74,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       productoraEmpresa,
       nombreProyecto,
       colaboracionPedida,
+      sistemaInterno,
+      linkExterno,
       tags,
       visibility,
     } = req.body;
@@ -101,6 +103,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       productoraEmpresa: productoraEmpresa || '',
       nombreProyecto: nombreProyecto || '',
       colaboracionPedida: colaboracionPedida || '',
+      sistemaInterno: sistemaInterno !== undefined ? Boolean(sistemaInterno) : true,
+      linkExterno: linkExterno || '',
       tags: tags || [],
       visibility: visibility || 'public',
     });
@@ -138,7 +142,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       'tipo', 'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
       'fechaDesde', 'fechaHasta', 'imagenUrl', 'parametrosPresentacion',
       'nombrePuesto', 'productoraEmpresa', 'nombreProyecto',
-      'colaboracionPedida', 'activa', 'tags', 'visibility'
+      'colaboracionPedida', 'activa', 'sistemaInterno', 'linkExterno', 'tags', 'visibility'
     ];
 
     updatableFields.forEach(field => {
@@ -195,6 +199,10 @@ router.post('/:id/inscripcion', authMiddleware, async (req: AuthRequest, res: Re
 
     if (!oportunidad.activa) {
       return res.status(400).json({ error: 'Esta oportunidad ya no está activa' });
+    }
+
+    if (oportunidad.sistemaInterno === false) {
+      return res.status(400).json({ error: 'Esta convocatoria gestiona sus postulaciones externamente a través de su link oficial.' });
     }
 
     // Verificar si ya está inscrito

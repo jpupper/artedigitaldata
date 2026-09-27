@@ -2243,18 +2243,38 @@
 
   // ========== SECUENCIA DEFAULT PINEADA PARA EL FRONT (Admin Pinned) ==========
   async function initDefaultFrontVisualEffect() {
-    if (window.location.pathname.includes('visualeffects.html') || window.location.pathname.includes('outputeffect.html')) return;
+    if (window.location.pathname.includes('visualeffects.html') || window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect')) return;
 
     try {
-      const apiUrl = (window.CONFIG && window.CONFIG.API_URL) 
-        ? window.CONFIG.API_URL 
-        : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'https://vps-4455523-x.dattaweb.com/artedigitaldata/api' 
-            : '/artedigitaldata/api');
-      
-      const res = await fetch(`${apiUrl}/visualeffects/default-front`);
-      if (!res.ok) return;
-      const effect = await res.json();
+      const candidates = [];
+      if (window.CONFIG && window.CONFIG.API_URL) candidates.push(window.CONFIG.API_URL);
+      candidates.push('https://vps-4455523-x.dattaweb.com/artedigitaldata/api');
+      candidates.push('https://vps-4455523-x.dattaweb.com/api');
+      if (window.location.origin) {
+        candidates.push(window.location.origin + '/artedigitaldata/api');
+        candidates.push(window.location.origin + '/api');
+      }
+
+      const uniqueEndpoints = Array.from(new Set(candidates));
+      let effect = null;
+
+      for (const base of uniqueEndpoints) {
+        try {
+          const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+          const res = await fetch(`${cleanBase}/visualeffects/default-front`);
+          if (res.ok) {
+            const cType = res.headers.get('content-type') || '';
+            if (cType.includes('application/json')) {
+              const data = await res.json();
+              if (data && (data.isDefaultFront || data._id)) {
+                effect = data;
+                break;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
       if (!effect || !effect.isDefaultFront) return;
 
       console.log('[Front VisualEffect] Cargando secuencia default:', effect.title);

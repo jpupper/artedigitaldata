@@ -79,6 +79,13 @@
               <p id="opo-fechas" class="text-gray-400 text-sm"></p>
             </div>
 
+            <div id="opo-link-externo-row" class="hidden mb-6">
+              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-link text-cyan-400 mr-2"></i>Enlace Oficial de la Convocatoria</h3>
+              <a id="opo-link-externo-text" href="#" target="_blank" rel="noopener noreferrer" class="text-cyan-400 text-sm font-semibold hover:underline inline-flex items-center gap-1.5 break-all">
+                <span></span> <i class="fas fa-external-link-alt text-xs"></i>
+              </a>
+            </div>
+
             <div id="opo-parametros-section" class="hidden">
               <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-clipboard-list mr-2"></i>Parámetros de Presentación</h3>
               <div id="opo-parametros" class="flex flex-wrap gap-2"></div>
@@ -125,7 +132,24 @@
           <div class="flex flex-wrap gap-2" id="opo-tags"></div>
         </section>
 
-        <!-- Botón Inscribirse y Estado -->
+        <!-- Sección Convocatoria Externa (si sistemaInterno === false) -->
+        <section id="convocatoria-externa-section" class="hidden mb-8">
+          <div class="rounded-2xl p-6 md:p-8 bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-cyan-500/5 border-2 border-cyan-500/30 text-center">
+            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
+              <i class="fas fa-external-link-alt text-2xl text-cyan-400"></i>
+            </div>
+            <h3 class="text-xl md:text-2xl font-black text-white mb-2">Convocatoria con Inscripción Externa</h3>
+            <p class="text-xs md:text-sm text-gray-300 max-w-xl mx-auto mb-6">
+              Esta convocatoria recibe postulaciones directamente en su formulario o sitio oficial externo.
+            </p>
+            <a id="btn-link-externo" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-cyan-500 text-black font-black text-sm uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-[0_0_30px_rgba(6,182,212,0.4)]">
+              <span>Ir a la Convocatoria / Inscribirse</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </section>
+
+        <!-- Botón Inscribirse y Estado (Sistema Interno ADD) -->
         <section id="inscripcion-section" class="mb-8">
           <button id="btn-inscribirse" onclick="toggleInscripcionForm()" class="w-full px-6 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2">
             <i class="fas fa-paper-plane"></i>
@@ -359,6 +383,8 @@
         oportunidadData = await res.json();
         renderOportunidad(oportunidadData);
 
+        const esInterno = oportunidadData.sistemaInterno !== false;
+
         // Check permissions (creator or admin)
         if (isLoggedIn() && oportunidadData.creador) {
           const userId = getUserId();
@@ -374,18 +400,45 @@
             if (userIsAdmin && !esCreador) {
               document.getElementById('panel-titulo').textContent = 'Panel de Administración de Oportunidad';
             }
-            document.getElementById('btn-ver-postulantes').href = `postulantes.html?id=${oportunidadId}`;
+            if (esInterno) {
+              document.getElementById('btn-ver-postulantes').classList.remove('hidden');
+              document.getElementById('btn-ver-postulantes').href = `postulantes.html?id=${oportunidadId}`;
+            } else {
+              document.getElementById('btn-ver-postulantes').classList.add('hidden');
+            }
             document.getElementById('btn-edit-panel-opo').href = `crear-oportunidad.html?id=${oportunidadId}`;
           }
 
-          if (esCreador) {
-            document.getElementById('inscripcion-section').classList.add('hidden');
+          if (esInterno) {
+            document.getElementById('convocatoria-externa-section').classList.add('hidden');
+            if (esCreador) {
+              document.getElementById('inscripcion-section').classList.add('hidden');
+            } else {
+              // Check if already inscribed (for admin or standard user)
+              checkInscripcion();
+            }
           } else {
-            // Check if already inscribed (for admin or standard user)
-            checkInscripcion();
+            document.getElementById('inscripcion-section').classList.add('hidden');
+            if (oportunidadData.linkExterno) {
+              document.getElementById('convocatoria-externa-section').classList.remove('hidden');
+              document.getElementById('btn-link-externo').href = oportunidadData.linkExterno;
+            } else {
+              document.getElementById('convocatoria-externa-section').classList.add('hidden');
+            }
           }
         } else {
-          document.getElementById('inscripcion-section').classList.add('hidden');
+          if (esInterno) {
+            document.getElementById('convocatoria-externa-section').classList.add('hidden');
+            document.getElementById('inscripcion-section').classList.remove('hidden');
+          } else {
+            document.getElementById('inscripcion-section').classList.add('hidden');
+            if (oportunidadData.linkExterno) {
+              document.getElementById('convocatoria-externa-section').classList.remove('hidden');
+              document.getElementById('btn-link-externo').href = oportunidadData.linkExterno;
+            } else {
+              document.getElementById('convocatoria-externa-section').classList.add('hidden');
+            }
+          }
         }
 
         document.getElementById('loading').classList.add('hidden');
@@ -446,11 +499,22 @@
           const hasta = opo.fechaHasta ? new Date(opo.fechaHasta).toLocaleDateString('es-AR') : '?';
           document.getElementById('opo-fechas').textContent = `Desde ${desde} hasta ${hasta}`;
         }
-        if (opo.parametrosPresentacion && opo.parametrosPresentacion.length) {
+        if (opo.linkExterno) {
+          document.getElementById('opo-link-externo-row').classList.remove('hidden');
+          const linkEl = document.getElementById('opo-link-externo-text');
+          linkEl.href = opo.linkExterno;
+          linkEl.querySelector('span').textContent = opo.linkExterno;
+        } else {
+          document.getElementById('opo-link-externo-row').classList.add('hidden');
+        }
+        const esInterno = opo.sistemaInterno !== false;
+        if (esInterno && opo.parametrosPresentacion && opo.parametrosPresentacion.length) {
           document.getElementById('opo-parametros-section').classList.remove('hidden');
           document.getElementById('opo-parametros').innerHTML = opo.parametrosPresentacion.map(p => 
             `<span class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold">${p.label}${p.required ? ' *' : ''}</span>`
           ).join('');
+        } else {
+          document.getElementById('opo-parametros-section').classList.add('hidden');
         }
       } else if (opo.tipo === 'oportunidad_laboral') {
         document.getElementById('opo-nombrePuesto').textContent = opo.nombrePuesto || '-';
