@@ -40,7 +40,9 @@ window.CONFIG = {
     },
 
     get FSCAUTH_URL() {
-        return VPS_ORIGIN + '/fscauth';
+        // El ingreso vive SIEMPRE en el dominio público (fullscreencode.com): así el
+        // usuario nunca sale del dominio y la sesión es la misma en todas las apps.
+        return 'https://fullscreencode.com/fscauth';
     },
 
     get DONATIONS() {
