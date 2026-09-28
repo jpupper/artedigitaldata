@@ -122,8 +122,14 @@
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-gray-300 mb-2">Lugar de Exposición</label>
-            <input type="text" id="opo-lugarExposicion" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors" placeholder="Nombre del lugar o galería">
+            <label class="block text-sm font-bold text-gray-300 mb-2">
+              <i class="fas fa-map-marker-alt text-cyan-400 mr-1.5"></i>Lugar de Exposición
+            </label>
+            <input type="text" id="opo-lugarExposicion" oninput="updateMapPreview(this.value)" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none transition-colors" placeholder="Ej: Centro Cultural Recoleta, Junín 1930, Buenos Aires">
+            <p class="text-xs text-gray-500 mt-1">Escribí el nombre del lugar, museo o dirección para mostrar el mapa en la publicación.</p>
+            <div id="opo-map-preview-container" class="hidden mt-3 rounded-2xl overflow-hidden border border-white/10 bg-black/40">
+              <iframe id="opo-map-preview-iframe" class="w-full h-44 border-0" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" loading="lazy" src=""></iframe>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,6 +466,9 @@
               data.parametrosPresentacion.forEach(param => addParametro(param));
             }
           }
+          if (data.lugarExposicion) {
+            updateMapPreview(data.lugarExposicion);
+          }
         } else if (data.tipo === 'oportunidad_laboral') {
           document.getElementById('opo-nombrePuesto').value = data.nombrePuesto || '';
           document.getElementById('opo-productoraEmpresa').value = data.productoraEmpresa || '';
@@ -471,6 +480,26 @@
         console.error('Error al cargar datos para edición:', err);
         alert('Error de conexión al cargar la oportunidad.');
       }
+    }
+
+    let mapPreviewTimeout = null;
+    function updateMapPreview(val) {
+      clearTimeout(mapPreviewTimeout);
+      const container = document.getElementById('opo-map-preview-container');
+      const iframe = document.getElementById('opo-map-preview-iframe');
+      if (!container || !iframe) return;
+
+      const query = (val || '').trim();
+      if (!query) {
+        container.classList.add('hidden');
+        iframe.src = '';
+        return;
+      }
+
+      mapPreviewTimeout = setTimeout(() => {
+        iframe.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        container.classList.remove('hidden');
+      }, 500);
     }
 
     function toggleSistemaInterno(enabled) {
@@ -516,6 +545,9 @@
 
       if (tipo === 'convocatoria_obra') {
         const switchEl = document.getElementById('opo-sistemaInterno');
+        if (!editingId && switchEl) {
+          switchEl.checked = true;
+        }
         toggleSistemaInterno(switchEl ? switchEl.checked : true);
       }
 
@@ -758,5 +790,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
+  <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
+  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=5"></script>
 </body>
 </html>

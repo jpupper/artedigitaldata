@@ -233,10 +233,16 @@
               
               <div class="mt-auto flex items-center justify-between pt-3 border-t border-white/5">
                 <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[9px] font-bold text-gray-500">
-                    ${(opo.creador?.username || '?')[0].toUpperCase()}
+                  <div class="w-6 h-6 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-bold text-cyan-400 shrink-0">
+                    ${opo.creador?.avatar 
+                      ? `<img src="${opo.creador.avatar}" alt="${opo.creador.username || ''}" class="w-full h-full object-cover">` 
+                      : (typeof GenerativeAvatar !== 'undefined' && opo.creador 
+                          ? GenerativeAvatar.markup(opo.creador, { className: 'w-full h-full object-cover' }) 
+                          : `<span>${(opo.creador?.username || '?')[0].toUpperCase()}</span>`
+                        )
+                    }
                   </div>
-                  <span class="text-xs text-gray-500 font-medium">@${opo.creador?.username || 'anónimo'}</span>
+                  <span class="text-xs text-gray-400 font-medium">@${opo.creador?.username || 'anónimo'}</span>
                 </div>
                 ${opo.tipo === 'convocatoria_obra' && opo.sistemaInterno === false ? `
                   <span class="text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
@@ -260,5 +266,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="js/ascii-shader-bg.js"></script>
   <script src="js/p5-effect.js"></script>
+  <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
+  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=5"></script>
 </body>
 </html>

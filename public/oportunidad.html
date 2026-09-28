@@ -39,12 +39,15 @@
             </div>
           </div>
           <h1 id="opo-titulo" class="text-3xl md:text-4xl font-black text-white mb-4"></h1>
-          <div class="flex items-center gap-4 text-sm text-gray-400">
-            <div class="flex items-center gap-2">
-              <div id="opo-creador-avatar" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold"></div>
-              <span id="opo-creador-nombre"></span>
+          <div class="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+            <div class="flex items-center gap-2.5">
+              <div id="opo-creador-avatar" class="w-9 h-9 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-cyan-400 shrink-0"></div>
+              <div>
+                <span class="text-[10px] uppercase font-bold text-gray-500 block leading-tight">Creado por</span>
+                <a id="opo-creador-nombre" href="#" class="text-white font-bold hover:text-cyan-400 transition-colors text-sm"></a>
+              </div>
             </div>
-            <span id="opo-fecha"></span>
+            <span id="opo-fecha" class="ml-auto text-xs text-gray-500"></span>
           </div>
         </section>
 
@@ -70,8 +73,16 @@
             </div>
 
             <div id="opo-lugar-section" class="hidden mb-6">
-              <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Lugar de Exposición</h3>
-              <p id="opo-lugarExposicion" class="text-gray-400 text-sm"></p>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <h3 class="text-sm font-bold text-gray-300"><i class="fas fa-map-marker-alt text-cyan-400 mr-2"></i>Lugar de Exposición</h3>
+                <a id="opo-map-link" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold">
+                  <span>Abrir en Google Maps</span> <i class="fas fa-external-link-alt text-[10px]"></i>
+                </a>
+              </div>
+              <p id="opo-lugarExposicion" class="text-gray-300 text-sm font-medium mb-3"></p>
+              <div id="opo-map-container" class="rounded-2xl overflow-hidden border border-white/10 bg-black/40 relative shadow-lg">
+                <iframe id="opo-map-iframe" class="w-full h-56 md:h-72 border-0" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" loading="lazy" src=""></iframe>
+              </div>
             </div>
 
             <div id="opo-fechas-section" class="hidden mb-6">
@@ -464,8 +475,23 @@
 
       // Creator
       const creador = opo.creador || {};
-      document.getElementById('opo-creador-nombre').textContent = '@' + (creador.username || 'anónimo');
-      document.getElementById('opo-creador-avatar').textContent = (creador.username || '?')[0].toUpperCase();
+      const creadorUser = creador.username || 'anónimo';
+      const nombreEl = document.getElementById('opo-creador-nombre');
+      if (nombreEl) {
+        nombreEl.textContent = `@${creadorUser}`;
+        nombreEl.href = `profile.html?user=${encodeURIComponent(creadorUser)}`;
+      }
+
+      const avatarEl = document.getElementById('opo-creador-avatar');
+      if (avatarEl) {
+        if (creador.avatar) {
+          avatarEl.innerHTML = `<img src="${creador.avatar}" alt="${creadorUser}" class="w-full h-full object-cover rounded-full">`;
+        } else if (typeof GenerativeAvatar !== 'undefined' && creador) {
+          avatarEl.innerHTML = GenerativeAvatar.markup(creador, { className: 'w-full h-full object-cover rounded-full' });
+        } else {
+          avatarEl.innerHTML = `<span class="text-cyan-400 font-bold">${(creadorUser || '?')[0].toUpperCase()}</span>`;
+        }
+      }
       document.getElementById('opo-fecha').textContent = new Date(opo.createdAt).toLocaleDateString('es-AR');
 
       // Description
@@ -489,9 +515,18 @@
           document.getElementById('opo-bases-section').classList.remove('hidden');
           document.getElementById('opo-basesCondiciones').innerHTML = typeof formatMentions === 'function' ? formatMentions(opo.basesCondiciones) : escapeHTML(opo.basesCondiciones);
         }
-        if (opo.lugarExposicion) {
+        if (opo.lugarExposicion && opo.lugarExposicion.trim()) {
+          const lugar = opo.lugarExposicion.trim();
           document.getElementById('opo-lugar-section').classList.remove('hidden');
-          document.getElementById('opo-lugarExposicion').textContent = opo.lugarExposicion;
+          document.getElementById('opo-lugarExposicion').textContent = lugar;
+
+          const mapQuery = encodeURIComponent(lugar);
+          const mapLink = document.getElementById('opo-map-link');
+          if (mapLink) mapLink.href = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+          const mapIframe = document.getElementById('opo-map-iframe');
+          if (mapIframe) mapIframe.src = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        } else {
+          document.getElementById('opo-lugar-section').classList.add('hidden');
         }
         if (opo.fechaDesde || opo.fechaHasta) {
           document.getElementById('opo-fechas-section').classList.remove('hidden');
@@ -1080,5 +1115,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="js/ascii-shader-bg.js"></script>
   <script src="js/p5-effect.js"></script>
+  <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
+  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=5"></script>
 </body>
 </html>
