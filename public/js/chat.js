@@ -12,7 +12,7 @@ if (!isLoggedIn()) {
 document.addEventListener('DOMContentLoaded', async () => {
   if (!isLoggedIn()) return;
 
-  socket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH });
+  socket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH, auth: { token: localStorage.getItem('artedigitaldata_token') || '' } });
 
   socket.on('newMessage', (msg) => {
     if (msg.room === currentRoomId) {

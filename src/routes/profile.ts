@@ -135,12 +135,12 @@ router.get('/me/export', authMiddleware, async (req: AuthRequest, res: Response)
     const user = await User.findById(userId).select('-password');
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    const posts = await Post.find({ author: userId });
-    const recursos = await Recurso.find({ author: userId });
-    const eventos = await Evento.find({ creator: userId });
-    const oportunidades = await Oportunidad.find({ creador: userId });
-    const visualeffects = await VisualEffect.find({ author: userId });
-    const tickets = await Ticket.find({ user: userId });
+    const posts = await Post.find({ author: userId }).limit(5000);
+    const recursos = await Recurso.find({ author: userId }).limit(5000);
+    const eventos = await Evento.find({ creator: userId }).limit(5000);
+    const oportunidades = await Oportunidad.find({ creador: userId }).limit(5000);
+    const visualeffects = await VisualEffect.find({ author: userId }).limit(5000);
+    const tickets = await Ticket.find({ user: userId }).limit(5000);
 
     const exportData = {
       exportMetadata: {

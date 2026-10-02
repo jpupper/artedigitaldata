@@ -513,7 +513,7 @@
     if (!u) return;
 
     try {
-      floatSocket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH });
+      floatSocket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH, auth: { token: localStorage.getItem('artedigitaldata_token') || '' } });
 
       floatSocket.on('connect', () => {
         const uid = u.id || u._id;

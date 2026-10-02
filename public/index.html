@@ -335,7 +335,12 @@
         <button onclick="toggleHumanAI()" id="filter-human-ai" class="w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0" title="Mostrando contenido Humano (Click para cambiar a IA)">
           <i class="fas fa-user text-sm"></i>
         </button>
+        <button onclick="toggleExternalData()" id="filter-external" class="h-9 px-3.5 rounded-xl border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2 transition-all hover:border-cyan-500/50 hover:bg-white/10 shrink-0" title="Data Externa: sumar al feed las creaciones del resto de las apps del ecosistema (apagado por defecto)">
+          <span id="filter-external-knob" class="w-3.5 h-3.5 rounded-full bg-gray-600 transition-all"></span>
+          <span class="text-[10px] font-black uppercase tracking-widest">Data Externa</span>
+        </button>
       </div>
+      <p id="external-status" class="hidden text-[11px] font-bold text-cyan-400 mb-4"></p>
       <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center text-gray-500 py-20">
           <i class="fas fa-spinner fa-spin text-3xl text-orange-400 mb-4"></i>
@@ -351,6 +356,7 @@
   <script src="js/p5-effect.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/external-data.js"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="js/notifications.js"></script>
   <script>

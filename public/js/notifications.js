@@ -10,7 +10,7 @@ function initNotifications() {
   const user = getUser();
   if (!user || !(user.id || user._id)) return;
 
-  notificationSocket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH });
+  notificationSocket = io(CONFIG.SOCKET_URL, { path: CONFIG.SOCKET_PATH, auth: { token: localStorage.getItem('artedigitaldata_token') || '' } });
 
   notificationSocket.on('connect', () => {
     const userId = user.id || user._id;

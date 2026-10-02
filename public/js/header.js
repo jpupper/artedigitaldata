@@ -15,7 +15,7 @@ function renderHeader() {
 
         <!-- Colaborar Button -->
         <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase mr-1 shrink-0 whitespace-nowrap">
-          <i class="fas fa-heart text-yellow-500"></i> COLABORAR
+          COLABORAR
         </button>
 
         <!-- Trophy Button -->
@@ -26,40 +26,40 @@ function renderHeader() {
         <!-- Desktop Nav -->
         <nav class="hidden lg:flex items-center gap-0.5 shrink-0 flex-nowrap">
           <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-home text-[10px]"></i> INICIO
+            INICIO
           </a>
           <a href="${CONFIG.BASE}/quienessomos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-info-circle text-[10px]"></i> QUIENES SOMOS
+            QUIENES SOMOS
           </a>
           <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-palette text-[10px]"></i> OBRAS
+            OBRAS
           </a>
           <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-box-open text-[10px]"></i> RECURSOS
+            RECURSOS
           </a>
           <a href="${CONFIG.BASE}/oportunidades.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-emerald)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-briefcase text-[10px]"></i> CHANCES
+            CHANCES
           </a>
           <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-search text-[10px]"></i> BUSCAR
+            BUSCAR
           </a>
           <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-calendar-alt text-[10px]"></i> CALENDARIO
+            CALENDARIO
           </a>
           <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-users text-[10px]"></i> ARTISTAS
+            ARTISTAS
           </a>
           <a href="${CONFIG.BASE}/visualeffects.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap" title="Efecto de Partículas y Letras">
-            <i class="fas fa-magic text-[10px]"></i> EFFECT
+            EFFECT
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
-            <i class="fas fa-comments text-[10px]"></i> CHAT
+            CHAT
           </a>
           ` : ''}
           ${admin ? `
           <a href="${CONFIG.BASE}/admin.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30 ml-1 whitespace-nowrap">
-            <i class="fas fa-shield-alt text-[9px]"></i> Admin
+            Admin
           </a>
           ` : ''}
         </nav>
@@ -68,7 +68,7 @@ function renderHeader() {
         <div class="hidden md:flex items-center gap-3 shrink-0">
           ${loggedIn ? `
             <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1 whitespace-nowrap">
-              <i class="fas fa-plus-circle text-xs"></i> CREAR
+              CREAR
             </a>
             <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" id="header-notif-btn" class="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all text-xs font-bold shrink-0" title="Ver Notificaciones">
               <i class="fas fa-bell text-xs"></i>
@@ -106,43 +106,43 @@ function renderHeader() {
       <div id="mobile-menu" class="md:hidden hidden pb-4 border-t border-white/10 mt-2 pt-3">
         <div class="flex flex-col gap-1">
           <a href="${CONFIG.BASE}/" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-home mr-2"></i> INICIO
+            INICIO
           </a>
           <a href="${CONFIG.BASE}/quienessomos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-info-circle mr-2"></i> QUIENES SOMOS
+            QUIENES SOMOS
           </a>
           <a href="${CONFIG.BASE}/obras.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-palette mr-2"></i> OBRAS
+            OBRAS
           </a>
           <a href="${CONFIG.BASE}/recursos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-box-open mr-2"></i> RECURSOS
+            RECURSOS
           </a>
           <a href="${CONFIG.BASE}/oportunidades.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-emerald)] hover:bg-white/5">
-            <i class="fas fa-briefcase mr-2"></i> CHANCES
+            CHANCES
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/create.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 border border-white/10">
-            <i class="fas fa-plus-circle mr-2"></i> CREAR
+            CREAR
           </a>
           ` : ''}
           <a href="${CONFIG.BASE}/search.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-search mr-2"></i> BUSCAR
+            BUSCAR
           </a>
           <a href="${CONFIG.BASE}/calendario.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-calendar-alt mr-2"></i> CALENDARIO
+            CALENDARIO
           </a>
           <a href="${CONFIG.BASE}/artistas.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
-            <i class="fas fa-users mr-2"></i> ARTISTAS
+            ARTISTAS
           </a>
           <a href="${CONFIG.BASE}/visualeffects.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            <i class="fas fa-magic mr-2"></i> EFFECT
+            EFFECT
           </a>
           ${loggedIn ? `
           <a href="${CONFIG.BASE}/chat.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
-            <i class="fas fa-comments mr-2"></i> CHAT
+            CHAT
           </a>
           <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" class="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20">
-            <span class="flex items-center"><i class="fas fa-bell mr-2"></i> NOTIFICACIONES</span>
+            <span class="flex items-center">NOTIFICACIONES</span>
             <span id="mobile-notif-badge" class="hidden min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">0</span>
           </a>
           <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
@@ -154,13 +154,13 @@ function renderHeader() {
           ` : ''}
           ${admin ? `
           <a href="${CONFIG.BASE}/admin.html" class="px-4 py-3 rounded-lg text-sm font-medium text-[var(--color-cyan)] hover:bg-cyan-500/10 border border-cyan-500/30">
-            <i class="fas fa-shield-alt mr-2"></i> Admin
+            Admin
           </a>
           ` : ''}
           <hr class="border-white/10 my-2">
           ${loggedIn ? `
             <button onclick="logout()" class="px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 text-left w-full">
-              <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+              Cerrar Sesión
             </button>
           ` : `
             <button onclick="showLogin()" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 text-left w-full">
@@ -171,7 +171,7 @@ function renderHeader() {
             </button>
           `}
           <button onclick="showDonationModal()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 hover:bg-yellow-500/5 mt-2 border border-yellow-500/10">
-            <i class="fas fa-heart text-yellow-500"></i> COLABORAR
+            COLABORAR
           </button>
         </div>
       </div>

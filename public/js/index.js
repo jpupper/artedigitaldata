@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>`;
   }
   await Promise.all([loadPinnedEvents(), loadFeed()]);
+  paintExternalSwitch();
+  if (window.ExternalData && ExternalData.enabled() && ExternalData.canUse()) {
+    await loadExternal();
+  }
 });
 
 async function loadPinnedEvents() {
@@ -177,6 +181,13 @@ let allFeedItems = [];
 let activeFilters = { post: true, recurso: true, evento: true, oportunidad: true };
 let showBotsOnly = false;
 
+// ── Data Externa ─────────────────────────────────────────────────────────────
+// Internal = lo que vive en la base de datos de artedigitaldata (allFeedItems).
+// External = las creaciones del MISMO usuario en el resto del ecosistema FSC,
+// indexadas con el fan-out de fscauth. El switch arranca APAGADO.
+let externalApps = [];
+let externalItems = [];
+
 function toggleHumanAI() {
   showBotsOnly = !showBotsOnly;
   const btn = document.getElementById('filter-human-ai');
@@ -280,7 +291,12 @@ function renderFeed() {
       return hasAutobotTag;
     });
 
-  if (!filtered.length) {
+  // Data Externa: se mezclan las creaciones del resto del ecosistema con el feed propio.
+  // En modo IA (solo bots) no aplica: lo externo es contenido humano de otras apps.
+  const mixExt = (window.ExternalData && ExternalData.enabled() && !showBotsOnly) ? externalItems : [];
+  const mixed = interleave(filtered, mixExt);
+
+  if (!mixed.length) {
     container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20 px-8 bg-white/5 rounded-3xl border border-dashed border-white/10">
       <i class="fas fa-search text-4xl mb-4 opacity-20"></i>
       <p class="text-xl">No hay publicaciones para los filtros seleccionados</p>
@@ -288,7 +304,8 @@ function renderFeed() {
     return;
   }
 
-  container.innerHTML = filtered.map(item => {
+  container.innerHTML = mixed.map(item => {
+    if (item.feedType === 'externo') return renderExternalCard(item);
     const type = item.feedType;
     const isPost = type === 'post';
     const isRecurso = type === 'recurso';
@@ -422,3 +439,114 @@ async function toggleFeedLike(event, id, type) {
   }
 }
 
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DATA EXTERNA (Internal vs External)
+//  Internal = artedigitaldata (allFeedItems). External = el resto del
+//  ecosistema FSC, indexado por fscauth. Switch apagado por defecto.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Reparte los items externos entre los propios para que queden mezclados
+// (el índice de fscauth no expone fechas, así que no hay orden cronológico).
+function interleave(own, ext) {
+  if (!ext.length) return own;
+  if (!own.length) return ext;
+  const out = [];
+  const n = own.length, m = ext.length;
+  let ei = 0;
+  for (let i = 0; i < n; i++) {
+    out.push(own[i]);
+    const target = Math.round(((i + 1) / (n + 1)) * m);
+    while (ei < target && ei < m) out.push(ext[ei++]);
+  }
+  while (ei < m) out.push(ext[ei++]);
+  return out;
+}
+
+function renderExternalCard(item) {
+  const label = escapeHTML(item.appLabel || item.app || 'App');
+  const typeLabel = escapeHTML(item.typeLabel || '');
+  const url = sanitizeUrl(item.url);
+  const open = url ? `onclick="window.open('${url}','_blank','noopener')" class="cursor-pointer"` : '';
+  return `
+      <div class="group rounded-[2rem] overflow-hidden border border-cyan-500/20 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-cyan-400/50 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
+        <div class="p-6 flex-1 flex flex-col">
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <span class="px-3 py-1 rounded-full text-[10px] font-black border border-cyan-500/30 bg-black/60 text-cyan-300 uppercase tracking-widest">Externa</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 truncate">${label}</span>
+          </div>
+          <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-cyan-300 transition-colors line-clamp-2" ${open}>
+            ${escapeHTML(item.title)}
+          </h3>
+          ${typeLabel ? `<p class="text-xs text-gray-500 uppercase tracking-widest font-bold">${typeLabel}</p>` : ''}
+          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between gap-3">
+            <span class="text-[10px] text-gray-500 truncate">Creado en <span class="text-gray-300 font-bold">${label}</span></span>
+            ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-all whitespace-nowrap">Abrir</a>` : ''}
+          </div>
+        </div>
+      </div>`;
+}
+
+function showExternalStatus(msg, kind) {
+  const el = document.getElementById('external-status');
+  if (!el) return;
+  if (!msg) { el.textContent = ''; el.classList.add('hidden'); return; }
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  el.className = (kind === 'warn' ? 'text-red-400' : 'text-cyan-400') + ' text-[11px] font-bold mb-4';
+}
+
+function paintExternalSwitch() {
+  const btn = document.getElementById('filter-external');
+  const knob = document.getElementById('filter-external-knob');
+  if (!btn || !knob) return;
+  const on = window.ExternalData && ExternalData.enabled();
+  const usable = window.ExternalData && ExternalData.canUse();
+  btn.className = on
+    ? 'h-9 px-3.5 rounded-xl border border-cyan-500/60 bg-cyan-500/20 text-cyan-300 flex items-center gap-2 transition-all hover:border-cyan-400 shrink-0 shadow-[0_0_15px_rgba(34,211,238,0.25)]'
+    : 'h-9 px-3.5 rounded-xl border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2 transition-all hover:border-cyan-500/50 hover:bg-white/10 shrink-0';
+  knob.className = on
+    ? 'w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] transition-all'
+    : 'w-3.5 h-3.5 rounded-full bg-gray-600 transition-all';
+  btn.title = on
+    ? (usable ? 'Data Externa ACTIVADA: el feed incluye tus creaciones del resto del ecosistema' : 'Iniciá sesión para ver tus datos externos del ecosistema')
+    : 'Data Externa: sumar al feed las creaciones del resto de las apps del ecosistema (apagado por defecto)';
+}
+
+async function toggleExternalData() {
+  if (!window.ExternalData) return;
+  if (ExternalData.enabled()) {
+    ExternalData.setEnabled(false);
+    externalApps = [];
+    externalItems = [];
+    showExternalStatus('');
+    paintExternalSwitch();
+    renderFeed();
+    return;
+  }
+  if (!ExternalData.canUse()) {
+    showExternalStatus('Iniciá sesión para indexar tus creaciones del resto del ecosistema.', 'warn');
+    return;
+  }
+  ExternalData.setEnabled(true);
+  paintExternalSwitch();
+  await loadExternal();
+}
+
+async function loadExternal() {
+  showExternalStatus('Indexando el resto del ecosistema...');
+  try {
+    externalApps = await ExternalData.fetchApps();
+    externalItems = ExternalData.flatten(externalApps).map(it => ({ ...it, feedType: 'externo' }));
+    const ok = externalApps.filter(a => a.ok).length;
+    showExternalStatus(externalItems.length
+      ? `${externalItems.length} creación(es) de ${ok} app(s) del ecosistema sumadas al feed.`
+      : 'Todavía no hay creaciones tuyas en el resto de las apps.');
+  } catch (err) {
+    externalApps = [];
+    externalItems = [];
+    showExternalStatus(err.message || 'No se pudo indexar el ecosistema.', 'warn');
+  }
+  renderFeed();
+}
