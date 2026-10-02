@@ -1,16 +1,16 @@
 ---
 name: art-social-architecture-v3
-description: Arquitectura completa para la Red Social de Arte Digital: TS, MongoDB, Cloudinary, VPS y Ferozo.
+description: Arquitectura completa para la Red Social de Arte Digital: TS, MongoDB, Cloudflare R2, VPS y Ferozo.
 ---
 
 # Arquitectura de Sistema - Red Social de Arte Digital
 
 ## 1. Stack Tecnológico (Tecnologías Específicas)
 
-* **Lenguaje:** **TypeScript** (Indispensable para manejar los modelos de datos de usuarios, posts y la API de Cloudinary con seguridad).
+* **Lenguaje:** **TypeScript** (Indispensable para manejar los modelos de datos de usuarios, posts y la subida a Cloudflare R2 con seguridad).
 * **Backend:** Node.js + Express (Escrito en TS, ejecutado como JS).
 * **Base de Datos:** **MongoDB** (Almacena el "esqueleto": usuarios, likes, comentarios y URLs).
-* **Media Storage:** **Cloudinary** (Almacena el "cuerpo": archivos binarios de arte, videos y avatars).
+* **Media Storage:** **Cloudflare R2** (Almacena el "cuerpo": archivos binarios de arte, videos y avatars). Bucket compartido del ecosistema FSC: `fscapps`, prefijo `artedigitaldata/<subcarpeta>/`. Cloudinary quedó **descontinuado** (01-Oct-2026).
 * **Real-time:** Socket.io (Para notificaciones y actividad social en vivo).
 * **Frontend:** Vanilla JS/TS compilado, servido de forma estática.
 
@@ -34,7 +34,7 @@ description: Arquitectura completa para la Red Social de Arte Digital: TS, Mongo
 
 ### B. VPS (Producción - El Cerebro)
 - **URL:** `https://vps-4455523-x.dattaweb.com/artedigitaldata/`
-- **Función:** Ejecuta el `server.js` (Node+Express). Gestiona la base de datos y la subida a Cloudinary.
+- **Función:** Ejecuta el `server.js` (Node+Express). Gestiona la base de datos y la subida a Cloudflare R2.
 - **IP:** `149.50.139.152` (SSH puerto `5752`).
 
 ### C. fullscreencode.com (Producción - Espejo Estático)
@@ -131,7 +131,7 @@ app.use((_req, res, next) => {
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com; " +
     "img-src * data: blob: ; " +
-    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://*.cloudinary.com https://cdn.socket.io;"
+    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://*.cloudflarestorage.com https://pub-6289669d41aa4adc9b90385dbd269b1f.r2.dev https://cdn.socket.io;"
   );
   next();
 });
@@ -146,7 +146,7 @@ Esta es la lógica que debés seguir para programar nuevas funcionalidades:
 1.  **Frontend (Vanilla + Config.js):**
     - Todo `fetch` o `axios` debe usar `CONFIG.API_URL + '/endpoint'`.
     - Nunca escribas la URL del VPS a fuego en los archivos `.html` o `.js`.
-    - Las imágenes subidas siempre vendrán de la URL que devuelve Cloudinary.
+    - Las imágenes subidas vienen de la URL pública de Cloudflare R2 (`R2_PUBLIC_URL`, p. ej. `https://pub-6289669d41aa4adc9b90385dbd269b1f.r2.dev/artedigitaldata/...`). El binario **nunca** se guarda en el disco del VPS ni en base64 dentro del documento.
 
 2.  **Backend (Express + TS):**
     - Los controladores en `src/routes/` deben devolver siempre JSON.
@@ -173,4 +173,4 @@ if (mongoose.models['User']) {
     userModel = mongoose.model('User', UserSchema);
 }
 // Esto asegura que ChatRoom.find().populate('creator') NO tire un Error 500.
-```
+```

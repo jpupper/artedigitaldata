@@ -8,7 +8,13 @@ import { uploadToR2 } from '../utils/r2';
 
 const router = Router();
 
-const FSCAUTH_URL = process.env.FSC_AUTH_API || 'http://localhost:3027/fscauth';
+// FSC_AUTH_API puede venir con o sin el sufijo /api (según el .env de cada app).
+// Normalizamos para que este helper funcione en los dos casos (bug real: el doble /api
+// hacía POST a /fscauth/api/api/assets/register → 404 HTML, y el error se tragaba).
+const FSCAUTH_BASE = (process.env.FSC_AUTH_API || 'http://localhost:3027/fscauth/api')
+  .replace(/\/+$/, '')
+  .replace(/\/api$/, '');
+const FSCAUTH_URL = `${FSCAUTH_BASE}/api`;
 
 function getSubfolder(req: any): string {
   const referer = req.headers.referer || '';
@@ -80,24 +86,30 @@ router.post('/', authMiddleware, upload.single('file'), async (req: AuthRequest,
     // Registrar imagen en FSCAUTH para el panel central
     try {
       const authHeader = req.headers.authorization;
-      if (authHeader) {
-        const registerRes = await fetch(`${FSCAUTH_URL}/api/assets/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader
-          },
-          body: JSON.stringify({
-            application: 'artedigitaldata',
-            publicId,
-            url: absoluteUrl,
-            originalName: req.file.originalname,
-            mimetype: req.file.mimetype,
-            size: processedBuffer.length
-          })
-        });
+      const internalKey = process.env.FSC_INTERNAL_KEY || process.env.JWT_SECRET || '';
+      const registerRes = await fetch(`${FSCAUTH_URL}/assets/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fsc-internal': internalKey,
+          ...(authHeader ? { Authorization: authHeader } : {})
+        },
+        body: JSON.stringify({
+          application: 'artedigitaldata',
+          publicId,
+          url: absoluteUrl,
+          originalName: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: processedBuffer.length,
+          username: req.user && (req.user as any).username
+        })
+      });
+      if (!registerRes.ok) {
+        const body = await registerRes.text();
+        console.warn(`[UPLOAD] FSCAUTH register HTTP ${registerRes.status} en ${FSCAUTH_URL}/assets/register: ${body.slice(0, 160)}`);
+      } else {
         const registerData: any = await registerRes.json();
-        console.log(`[UPLOAD] Asset registrado en FSCAUTH: ${registerData.success ? 'OK' : 'FAILED'}`);
+        console.log(`[UPLOAD] Asset registrado en FSCAUTH: ${registerData.success ? 'OK' : 'FAILED'} (${publicId})`);
       }
     } catch (regErr) {
       console.warn('[UPLOAD] Error registrando en FSCAUTH (no crítico):', regErr);

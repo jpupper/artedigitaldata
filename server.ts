@@ -116,7 +116,7 @@ app.use((_req, res, next) => {
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
     "img-src * data: blob: ; " +
     "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; " +
-    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://www.artedigitaldata.com https://*.cloudinary.com https://cdn.socket.io;"
+    "connect-src 'self' ws: wss: https://vps-4455523-x.dattaweb.com https://fullscreencode.com https://artedigitaldata.com https://www.artedigitaldata.com https://*.cloudflarestorage.com https://pub-6289669d41aa4adc9b90385dbd269b1f.r2.dev https://cdn.socket.io;"
   );
   next();
 });

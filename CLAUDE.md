@@ -248,11 +248,12 @@ notifyUser(userId, 'newNotification', data);  // emite a room user_{userId}
 
 ## Upload de archivos
 
-- Endpoint: `POST /upload` con `multipart/form-data`, campo `file`
-- Guarda en `/img/uploads/{subfolder}/` (subfolders: profiles, recursos, eventos, posts, general)
-- Devuelve `{ url: "https://vps.../artedigitaldata/img/uploads/..." }`
-- Tamaño máximo: 10 MB
-- **Cloudinary está en package.json pero NO se usa** — el upload actual es a disco local
+- Endpoint: `POST /api/upload` con `multipart/form-data`, campo `file` (multer `memoryStorage`, 10 MB máx.)
+- Procesa con `sharp` (rotate/crop) y sube a **Cloudflare R2** vía `uploadToR2()` (`src/utils/r2.ts`) → key `artedigitaldata/<subfolder>/<timestamp>_<uuid>.<ext>` (subfolders: profiles, recursos, eventos, posts, general)
+- Devuelve `{ url, public_id }` donde `url` = `R2_PUBLIC_URL + '/' + key` (p. ej. `https://pub-6289669d41aa4adc9b90385dbd269b1f.r2.dev/...`)
+- Después del upload registra el asset en fscauth (`POST {FSC_AUTH_API}/assets/register` con `x-fsc-internal`) para que aparezca en `/fscauth/admin`
+- **`cloudinary` y `multer-storage-cloudinary` siguen en `package.json` pero NO se usan** — pendiente sacarlos
+- ⚠️ `ecosystem.config.js` tiene las credenciales `R2_*` / `CLOUDFLARE_ACCOUNT_ID` hardcodeadas: hay que pasarlas al `.env` (que es gitignored) y dejar el `ecosystem.config.js` sin secretos
 
 ---
 
