@@ -278,7 +278,6 @@
           <div class="moon-unit moon-north">
             <div class="moon-counter">
               <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active moon-pill">
-                <i class="fas fa-palette text-xs shrink-0"></i>
                 <span>Obras</span>
               </button>
             </div>
@@ -288,7 +287,6 @@
           <div class="moon-unit moon-east">
             <div class="moon-counter">
               <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active moon-pill">
-                <i class="fas fa-briefcase text-xs shrink-0"></i>
                 <span>Chances</span>
               </button>
             </div>
@@ -298,7 +296,6 @@
           <div class="moon-unit moon-south">
             <div class="moon-counter">
               <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active moon-pill">
-                <i class="fas fa-calendar-alt text-xs shrink-0"></i>
                 <span>Eventos</span>
               </button>
             </div>
@@ -308,7 +305,6 @@
           <div class="moon-unit moon-west">
             <div class="moon-counter">
               <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active moon-pill">
-                <i class="fas fa-box-open text-xs shrink-0"></i>
                 <span>Recursos</span>
               </button>
             </div>
@@ -324,7 +320,7 @@
     <!-- Pinned Events Section -->
     <section id="pinned-section" class="mb-12 hidden">
       <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
-        <i class="fas fa-thumbtack animated-violet-pin mr-2.5"></i>Contenido Destacado
+        Contenido Destacado
       </h2>
       <div id="pinned-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </section>
@@ -332,8 +328,8 @@
     <!-- Feed -->
     <section>
       <div class="flex items-center gap-3 mb-6">
-        <button onclick="toggleHumanAI()" id="filter-human-ai" class="w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0" title="Mostrando contenido Humano (Click para cambiar a IA)">
-          <i class="fas fa-user text-sm"></i>
+        <button onclick="toggleHumanAI()" id="filter-human-ai" class="h-9 px-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:border-emerald-500 shrink-0" title="Mostrando contenido Humano (Click para cambiar a IA)">
+          <span class="text-[10px] font-black uppercase tracking-widest">Humano</span>
         </button>
         <button onclick="toggleExternalData()" id="filter-external" class="h-9 px-3.5 rounded-xl border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2 transition-all hover:border-cyan-500/50 hover:bg-white/10 shrink-0" title="Data Externa: sumar al feed las creaciones del resto de las apps del ecosistema (apagado por defecto)">
           <span id="filter-external-knob" class="w-3.5 h-3.5 rounded-full bg-gray-600 transition-all"></span>
@@ -535,7 +531,7 @@
   <script src="js/tagging.js"></script>
   <script src="js/forms.js"></script>
   <script src="js/image-cropper.js"></script>
-  <script src="js/index.js"></script>
+  <script src="js/index.js?v=2"></script>
   <!-- 🔘 Botón universal FSC: lleva al pasaporte de usuario (fscauth) -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
 </body>

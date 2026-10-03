@@ -193,12 +193,12 @@ function toggleHumanAI() {
   const btn = document.getElementById('filter-human-ai');
   if (btn) {
     if (showBotsOnly) {
-      btn.innerHTML = '<i class="fas fa-robot text-sm"></i>';
-      btn.className = 'w-9 h-9 rounded-xl border border-purple-500/40 bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all hover:scale-105 hover:border-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0';
+      btn.innerHTML = '<span class="text-[10px] font-black uppercase tracking-widest">IA</span>';
+      btn.className = 'h-9 px-3.5 rounded-xl border border-purple-500/40 bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all hover:border-purple-500 shrink-0';
       btn.title = 'Mostrando contenido IA (Click para cambiar a Humanos)';
     } else {
-      btn.innerHTML = '<i class="fas fa-user text-sm"></i>';
-      btn.className = 'w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0';
+      btn.innerHTML = '<span class="text-[10px] font-black uppercase tracking-widest">Humano</span>';
+      btn.className = 'h-9 px-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:border-emerald-500 shrink-0';
       btn.title = 'Mostrando contenido Humano (Click para cambiar a IA)';
     }
   }
