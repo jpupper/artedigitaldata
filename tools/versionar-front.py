@@ -9,7 +9,7 @@ from pathlib import Path
 
 PUB = Path(__file__).resolve().parent.parent / "public"
 V = "4"
-OBJETIVOS = ["js/header.js", "js/index.js", "js/external-data.js", "css/fsc-ui.css"]
+OBJETIVOS = ["js/header.js", "js/auth.js", "js/index.js", "js/external-data.js", "css/fsc-ui.css"]
 
 total = 0
 for html in sorted(PUB.glob("*.html")):

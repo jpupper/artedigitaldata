@@ -48,43 +48,60 @@ function logout() {
   window.location.href = CONFIG.BASE + '/';
 }
 
+// ── Sesión de FSCAUTH vencida ───────────────────────────────────────────────
+// El login del ecosistema lo emite fscauth y dura 7 días; si el token venció (o
+// se rotó el JWT_SECRET, que invalida TODOS los tokens viejos), la app se quedaba
+// en silencio: 401 → logout() → home, sin formulario, sin pista, y el botón
+// "Iniciar Sesión" tampoco llevaba a ningún lado porque cortaba con isLoggedIn().
+// Ahora: se limpia el token muerto y se va al FORMULARIO con retorno a esta página.
+function urlLoginFsc(aviso) {
+  const redirectUrl = new URL(window.location.origin + window.location.pathname);
+  redirectUrl.searchParams.delete('token');
+  redirectUrl.searchParams.delete('username');
+  redirectUrl.searchParams.delete('userId');
+  return `${CONFIG.FSCAUTH_URL}/login.html?redirect=${encodeURIComponent(redirectUrl.toString())}&origin=artedigitaldata${aviso ? '&aviso=' + aviso : ''}`;
+}
+
+let __yendoALogin = false;
+function irALoginPorSesionVencida() {
+  if (__yendoALogin) return;
+  const paginas = /login\.html|register\.html|reset-password\.html|forgot-password\.html/;
+  if (paginas.test(window.location.pathname)) return;
+  __yendoALogin = true;
+  removeToken();
+  removeUser();
+  let intentos = 0;
+  try {
+    intentos = Number(sessionStorage.getItem('add_login_intentos') || '0') + 1;
+    sessionStorage.setItem('add_login_intentos', String(intentos));
+    sessionStorage.setItem('add_sesion_vencida', '1');
+  } catch (e) { /* modo privado: seguimos */ }
+  // Corte anti-loop: si ya rebotamos una vez, no se insiste (evita el ping-pong
+  // con el login cuando el navegador bloquea el retorno).
+  if (intentos > 1) { window.location.href = CONFIG.BASE + '/'; return; }
+  window.location.href = urlLoginFsc('vencida');
+}
+
 // Centralized Redirection logic
 function showLogin() {
     // If we already have a token in URL, don't redirect (let the loader handle it)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('token')) return;
-
-    if (isLoggedIn()) {
-        window.location.href = CONFIG.BASE + '/';
-        return;
-    }
-
-    const currentUrl = window.location.href;
-    // Ensure the redirect URL doesn't have existing auth params
-    const redirectUrl = new URL(currentUrl);
-    redirectUrl.searchParams.delete('token');
-    redirectUrl.searchParams.delete('username');
-    redirectUrl.searchParams.delete('userId');
-
-    window.location.href = `${CONFIG.FSCAUTH_URL}/login.html?redirect=${encodeURIComponent(redirectUrl.toString())}&origin=artedigitaldata`;
+    // OJO: acá NO se corta con isLoggedIn(). Un token viejo (vencido o firmado con
+    // el secreto anterior) hacía que el botón "Iniciar Sesión" mandara al inicio sin
+    // formulario => el usuario no podía volver a entrar nunca.
+    window.location.href = urlLoginFsc();
 }
 
 function showRegister() {
     // If we already have a token in URL, don't redirect
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('token')) return;
-
-    if (isLoggedIn()) {
-        window.location.href = CONFIG.BASE + '/';
-        return;
-    }
-
-    const currentUrl = window.location.href;
-    const redirectUrl = new URL(currentUrl);
+    // Igual que showLogin(): un token viejo no debe encerrar al usuario en el inicio.
+    const redirectUrl = new URL(window.location.origin + window.location.pathname);
     redirectUrl.searchParams.delete('token');
     redirectUrl.searchParams.delete('username');
     redirectUrl.searchParams.delete('userId');
-
     window.location.href = `${CONFIG.FSCAUTH_URL}/register.html?redirect=${encodeURIComponent(redirectUrl.toString())}&origin=artedigitaldata`;
 }
 
@@ -155,6 +172,11 @@ async function syncSession() {
     if (urlToken && urlUsername) {
         setToken(urlToken);
         setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
+        // Volvimos bien del login: se resetean los contadores del rebote por sesión vencida.
+        try {
+            sessionStorage.removeItem('add_login_intentos');
+            sessionStorage.removeItem('add_sesion_vencida');
+        } catch (e) {}
         
         // Limpiar URL sin recargar
         urlParams.delete('token');
@@ -228,7 +250,10 @@ async function apiRequest(endpoint, options = {}) {
 
   const res = await fetch(CONFIG.API_URL + endpoint, { ...options, headers });
   if (res.status === 401) {
-    logout();
+    // 401 (no 403: eso es permiso, no sesión muerta) + creíamos estar logueados
+    // = el token venció o se rotó el JWT_SECRET. Se limpia y se vuelve al login
+    // con retorno, en vez de dejar al usuario en el inicio sin explicación.
+    if (token) irALoginPorSesionVencida();
     return null;
   }
   return res;
