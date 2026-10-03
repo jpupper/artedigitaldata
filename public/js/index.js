@@ -187,18 +187,20 @@ let showBotsOnly = false;
 // indexadas con el fan-out de fscauth. El switch arranca APAGADO.
 let externalApps = [];
 let externalItems = [];
+let externalCatalog = { apps: [], types: [] };   // QUÉ app y QUÉ tipo (lo manda el backend)
+let externalFilter = { app: 'all', type: 'all' }; // filtros activos del feed externo
 
 function toggleHumanAI() {
   showBotsOnly = !showBotsOnly;
   const btn = document.getElementById('filter-human-ai');
   if (btn) {
     if (showBotsOnly) {
-      btn.innerHTML = '<span class="text-[10px] font-black uppercase tracking-widest">IA</span>';
-      btn.className = 'h-9 px-3.5 rounded-xl border border-purple-500/40 bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all hover:border-purple-500 shrink-0';
+      btn.innerHTML = '<i class="fas fa-robot text-sm"></i>';
+      btn.className = 'w-9 h-9 rounded-xl border border-purple-500/40 bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all hover:scale-105 hover:border-purple-500 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0';
       btn.title = 'Mostrando contenido IA (Click para cambiar a Humanos)';
     } else {
-      btn.innerHTML = '<span class="text-[10px] font-black uppercase tracking-widest">Humano</span>';
-      btn.className = 'h-9 px-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:border-emerald-500 shrink-0';
+      btn.innerHTML = '<i class="fas fa-user text-sm"></i>';
+      btn.className = 'w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0';
       btn.title = 'Mostrando contenido Humano (Click para cambiar a IA)';
     }
   }
@@ -293,7 +295,7 @@ function renderFeed() {
 
   // Data Externa: se mezclan las creaciones del resto del ecosistema con el feed propio.
   // En modo IA (solo bots) no aplica: lo externo es contenido humano de otras apps.
-  const mixExt = (window.ExternalData && ExternalData.enabled() && !showBotsOnly) ? externalItems : [];
+  const mixExt = (window.ExternalData && ExternalData.enabled() && !showBotsOnly) ? filteredExternal() : [];
   const mixed = interleave(filtered, mixExt);
 
   if (!mixed.length) {
@@ -469,8 +471,15 @@ function renderExternalCard(item) {
   const typeLabel = escapeHTML(item.typeLabel || '');
   const url = sanitizeUrl(item.url);
   const open = url ? `onclick="window.open('${url}','_blank','noopener')" class="cursor-pointer"` : '';
+  const img = sanitizeUrl(item.image);
+  const media = img
+    ? `<a href="${url || img}" target="_blank" rel="noopener noreferrer" class="block relative overflow-hidden bg-black/40" style="aspect-ratio:16/10">
+         <img src="${img}" alt="${escapeHTML(item.title)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onerror="this.parentElement.style.display='none'">
+       </a>`
+    : '';
   return `
       <div class="group rounded-[2rem] overflow-hidden border border-cyan-500/20 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-cyan-400/50 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
+        ${media}
         <div class="p-6 flex-1 flex flex-col">
           <div class="flex items-center justify-between gap-2 mb-4">
             <span class="px-3 py-1 rounded-full text-[10px] font-black border border-cyan-500/30 bg-black/60 text-cyan-300 uppercase tracking-widest">Externa</span>
@@ -486,6 +495,55 @@ function renderExternalCard(item) {
           </div>
         </div>
       </div>`;
+}
+
+// Items externos que pasan los filtros elegidos (app + tipo).
+function filteredExternal() {
+  return externalItems.filter(it =>
+    (externalFilter.app === 'all' || it.app === externalFilter.app) &&
+    (externalFilter.type === 'all' || it.type === externalFilter.type));
+}
+
+function setExternalFilter(kind, id) {
+  externalFilter[kind] = (externalFilter[kind] === id && id !== 'all') ? 'all' : id;
+  renderExternalFilters();
+  renderFeed();
+}
+
+// Barra de filtros: QUÉ aplicación y QUÉ tipo de cosa, con los totales
+// indexados por fscauth (externalCatalog viene del backend, no está hardcodeado).
+function renderExternalFilters() {
+  const box = document.getElementById('external-filters');
+  if (!box) return;
+  const on = window.ExternalData && ExternalData.enabled();
+  if (!on || !externalItems.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.classList.remove('hidden');
+
+  const cuenta = (fn) => externalItems.filter(fn).length;
+  const apps = (externalCatalog.apps || [])
+    .map(a => ({ id: a.id, label: a.label || a.id, total: cuenta(it => it.app === a.id), url: a.url }))
+    .filter(a => a.total)
+    .sort((a, b) => b.total - a.total);
+  const tipos = (externalCatalog.types || [])
+    .map(t => ({ id: t.type, label: t.label || t.type, total: cuenta(it => it.type === t.type) }))
+    .filter(t => t.total)
+    .sort((a, b) => b.total - a.total);
+
+  const chip = (activo, onclick, texto) => `<button type="button" onclick="${onclick}" class="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+    activo ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.2)]'
+           : 'border-white/10 bg-white/5 text-gray-400 hover:border-cyan-500/40 hover:text-cyan-200'}">${escapeHTML(texto)}</button>`;
+
+  box.innerHTML = `
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 mr-1">Aplicación</span>
+      ${chip(externalFilter.app === 'all', "setExternalFilter('app','all')", 'Todas · ' + externalItems.length)}
+      ${apps.map(a => chip(externalFilter.app === a.id, `setExternalFilter('app','${a.id}')`, a.label + ' · ' + a.total)).join('')}
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 mr-1">Tipo</span>
+      ${chip(externalFilter.type === 'all', "setExternalFilter('type','all')", 'Todos · ' + externalItems.length)}
+      ${tipos.map(t => chip(externalFilter.type === t.id, `setExternalFilter('type','${t.id}')`, t.label + ' · ' + t.total)).join('')}
+    </div>`;
 }
 
 function showExternalStatus(msg, kind) {
@@ -520,7 +578,10 @@ async function toggleExternalData() {
     ExternalData.setEnabled(false);
     externalApps = [];
     externalItems = [];
+    externalCatalog = { apps: [], types: [] };
+    externalFilter = { app: 'all', type: 'all' };
     showExternalStatus('');
+    renderExternalFilters();
     paintExternalSwitch();
     renderFeed();
     return;
@@ -538,6 +599,7 @@ async function loadExternal() {
   showExternalStatus('Indexando el resto del ecosistema...');
   try {
     externalApps = await ExternalData.fetchApps();
+    externalCatalog = ExternalData.catalog();
     externalItems = ExternalData.flatten(externalApps).map(it => ({ ...it, feedType: 'externo' }));
     const ok = externalApps.filter(a => a.ok).length;
     showExternalStatus(externalItems.length
@@ -546,7 +608,9 @@ async function loadExternal() {
   } catch (err) {
     externalApps = [];
     externalItems = [];
+    externalCatalog = { apps: [], types: [] };
     showExternalStatus(err.message || 'No se pudo indexar el ecosistema.', 'warn');
   }
+  renderExternalFilters();
   renderFeed();
 }

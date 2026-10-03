@@ -22,11 +22,59 @@ import { authorizedFsc, FSCAUTH_API } from '../utils/fscAuthApi';
 
 const router = Router();
 
+const APP_ID = 'artedigitaldata';
 const CACHE_TTL_MS = 60_000;   // el índice del usuario cambia lento
 const UPSTREAM_MS = 20_000;    // el fan-out de fscauth es lento por diseño
 const CACHE_MAX = 200;
 
 const cache = new Map<string, { at: number; data: unknown }>();
+
+// Últimos tipos vistos en un fan-out, para que /fsc/catalog pueda contestar sin
+// sesión (el catálogo de apps sale del registro público de fscauth; los TIPOS
+// sólo existen dentro del índice de cada usuario).
+let ultimosTipos: Array<{ type: string; label: string }> = [];
+
+// ════════════════════════════════════════════════════════════
+// Catálogo del ecosistema: QUÉ app y QUÉ tipo de cosa, con los totales
+// indexados. Se arma con el fan-out (totales) + el registro público de fscauth
+// (`GET /api/apps`: etiqueta, descripción y URL humana), para que CUALQUIER
+// página pueda replicar la misma data y los mismos filtros.
+// ════════════════════════════════════════════════════════════
+async function catalogoDe(data: any) {
+  const apps: any[] = Array.isArray(data && data.apps) ? data.apps : [];
+
+  let registro: Record<string, { label?: string; url?: string; desc?: string }> = {};
+  try {
+    const r = await fetch(`${FSCAUTH_API}/api/apps`, { signal: AbortSignal.timeout(5000) });
+    const reg: any = await r.json();
+    (reg && reg.apps ? reg.apps : []).forEach((a: any) => { registro[a.id] = a; });
+  } catch (e) {
+    // fail-soft: sin el registro igual devolvemos el catálogo del fan-out
+    console.warn('[FSC-CATALOGO] sin registro de apps:', (e as any) && (e as any).message);
+  }
+
+  const tipos = new Map<string, { type: string; label: string; count: number }>();
+  const externas = apps.filter((a) => a && a.id !== APP_ID).map((a) => {
+    (a.groups || []).forEach((g: any) => {
+      const t = tipos.get(g.type) || { type: g.type, label: g.label || g.type, count: 0 };
+      t.count += Number(g.count || 0);
+      tipos.set(g.type, t);
+    });
+    const meta = registro[a.id] || ({} as any);
+    return {
+      id: a.id,
+      label: meta.label || a.label || a.id,
+      desc: meta.desc || '',
+      url: meta.url || '',
+      ok: a.ok !== false,
+      total: Number(a.total || 0)
+    };
+  });
+
+  const listaTipos = Array.from(tipos.values()).sort((x, y) => y.count - x.count);
+  if (listaTipos.length) ultimosTipos = listaTipos.map((t) => ({ type: t.type, label: t.label }));
+  return { apps: externas, types: listaTipos };
+}
 
 router.get('/', async (req: Request, res: Response) => {
   const username = String(req.query.username || '').trim();
@@ -64,9 +112,10 @@ router.get('/', async (req: Request, res: Response) => {
       });
     }
 
-    cache.set(key, { at: Date.now(), data });
+    const conCatalogo = { ...data, catalog: await catalogoDe(data) };
+    cache.set(key, { at: Date.now(), data: conCatalogo });
     if (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value as string);
-    return res.json(data);
+    return res.json(conCatalogo);
   } catch (err: any) {
     const timeOut = err && (err.name === 'AbortError' || err.code === 'ABORT_ERR');
     console.error('[FSC-ECOSYSTEM] error:', err && err.message);
@@ -76,6 +125,26 @@ router.get('/', async (req: Request, res: Response) => {
     });
   } finally {
     clearTimeout(timer);
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// GET /artedigitaldata/api/fsc/ecosystem/catalog   (SIN sesión)
+// El mismo catálogo (QUÉ app y QUÉ tipo de cosa) para que cualquier página del
+// sitio arme los mismos filtros sin depender de una sesión: las apps salen del
+// registro público de fscauth y los tipos, del último fan-out que se indexó.
+// ════════════════════════════════════════════════════════════
+router.get('/catalog', async (_req: Request, res: Response) => {
+  try {
+    const r = await fetch(`${FSCAUTH_API}/api/apps`, { signal: AbortSignal.timeout(5000) });
+    const reg: any = await r.json();
+    const apps = (reg && reg.apps ? reg.apps : [])
+      .filter((a: any) => a && a.id !== APP_ID)
+      .map((a: any) => ({ id: a.id, label: a.label, desc: a.desc || '', icon: a.icon || '', url: a.url || '' }));
+    return res.json({ ok: true, apps, types: ultimosTipos });
+  } catch (err: any) {
+    console.error('[FSC-CATALOGO] error:', err && err.message);
+    return res.status(502).json({ ok: false, error: 'No pude leer el registro del ecosistema' });
   }
 });
 

@@ -22,7 +22,7 @@
   var APP_ID = 'artedigitaldata';
   var CACHE_MS = 60000;
 
-  var cache = { key: null, at: 0, data: null };
+  var cache = { key: null, at: 0, data: null, catalog: null };
 
   function enabled() {
     return localStorage.getItem(KEY) === '1';
@@ -30,7 +30,7 @@
 
   function setEnabled(v) {
     localStorage.setItem(KEY, v ? '1' : '0');
-    if (!v) cache = { key: null, at: 0, data: null };
+    if (!v) cache = { key: null, at: 0, data: null, catalog: null };
   }
 
   // El índice externo depende de la sesión (fscauth no indexa datos ajenos).
@@ -56,6 +56,8 @@
             id: String(it.id || ''),
             title: it.title || 'Sin título',
             url: it.url || '',
+            // La captura/preview que indexa cada app (composiciones, shaders, imágenes).
+            image: it.image || (it.meta && it.meta.image) || '',
             app: a.id,
             appLabel: a.label || a.id,
             type: g.type,
@@ -88,7 +90,13 @@
     if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'No se pudo indexar el ecosistema');
 
     var apps = onlyExternal(data.apps);
-    cache = { key: username, at: Date.now(), data: apps };
+    // `catalog` = QUÉ app y QUÉ tipo de cosa indexó fscauth (apps + tipos con
+    // totales). Lo arma el backend con el registro público de fscauth, así
+    // cualquier página puede repetir la misma data/filtros.
+    cache = {
+      key: username, at: Date.now(), data: apps,
+      catalog: data.catalog || { apps: [], types: [] }
+    };
     return apps;
   }
 
@@ -98,6 +106,8 @@
     enabled: enabled,
     setEnabled: setEnabled,
     canUse: canUse,
+    // Catálogo del último fetch (apps + tipos). Lo consume la UI de filtros.
+    catalog: function () { return (cache && cache.catalog) || { apps: [], types: [] }; },
     fetchApps: fetchApps,
     onlyExternal: onlyExternal,
     flatten: flatten,
