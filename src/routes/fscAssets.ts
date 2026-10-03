@@ -1,13 +1,14 @@
 // ============================================================
 // 🗂️ FSC — índice universal de assets (lo llama el perfil de fscauth)
-// GET /artedigitaldata/api/fsc/assets?username=X
+// GET /artedigitaldata/api/fsc/assets?username=X        → Internal (esta app)
+// GET /artedigitaldata/api/fsc/ecosystem?username=X     → External (proxy de fscauth)
 //
 // Arquitectura BICOMPARTIDA: las creaciones (recursos, obras, posteos y
 // composiciones de palabras) SIGUEN viviendo en la base de datos de esta app;
 // fscauth solo las INDEXA para el pasaporte universal de usuario.
 //
 // Autorización: clave interna de fscauth (x-fsc-internal === JWT_SECRET/FSC_INTERNAL_KEY)
-// o sesión FSC válida del propio usuario (se verifica contra fscauth).
+// o sesión FSC válida del propio usuario — el helper compartido está en utils/fscAuthApi.ts.
 // ============================================================
 import { Router, Request, Response } from 'express';
 import User from '../models/User';
@@ -15,37 +16,25 @@ import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import VisualEffect from '../models/VisualEffect';
 import ParticleWord from '../models/ParticleWord';
+import { authorizedFsc } from '../utils/fscAuthApi';
+import fscEcosystemRoutes from './fscEcosystem';
 
 const router = Router();
 
+// /api/fsc/assets     → lo que vive en ESTA app (Internal)
+// /api/fsc/ecosystem  → el resto del ecosistema, proxeado a fscauth (External)
 const FSC_BASE = process.env.FSC_PUBLIC_PATH || '/artedigitaldata';
-const FSCAUTH = process.env.FSCAUTH_URL || 'https://vps-4455523-x.dattaweb.com/fscauth';
 
 interface Item { id: string; title: string; url: string; meta?: Record<string, unknown> }
 interface Group { type: string; label: string; count: number; items: Item[] }
 
-async function authorized(req: Request, username: string): Promise<boolean> {
-  const internal = process.env.FSC_INTERNAL_KEY || process.env.JWT_SECRET || '';
-  const key = req.headers['x-fsc-internal'];
-  if (internal && typeof key === 'string' && key === internal) return true;
-
-  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!token) return false;
-  try {
-    const r = await fetch(`${FSCAUTH}/api/auth/verify`, { headers: { Authorization: `Bearer ${token}` } });
-    const d: any = await r.json();
-    if (!d || d.loggedIn !== true || !d.user) return false;
-    if (String(d.user.username || '').toLowerCase() === username.toLowerCase()) return true;
-    return d.user.role === 'ADMIN' || d.user.role === 'SYSTEM';
-  } catch {
-    return false;
-  }
-}
-
+// El índice EXTERNO va montado acá para no tocar server.ts:
+// GET /api/fsc/ecosystem?username=X → ver fscEcosystem.ts (explica el bug de CORS).
+router.use('/ecosystem', fscEcosystemRoutes);
 router.get('/assets', async (req: Request, res: Response) => {
   const username = String(req.query.username || '').trim();
   if (!username) return res.status(400).json({ error: 'username requerido' });
-  if (!(await authorized(req, username))) return res.status(401).json({ error: 'No autorizado' });
+  if (!(await authorizedFsc(req, username))) return res.status(401).json({ error: 'No autorizado' });
 
   try {
     const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

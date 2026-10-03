@@ -76,9 +76,12 @@
     var username = getUserUsername();
     if (cache.key === username && (Date.now() - cache.at) < CACHE_MS && cache.data) return cache.data;
 
-    var url = CONFIG.FSCAUTH_URL + '/api/auth/assets?username=' + encodeURIComponent(username);
+    // ⚠ Se pide a la API DE ESTA APP, que lo proxea a fscauth server→server.
+    // Pedirlo directo a fscauth desde el browser rompe por CORS: el preflight se
+    // come un 307 de fullscreencode.com ("Redirect is not allowed for a preflight
+    // request") y la allowlist de fscauth no incluye artedigitaldata.com.
+    var url = CONFIG.API_URL + '/fsc/ecosystem?username=' + encodeURIComponent(username);
     var res = await fetch(url, {
-      credentials: 'include',
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     var data = await res.json().catch(function () { return {}; });
