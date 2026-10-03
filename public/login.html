@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="suave">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +10,9 @@
   <script src="js/auth.js"></script>
   <script src="js/generative-avatar.js"></script>
   <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=4">
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="ui-con-header min-h-screen flex flex-col">
   <script>showLogin();</script>
   <div id="app-header"></div>
 
@@ -54,7 +55,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/header.js"></script>
+  <script src="js/header.js?v=4"></script>
   <script>
     if (isLoggedIn()) window.location.href = CONFIG.BASE + '/';
 

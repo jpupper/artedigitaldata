@@ -476,7 +476,12 @@ function renderExternalCard(item) {
     ? `<a href="${url || img}" target="_blank" rel="noopener noreferrer" class="block relative overflow-hidden bg-black/40" style="aspect-ratio:16/10">
          <img src="${img}" alt="${escapeHTML(item.title)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onerror="this.parentElement.style.display='none'">
        </a>`
-    : '';
+    // Sin preview (la app todavía no manda `meta.image`): mostramos el ícono de
+    // la app + el tipo. Nunca un hueco vacío.
+    : `<div class="ui-card-media ui-sheen flex flex-col items-center justify-center gap-2" style="aspect-ratio:16/10">
+         <span style="font-size:34px;line-height:1">${escapeHTML(item.appIcon || '📦')}</span>
+         <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">${escapeHTML(item.appLabel)}</span>
+       </div>`;
   return `
       <div class="group rounded-[2rem] overflow-hidden border border-cyan-500/20 bg-[#0d0d12]/60 hover:bg-[#0d0d12]/80 backdrop-blur-xl transition-all duration-500 hover:border-cyan-400/50 hover:shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col h-full card-cyber">
         ${media}
@@ -546,13 +551,18 @@ function renderExternalFilters() {
     </div>`;
 }
 
-function showExternalStatus(msg, kind) {
+// Botón reutilizable: sesión vencida = un click para volver a entrar.
+const BOTON_ENTRAR = '<button type="button" onclick="showLogin()" class="ui-btn ui-btn--solid" style="padding:7px 14px;font-size:11px"><i class="fas fa-right-to-bracket"></i> Volver a entrar</button>';
+
+function showExternalStatus(msg, kind, accionHTML) {
   const el = document.getElementById('external-status');
   if (!el) return;
   if (!msg) { el.textContent = ''; el.classList.add('hidden'); return; }
-  el.textContent = msg;
+  el.innerHTML = escapeHTML(msg) + (accionHTML || '');
   el.classList.remove('hidden');
-  el.className = (kind === 'warn' ? 'text-red-400' : 'text-cyan-400') + ' text-[11px] font-bold mb-4';
+  el.className = 'flex flex-wrap items-center gap-3 ' +
+    (kind === 'warn' ? 'text-red-400' : (kind === 'info' ? 'text-amber-300' : 'text-cyan-400')) +
+    ' text-[11px] font-bold mb-4';
 }
 
 function paintExternalSwitch() {
@@ -587,7 +597,7 @@ async function toggleExternalData() {
     return;
   }
   if (!ExternalData.canUse()) {
-    showExternalStatus('Iniciá sesión para indexar tus creaciones del resto del ecosistema.', 'warn');
+    showExternalStatus('Iniciá sesión para indexar tus creaciones del resto del ecosistema.', 'warn', BOTON_ENTRAR);
     return;
   }
   ExternalData.setEnabled(true);
@@ -606,10 +616,24 @@ async function loadExternal() {
       ? `${externalItems.length} creación(es) de ${ok} app(s) del ecosistema sumadas al feed.`
       : 'Todavía no hay creaciones tuyas en el resto de las apps.');
   } catch (err) {
-    externalApps = [];
-    externalItems = [];
-    externalCatalog = { apps: [], types: [] };
-    showExternalStatus(err.message || 'No se pudo indexar el ecosistema.', 'warn');
+    externalFilter = { app: 'all', type: 'all' };
+    // Si el fetch falló pero hay una copia buena guardada, mostramos ESA copia:
+    // un problema de red no puede dejar el feed vacío.
+    const copia = (err.kind === 'cache' && ExternalData.copiaGuardada) ? ExternalData.copiaGuardada() : null;
+    if (copia) {
+      externalApps = ExternalData.onlyExternal(copia.data);
+      externalCatalog = copia.catalog || { apps: [], types: [] };
+      externalItems = ExternalData.flatten(externalApps).map(it => ({ ...it, feedType: 'externo' }));
+      // Si lo que falló fue la sesión, además de la copia hay que ofrecer reentrar.
+      showExternalStatus(err.message, 'info', err.causa === 'sesion' ? BOTON_ENTRAR : '');
+    } else {
+      externalApps = [];
+      externalItems = [];
+      externalCatalog = { apps: [], types: [] };
+      // Sesión vencida = mensaje accionable, no un error crudo.
+      const accion = (err.kind === 'sesion' || err.kind === 'sin-sesion') ? BOTON_ENTRAR : '';
+      showExternalStatus(err.message, 'warn', accion);
+    }
   }
   renderExternalFilters();
   renderFeed();

@@ -1,0 +1,347 @@
+/* ============================================================================
+   🎨 FSC-UI — SISTEMA DE DISEÑO ÚNICO de Arte Digital Data
+   ----------------------------------------------------------------------------
+   UNA sola fuente de verdad del estilo del sitio. Reglas de oro:
+
+   1. NINGUNA página define colores, bordes, radios ni sombras propias.
+      Todo sale de las variables de este archivo (`--ui-*`).
+      Cambiás un token acá → cambia en TODA la página (inicio, recursos,
+      chances, chat, perfil, admin, calendario, artistas...).
+   2. Los componentes (.ui-*) NO dependen de clases de Tailwind: funcionan
+      igual en cualquier página aunque Tailwind no cargue.
+   3. Se carga DESPUÉS de tailwind.css, así puede remapear los acentos
+      (cyan/emerald/magenta) sin pelear con las utilidades.
+   4. Tres "direcciones" de estilo con cambiar un atributo:
+         <html data-theme="suave">    → amigable, redondeado, sereno
+         <html data-theme="cristal">  → cyber fino, glass, glow
+         <html data-theme="boton">    → botón grande, borde grueso, juguetón
+      (el default es `suave`)
+
+   PROBAR: public/_design-preview.html
+   ========================================================================== */
+
+/* ─────────────────────────────────────────────────────────────── TOKENS ── */
+:root {
+  /* Escala de color base (una sola lista, todo lo demás la referencia) */
+  --ui-c-cyan:    #22d3ee;
+  --ui-c-cyan-2:  #00f5ff;
+  --ui-c-magenta: #e879f9;
+  --ui-c-lime:    #a3e635;
+  --ui-c-gold:    #facc15;
+  --ui-c-red:     #f87171;
+
+  --ui-bg:         #0d0d12;
+  --ui-bg-soft:    #13131b;
+  --ui-surface:    rgba(255, 255, 255, 0.035);
+  --ui-surface-2:  rgba(255, 255, 255, 0.07);
+  --ui-text:       #f2f2f7;
+  --ui-text-dim:   #9aa2b1;
+  --ui-text-mute:  #6b7280;
+
+  /* Acento "de la sección" — cada página/sección elige UNO y todo lo hereda */
+  --ui-accent:   var(--ui-c-cyan);
+  --ui-accent-2: var(--ui-c-magenta);
+  --ui-on-accent: #05141a;
+
+  /* Formas */
+  --ui-r-sm:   10px;
+  --ui-r-md:   16px;
+  --ui-r-lg:   22px;
+  --ui-r-pill: 999px;
+
+  /* Líneas: el borde SIEMPRE visible (el usuario tiene que ver dónde apretar) */
+  --ui-bw:     1px;
+  --ui-line:        rgba(255, 255, 255, 0.10);
+  --ui-line-strong: rgba(255, 255, 255, 0.22);
+  --ui-line-accent: color-mix(in srgb, var(--ui-accent) 55%, transparent);
+
+  /* Movimiento: elegante = rápido, con una curva suave y un pelín de rebote */
+  --ui-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ui-t-fast: 140ms;
+  --ui-t:      220ms;
+  --ui-t-slow: 420ms;
+
+  /* Sombras / luces */
+  --ui-glow:      0 0 0 0 transparent;
+  --ui-glow-hover: 0 0 22px -4px color-mix(in srgb, var(--ui-accent) 55%, transparent);
+  --ui-shadow:    0 18px 40px -22px rgba(0, 0, 0, 0.9);
+
+  /* Ritmo */
+  --ui-pad:   14px 18px;
+  --ui-gap:   10px;
+  --ui-header-h: 64px;
+}
+
+/* ─────────────────────────────────────────────────────── DIRECCIONES ───── */
+/* A) SUAVE — amigable, redondeado, poca densidad. Default. */
+[data-theme="suave"] {
+  --ui-r-sm: 12px; --ui-r-md: 18px; --ui-r-lg: 26px;
+  --ui-line: rgba(255, 255, 255, 0.13);
+  --ui-surface: rgba(255, 255, 255, 0.045);
+  --ui-glow-hover: 0 10px 30px -14px color-mix(in srgb, var(--ui-accent) 70%, transparent);
+}
+/* B) CRISTAL — fino, glass, glow marcado, tipografía más chica y espaciada. */
+[data-theme="cristal"] {
+  --ui-r-sm: 8px; --ui-r-md: 12px; --ui-r-lg: 16px;
+  --ui-line: rgba(255, 255, 255, 0.08);
+  --ui-line-strong: color-mix(in srgb, var(--ui-accent) 70%, transparent);
+  --ui-surface: rgba(255, 255, 255, 0.02);
+  --ui-pad: 11px 15px;
+  --ui-glow-hover: 0 0 26px -6px color-mix(in srgb, var(--ui-accent) 75%, transparent);
+}
+/* C) BOTÓN GRANDE — borde grueso, alto contraste, apretable. */
+[data-theme="boton"] {
+  --ui-r-sm: 999px; --ui-r-md: 999px; --ui-r-lg: 28px;
+  --ui-bw: 2px;
+  --ui-line: rgba(255, 255, 255, 0.24);
+  --ui-line-strong: rgba(255, 255, 255, 0.42);
+  --ui-pad: 16px 24px;
+  --ui-surface: rgba(255, 255, 255, 0.06);
+  --ui-glow-hover: 0 8px 0 -2px color-mix(in srgb, var(--ui-accent) 45%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────── BASE ─────── */
+body { background: var(--ui-bg); color: var(--ui-text); }
+.ui-wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+
+/* ────────────────────────────────────────────── HEADER (sin solapes) ───── */
+/* Rejilla de 3 columnas: logo fijo | navegación elástica | acciones fijas.
+   Con `min-width:0` en el medio, NADA se puede encimar ni desbordar. */
+.ui-header {
+  position: fixed; inset: 0 0 auto 0; z-index: 60;
+  height: var(--ui-header-h);
+  background: color-mix(in srgb, var(--ui-bg) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: var(--ui-bw) solid var(--ui-line);
+}
+.ui-header-bar {
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+.ui-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 0 0 auto; }
+.ui-logo img { width: 38px; height: 38px; border-radius: var(--ui-r-sm); object-fit: cover;
+               border: var(--ui-bw) solid var(--ui-line); }
+.ui-logo span { font-weight: 900; letter-spacing: -0.02em; font-size: 15px; color: var(--ui-text); }
+
+.ui-nav { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+@media (max-width: 1023px) { .ui-nav { display: none; } }
+
+.ui-navlink {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 13px; border-radius: var(--ui-r-pill);
+  border: var(--ui-bw) solid transparent;
+  color: var(--ui-text-dim); font-size: 12px; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+  white-space: nowrap; cursor: pointer;
+  transition: color var(--ui-t) var(--ui-ease), background var(--ui-t) var(--ui-ease),
+              border-color var(--ui-t) var(--ui-ease), transform var(--ui-t) var(--ui-ease);
+}
+.ui-navlink:hover { color: var(--ui-text); background: var(--ui-surface); border-color: var(--ui-line); transform: translateY(-1px); }
+.ui-navlink.is-active { color: var(--ui-accent); border-color: var(--ui-line-accent);
+                        background: color-mix(in srgb, var(--ui-accent) 12%, transparent); }
+/* OJO: el acento de cada sección se elige en el <body>, no acá. */
+.ui-navlink.is-chances { color: var(--ui-c-lime); }
+.ui-navlink.is-chat    { color: var(--ui-c-magenta); }
+
+.ui-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+/* Desplegable "MÁS": la razón por la que el header ya no se desborda. */
+.ui-menu { position: relative; }
+.ui-menu-panel {
+  position: absolute; right: 0; top: calc(100% + 10px); min-width: 220px; padding: 8px;
+  background: color-mix(in srgb, var(--ui-bg-soft) 96%, transparent);
+  border: var(--ui-bw) solid var(--ui-line); border-radius: var(--ui-r-md);
+  box-shadow: var(--ui-shadow); backdrop-filter: blur(16px);
+  display: grid; gap: 4px;
+  opacity: 0; transform: translateY(-6px) scale(0.98); pointer-events: none;
+  transition: opacity var(--ui-t) var(--ui-ease), transform var(--ui-t) var(--ui-ease);
+}
+.ui-menu[data-open="1"] .ui-menu-panel { opacity: 1; transform: none; pointer-events: auto; }
+.ui-menu-panel a {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-radius: var(--ui-r-sm); color: var(--ui-text-dim); font-size: 13px; font-weight: 700;
+  text-decoration: none; transition: background var(--ui-t-fast) var(--ui-ease), color var(--ui-t-fast) var(--ui-ease);
+}
+.ui-menu-panel a:hover { background: var(--ui-surface-2); color: var(--ui-text); }
+
+/* ─────────────────────────────────────────────────────────── BOTONES ──── */
+.ui-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: var(--ui-pad); border-radius: var(--ui-r-md);
+  border: var(--ui-bw) solid var(--ui-line-strong);
+  background: var(--ui-surface); color: var(--ui-text);
+  font-weight: 800; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform var(--ui-t) var(--ui-ease), background var(--ui-t) var(--ui-ease),
+              border-color var(--ui-t) var(--ui-ease), color var(--ui-t) var(--ui-ease),
+              box-shadow var(--ui-t) var(--ui-ease);
+}
+.ui-btn:hover { transform: translateY(-2px); border-color: var(--ui-accent); color: var(--ui-accent);
+                background: color-mix(in srgb, var(--ui-accent) 10%, transparent); box-shadow: var(--ui-glow-hover); }
+.ui-btn:active { transform: translateY(0) scale(0.98); }
+
+.ui-btn--primary { background: color-mix(in srgb, var(--ui-accent) 16%, transparent);
+                   border-color: var(--ui-line-accent); color: var(--ui-accent); }
+.ui-btn--primary:hover { background: var(--ui-accent); color: var(--ui-on-accent); }
+
+.ui-btn--solid { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+.ui-btn--solid:hover { color: var(--ui-on-accent); filter: brightness(1.08);
+                       background: var(--ui-accent); border-color: var(--ui-accent); }
+
+.ui-btn--ghost { border-color: transparent; background: transparent; color: var(--ui-text-dim); }
+.ui-btn--ghost:hover { border-color: var(--ui-line); background: var(--ui-surface); color: var(--ui-text); }
+
+.ui-btn--icon { padding: 10px; border-radius: var(--ui-r-pill); }
+
+.ui-btn[disabled], .ui-btn.is-disabled { opacity: 0.45; pointer-events: none; }
+
+/* Foco visible SIEMPRE (teclado) — mismo look en toda la página */
+:where(.ui-btn, .ui-navlink, .ui-chip, .ui-input, a, button):focus-visible {
+  outline: 2px solid var(--ui-accent); outline-offset: 2px; border-radius: var(--ui-r-sm);
+}
+
+/* ──────────────────────────────────────────────────────────── CHIPS ────── */
+.ui-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: var(--ui-r-pill);
+  border: var(--ui-bw) solid var(--ui-line); background: var(--ui-surface);
+  color: var(--ui-text-dim); font-size: 11px; font-weight: 900;
+  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  transition: all var(--ui-t) var(--ui-ease);
+}
+.ui-chip:hover { color: var(--ui-text); border-color: var(--ui-line-strong); transform: translateY(-1px); }
+.ui-chip.is-on { color: var(--ui-accent); border-color: var(--ui-line-accent);
+                 background: color-mix(in srgb, var(--ui-accent) 14%, transparent); }
+.ui-chip b { font-weight: 900; opacity: 0.75; }
+
+/* ──────────────────────────────────────────────────────────── TARJETA ─── */
+.ui-card {
+  background: var(--ui-surface); border: var(--ui-bw) solid var(--ui-line);
+  border-radius: var(--ui-r-lg); overflow: hidden;
+  transition: transform var(--ui-t) var(--ui-ease), border-color var(--ui-t) var(--ui-ease),
+              box-shadow var(--ui-t) var(--ui-ease), background var(--ui-t) var(--ui-ease);
+}
+.ui-card:hover { transform: translateY(-4px); border-color: var(--ui-line-accent);
+                 background: var(--ui-surface-2); box-shadow: var(--ui-shadow); }
+.ui-card-media { aspect-ratio: 16 / 10; background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent); }
+.ui-card-body { padding: 18px; display: grid; gap: 8px; }
+.ui-card-title { font-size: 17px; font-weight: 900; letter-spacing: -0.01em; color: var(--ui-text); }
+
+.ui-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+            border-radius: var(--ui-r-pill); border: var(--ui-bw) solid var(--ui-line-accent);
+            background: color-mix(in srgb, var(--ui-accent) 12%, transparent);
+            color: var(--ui-accent); font-size: 10px; font-weight: 900;
+            letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ────────────────────────────────────────────────────── FORM / MODAL ─── */
+.ui-input {
+  width: 100%; padding: var(--ui-pad); border-radius: var(--ui-r-md);
+  border: var(--ui-bw) solid var(--ui-line); background: rgba(0, 0, 0, 0.25);
+  color: var(--ui-text); font: inherit; font-size: 14px;
+  transition: border-color var(--ui-t) var(--ui-ease), background var(--ui-t) var(--ui-ease);
+}
+.ui-input::placeholder { color: var(--ui-text-mute); }
+.ui-input:hover { border-color: var(--ui-line-strong); }
+.ui-input:focus { border-color: var(--ui-accent); background: rgba(0, 0, 0, 0.4); outline: none; }
+
+.ui-modal { position: fixed; inset: 0; z-index: 200; display: none; place-items: center;
+            padding: 20px; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); }
+.ui-modal.is-open { display: grid; }
+.ui-modal-box { width: 100%; max-width: 460px; background: var(--ui-bg-soft);
+                border: var(--ui-bw) solid var(--ui-line-strong); border-radius: var(--ui-r-lg);
+                box-shadow: var(--ui-shadow); padding: 24px; animation: ui-pop var(--ui-t-slow) var(--ui-ease); }
+@keyframes ui-pop { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+
+/* ─────────────────────────────────────────────── SECCIONES / TÍTULOS ──── */
+.ui-section { padding: 46px 0; }
+.ui-eyebrow { font-size: 11px; font-weight: 900; letter-spacing: 0.22em; text-transform: uppercase;
+              color: var(--ui-accent); }
+.ui-title { font-size: clamp(24px, 4vw, 38px); font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; }
+.ui-sub { color: var(--ui-text-dim); font-size: 14px; max-width: 60ch; }
+
+/* Tira de pestañas (chat / recursos / chances / perfil) */
+.ui-tabs { display: flex; gap: 6px; padding: 6px; border: var(--ui-bw) solid var(--ui-line);
+           border-radius: var(--ui-r-pill); background: var(--ui-surface); width: fit-content; max-width: 100%;
+           overflow-x: auto; scrollbar-width: none; }
+.ui-tab { padding: 10px 18px; border-radius: var(--ui-r-pill); border: var(--ui-bw) solid transparent;
+          background: transparent; color: var(--ui-text-dim); font-size: 12px; font-weight: 900;
+          letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap;
+          transition: all var(--ui-t) var(--ui-ease); }
+.ui-tab:hover { color: var(--ui-text); background: var(--ui-surface-2); }
+.ui-tab.is-on { color: var(--ui-on-accent); background: var(--ui-accent); border-color: var(--ui-accent); }
+
+/* Barra inferior mobile (reemplaza al hamburger) */
+.ui-bottom-bar { position: fixed; inset: auto 0 0 0; z-index: 70; display: none;
+                 grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+                 background: color-mix(in srgb, var(--ui-bg) 88%, transparent);
+                 backdrop-filter: blur(14px); border-top: var(--ui-bw) solid var(--ui-line); }
+@media (max-width: 767px) { .ui-bottom-bar { display: grid; } }
+.ui-bottom-bar .ui-btn { flex-direction: column; gap: 4px; font-size: 9px; padding: 8px 4px; border-color: transparent; }
+.ui-bottom-bar .ui-btn.is-on { color: var(--ui-accent); background: color-mix(in srgb, var(--ui-accent) 12%, transparent); }
+
+/* Brillo que barre el borde en hover — la "animación elegante" (una sola) */
+.ui-sheen { position: relative; overflow: hidden; }
+.ui-sheen::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--ui-accent) 22%, transparent) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform 650ms var(--ui-ease);
+  pointer-events: none;
+}
+.ui-sheen:hover::after { transform: translateX(120%); }
+
+/* Aparecer al entrar (se usa en las tarjetas del feed) */
+.ui-rise { animation: ui-rise var(--ui-t-slow) var(--ui-ease) both; }
+@keyframes ui-rise { from { opacity: 0; transform: translateY(12px); } }
+
+.ui-hidden { display: none !important; }
+
+/* ──────────────────────────────────────────── LAYOUT Y UTILIDADES ─────── */
+.ui-row { display: flex; flex-wrap: wrap; gap: var(--ui-gap); align-items: center; }
+.ui-col { display: grid; gap: var(--ui-gap); }
+.ui-btn, .ui-navlink { position: relative; }        /* para los badges */
+.ui-logo-texto { display: none; }
+@media (min-width: 1180px) { .ui-logo-texto { display: inline; } }
+
+/* En 360-1023 manda el hamburger; arriba sobran las acciones de escritorio. */
+.ui-solo-mobile { display: inline-flex; }
+.ui-solo-desktop { display: none; }
+@media (min-width: 1024px) {
+  .ui-solo-mobile { display: none; }
+  .ui-solo-desktop { display: inline-flex; }
+}
+/* El texto de COLABORAR se cae antes que el botón: menos info, mismo acceso. */
+.ui-colab-texto { display: none; }
+@media (min-width: 1280px) { .ui-colab-texto { display: inline; } }
+
+.ui-user {
+  display: flex; align-items: center; gap: 9px; padding: 5px 10px 5px 5px;
+  border-radius: var(--ui-r-pill); border: var(--ui-bw) solid transparent;
+  text-decoration: none; transition: all var(--ui-t) var(--ui-ease); min-width: 0;
+}
+.ui-user:hover { border-color: var(--ui-line); background: var(--ui-surface); }
+.ui-user-nombre {
+  font-size: 12px; font-weight: 800; color: var(--ui-text-dim); max-width: 130px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 1279px) { .ui-user-nombre { display: none; } }
+
+.ui-footer {
+  border-top: var(--ui-bw) solid var(--ui-line);
+  background: color-mix(in srgb, var(--ui-bg) 70%, transparent);
+  padding: 40px 0; margin-top: 60px;
+}
+.ui-footer-grid { display: grid; gap: 26px; grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .ui-footer-grid { grid-template-columns: 1.2fr auto auto; align-items: start; }
+}
+
+/* Espacio para el header fijo: cualquier página que lo incluya respira. */
+body { --ui-header-h: 64px; }
+body.ui-con-header { padding-top: var(--ui-header-h); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}

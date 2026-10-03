@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="suave">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diseño nuevo — Arte Digital Data</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/fsc-ui.css?v=4">
+<style>
+  /* Sólo lo de la demo (barra de cambio de dirección). Nada de estilo del sitio acá. */
+  body { padding-bottom: 90px; }
+  .demo-bar { position: fixed; z-index: 300; left: 50%; bottom: 18px; transform: translateX(-50%);
+    display: flex; gap: 6px; padding: 8px; border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px; background: rgba(10,10,14,.9); backdrop-filter: blur(14px); }
+  .demo-bar button { padding: 10px 16px; border-radius: 999px; border: 1px solid transparent;
+    background: transparent; color: #9aa2b1; font: 800 11px/1 ui-sans-serif, system-ui;
+    letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+  .demo-bar button:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .demo-bar button[aria-current="true"] { color: #05141a; background: #22d3ee; }
+  .demo-title { font: 900 11px/1 ui-sans-serif, system-ui; letter-spacing: .22em; text-transform: uppercase; color: #6b7280; margin: 34px 0 12px; }
+  .demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .demo-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .demo-card-old { border: 1px solid rgba(255,255,255,.07); border-radius: 32px; background: rgba(13,13,18,.6); padding: 18px; color: #6b7280; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER NUEVO (sin solape, con desplegable MÁS) ═══════════════ -->
+<header class="ui-header">
+  <div class="ui-wrap ui-header-bar">
+    <a class="ui-logo" href="#"><img src="img/artedigital.png" alt="Arte Digital Data"><span>Arte Digital Data</span></a>
+
+    <nav class="ui-nav">
+      <a class="ui-navlink is-active" href="#">Inicio</a>
+      <a class="ui-navlink" href="#">Obras</a>
+      <a class="ui-navlink" href="#">Recursos</a>
+      <a class="ui-navlink is-chances" href="#">Chances</a>
+      <a class="ui-navlink" href="#">Artistas</a>
+      <div class="ui-menu" id="mas">
+        <button class="ui-navlink" onclick="this.closest('.ui-menu').dataset.open = this.closest('.ui-menu').dataset.open==='1'?'0':'1'">
+          Más <i class="fas fa-chevron-down" style="font-size:9px"></i>
+        </button>
+        <div class="ui-menu-panel">
+          <a href="#"><i class="fas fa-comments"></i> Chat</a>
+          <a href="#"><i class="fas fa-calendar"></i> Calendario</a>
+          <a href="#"><i class="fas fa-search"></i> Buscar</a>
+          <a href="#"><i class="fas fa-wand-magic-sparkles"></i> Efectos</a>
+          <a href="#"><i class="fas fa-trophy"></i> Concurso</a>
+          <a href="#"><i class="fas fa-circle-info"></i> Quiénes somos</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="ui-actions">
+      <button class="ui-btn ui-btn--ghost ui-sheen" onclick="document.getElementById('modal').classList.add('is-open')">
+        <i class="fas fa-heart" style="color:var(--ui-c-gold)"></i> Colaborar
+      </button>
+      <button class="ui-btn ui-btn--primary"><i class="fas fa-right-to-bracket"></i> Entrar</button>
+      <button class="ui-btn ui-btn--icon ui-btn--ghost" title="Menú"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</header>
+<div style="height:var(--ui-header-h)"></div>
+
+<main class="ui-wrap">
+
+  <section class="ui-section">
+    <p class="ui-eyebrow">Dirección de diseño · probá las 3 abajo</p>
+    <h1 class="ui-title">Elegí una, mezclá, o decime <span style="color:var(--ui-accent)">"más como la B"</span>.</h1>
+    <p class="ui-sub">Un solo archivo (<b>css/fsc-ui.css</b>) manda el estilo de TODAS las secciones:
+      colores, bordes, radios, hovers y animaciones. Cambiar un token = cambia en toda la página.</p>
+  </section>
+
+  <!-- ─── BOTONES ─── -->
+  <p class="demo-title">Botones — que den ganas de apretarlos</p>
+  <div class="demo-row">
+    <button class="ui-btn ui-btn--solid ui-sheen"><i class="fas fa-plus"></i> Crear obra</button>
+    <button class="ui-btn ui-btn--primary"><i class="fas fa-paper-plane"></i> Publicar</button>
+    <button class="ui-btn"><i class="fas fa-hand-holding-heart"></i> Colaborar</button>
+    <button class="ui-btn ui-btn--ghost"><i class="fas fa-bookmark"></i> Guardar</button>
+    <button class="ui-btn ui-btn--icon" title="Me gusta"><i class="fas fa-heart"></i></button>
+    <button class="ui-btn" disabled><i class="fas fa-lock"></i> Próximamente</button>
+  </div>
+
+  <!-- ─── FILTROS ─── -->
+  <p class="demo-title">Filtros — el estado activo se ve de lejos</p>
+  <div class="demo-row">
+    <button class="ui-chip is-on">Todo <b>329</b></button>
+    <button class="ui-chip">Obras <b>20</b></button>
+    <button class="ui-chip">Recursos <b>5</b></button>
+    <button class="ui-chip">Chances <b>3</b></button>
+    <button class="ui-chip">Externa <b>221</b></button>
+  </div>
+
+  <!-- ─── PESTAÑAS POR SECCIÓN ─── -->
+  <p class="demo-title">Pestañas (chat · recursos · chances)</p>
+  <div class="ui-tabs">
+    <button class="ui-tab is-on">Feed</button>
+    <button class="ui-tab">Recursos</button>
+    <button class="ui-tab">Chances</button>
+    <button class="ui-tab">Chat</button>
+    <button class="ui-tab">Favoritos</button>
+  </div>
+
+  <!-- ─── TARJETAS ─── -->
+  <p class="demo-title">Tarjetas (mismo componente, distinto acento por sección)</p>
+  <div class="demo-grid">
+    <article class="ui-card ui-rise ui-sheen">
+      <div class="ui-card-media"></div>
+      <div class="ui-card-body">
+        <span class="ui-badge"><i class="fas fa-palette"></i> Obra</span>
+        <h3 class="ui-card-title">TOLCH Streaming 2</h3>
+        <p class="ui-sub" style="font-size:13px">Efecto visual con audio reactivo.</p>
+        <div class="demo-row"><button class="ui-btn ui-btn--primary">Abrir</button><button class="ui-btn ui-btn--icon ui-btn--ghost"><i class="fas fa-heart"></i></button></div>
+      </div>
+    </article>
+    <article class="ui-card ui-rise" style="--ui-accent: var(--ui-c-lime)">
+      <div class="ui-card-media"></div>
+      <div class="ui-card-body">
+        <span class="ui-badge"><i class="fas fa-briefcase"></i> Chance</span>
+        <h3 class="ui-card-title">Convocatoria mural digital</h3>
+        <p class="ui-sub" style="font-size:13px">Cierra el 20 de octubre.</p>
+        <div class="demo-row"><button class="ui-btn ui-btn--primary">Postularme</button></div>
+      </div>
+    </article>
+    <article class="ui-card ui-rise" style="--ui-accent: var(--ui-c-magenta)">
+      <div class="ui-card-media"></div>
+      <div class="ui-card-body">
+        <span class="ui-badge"><i class="fas fa-comments"></i> Chat</span>
+        <h3 class="ui-card-title">Sala Vuelapelucas</h3>
+        <p class="ui-sub" style="font-size:13px">4 personas dibujando ahora.</p>
+        <div class="demo-row"><button class="ui-btn ui-btn--primary">Entrar</button></div>
+      </div>
+    </article>
+    <article class="ui-card ui-rise">
+      <div class="ui-card-body">
+        <span class="ui-badge"><i class="fas fa-globe"></i> Externa</span>
+        <h3 class="ui-card-title">ima_glitch2</h3>
+        <p class="ui-sub" style="font-size:13px">JPShader Editor · Shader</p>
+        <div class="demo-row"><button class="ui-btn">Abrir en la app</button></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- ─── FORM ─── -->
+  <p class="demo-title">Formulario y modal propio (nunca alert nativo)</p>
+  <div class="demo-row" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;max-width:620px">
+    <input class="ui-input" placeholder="Buscar obras, recursos, artistas…">
+    <button class="ui-btn ui-btn--solid"><i class="fas fa-magnifying-glass"></i> Buscar</button>
+  </div>
+
+  <p class="demo-title">Lo que cambia con la dirección elegida</p>
+  <div class="demo-grid">
+    <div class="ui-card"><div class="ui-card-body">
+      <b>A · Suave</b>
+      <p class="ui-sub" style="font-size:13px">Redondeado, bordes suaves, aire. Amigable y tranquilo: es la que menos “pesa” visualmente.</p>
+    </div></div>
+    <div class="ui-card"><div class="ui-card-body">
+      <b>B · Cristal</b>
+      <p class="ui-sub" style="font-size:13px">Fino, glass, glow marcado. La más “cyber elegante” y la más parecida al fondo p5 actual.</p>
+    </div></div>
+    <div class="ui-card"><div class="ui-card-body">
+      <b>C · Botón grande</b>
+      <p class="ui-sub" style="font-size:13px">Borde grueso de 2px, pastillas, alto contraste. La que más invita a apretar en celular.</p>
+    </div></div>
+  </div>
+
+  <p class="demo-title">Así está hoy el header (referencia)</p>
+  <div class="demo-card-old">
+    En 1024–1200px la fila del header mide <b>1086px</b> dentro de un contenedor de <b>992px</b>:
+    el logo queda pegado a COLABORAR (gap 0) y el bloque de sesión se sale de la pantalla.
+    Logueado (CREAR + campana + avatar + salir) se desborda antes, desde ~1280px.
+  </div>
+
+</main>
+
+<div class="ui-modal" id="modal">
+  <div class="ui-modal-box">
+    <span class="ui-badge"><i class="fas fa-heart" style="color:var(--ui-c-gold)"></i> Colaborar</span>
+    <h3 class="ui-title" style="font-size:22px;margin:10px 0">Apoyá el proyecto</h3>
+    <p class="ui-sub" style="margin-bottom:16px">Elegí con qué querés sumar. Cerrá con Esc o apretando afuera.</p>
+    <div style="display:grid;gap:8px">
+      <button class="ui-btn ui-btn--primary" style="justify-content:flex-start"><i class="fas fa-wallet"></i> Mercado Pago</button>
+      <button class="ui-btn" style="justify-content:flex-start"><i class="fas fa-mug-hot"></i> Cafecito</button>
+    </div>
+  </div>
+</div>
+
+<div class="demo-bar">
+  <button data-t="suave" aria-current="true" onclick="setTheme('suave', this)">A · Suave</button>
+  <button data-t="cristal" onclick="setTheme('cristal', this)">B · Cristal</button>
+  <button data-t="boton" onclick="setTheme('boton', this)">C · Botón grande</button>
+</div>
+
+<script>
+function setTheme(t, btn) {
+  document.documentElement.dataset.theme = t;
+  document.querySelectorAll('.demo-bar button').forEach(b => b.setAttribute('aria-current', b === btn ? 'true' : 'false'));
+}
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') e.target.classList.remove('is-open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.ui-modal').forEach(m => m.classList.remove('is-open')); });
+document.addEventListener('click', e => { const m = document.getElementById('mas');
+  if (m && !m.contains(e.target)) m.dataset.open = '0'; });
+</script>
+</body>
+</html>

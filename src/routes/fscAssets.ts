@@ -45,15 +45,19 @@ router.get('/assets', async (req: Request, res: Response) => {
     const groups: Group[] = [];
     if (ids.length) {
       const [recursos, obras, posteos] = await Promise.all([
-        Recurso.find({ author: { $in: ids } }).select('_id title').sort({ createdAt: -1 }).limit(200).lean(),
+        Recurso.find({ author: { $in: ids } }).select('_id title imageUrl').sort({ createdAt: -1 }).limit(200).lean(),
         VisualEffect.find({ author: { $in: ids } }).select('_id title').sort({ createdAt: -1 }).limit(200).lean(),
-        Post.find({ author: { $in: ids } }).select('_id title').sort({ createdAt: -1 }).limit(200).lean()
+        Post.find({ author: { $in: ids } }).select('_id title imageUrl').sort({ createdAt: -1 }).limit(200).lean()
       ]);
+
+      // La preview que se ve en el pasaporte/feed externo. Si la app no la manda,
+      // fscauth cae al ícono de la app (nunca un hueco vacío).
+      const preview = (u: any) => (u && typeof u === 'string' ? { image: u } : undefined);
 
       if (recursos.length) {
         groups.push({
           type: 'recurso', label: 'Recursos', count: recursos.length,
-          items: recursos.map((r: any) => ({ id: String(r._id), title: r.title || 'Recurso', url: `${FSC_BASE}/recurso.html?id=${r._id}` }))
+          items: recursos.map((r: any) => ({ id: String(r._id), title: r.title || 'Recurso', url: `${FSC_BASE}/recurso.html?id=${r._id}`, meta: preview(r.imageUrl) }))
         });
       }
       if (obras.length) {
@@ -65,7 +69,7 @@ router.get('/assets', async (req: Request, res: Response) => {
       if (posteos.length) {
         groups.push({
           type: 'post', label: 'Posteos', count: posteos.length,
-          items: posteos.map((p: any) => ({ id: String(p._id), title: p.title || 'Posteo', url: `${FSC_BASE}/post.html?id=${p._id}` }))
+          items: posteos.map((p: any) => ({ id: String(p._id), title: p.title || 'Posteo', url: `${FSC_BASE}/post.html?id=${p._id}`, meta: preview(p.imageUrl) }))
         });
       }
     }
@@ -75,7 +79,9 @@ router.get('/assets', async (req: Request, res: Response) => {
     if (palabras.length) {
       groups.push({
         type: 'palabra', label: 'Composiciones de palabras', count: palabras.length,
-        items: palabras.map((w: any) => ({ id: String(w._id), title: w.word, url: `${FSC_BASE}/particulas.html` }))
+        // Las palabras viven en la nube de partículas: el link lleva la palabra
+        // para poder identificarla (antes las 66 apuntaban al mismo HTML pelado).
+        items: palabras.map((w: any) => ({ id: String(w._id), title: w.word, url: `${FSC_BASE}/particulas.html?palabra=${encodeURIComponent(w.word || '')}` }))
       });
     }
 

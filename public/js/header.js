@@ -1,284 +1,182 @@
+/* ============================================================
+   🧭 HEADER + FOOTER ÚNICOS de Arte Digital Data
+   ------------------------------------------------------------
+   El estilo sale TODO del sistema de diseño (css/fsc-ui.css):
+   este archivo no define colores, bordes ni radios propios.
+
+   Estructura: rejilla de 3 columnas (logo | navegación | acciones).
+   El bloque del medio es `minmax(0,1fr)`, así NADA se puede encimar:
+   antes la fila medía 1086px dentro de un contenedor de 992px y el
+   logo quedaba pegado a COLABORAR con el bloque de sesión afuera de
+   la pantalla. Los ítems que no entran en 1024px viven en el
+   desplegable "MÁS" (no se ocultan ni se superponen).
+   ============================================================ */
+
+// Ítems que NO entran en la fila: van al desplegable "MÁS".
+const NAV_MAS = [
+  { href: '/search.html', label: 'Buscar', icon: 'fa-magnifying-glass' },
+  { href: '/calendario.html', label: 'Calendario', icon: 'fa-calendar-days' },
+  { href: '/visualeffects.html', label: 'Efectos', icon: 'fa-wand-magic-sparkles' },
+  { href: '/concurso.html', label: 'Concurso', icon: 'fa-trophy' },
+  { href: '/quienessomos.html', label: 'Quiénes somos', icon: 'fa-circle-info' }
+];
+
+function navActivo(href) {
+  const p = (window.location.pathname || '').toLowerCase();
+  const base = (CONFIG.BASE || '').toLowerCase();
+  let rel = p.startsWith(base) ? p.slice(base.length) : p;
+  if (!rel || rel === '/') rel = '/index.html';
+  if (rel.startsWith('/') === false) rel = '/' + rel;
+  return rel === href ? ' is-active' : '';
+}
+
 function renderHeader() {
   const user = getUser();
   const loggedIn = isLoggedIn();
   const admin = isAdmin();
+  const u = encodeURIComponent((user && user.username) || '');
+  const nombre = escapeHTML((user && (user.displayName || user.username)) || 'Usuario');
+
+  const avatar = window.GenerativeAvatar
+    ? window.GenerativeAvatar.markup(user, { className: 'w-8 h-8 rounded-full object-cover' })
+    : `<span class="ui-btn ui-btn--icon" style="padding:6px"><i class="fas fa-user-astronaut"></i></span>`;
+
+  const masItems = NAV_MAS.map(i =>
+    `<a href="${CONFIG.BASE}${i.href}"><i class="fas ${i.icon}"></i> ${i.label}</a>`).join('') +
+    (admin ? `<a href="${CONFIG.BASE}/admin.html"><i class="fas fa-shield-halved"></i> Admin</a>` : '');
 
   const headerHTML = `
-  <header class="fixed top-0 left-0 w-full z-50 border-b border-cyan-500/30" style="background: rgba(13, 13, 18, 0.75); backdrop-filter: blur(10px);">
-    <div class="max-w-7xl mx-auto px-4">
-      <div class="flex items-center justify-between h-16">
-        
-        <!-- Logo -->
-        <a href="${CONFIG.BASE}/" class="flex items-center group shrink-0" title="Arte Digital Data">
-          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital Data" class="w-10 h-10 rounded-lg object-cover">
-        </a>
+  <header class="ui-header">
+    <div class="ui-wrap ui-header-bar">
 
-        <!-- Colaborar Button -->
-        <button onclick="showDonationModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-all uppercase mr-1 shrink-0 whitespace-nowrap">
-          COLABORAR
-        </button>
+      <a class="ui-logo" href="${CONFIG.BASE}/" title="Arte Digital Data">
+        <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital Data">
+        <span class="ui-logo-texto">Arte Digital Data</span>
+      </a>
 
-        <!-- Trophy Button -->
-        <a href="${CONFIG.BASE}/concurso.html" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all mr-2 shrink-0 whitespace-nowrap" title="Concurso Mensual de Arte">
-          <i class="fas fa-trophy text-xs"></i>
-        </a>
-
-        <!-- Desktop Nav -->
-        <nav class="hidden lg:flex items-center gap-0.5 shrink-0 flex-nowrap">
-          <a href="${CONFIG.BASE}/" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            INICIO
-          </a>
-          <a href="${CONFIG.BASE}/quienessomos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            QUIENES SOMOS
-          </a>
-          <a href="${CONFIG.BASE}/obras.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            OBRAS
-          </a>
-          <a href="${CONFIG.BASE}/recursos.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            RECURSOS
-          </a>
-          <a href="${CONFIG.BASE}/oportunidades.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-emerald)] hover:bg-white/5 transition-all whitespace-nowrap">
-            CHANCES
-          </a>
-          <a href="${CONFIG.BASE}/search.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            BUSCAR
-          </a>
-          <a href="${CONFIG.BASE}/calendario.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap">
-            CALENDARIO
-          </a>
-          <a href="${CONFIG.BASE}/artistas.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
-            ARTISTAS
-          </a>
-          <a href="${CONFIG.BASE}/visualeffects.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all whitespace-nowrap" title="Efecto de Partículas y Letras">
-            EFFECT
-          </a>
-          ${loggedIn ? `
-          <a href="${CONFIG.BASE}/chat.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-magenta)] hover:bg-white/5 transition-all whitespace-nowrap">
-            CHAT
-          </a>
-          ` : ''}
-          ${admin ? `
-          <a href="${CONFIG.BASE}/admin.html" class="nav-link flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-[var(--color-cyan)] hover:text-white hover:bg-cyan-500/10 transition-all border border-cyan-500/30 ml-1 whitespace-nowrap">
-            Admin
-          </a>
-          ` : ''}
-        </nav>
-
-        <!-- Auth Buttons / User Menu -->
-        <div class="hidden md:flex items-center gap-3 shrink-0">
-          ${loggedIn ? `
-            <a href="${CONFIG.BASE}/create.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-400 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all border border-white/10 uppercase mr-1 whitespace-nowrap">
-              CREAR
-            </a>
-            <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" id="header-notif-btn" class="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all text-xs font-bold shrink-0" title="Ver Notificaciones">
-              <i class="fas fa-bell text-xs"></i>
-              <span class="hidden xl:inline text-[10px] tracking-wide uppercase font-black">Notificaciones</span>
-              <span id="header-notif-badge" class="hidden min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border border-black shadow">0</span>
-            </a>
-            <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-white/5 transition-all">
-              ${window.GenerativeAvatar
-                ? window.GenerativeAvatar.markup(user, { className: 'w-8 h-8 rounded-full object-cover border border-cyan-500/30 group-hover:border-cyan-400' })
-                : `<div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-500/30"><i class="fas fa-user-astronaut"></i></div>`}
-              <span class="text-sm font-bold text-gray-300 group-hover:text-cyan-400 transition-colors uppercase max-w-[120px] truncate">
-                ${escapeHTML(user?.displayName || user?.username || 'Usuario')}
-              </span>
-            </a>
-            <button onclick="logout()" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Salir">
-              <i class="fas fa-sign-out-alt"></i>
-            </button>
-          ` : `
-            <button onclick="showLogin()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5 transition-all">
-              Iniciar Sesión
-            </button>
-            <button onclick="showRegister()" class="btn-primary px-5 py-2 rounded-lg text-sm transition-all">
-              Registrarse
-            </button>
-          `}
+      <nav class="ui-nav">
+        <a class="ui-navlink${navActivo('/index.html')}" href="${CONFIG.BASE}/">Inicio</a>
+        <a class="ui-navlink${navActivo('/obras.html')}" href="${CONFIG.BASE}/obras.html">Obras</a>
+        <a class="ui-navlink${navActivo('/recursos.html')}" href="${CONFIG.BASE}/recursos.html">Recursos</a>
+        <a class="ui-navlink is-chances${navActivo('/oportunidades.html')}" href="${CONFIG.BASE}/oportunidades.html">Chances</a>
+        <a class="ui-navlink${navActivo('/artistas.html')}" href="${CONFIG.BASE}/artistas.html">Artistas</a>
+        ${loggedIn ? `<a class="ui-navlink is-chat${navActivo('/chat.html')}" href="${CONFIG.BASE}/chat.html"><i class="fas fa-comments"></i> Chat</a>` : ''}
+        <div class="ui-menu" id="ui-menu-mas">
+          <button type="button" class="ui-navlink" data-ui-menu-btn aria-expanded="false">
+            Más <i class="fas fa-chevron-down" style="font-size:9px"></i>
+          </button>
+          <div class="ui-menu-panel">${masItems}</div>
         </div>
+      </nav>
 
-        <!-- Mobile Hamburger -->
-        <button id="mobile-menu-btn" class="md:hidden text-gray-300 hover:text-[var(--color-cyan)] transition-colors p-2">
-          <i class="fas fa-bars text-xl"></i>
+      <div class="ui-actions">
+        <button type="button" onclick="showDonationModal()" class="ui-btn ui-btn--ghost ui-sheen ui-colab" title="Apoyá el proyecto">
+          <i class="fas fa-heart" style="color:var(--ui-c-gold)"></i> <span class="ui-colab-texto">Colaborar</span>
+        </button>
+        ${loggedIn ? `
+          <a href="${CONFIG.BASE}/create.html" class="ui-btn ui-btn--primary ui-solo-desktop"><i class="fas fa-plus"></i> Crear</a>
+          <a href="${CONFIG.BASE}/profile.html?user=${u}&tab=notificaciones" class="ui-btn ui-btn--icon ui-solo-desktop" title="Notificaciones">
+            <i class="fas fa-bell"></i>
+            <span id="header-notif-badge" class="hidden" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center">0</span>
+          </a>
+          <a href="${CONFIG.BASE}/profile.html?user=${u}" class="ui-user" title="Mi perfil">${avatar}<span class="ui-user-nombre">${nombre}</span></a>
+          <button type="button" onclick="logout()" class="ui-btn ui-btn--icon ui-btn--ghost ui-solo-desktop" title="Salir"><i class="fas fa-right-from-bracket"></i></button>
+        ` : `
+          <button type="button" onclick="showLogin()" class="ui-btn ui-btn--ghost">Entrar</button>
+          <button type="button" onclick="showRegister()" class="ui-btn ui-btn--solid">Registrarse</button>
+        `}
+        <button type="button" id="mobile-menu-btn" class="ui-btn ui-btn--icon ui-solo-mobile" aria-label="Menú">
+          <i class="fas fa-bars"></i>
         </button>
       </div>
+    </div>
 
-      <!-- Mobile Menu -->
-      <div id="mobile-menu" class="md:hidden hidden pb-4 border-t border-white/10 mt-2 pt-3">
-        <div class="flex flex-col gap-1">
-          <a href="${CONFIG.BASE}/" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            INICIO
-          </a>
-          <a href="${CONFIG.BASE}/quienessomos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            QUIENES SOMOS
-          </a>
-          <a href="${CONFIG.BASE}/obras.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            OBRAS
-          </a>
-          <a href="${CONFIG.BASE}/recursos.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            RECURSOS
-          </a>
-          <a href="${CONFIG.BASE}/oportunidades.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-emerald)] hover:bg-white/5">
-            CHANCES
-          </a>
-          ${loggedIn ? `
-          <a href="${CONFIG.BASE}/create.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5 border border-white/10">
-            CREAR
-          </a>
-          ` : ''}
-          <a href="${CONFIG.BASE}/search.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            BUSCAR
-          </a>
-          <a href="${CONFIG.BASE}/calendario.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            CALENDARIO
-          </a>
-          <a href="${CONFIG.BASE}/artistas.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
-            ARTISTAS
-          </a>
-          <a href="${CONFIG.BASE}/visualeffects.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            EFFECT
-          </a>
-          ${loggedIn ? `
-          <a href="${CONFIG.BASE}/chat.html" class="px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-magenta)] hover:bg-white/5">
-            CHAT
-          </a>
-          <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}&tab=notificaciones" class="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20">
-            <span class="flex items-center">NOTIFICACIONES</span>
-            <span id="mobile-notif-badge" class="hidden min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center">0</span>
-          </a>
-          <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(user?.username || '')}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-gray-300 hover:text-[var(--color-cyan)] hover:bg-white/5">
-            ${window.GenerativeAvatar
-              ? window.GenerativeAvatar.markup(user, { className: 'w-8 h-8 rounded-full object-cover border border-cyan-500/30' })
-              : `<div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400"><i class="fas fa-user-astronaut text-xs"></i></div>`}
-            <span class="uppercase">${escapeHTML(user?.displayName || user?.username || 'MI PERFIL')}</span>
-          </a>
-          ` : ''}
-          ${admin ? `
-          <a href="${CONFIG.BASE}/admin.html" class="px-4 py-3 rounded-lg text-sm font-medium text-[var(--color-cyan)] hover:bg-cyan-500/10 border border-cyan-500/30">
-            Admin
-          </a>
-          ` : ''}
-          <hr class="border-white/10 my-2">
-          ${loggedIn ? `
-            <button onclick="logout()" class="px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 text-left w-full">
-              Cerrar Sesión
-            </button>
-          ` : `
-            <button onclick="showLogin()" class="px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 text-left w-full">
-              Iniciar Sesión
-            </button>
-            <button onclick="showRegister()" class="btn-primary px-4 py-3 rounded-lg text-center mt-2 w-full">
-              Registrarse
-            </button>
-          `}
-          <button onclick="showDonationModal()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-yellow-400 hover:bg-yellow-500/5 mt-2 border border-yellow-500/10">
-            COLABORAR
-          </button>
-        </div>
+    <!-- Menú mobile: mismas secciones, targets grandes -->
+    <div id="mobile-menu" class="ui-hidden ui-wrap" style="padding-bottom:18px">
+      <div class="ui-menu-panel" style="position:static;opacity:1;transform:none;pointer-events:auto;min-width:0">
+        <a href="${CONFIG.BASE}/">Inicio</a>
+        <a href="${CONFIG.BASE}/obras.html">Obras</a>
+        <a href="${CONFIG.BASE}/recursos.html">Recursos</a>
+        <a href="${CONFIG.BASE}/oportunidades.html">Chances</a>
+        <a href="${CONFIG.BASE}/artistas.html">Artistas</a>
+        ${loggedIn ? `<a href="${CONFIG.BASE}/chat.html">Chat</a><a href="${CONFIG.BASE}/create.html">Crear</a>` : ''}
+        ${NAV_MAS.map(i => `<a href="${CONFIG.BASE}${i.href}"><i class="fas ${i.icon}"></i> ${i.label}</a>`).join('')}
+        ${admin ? `<a href="${CONFIG.BASE}/admin.html"><i class="fas fa-shield-halved"></i> Admin</a>` : ''}
+        ${loggedIn ? `<a href="${CONFIG.BASE}/profile.html?user=${u}">${avatar}<span style="margin-left:8px">${nombre}</span></a>
+          <a href="#" onclick="logout();return false" style="color:#f87171"><i class="fas fa-right-from-bracket"></i> Salir</a>`
+        : `<a href="#" onclick="showLogin();return false"><i class="fas fa-right-to-bracket"></i> Entrar</a>
+           <a href="#" onclick="showRegister();return false"><i class="fas fa-user-plus"></i> Registrarse</a>`}
       </div>
     </div>
   </header>
 
-  <!-- Global Donation Modal -->
-  <div id="donation-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/90 px-4 backdrop-blur-md">
-    <div class="w-full max-w-md rounded-[2.5rem] border border-yellow-500/30 card-cyber bg-[#0d0d12] overflow-hidden shadow-[0_0_50px_rgba(234,179,8,0.1)]">
-      <div class="p-8 text-center relative">
-        <button onclick="hideDonationModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-all">
-          <i class="fas fa-times text-xl"></i>
-        </button>
-        <div class="w-20 h-20 bg-yellow-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-yellow-500/20">
-          <i class="fas fa-heart text-3xl text-yellow-500"></i>
+  <!-- Modal de colaboración (nunca alert nativo) -->
+  <div id="donation-modal" class="ui-modal">
+    <div class="ui-modal-box" style="max-width:520px">
+      <button onclick="hideDonationModal()" class="ui-btn ui-btn--icon ui-btn--ghost" style="position:absolute;top:14px;right:14px" aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+      <span class="ui-badge"><i class="fas fa-heart" style="color:var(--ui-c-gold)"></i> Colaborar</span>
+      <h3 class="ui-title" style="font-size:24px;margin:12px 0 6px">Apoyá el proyecto</h3>
+      <p class="ui-sub" style="margin-bottom:18px">Tu colaboración mantiene la plataforma libre y sin publicidad.</p>
+      <div style="display:grid;gap:10px">
+        <a href="${CONFIG.DONATIONS.MERCADOPAGO}" rel="noopener" target="_blank" class="ui-btn ui-btn--primary ui-sheen" style="justify-content:flex-start;text-transform:none;letter-spacing:0">
+          <i class="fas fa-wallet"></i> Mercado Pago · donaciones en pesos
+        </a>
+        <a href="${CONFIG.DONATIONS.CAFECITO}" rel="noopener" target="_blank" class="ui-btn ui-sheen" style="justify-content:flex-start;text-transform:none;letter-spacing:0">
+          <i class="fas fa-mug-hot" style="color:var(--ui-c-gold)"></i> Cafecito · invitame un café
+        </a>
+        <div class="ui-btn is-disabled" style="justify-content:flex-start;text-transform:none;letter-spacing:0">
+          <i class="fab fa-paypal"></i> PayPal · próximamente
         </div>
-        <h3 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">Apoyá al <span class="text-yellow-500">Proyecto</span></h3>
-        <p class="text-sm text-gray-400 mb-8">Tu colaboración nos ayuda a seguir creciendo y manteniendo esta plataforma libre.</p>
-        
-        <div class="grid grid-cols-1 gap-3">
-          <!-- Mercado Pago (Active) -->
-          <a href="${CONFIG.DONATIONS.MERCADOPAGO}" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-[#009ee3]/10 border border-[#009ee3]/50 hover:border-[#009ee3] hover:bg-[#009ee3]/20 transition-all group no-underline relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-[#009ee3]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div class="w-10 h-10 rounded-xl bg-[#009ee3] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,158,227,0.3)] group-hover:scale-110 transition-transform relative z-10">
-              <i class="fas fa-wallet text-white"></i>
-            </div>
-            <div class="text-left flex-1 relative z-10">
-              <div class="text-sm font-black text-white uppercase tracking-tight">Mercado Pago</div>
-              <div class="text-[10px] text-[#009ee3] font-bold uppercase tracking-wider">¡Donaciones en Pesos!</div>
-            </div>
-            <div class="relative z-10 flex flex-col items-center">
-               <i class="fas fa-external-link-alt text-[#009ee3] transition-transform group-hover:translate-x-1"></i>
-            </div>
-          </a>
-
-          <!-- Cafecito (Active) -->
-          <a href="${CONFIG.DONATIONS.CAFECITO}" rel="noopener" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/50 hover:border-yellow-400 hover:bg-yellow-500/20 transition-all group no-underline relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div class="w-10 h-10 rounded-xl bg-[#ffdd00] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,221,0,0.3)] group-hover:scale-110 transition-transform relative z-10">
-              <i class="fas fa-coffee text-[#333]"></i>
-            </div>
-            <div class="text-left flex-1 relative z-10">
-              <div class="text-sm font-black text-white uppercase tracking-tight">Cafecito</div>
-              <div class="text-[10px] text-yellow-500 font-bold uppercase tracking-wider">¡Apoyanos con un café!</div>
-            </div>
-            <div class="relative z-10 flex flex-col items-center">
-               <i class="fas fa-external-link-alt text-yellow-500 transition-transform group-hover:translate-x-1"></i>
-            </div>
-          </a>
-
-          <!-- PayPal (Disabled) -->
-          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
-            <div class="w-10 h-10 rounded-xl bg-[#003087] flex items-center justify-center shrink-0">
-              <i class="fab fa-paypal text-white"></i>
-            </div>
-            <div class="text-left flex-1">
-              <div class="text-sm font-bold text-white">PayPal</div>
-              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
-            </div>
-          </div>
-
-          <!-- Patreon (Disabled) -->
-          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 grayscale opacity-30 select-none cursor-not-allowed">
-            <div class="w-10 h-10 rounded-xl bg-[#ff424d] flex items-center justify-center shrink-0">
-              <i class="fab fa-patreon text-white"></i>
-            </div>
-            <div class="text-left flex-1">
-              <div class="text-sm font-bold text-white">Patreon</div>
-              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Próximamente</div>
-            </div>
-          </div>
+        <div class="ui-btn is-disabled" style="justify-content:flex-start;text-transform:none;letter-spacing:0">
+          <i class="fab fa-patreon"></i> Patreon · próximamente
         </div>
       </div>
     </div>
   </div>
   `;
 
-  document.getElementById('app-header').innerHTML = headerHTML;
+  const host = document.getElementById('app-header');
+  if (host) host.innerHTML = headerHTML;
 
-  // Mobile toggle
-  const btn = document.getElementById('mobile-menu-btn');
-  const menu = document.getElementById('mobile-menu');
-  if (btn && menu) {
-    btn.addEventListener('click', () => {
-      menu.classList.toggle('hidden');
-      const icon = btn.querySelector('i');
-      icon.classList.toggle('fa-bars');
-      icon.classList.toggle('fa-times');
+  // Desplegable "MÁS" y menú mobile
+  const mas = document.getElementById('ui-menu-mas');
+  if (mas) {
+    const btn = mas.querySelector('[data-ui-menu-btn]');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const abierto = mas.dataset.open === '1';
+      mas.dataset.open = abierto ? '0' : '1';
+      btn.setAttribute('aria-expanded', abierto ? 'false' : 'true');
+    });
+    document.addEventListener('click', (e) => {
+      if (!mas.contains(e.target)) { mas.dataset.open = '0'; btn.setAttribute('aria-expanded', 'false'); }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { mas.dataset.open = '0'; btn.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+
+  const btnM = document.getElementById('mobile-menu-btn');
+  const menuM = document.getElementById('mobile-menu');
+  if (btnM && menuM) {
+    btnM.addEventListener('click', () => {
+      menuM.classList.toggle('ui-hidden');
+      const icon = btnM.querySelector('i');
+      if (icon) { icon.classList.toggle('fa-bars'); icon.classList.toggle('fa-times'); }
     });
   }
 }
 
-
 function showDonationModal() {
   const modal = document.getElementById('donation-modal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  }
+  if (modal) modal.classList.add('is-open');
 }
 
 function hideDonationModal() {
   const modal = document.getElementById('donation-modal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  }
+  if (modal) modal.classList.remove('is-open');
 }
 
 function extractYouTubeId(item) {
@@ -304,8 +202,7 @@ function playVideo(el, youtubeId) {
   const overlay = el.querySelector('.video-overlay');
   if (!overlay) return;
   const iframe = overlay.querySelector('iframe');
-  
-  // Agregar loader visual
+
   let loader = overlay.querySelector('.video-loader');
   if (!loader) {
     loader = document.createElement('div');
@@ -314,22 +211,16 @@ function playVideo(el, youtubeId) {
     overlay.appendChild(loader);
   }
   loader.style.display = 'flex';
-
-  // Ocultar loader cuando el iframe cargue
-  iframe.onload = () => {
-    loader.style.display = 'none';
-  };
+  iframe.onload = () => { loader.style.display = 'none'; };
 
   if (!iframe.src || iframe.src === 'about:blank') {
     const url = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&modestbranding=1&rel=0&enablejsapi=1`;
-    console.log('[YouTube] Loading:', url);
     iframe.src = url;
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.position = 'absolute';
     iframe.style.top = '0';
     iframe.style.left = '0';
-    // Use thumbnail as background
     overlay.style.background = `url(https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg) no-repeat center center`;
     overlay.style.backgroundSize = 'cover';
   }
@@ -348,50 +239,38 @@ function stopVideo(el) {
   iframe.src = 'about:blank';
 }
 
-
 function renderFooter() {
   if (document.getElementById('app-footer')) return;
-  
+
   const footerContainer = document.createElement('div');
   footerContainer.id = 'app-footer';
-  footerContainer.className = 'mt-auto border-t border-white/5 bg-[#0d0d12]/80 backdrop-blur-xl py-12 px-4';
-  
-  const footerHTML = `
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-      <div class="flex flex-col items-center md:items-start gap-4">
-        <a href="${CONFIG.BASE}/" class="flex items-center gap-3">
-          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital" class="w-12 h-12 rounded-xl object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
-          <span class="text-xl font-black gradient-text opacity-70">Arte Digital Data</span>
-        </a>
-        <p class="text-gray-500 text-xs text-center md:text-left max-w-xs">
-          La red social definitiva para artistas digitales, músicos y diseñadores. 
-          Unite a la revolución creativa.
-        </p>
-      </div>
+  footerContainer.className = 'ui-footer';
+  footerContainer.style.marginTop = 'auto';
 
-      <div class="flex flex-wrap justify-center gap-4">
-        <a href="https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all font-bold text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(37,211,102,0.1)]">
-          <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+  footerContainer.innerHTML = `
+    <div class="ui-wrap ui-footer-grid">
+      <div>
+        <a href="${CONFIG.BASE}/" class="ui-logo" style="margin-bottom:10px">
+          <img src="${CONFIG.BASE}/img/artedigital.png" alt="Arte Digital Data">
+          <span>Arte Digital Data</span>
         </a>
-        <a href="https://discord.gg/sapq5a58" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#5865F2]/10 text-[#5865F2] border border-[#5865F2]/20 hover:bg-[#5865F2]/20 transition-all font-bold text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(88,101,242,0.1)]">
-          <i class="fab fa-discord text-lg"></i> Discord
-        </a>
-        <a href="https://github.com/jpupper/artedigitaldata" target="_blank" class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white transition-all font-bold text-sm uppercase tracking-widest">
-          <i class="fab fa-github text-lg"></i> Github
-        </a>
+        <p class="ui-sub" style="font-size:12px">La red de artistas digitales, música visual y diseño generativo.</p>
       </div>
-
-      <div class="flex flex-col items-center md:items-end gap-2 text-gray-600">
-        <a href="https://fullscreencode.com" target="_blank" class="text-[10px] font-black uppercase tracking-[0.2em] hover:text-cyan-400 transition-colors">Desarrollado por FullScreenCode</a>
-        <div class="flex gap-4 text-sm">
-          <a href="${CONFIG.BASE}/terminos" class="hover:text-cyan-500 transition-colors">Términos</a>
-          <a href="${CONFIG.BASE}/privacidad" class="hover:text-magenta-500 transition-colors">Privacidad</a>
+      <div class="ui-row">
+        <a href="https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN" target="_blank" class="ui-btn ui-sheen"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp</a>
+        <a href="https://discord.gg/sapq5a58" target="_blank" class="ui-btn ui-sheen"><i class="fab fa-discord" style="color:#5865F2"></i> Discord</a>
+        <a href="https://github.com/jpupper/artedigitaldata" target="_blank" class="ui-btn ui-sheen"><i class="fab fa-github"></i> GitHub</a>
+      </div>
+      <div style="display:grid;gap:8px;justify-items:start">
+        <a href="https://fullscreencode.com" target="_blank" class="ui-btn ui-btn--ghost">Hecho en FullScreen Code</a>
+        <div class="ui-row">
+          <a href="${CONFIG.BASE}/terminos.html" class="ui-navlink">Términos</a>
+          <a href="${CONFIG.BASE}/privacidad.html" class="ui-navlink">Privacidad</a>
+          <button type="button" onclick="showDonationModal()" class="ui-navlink">Colaborar</button>
         </div>
       </div>
-    </div>
-  `;
-  
-  footerContainer.innerHTML = footerHTML;
+    </div>`;
+
   document.body.appendChild(footerContainer);
 }
 
@@ -415,7 +294,7 @@ async function updateHeaderNotifBadge() {
         b.classList.add('hidden');
       }
     });
-  } catch(e) {}
+  } catch (e) {}
 }
 window.updateHeaderNotifBadge = updateHeaderNotifBadge;
 
@@ -427,10 +306,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Cerrar el modal de colaboración: Esc o click afuera (nunca alert nativo).
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideDonationModal();
+});
+document.addEventListener('click', (e) => {
+  const m = document.getElementById('donation-modal');
+  if (m && m.classList.contains('is-open') && !m.querySelector('.ui-modal-box').contains(e.target) && !e.target.closest('.ui-colab')) {
+    hideDonationModal();
+  }
+});
+
 // Dynamically load floating chat widget and cookie consent banner on all pages
 (function loadGlobalWidgets() {
   const p = window.location.pathname.toLowerCase();
-  
+
   // Floating Chat
   if (!p.includes('chat.html') && !p.endsWith('/chat') && !document.querySelector('script[src*="floating-chat.js"]')) {
     const scriptChat = document.createElement('script');
@@ -445,4 +335,3 @@ document.addEventListener('DOMContentLoaded', () => {
     (document.head || document.documentElement).appendChild(scriptCookie);
   }
 })();
-
