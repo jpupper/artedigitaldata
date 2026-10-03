@@ -57,7 +57,14 @@
   <script src="js/auth.js?v=4"></script>
   <script src="js/header.js?v=4"></script>
   <script>
-    if (isLoggedIn()) window.location.href = CONFIG.BASE + '/';
+    // OJO: NO alcanza con "hay token". Un token vencido (o firmado con el secreto
+    // anterior) mandaba al inicio sin formulario y el usuario quedaba encerrado sin
+    // poder entrar. Se valida contra la API y recién ahí se redirige.
+    if (isLoggedIn()) {
+      apiRequest('/auth/me')
+        .then(res => { if (res && res.ok) window.location.href = CONFIG.BASE + '/'; })
+        .catch(() => {});
+    }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
