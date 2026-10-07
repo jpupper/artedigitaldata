@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/fsc-ui.css?v=4">
-  <link rel="stylesheet" href="css/planilla.css?v=2">
+  <link rel="stylesheet" href="css/planilla.css?v=3">
 </head>
 <body class="ui-con-header">
   <div id="p5-global-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
@@ -268,6 +268,7 @@
       }
 
       inscripciones = await res.json();
+      await resolverObrasVinculadas();
       columnas = construirColumnas(oportunidadData, inscripciones);
       renderCabecera();
       renderFilas();
@@ -372,29 +373,75 @@
     }
 
     // ─────────────────────────────────────────────────── CELDAS ───────────
+    // Una inscripción puede traer su obra de dos maneras:
+    //  a) como obra de la plataforma (obra ref / datos.obraId), o
+    //  b) como LINK a una obra subida en Arte Digital Data (post?id=...) escrito
+    //     en alguna respuesta del formulario ("obra tipo link").
+    // Si la obra vino como link a una obra de ADD, se busca su ficha pública
+    // para mostrar el nombre, la imagen y la descripción reales.
+    async function resolverObrasVinculadas() {
+      const pendientes = inscripciones.filter(i => {
+        const tieneTitulo = (i.obra && i.obra.title) || i.datos?.obraTitulo;
+        return !tieneTitulo && !!obraIdVinculado(i);
+      }).slice(0, 20);
+
+      await Promise.all(pendientes.map(async (insc) => {
+        const id = obraIdVinculado(insc);
+        try {
+          const res = await fetch(`${CONFIG.API_URL}/posts/${id}`);
+          if (!res.ok) return;
+          const post = await res.json();
+          insc._obraVinculada = {
+            _id: id,
+            title: post.title,
+            imageUrl: post.imageUrl,
+            description: post.description,
+            youtube_video: post.youtube_video,
+          };
+        } catch (e) { /* si falla, queda el link pelado */ }
+      }));
+    }
+
+    function obraIdEnTexto(txt) {
+      if (!txt || typeof txt !== 'string') return '';
+      const m = txt.match(/(?:post|obra)(?:\.html)?\?id=([a-fA-F0-9]{24})/);
+      return m ? m[1] : '';
+    }
+
+    function obraIdVinculado(insc) {
+      const obra = insc.obra || {};
+      const vinc = insc._obraVinculada || {};
+      const directo = obra._id || insc.datos?.obraId || vinc._id;
+      if (directo) return String(directo);
+      for (const valor of Object.values(insc.datos || {})) {
+        const id = obraIdEnTexto(valor);
+        if (id) return id;
+      }
+      return '';
+    }
+
+    function obraDeInsc(insc) {
+      const obra = insc.obra || {};
+      const vinc = insc._obraVinculada || {};
+      const id = obraIdVinculado(insc);
+      return {
+        id,
+        viaLink: !!id && !obra._id && !insc.datos?.obraId,
+        title: obra.title || insc.datos?.obraTitulo || vinc.title || '',
+        image: obra.imageUrl || insc.datos?.obraImagen || vinc.imageUrl || '',
+        description: obra.description || insc.datos?.obraDescripcion || vinc.description || '',
+        youtube: obra.youtube_video || insc.datos?.obraYoutube || vinc.youtube_video || '',
+      };
+    }
+
     function esObra(insc) {
-      return insc.tipoInscripcion === 'obra' || !!insc.obra || insc.datos?.tipoInscripcion === 'obra';
+      return insc.tipoInscripcion === 'obra' || !!insc.obra || insc.datos?.tipoInscripcion === 'obra' || !!obraIdVinculado(insc);
     }
 
-    function nombreObra(insc) {
-      const obra = insc.obra || {};
-      return obra.title || insc.datos?.obraTitulo || '';
-    }
-
-    function descripcionObra(insc) {
-      const obra = insc.obra || {};
-      return obra.description || insc.datos?.obraDescripcion || '';
-    }
-
-    function imagenObra(insc) {
-      const obra = insc.obra || {};
-      return obra.imageUrl || insc.datos?.obraImagen || '';
-    }
-
-    function videoObra(insc) {
-      const obra = insc.obra || {};
-      return obra.youtube_video || insc.datos?.obraYoutube || '';
-    }
+    function nombreObra(insc) { return obraDeInsc(insc).title; }
+    function descripcionObra(insc) { return obraDeInsc(insc).description; }
+    function imagenObra(insc) { return obraDeInsc(insc).image; }
+    function videoObra(insc) { return obraDeInsc(insc).youtube; }
 
     function nombreArtista(insc) {
       const u = insc.usuario || {};
@@ -402,24 +449,30 @@
     }
 
     function obraCell(insc) {
-      const title = nombreObra(insc);
-      const obra = insc.obra || {};
-      const id = obra._id || insc.datos?.obraId || '';
+      const o = obraDeInsc(insc);
+      const href = o.id ? `post.html?id=${encodeURIComponent(o.id)}` : '';
 
-      let titulo;
-      if (title && id) {
-        titulo = `<a class="pl-obra-title" href="post.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener" title="${escapeHTML(title)}">${escapeHTML(title)}</a>`;
-      } else if (title) {
-        titulo = `<span class="pl-obra-title" title="${escapeHTML(title)}">${escapeHTML(title)}</span>`;
+      let tituloHtml;
+      if (o.title && href) {
+        tituloHtml = `<a class="pl-obra-title" href="${href}" target="_blank" rel="noopener" title="${escapeHTML(o.title)}">${escapeHTML(o.title)}</a>`;
+      } else if (o.title) {
+        tituloHtml = `<span class="pl-obra-title" title="${escapeHTML(o.title)}">${escapeHTML(o.title)}</span>`;
+      } else if (href) {
+        tituloHtml = `<a class="pl-obra-title" href="${href}" target="_blank" rel="noopener" title="Obra subida en Arte Digital Data">Ver obra en ADD</a>`;
       } else {
-        titulo = '<span class="pl-obra-title" style="color: var(--ui-text-mute); font-weight:700;">Sin obra adjunta</span>';
+        tituloHtml = '<span class="pl-obra-title" style="color: var(--ui-text-mute); font-weight:700;">Sin obra adjunta</span>';
       }
 
-      const origen = esObra(insc)
-        ? '<span class="pl-origen pl-origen--obra"><i class="fas fa-palette"></i> Obra</span>'
-        : '<span class="pl-origen pl-origen--form"><i class="fas fa-file-signature"></i> Formulario</span>';
+      let origen;
+      if (o.viaLink) {
+        origen = '<span class="pl-origen pl-origen--link"><i class="fas fa-link"></i> Obra por link</span>';
+      } else if (esObra(insc)) {
+        origen = '<span class="pl-origen pl-origen--obra"><i class="fas fa-palette"></i> Obra</span>';
+      } else {
+        origen = '<span class="pl-origen pl-origen--form"><i class="fas fa-file-signature"></i> Formulario</span>';
+      }
 
-      return titulo + '<br>' + origen;
+      return tituloHtml + '<br>' + origen;
     }
 
     function usuarioCell(insc) {
@@ -434,18 +487,18 @@
         ? `<img src="${avatarUrl}" alt="${nombre}">`
         : `<span class="pl-user-inicial">${inicial}</span>`;
 
-      const perfil = username
-        ? `<a href="profile.html?user=${encodeURIComponent(u.username)}" target="_blank" rel="noopener">@${username}</a>`
-        : '';
+      const extra = [username ? '@' + username : '', email].filter(Boolean).join(' · ');
 
-      return `
-        <div class="pl-user">
+      const contenido = `
           ${avatar}
           <div style="min-width:0;">
             <div class="pl-user-nombre">${nombre}</div>
-            <div class="pl-user-extra">${perfil}${perfil && email ? ' · ' : ''}${email}</div>
-          </div>
-        </div>`;
+            <div class="pl-user-extra">${extra}</div>
+          </div>`;
+
+      // Toda la celda del artista lleva a su perfil.
+      if (!u.username) return `<div class="pl-user">${contenido}</div>`;
+      return `<a class="pl-user pl-user--link" href="profile.html?user=${encodeURIComponent(u.username)}" target="_blank" rel="noopener" title="Ver el perfil de ${nombre}">${contenido}</a>`;
     }
 
     function mediaCell(insc) {

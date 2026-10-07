@@ -131,8 +131,12 @@ table.planilla tbody tr:hover { background: color-mix(in srgb, var(--ui-accent) 
 }
 .pl-origen--obra { border-color: var(--ui-line-accent); color: var(--ui-accent); }
 .pl-origen--form { border-color: rgba(163, 230, 53, 0.4); color: var(--ui-c-lime); }
+.pl-origen--link { border-color: rgba(250, 204, 21, 0.45); color: var(--ui-c-gold); }
 
 .pl-user { display: flex; align-items: center; gap: 9px; min-width: 190px; }
+.pl-user--link { text-decoration: none; cursor: pointer; }
+.pl-user--link:hover .pl-user-nombre { color: var(--ui-accent); }
+.pl-user--link:hover .pl-user-inicial { border-color: var(--ui-accent); color: var(--ui-accent); }
 .pl-user img,
 .pl-user .pl-user-inicial {
   width: 30px; height: 30px; border-radius: var(--ui-r-pill); object-fit: cover; flex: 0 0 auto;

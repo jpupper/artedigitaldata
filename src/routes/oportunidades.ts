@@ -546,6 +546,17 @@ function imagenUrlsDeDatos(datos: any): string[] {
   return urls;
 }
 
+// "Obra por link": la respuesta trae el link a una obra de ADD (post?id=...) en
+// lugar de haber seleccionado la obra desde el perfil.
+function obraIdEnDatos(datos: any): string {
+  for (const valor of Object.values(datos || {})) {
+    if (typeof valor !== 'string') continue;
+    const m = valor.match(/(?:post|obra)(?:\.html)?\?id=([a-fA-F0-9]{24})/);
+    if (m) return m[1];
+  }
+  return '';
+}
+
 async function bajarImagen(url: string): Promise<{ data: Buffer; ext: string } | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
@@ -629,11 +640,26 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
       const insc = inscripciones[idx];
       const usuario: any = usuarioMap.get(insc.usuario.toString()) || {};
       const obra: any = insc.obra || {};
-      const tituloObra = obra.title || insc.datos?.obraTitulo || '';
       const artista = usuario.displayName || usuario.username || '';
 
+      // Obra "por link": si no eligió una obra del perfil pero escribió el link
+      // a una obra de ADD, se usa su ficha para el nombre/imagen/descripción.
+      let obraLink: any = null;
+      if (!obra._id && !insc.datos?.obraId) {
+        const linkId = obraIdEnDatos(insc.datos);
+        if (linkId) {
+          try {
+            obraLink = await Post.findById(linkId).select('title imageUrl description youtube_video');
+          } catch {
+            obraLink = null;
+          }
+        }
+      }
+
+      const tituloObra = obra.title || insc.datos?.obraTitulo || obraLink?.title || '';
+
       const candidatas: string[] = [];
-      const principal = obra.imageUrl || insc.datos?.obraImagen || '';
+      const principal = obra.imageUrl || insc.datos?.obraImagen || obraLink?.imageUrl || '';
       if (principal) candidatas.push(principal);
       imagenUrlsDeDatos(insc.datos).forEach(u => { if (!candidatas.includes(u)) candidatas.push(u); });
 
@@ -671,9 +697,9 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
         artista,
         usuario.username || '',
         usuario.email || '',
-        obra.description || insc.datos?.obraDescripcion || '',
+        obra.description || insc.datos?.obraDescripcion || obraLink?.description || '',
         principal,
-        obra.youtube_video || insc.datos?.obraYoutube || '',
+        obra.youtube_video || insc.datos?.obraYoutube || obraLink?.youtube_video || '',
         insc.createdAt ? new Date(insc.createdAt).toLocaleString('es-AR') : '',
         ...claves.map(k => (insc.datos || {})[k] ?? ''),
         insc.mensaje || '',
