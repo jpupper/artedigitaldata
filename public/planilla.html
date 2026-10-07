@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=4">
-  <link rel="stylesheet" href="css/planilla.css?v=3">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/planilla.css?v=4">
 </head>
 <body class="ui-con-header">
   <div id="p5-global-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Acceso denegado -->
-    <div id="unauthorized-message" class="ui-card ui-hidden" style="max-width:560px; margin:60px auto; padding:36px; text-align:center;">
+    <div id="unauthorized-message" class="ui-card planilla-cabecera ui-hidden" style="max-width:560px; margin:60px auto; padding:36px; text-align:center;">
       <i class="fas fa-user-lock" style="font-size:44px; color: var(--ui-c-red);"></i>
       <h2 style="font-size:22px; font-weight:900; margin:14px 0 8px;">Acceso restringido</h2>
       <p id="unauthorized-reason" class="ui-sub" style="margin:0 auto 22px;">
@@ -37,7 +37,7 @@
     <!-- Contenido -->
     <div id="planilla-content" class="ui-hidden">
       <!-- Encabezado -->
-      <section class="ui-card" style="padding:22px 24px; margin-bottom:18px;">
+      <section class="ui-card planilla-cabecera" style="padding:22px 24px; margin-bottom:18px;">
         <div class="ui-row" style="justify-content:space-between; align-items:flex-start;">
           <div style="min-width:0;">
             <div class="ui-row" style="gap:10px; margin-bottom:8px;">

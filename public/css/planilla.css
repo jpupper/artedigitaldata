@@ -4,10 +4,16 @@
    ========================================================================== */
 
 /* ──────────────────────────────────────── CONTENEDOR DE LA PLANILLA ───── */
+/* Fondo SÓLIDO: el fondo animado (shader ASCII) no se ve a través del panel. */
+.planilla-cabecera,
+.planilla-panel {
+  background: var(--ui-bg-soft);
+}
+
 .planilla-panel {
   border: var(--ui-bw) solid var(--ui-line);
   border-radius: var(--ui-r-lg);
-  background: var(--ui-surface);
+  background: var(--ui-bg-soft);
   padding: 16px;
   box-shadow: var(--ui-shadow);
 }
@@ -46,7 +52,7 @@
   padding: 12px 16px;
   border-radius: var(--ui-r-md);
   border: var(--ui-bw) solid var(--ui-line);
-  background: var(--ui-surface);
+  background: var(--ui-bg);
 }
 .pl-stat b { display: block; font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--ui-text); }
 .pl-stat span {
@@ -61,7 +67,7 @@
 .planilla-scroll {
   border: var(--ui-bw) solid var(--ui-line);
   border-radius: var(--ui-r-md);
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--ui-bg);
   overflow: auto;
   max-height: calc(100vh - 300px);
   min-height: 180px;

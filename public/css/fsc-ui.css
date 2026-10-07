@@ -330,7 +330,7 @@ body { background: var(--ui-bg); color: var(--ui-text); }
 
 .ui-footer {
   border-top: var(--ui-bw) solid var(--ui-line);
-  background: color-mix(in srgb, var(--ui-bg) 70%, transparent);
+  background: var(--ui-bg-soft);
   padding: 40px 0; margin-top: 60px;
 }
 .ui-footer-grid { display: grid; gap: 26px; grid-template-columns: 1fr; }
