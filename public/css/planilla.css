@@ -3,6 +3,15 @@
    Usa SOLO los tokens del sistema de diseño (--ui-*) definidos en fsc-ui.css.
    ========================================================================== */
 
+/* ──────────────────────────────────────── CONTENEDOR DE LA PLANILLA ───── */
+.planilla-panel {
+  border: var(--ui-bw) solid var(--ui-line);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-surface);
+  padding: 16px;
+  box-shadow: var(--ui-shadow);
+}
+
 .planilla-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -51,10 +60,11 @@
 /* ─────────────────────────────────────────────────────── HOJA / TABLA ──── */
 .planilla-scroll {
   border: var(--ui-bw) solid var(--ui-line);
-  border-radius: var(--ui-r-lg);
-  background: rgba(0, 0, 0, 0.22);
+  border-radius: var(--ui-r-md);
+  background: rgba(0, 0, 0, 0.28);
   overflow: auto;
-  max-height: calc(100vh - var(--ui-header-h) - 40px);
+  max-height: calc(100vh - 300px);
+  min-height: 180px;
 }
 
 table.planilla {
@@ -145,9 +155,16 @@ table.planilla tbody tr:hover { background: color-mix(in srgb, var(--ui-accent) 
   font-size: 12px;
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  cursor: zoom-in;
+}
+.pl-desc:hover { color: var(--ui-text); }
+.pl-desc.pl-abierto {
+  -webkit-line-clamp: unset;
+  max-width: 520px;
+  cursor: zoom-out;
 }
 
 .pl-media {
@@ -181,6 +198,22 @@ table.planilla tbody tr:hover { background: color-mix(in srgb, var(--ui-accent) 
   font-size: 12px;
   line-height: 1.5;
   word-break: break-word;
+}
+/* Textos largos: recortados a 3 lineas y desplegables al click (si no, la fila
+   crece a miles de px y hay que bajar una eternidad para pasar de inscripto). */
+.pl-valor--clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.pl-valor--clamp:hover { color: var(--ui-text); }
+.pl-valor--clamp.pl-abierto {
+  -webkit-line-clamp: unset;
+  display: block;
+  max-width: 520px;
+  cursor: zoom-out;
 }
 .pl-valor--vacio { color: var(--ui-text-mute); }
 .pl-valor a { color: var(--ui-accent); text-decoration: none; }
