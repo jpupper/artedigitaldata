@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="suave">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planilla de Inscriptos - Arte Digital Data</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=4">
+  <link rel="stylesheet" href="css/planilla.css?v=1">
+</head>
+<body class="ui-con-header">
+  <div id="p5-global-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
+  <div id="app-header"></div>
+
+  <main class="relative z-10 ui-wrap" style="padding-top: 26px; padding-bottom: 60px; max-width: 1560px;">
+    <!-- Loading -->
+    <div id="loading" style="text-align:center; padding:80px 20px;">
+      <i class="fas fa-spinner fa-spin" style="font-size:34px; color: var(--ui-accent);"></i>
+      <p style="color: var(--ui-text-dim); margin-top:14px;">Verificando acceso y armando la planilla...</p>
+    </div>
+
+    <!-- Acceso denegado -->
+    <div id="unauthorized-message" class="ui-card ui-hidden" style="max-width:560px; margin:60px auto; padding:36px; text-align:center;">
+      <i class="fas fa-user-lock" style="font-size:44px; color: var(--ui-c-red);"></i>
+      <h2 style="font-size:22px; font-weight:900; margin:14px 0 8px;">Acceso restringido</h2>
+      <p id="unauthorized-reason" class="ui-sub" style="margin:0 auto 22px;">
+        La planilla de inscriptos solo es visible para el creador de la convocatoria, los administradores y los usuarios autorizados.
+      </p>
+      <div class="ui-row" style="justify-content:center;">
+        <a id="btn-login" href="#" class="ui-btn ui-btn--primary ui-hidden"><i class="fas fa-right-to-bracket"></i> Iniciar sesión</a>
+        <a href="oportunidades.html" class="ui-btn"><i class="fas fa-arrow-left"></i> Ver Chances</a>
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div id="planilla-content" class="ui-hidden">
+      <!-- Encabezado -->
+      <section class="ui-card" style="padding:22px 24px; margin-bottom:18px;">
+        <div class="ui-row" style="justify-content:space-between; align-items:flex-start;">
+          <div style="min-width:0;">
+            <div class="ui-row" style="gap:10px; margin-bottom:8px;">
+              <a id="btn-back-opo" href="oportunidades.html" class="ui-btn ui-btn--icon" title="Volver a la convocatoria">
+                <i class="fas fa-arrow-left"></i>
+              </a>
+              <span id="opo-tipo-badge" class="ui-badge"></span>
+            </div>
+            <h1 id="opo-titulo" class="ui-title" style="font-size:clamp(22px, 3vw, 34px);"></h1>
+            <p class="ui-sub" style="margin:6px 0 0;">
+              <i class="fas fa-table-list" style="color: var(--ui-accent); margin-right:6px;"></i>
+              Planilla de inscriptos — <span id="total-inline">0</span> postulaciones
+            </p>
+          </div>
+          <div class="ui-row" style="justify-content:flex-end;">
+            <button type="button" onclick="copiarLink()" class="ui-btn" title="Copiar el link de esta planilla">
+              <i class="fas fa-link"></i> <span class="pl-solo-desktop">Copiar link</span>
+            </button>
+            <button type="button" onclick="exportarCSV()" class="ui-btn" title="Descargar como CSV (Excel)">
+              <i class="fas fa-file-csv"></i> <span class="pl-solo-desktop">Exportar CSV</span>
+            </button>
+            <a id="btn-ver-tarjetas" href="postulantes.html" class="ui-btn ui-hidden" title="Ver las postulaciones como tarjetas">
+              <i class="fas fa-clone"></i> <span class="pl-solo-desktop">Ver tarjetas</span>
+            </a>
+            <button type="button" id="btn-acceso" onclick="abrirAcceso()" class="ui-btn ui-btn--primary ui-hidden">
+              <i class="fas fa-user-shield"></i> <span class="pl-solo-desktop">Acceso</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div id="aviso-externo" class="pl-aviso pl-aviso--lock ui-hidden">
+        <i class="fas fa-external-link-alt" style="margin-right:8px;"></i>
+        Esta convocatoria gestiona sus postulaciones por fuera de ADD. La planilla interna no aplica.
+        <div style="margin-top:12px;">
+          <a id="btn-link-externo" href="#" target="_blank" rel="noopener" class="ui-btn ui-btn--primary">
+            <i class="fas fa-arrow-up-right-from-square"></i> Ir al formulario externo
+          </a>
+        </div>
+      </div>
+
+      <!-- Estadísticas -->
+      <div class="planilla-stats">
+        <div class="pl-stat"><b id="stat-total">0</b><span>Total</span></div>
+        <div class="pl-stat pl-stat--pend"><b id="stat-pendiente">0</b><span>Pendientes</span></div>
+        <div class="pl-stat pl-stat--ok"><b id="stat-aceptada">0</b><span>Aceptadas</span></div>
+        <div class="pl-stat pl-stat--no"><b id="stat-rechazada">0</b><span>Rechazadas</span></div>
+        <div class="pl-stat"><b id="stat-obras">0</b><span>Con obra</span></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="planilla-toolbar">
+        <input type="text" id="filtro-texto" class="ui-input" placeholder="Buscar por obra, artista, email o respuesta..." oninput="renderFilas()">
+        <select id="filtro-estado" class="ui-input" onchange="renderFilas()">
+          <option value="all">Todos los estados</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="aceptada">Aceptadas</option>
+          <option value="rechazada">Rechazadas</option>
+        </select>
+        <select id="filtro-origen" class="ui-input" onchange="renderFilas()">
+          <option value="all">Obra y formulario</option>
+          <option value="obra">Solo con obra</option>
+          <option value="formulario">Solo formulario</option>
+        </select>
+        <select id="filtro-orden" class="ui-input" onchange="renderFilas()">
+          <option value="recientes">Más recientes</option>
+          <option value="antiguos">Más antiguas</option>
+          <option value="obra">Nombre de la obra (A-Z)</option>
+          <option value="artista">Nombre del artista (A-Z)</option>
+        </select>
+      </div>
+
+      <!-- Planilla -->
+      <div class="planilla-scroll">
+        <table class="planilla">
+          <thead id="planilla-head"></thead>
+          <tbody id="planilla-body"></tbody>
+        </table>
+        <div id="planilla-vacia" class="pl-empty ui-hidden">
+          <i class="fas fa-inbox"></i>
+          <p style="font-weight:800; color: var(--ui-text);">No hay postulaciones para mostrar</p>
+          <p>Probá cambiando los filtros o esperá a que lleguen inscriptos.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de accesos -->
+  <div id="acceso-modal" class="ui-modal">
+    <div class="ui-modal-box" style="max-width:520px;">
+      <div class="ui-row" style="justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+        <div>
+          <h3 style="font-size:18px; font-weight:900;"><i class="fas fa-user-shield" style="color: var(--ui-accent); margin-right:8px;"></i>Acceso a la planilla</h3>
+          <p class="ui-sub" style="margin:6px 0 0; font-size:12px;">
+            Elegí qué usuarios pueden ver la planilla de inscriptos. Solo el creador y los administradores
+            pueden aceptar o rechazar postulaciones.
+          </p>
+        </div>
+        <button type="button" onclick="cerrarAcceso()" class="ui-btn ui-btn--ghost ui-btn--icon"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="pl-acceso-wrap" style="margin-top:16px;">
+        <input type="text" id="acceso-buscar" class="ui-input" placeholder="Buscar usuario por nombre, @usuario o email..." oninput="renderAccesoResultados()">
+        <div id="acceso-resultados" class="pl-acceso-resultados ui-hidden"></div>
+      </div>
+
+      <div id="acceso-lista" class="pl-acceso-chips"></div>
+      <p id="acceso-vacio" class="pl-nota">Todavía no autorizaste a nadie más. El creador y los administradores siempre pueden ver la planilla.</p>
+
+      <div class="ui-row" style="justify-content:space-between; align-items:center; margin-top:20px;">
+        <button type="button" onclick="copiarLink()" class="ui-btn ui-btn--ghost" style="font-size:11px;">
+          <i class="fas fa-link"></i> Copiar link de la planilla
+        </button>
+        <button type="button" onclick="cerrarAcceso()" class="ui-btn ui-btn--primary">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js?v=4"></script>
+  <script src="js/generative-avatar.js"></script>
+  <script src="js/header.js?v=4"></script>
+  <script src="js/acceso-planilla.js?v=1"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
+  <script>
+    const tipoLabels = {
+      convocatoria_obra: 'Convocatoria de Obra',
+      oportunidad_laboral: 'Oportunidad Laboral',
+      colaboracion: 'Colaboración'
+    };
+
+    const RESERVED_DATOS = ['tipoInscripcion', 'obraId', 'obraTitulo', 'obraImagen', 'obraDescripcion', 'obraYoutube', 'respuesta'];
+
+    let oportunidadId = null;
+    let oportunidadData = null;
+    let inscripciones = [];
+    let columnas = [];
+    let puedeGestionar = false;
+    let accesoLista = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      oportunidadId = params.get('id');
+
+      if (!oportunidadId) {
+        mostrarDenegado('No se especificó la convocatoria. Abrí la planilla desde la convocatoria o con el link que te compartieron.');
+        return;
+      }
+
+      await inicializar();
+
+      if (params.get('acceso') === '1') abrirAcceso();
+    });
+
+    async function inicializar() {
+      try {
+        const res = await fetch(CONFIG.API_URL + '/oportunidades/' + oportunidadId, {
+          headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {}
+        });
+        if (!res.ok) {
+          mostrarDenegado('La convocatoria solicitada no existe o fue eliminada.');
+          return;
+        }
+
+        oportunidadData = await res.json();
+        puedeGestionar = !!oportunidadData.puedeGestionar;
+
+        const userId = getUserId();
+        const accesoIds = (oportunidadData.accesoPostulantes || [])
+          .map(u => String((u && u._id) ? u._id : u));
+        const esViewer = !!userId && accesoIds.includes(String(userId));
+
+        document.getElementById('opo-titulo').textContent = oportunidadData.titulo || 'Convocatoria';
+        const badge = document.getElementById('opo-tipo-badge');
+        badge.textContent = tipoLabels[oportunidadData.tipo] || 'Oportunidad';
+        document.getElementById('btn-back-opo').href = `oportunidad.html?id=${oportunidadId}`;
+
+        if (oportunidadData.sistemaInterno === false) {
+          document.getElementById('aviso-externo').classList.remove('ui-hidden');
+          const link = document.getElementById('btn-link-externo');
+          link.href = sanitizeUrl(oportunidadData.linkExterno) || '#';
+          document.getElementById('btn-acceso').classList.add('ui-hidden');
+          finalizarCarga();
+          return;
+        }
+
+        if (!puedeGestionar && !esViewer) {
+          mostrarDenegado(isLoggedIn()
+            ? 'Tu cuenta no tiene permiso para ver la planilla de inscriptos de esta convocatoria. Pedile acceso a quien la organiza.'
+            : 'Iniciá sesión con una cuenta autorizada para ver la planilla de inscriptos.');
+          return;
+        }
+
+        if (puedeGestionar) {
+          document.getElementById('btn-acceso').classList.remove('ui-hidden');
+          const tarjetas = document.getElementById('btn-ver-tarjetas');
+          tarjetas.href = `postulantes.html?id=${oportunidadId}`;
+          tarjetas.classList.remove('ui-hidden');
+        }
+
+        await cargarInscriptos();
+        finalizarCarga();
+      } catch (err) {
+        console.error(err);
+        mostrarDenegado('Error de conexión al validar el acceso a la planilla.');
+      }
+    }
+
+    function finalizarCarga() {
+      document.getElementById('loading').classList.add('ui-hidden');
+      document.getElementById('planilla-content').classList.remove('ui-hidden');
+    }
+
+    async function cargarInscriptos() {
+      const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripciones`);
+      if (!res || !res.ok) {
+        document.getElementById('planilla-body').innerHTML =
+          '<tr><td colspan="20" class="pl-empty"><i class="fas fa-triangle-exclamation"></i><p>Error al cargar las postulaciones.</p></td></tr>';
+        return;
+      }
+
+      inscripciones = await res.json();
+      columnas = construirColumnas(oportunidadData, inscripciones);
+      renderCabecera();
+      renderFilas();
+      actualizarStats();
+    }
+
+    // ─────────────────────────────────────────────────── COLUMNAS ─────────
+    function construirColumnas(opo, lista) {
+      const cols = [];
+
+      cols.push({
+        id: 'num', label: '#', cls: 'pl-col-num',
+        render: (i, idx) => String(idx + 1),
+        csv: (i, idx) => idx + 1,
+      });
+
+      cols.push({
+        id: 'obra', label: 'Nombre de la obra',
+        render: (i) => obraCell(i),
+        csv: (i) => nombreObra(i),
+      });
+
+      cols.push({
+        id: 'artista', label: 'Artista',
+        render: (i) => usuarioCell(i),
+        csv: (i) => nombreArtista(i),
+      });
+
+      cols.push({
+        id: 'descripcion', label: 'Descripción de la obra',
+        render: (i) => {
+          const d = descripcionObra(i);
+          return d
+            ? `<div class="pl-desc" title="${escapeHTML(d)}">${escapeHTML(d)}</div>`
+            : '<span class="pl-valor pl-valor--vacio">—</span>';
+        },
+        csv: (i) => descripcionObra(i),
+      });
+
+      cols.push({
+        id: 'media', label: 'Imagen / Video',
+        render: (i) => mediaCell(i),
+        csv: (i) => [imagenObra(i), videoObra(i)].filter(Boolean).join(' | '),
+      });
+
+      cols.push({
+        id: 'fecha', label: 'Subido el',
+        render: (i) => fechaCell(i),
+        csv: (i) => i.createdAt ? new Date(i.createdAt).toLocaleString('es-AR') : '',
+      });
+
+      // Campos dinámicos definidos por el creador en el formulario
+      const params = (opo.parametrosPresentacion || []).filter(p => p && p.key);
+      const keys = [];
+      params.forEach(p => { if (!keys.includes(p.key)) keys.push(p.key); });
+      lista.forEach(insc => {
+        Object.keys(insc.datos || {}).forEach(k => {
+          if (!RESERVED_DATOS.includes(k) && !keys.includes(k)) keys.push(k);
+        });
+      });
+
+      const tipos = {};
+      params.forEach(p => { tipos[p.key] = p.type; });
+
+      keys.forEach(key => {
+        const param = params.find(p => p.key === key);
+        const label = param ? param.label : key.replace(/_/g, ' ');
+        const tipo = tipos[key] || 'text';
+        cols.push({
+          id: 'dato_' + key,
+          label: label,
+          render: (i) => renderValor((i.datos || {})[key], tipo),
+          csv: (i) => (i.datos || {})[key] || '',
+        });
+      });
+
+      cols.push({
+        id: 'mensaje', label: 'Mensaje',
+        render: (i) => i.mensaje
+          ? `<div class="pl-desc" style="max-width:260px;" title="${escapeHTML(i.mensaje)}">${escapeHTML(i.mensaje)}</div>`
+          : '<span class="pl-valor pl-valor--vacio">—</span>',
+        csv: (i) => i.mensaje || '',
+      });
+
+      cols.push({
+        id: 'estado', label: 'Aceptada por el curador',
+        render: (i) => estadoBadge(i.estado),
+        csv: (i) => estadoLabel(i.estado),
+      });
+
+      cols.push({
+        id: 'acciones', label: 'Acciones', sinCsv: true,
+        render: (i) => accionesCell(i),
+      });
+
+      return cols;
+    }
+
+    function renderCabecera() {
+      document.getElementById('planilla-head').innerHTML =
+        '<tr>' + columnas.map(c => `<th class="${c.cls || ''}">${escapeHTML(c.label)}</th>`).join('') + '</tr>';
+    }
+
+    // ─────────────────────────────────────────────────── CELDAS ───────────
+    function esObra(insc) {
+      return insc.tipoInscripcion === 'obra' || !!insc.obra || insc.datos?.tipoInscripcion === 'obra';
+    }
+
+    function nombreObra(insc) {
+      const obra = insc.obra || {};
+      return obra.title || insc.datos?.obraTitulo || '';
+    }
+
+    function descripcionObra(insc) {
+      const obra = insc.obra || {};
+      return obra.description || insc.datos?.obraDescripcion || '';
+    }
+
+    function imagenObra(insc) {
+      const obra = insc.obra || {};
+      return obra.imageUrl || insc.datos?.obraImagen || '';
+    }
+
+    function videoObra(insc) {
+      const obra = insc.obra || {};
+      return obra.youtube_video || insc.datos?.obraYoutube || '';
+    }
+
+    function nombreArtista(insc) {
+      const u = insc.usuario || {};
+      return u.displayName || u.username || '';
+    }
+
+    function obraCell(insc) {
+      const title = nombreObra(insc);
+      const obra = insc.obra || {};
+      const id = obra._id || insc.datos?.obraId || '';
+
+      let titulo;
+      if (title && id) {
+        titulo = `<a class="pl-obra-title" href="post.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener" title="${escapeHTML(title)}">${escapeHTML(title)}</a>`;
+      } else if (title) {
+        titulo = `<span class="pl-obra-title" title="${escapeHTML(title)}">${escapeHTML(title)}</span>`;
+      } else {
+        titulo = '<span class="pl-obra-title" style="color: var(--ui-text-mute); font-weight:700;">Sin obra adjunta</span>';
+      }
+
+      const origen = esObra(insc)
+        ? '<span class="pl-origen pl-origen--obra"><i class="fas fa-palette"></i> Obra</span>'
+        : '<span class="pl-origen pl-origen--form"><i class="fas fa-file-signature"></i> Formulario</span>';
+
+      return titulo + '<br>' + origen;
+    }
+
+    function usuarioCell(insc) {
+      const u = insc.usuario || {};
+      const nombre = escapeHTML(u.displayName || u.username || 'Usuario');
+      const username = escapeHTML(u.username || '');
+      const email = escapeHTML(u.email || '');
+      const avatarUrl = sanitizeUrl(u.avatar);
+      const inicial = escapeHTML(((u.displayName || u.username || '?')[0] || '?').toUpperCase());
+
+      const avatar = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${nombre}">`
+        : `<span class="pl-user-inicial">${inicial}</span>`;
+
+      const perfil = username
+        ? `<a href="profile.html?user=${encodeURIComponent(u.username)}" target="_blank" rel="noopener">@${username}</a>`
+        : '';
+
+      return `
+        <div class="pl-user">
+          ${avatar}
+          <div style="min-width:0;">
+            <div class="pl-user-nombre">${nombre}</div>
+            <div class="pl-user-extra">${perfil}${perfil && email ? ' · ' : ''}${email}</div>
+          </div>
+        </div>`;
+    }
+
+    function mediaCell(insc) {
+      const img = sanitizeUrl(imagenObra(insc));
+      const yt = youtubeId(videoObra(insc));
+      const partes = [];
+
+      if (img) {
+        partes.push(`<a class="pl-thumb" href="${img}" target="_blank" rel="noopener" title="Imagen de la obra"><img src="${img}" alt="Imagen de la obra"></a>`);
+      }
+      if (yt) {
+        partes.push(`<a class="pl-thumb" href="https://www.youtube.com/watch?v=${yt}" target="_blank" rel="noopener" title="Video de la obra"><img src="https://img.youtube.com/vi/${yt}/mqdefault.jpg" alt="Video"><span class="pl-play"><i class="fas fa-play"></i></span></a>`);
+      }
+
+      if (!partes.length) return '<span class="pl-valor pl-valor--vacio">—</span>';
+      return `<div class="pl-media">${partes.join('')}</div>`;
+    }
+
+    function fechaCell(insc) {
+      if (!insc.createdAt) return '<span class="pl-valor pl-valor--vacio">—</span>';
+      const d = new Date(insc.createdAt);
+      return `<div class="pl-fecha"><b>${d.toLocaleDateString('es-AR')}</b><span>${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs</span></div>`;
+    }
+
+    function estadoLabel(estado) {
+      return ({ pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' })[estado] || 'Pendiente';
+    }
+
+    function estadoBadge(estado) {
+      const e = ['aceptada', 'rechazada'].includes(estado) ? estado : 'pendiente';
+      const icono = e === 'aceptada' ? 'fa-check' : (e === 'rechazada' ? 'fa-xmark' : 'fa-hourglass-half');
+      return `<span class="pl-badge pl-badge--${e}"><i class="fas ${icono}"></i> ${estadoLabel(e)}</span>`;
+    }
+
+    function accionesCell(insc) {
+      if (!puedeGestionar) {
+        return '<span class="pl-valor pl-valor--vacio" title="Solo lectura"><i class="fas fa-eye"></i> Solo lectura</span>';
+      }
+      const e = insc.estado || 'pendiente';
+      return `
+        <div class="pl-acciones">
+          <button type="button" class="pl-btn pl-btn--ok" onclick="setEstado('${insc._id}', 'aceptada')" ${e === 'aceptada' ? 'disabled' : ''} title="Aceptar obra">
+            <i class="fas fa-check"></i> Aceptar
+          </button>
+          <button type="button" class="pl-btn pl-btn--no" onclick="setEstado('${insc._id}', 'rechazada')" ${e === 'rechazada' ? 'disabled' : ''} title="Rechazar obra">
+            <i class="fas fa-xmark"></i> Rechazar
+          </button>
+          ${e !== 'pendiente'
+            ? `<button type="button" class="pl-btn pl-btn--reset" onclick="setEstado('${insc._id}', 'pendiente')" title="Volver a pendiente"><i class="fas fa-rotate-left"></i></button>`
+            : ''}
+        </div>`;
+    }
+
+    function renderValor(val, tipo) {
+      if (val === undefined || val === null || String(val).trim() === '') {
+        return '<span class="pl-valor pl-valor--vacio">—</span>';
+      }
+
+      const texto = String(val);
+      const url = sanitizeUrl(texto);
+
+      if (url) {
+        const yt = youtubeId(url);
+        if (yt) {
+          return `<a href="${url}" target="_blank" rel="noopener" title="Ver video"><img class="pl-img-mini" src="https://img.youtube.com/vi/${yt}/mqdefault.jpg" alt="Video"></a>`;
+        }
+        if (/\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(url)) {
+          return `<a href="${url}" target="_blank" rel="noopener" title="Ver archivo"><img class="pl-img-mini" src="${url}" alt="Archivo"></a>`;
+        }
+        return `<span class="pl-valor"><a href="${url}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square" style="margin-right:4px;"></i>Ver enlace</a></span>`;
+      }
+
+      return `<span class="pl-valor" title="${escapeHTML(texto)}">${escapeHTML(texto)}</span>`;
+    }
+
+    // ─────────────────────────────────────────────── FILAS / FILTROS ──────
+    function inscripcionFiltrada(insc) {
+      const estado = document.getElementById('filtro-estado').value;
+      const origen = document.getElementById('filtro-origen').value;
+      const texto = (document.getElementById('filtro-texto').value || '').trim().toLowerCase();
+
+      if (estado !== 'all' && (insc.estado || 'pendiente') !== estado) return false;
+
+      const obra = esObra(insc);
+      if (origen === 'obra' && !obra) return false;
+      if (origen === 'formulario' && obra) return false;
+
+      if (texto) {
+        const u = insc.usuario || {};
+        const blob = [
+          nombreObra(insc), descripcionObra(insc),
+          u.username, u.displayName, u.email,
+          insc.mensaje,
+          ...Object.values(insc.datos || {}).map(v => (v === null || v === undefined) ? '' : String(v)),
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!blob.includes(texto)) return false;
+      }
+
+      return true;
+    }
+
+    function listaFiltrada() {
+      const orden = document.getElementById('filtro-orden').value;
+      const lista = inscripciones.filter(inscripcionFiltrada);
+
+      if (orden === 'recientes') {
+        lista.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      } else if (orden === 'antiguos') {
+        lista.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+      } else if (orden === 'obra') {
+        lista.sort((a, b) => (nombreObra(a) || '').localeCompare(nombreObra(b) || '', 'es'));
+      } else if (orden === 'artista') {
+        lista.sort((a, b) => nombreArtista(a).localeCompare(nombreArtista(b), 'es'));
+      }
+
+      return lista;
+    }
+
+    function renderFilas() {
+      const lista = listaFiltrada();
+      const body = document.getElementById('planilla-body');
+      const vacia = document.getElementById('planilla-vacia');
+
+      if (!lista.length) {
+        body.innerHTML = '';
+        vacia.classList.remove('ui-hidden');
+        return;
+      }
+
+      vacia.classList.add('ui-hidden');
+
+      body.innerHTML = lista.map((insc, idx) => {
+        const celdas = columnas.map(c => {
+          const clase = c.cls ? ` class="${c.cls}"` : '';
+          return `<td${clase}>${c.render(insc, idx)}</td>`;
+        }).join('');
+        return `<tr>${celdas}</tr>`;
+      }).join('');
+    }
+
+    function actualizarStats() {
+      const contar = (estado) => inscripciones.filter(i => (i.estado || 'pendiente') === estado).length;
+      document.getElementById('stat-total').textContent = inscripciones.length;
+      document.getElementById('stat-pendiente').textContent = contar('pendiente');
+      document.getElementById('stat-aceptada').textContent = contar('aceptada');
+      document.getElementById('stat-rechazada').textContent = contar('rechazada');
+      document.getElementById('stat-obras').textContent = inscripciones.filter(esObra).length;
+      document.getElementById('total-inline').textContent = inscripciones.length;
+    }
+
+    // ─────────────────────────────────────────────── ACEPTAR / RECHAZAR ──
+    async function setEstado(inscripcionId, estado) {
+      const res = await apiRequest(`/oportunidades/${oportunidadId}/inscripciones/${inscripcionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado }),
+      });
+
+      if (res && res.ok) {
+        const actualizada = await res.json();
+        const idx = inscripciones.findIndex(i => i._id === inscripcionId);
+        if (idx !== -1) inscripciones[idx] = { ...inscripciones[idx], estado: actualizada.estado };
+        renderFilas();
+        actualizarStats();
+      } else {
+        alert('No se pudo actualizar el estado de la postulación.');
+      }
+    }
+
+    // ──────────────────────────────────────────────────────── EXPORTAR ───
+    function exportarCSV() {
+      const lista = listaFiltrada();
+      if (!lista.length) {
+        alert('No hay filas para exportar.');
+        return;
+      }
+
+      const cols = columnas.filter(c => !c.sinCsv);
+      const escapar = (v) => {
+        const s = (v === null || v === undefined) ? '' : String(v);
+        return '"' + s.replace(/"/g, '""').replace(/\r?\n/g, ' ').trim() + '"';
+      };
+
+      const filas = [cols.map(c => escapar(c.label)).join(';')];
+      lista.forEach((insc, idx) => {
+        filas.push(cols.map(c => escapar(c.csv ? c.csv(insc, idx) : '')).join(';'));
+      });
+
+      const titulo = (oportunidadData?.titulo || 'planilla').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const contenido = '\uFEFF' + filas.join('\r\n');
+      const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `planilla-${titulo || 'inscriptos'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function copiarLink() {
+      const url = window.location.origin + window.location.pathname + '?id=' + oportunidadId;
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('Link de la planilla copiado:\n' + url);
+      } catch (err) {
+        window.prompt('Copiá el link de la planilla:', url);
+      }
+    }
+
+    // ──────────────────────────────────────────────── ACCESOS / MODAL ────
+    async function abrirAcceso() {
+      if (!puedeGestionar) return;
+      document.getElementById('acceso-modal').classList.add('is-open');
+      await AccesoPlanilla.ensureUsers();
+
+      const lista = await AccesoPlanilla.list(oportunidadId);
+      accesoLista = lista || [];
+      renderAccesoLista();
+    }
+
+    function cerrarAcceso() {
+      document.getElementById('acceso-modal').classList.remove('is-open');
+      document.getElementById('acceso-resultados').classList.add('ui-hidden');
+      document.getElementById('acceso-buscar').value = '';
+    }
+
+    function renderAccesoLista() {
+      const cont = document.getElementById('acceso-lista');
+      const vacio = document.getElementById('acceso-vacio');
+
+      if (!accesoLista.length) {
+        cont.innerHTML = '';
+        vacio.classList.remove('ui-hidden');
+        return;
+      }
+
+      vacio.classList.add('ui-hidden');
+      cont.innerHTML = accesoLista.map(u => AccesoPlanilla.userChip(u, { removable: true })).join('');
+    }
+
+    function renderAccesoResultados() {
+      const cont = document.getElementById('acceso-resultados');
+      const query = document.getElementById('acceso-buscar').value;
+      const yaIds = accesoLista.map(u => String(u._id));
+
+      if (!query.trim()) {
+        cont.classList.add('ui-hidden');
+        return;
+      }
+
+      const matches = AccesoPlanilla.search(query, yaIds);
+      cont.innerHTML = matches.length
+        ? matches.map(u => AccesoPlanilla.resultRow(u)).join('')
+        : '<div style="padding:14px 16px; font-size:13px; color: var(--ui-text-mute);"><i class="fas fa-search" style="margin-right:8px;"></i>No se encontraron usuarios</div>';
+      cont.classList.remove('ui-hidden');
+    }
+
+    AccesoPlanilla.onPick = async (userId) => {
+      document.getElementById('acceso-resultados').classList.add('ui-hidden');
+      document.getElementById('acceso-buscar').value = '';
+
+      const res = await AccesoPlanilla.add(oportunidadId, userId);
+      if (res && res.ok) {
+        const data = await res.json();
+        accesoLista = data.accesoPostulantes || [];
+        renderAccesoLista();
+      } else {
+        const err = res ? await res.json().catch(() => ({})) : {};
+        alert(err.error || 'No se pudo agregar el usuario.');
+      }
+    };
+
+    AccesoPlanilla.onRemove = async (userId) => {
+      if (!confirm('¿Quitarle a este usuario el acceso a la planilla?')) return;
+
+      const res = await AccesoPlanilla.remove(oportunidadId, userId);
+      if (res && res.ok) {
+        const data = await res.json();
+        accesoLista = data.accesoPostulantes || [];
+        renderAccesoLista();
+      } else {
+        alert('No se pudo quitar el acceso.');
+      }
+    };
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.pl-acceso-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('acceso-resultados').classList.add('ui-hidden');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarAcceso();
+    });
+
+    // ────────────────────────────────────────────────────── UTILIDADES ───
+    function youtubeId(url) {
+      if (!url) return '';
+      const m = String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{6,})/);
+      return m ? m[1] : '';
+    }
+
+    function mostrarDenegado(reason) {
+      document.getElementById('loading').classList.add('ui-hidden');
+      document.getElementById('planilla-content').classList.add('ui-hidden');
+
+      if (reason) document.getElementById('unauthorized-reason').textContent = reason;
+
+      if (!isLoggedIn()) {
+        const btn = document.getElementById('btn-login');
+        btn.href = '#';
+        btn.classList.remove('ui-hidden');
+        btn.onclick = (e) => { e.preventDefault(); showLogin(); };
+      }
+
+      document.getElementById('unauthorized-message').classList.remove('ui-hidden');
+    }
+  </script>
+  <style>
+    @media (max-width: 900px) { .pl-solo-desktop { display: none; } }
+  </style>
+  <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
+  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+</body>
+</html>

@@ -39,16 +39,31 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
 // =============================================
 // OBTENER UNA OPORTUNIDAD (público)
 // =============================================
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     const oportunidad = await Oportunidad.findById(req.params.id);
     if (!oportunidad) {
       return res.status(404).json({ error: 'Oportunidad no encontrada' });
     }
-    
+
+    const esGestor = !!req.user && (
+      oportunidad.creador.toString() === req.user.id ||
+      req.user.role === 'ADMINISTRADOR' ||
+      req.user.role === 'ADMIN' ||
+      req.user.username === 'jpupper'
+    );
+
     const [hydrated] = await hydrate([oportunidad], 'creador');
-    const final = await hydrateComments(hydrated);
-    return res.json(final);
+    let final: any = await hydrateComments(hydrated);
+
+    // Los inscriptos autorizados solo necesitan saber que están en la lista;
+    // el creador/admin reciben la lista con datos de usuario para gestionarla.
+    if (esGestor && Array.isArray(final.accesoPostulantes) && final.accesoPostulantes.length > 0) {
+      const [conUsuarios] = await hydrate([final], 'accesoPostulantes');
+      final = conUsuarios;
+    }
+
+    return res.json({ ...final, puedeGestionar: esGestor });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -297,11 +312,15 @@ router.get('/:id/inscripciones', authMiddleware, async (req: AuthRequest, res: R
       return res.status(404).json({ error: 'Oportunidad no encontrada' });
     }
 
-    if (
-      oportunidad.creador.toString() !== req.user!.id &&
-      req.user!.role !== 'ADMINISTRADOR' &&
-      req.user!.role !== 'ADMIN'
-    ) {
+    const esGestorInscripciones =
+      oportunidad.creador.toString() === req.user!.id ||
+      req.user!.role === 'ADMINISTRADOR' ||
+      req.user!.role === 'ADMIN';
+
+    const esViewerAutorizado = (oportunidad.accesoPostulantes || [])
+      .some((id: any) => (id?._id || id).toString() === req.user!.id);
+
+    if (!esGestorInscripciones && !esViewerAutorizado) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
@@ -398,6 +417,92 @@ router.patch('/:id/inscripciones/:inscripcionId', authMiddleware, async (req: Au
     obj.usuario = user || inscripcion.usuario;
 
     return res.json(obj);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// ACCESO A LA PLANILLA DE INSCRIPTOS (creador o admin)
+// =============================================
+// Igual que los "usuarios de puerta" de los eventos: el creador de la
+// oportunidad y los administradores eligen qué usuarios pueden VER la
+// planilla de inscriptos. Solo creador/admin pueden modificarla.
+// =============================================
+
+async function puedeGestionarAcceso(oportunidad: any, req: AuthRequest) {
+  return (
+    oportunidad.creador.toString() === req.user!.id ||
+    req.user!.role === 'ADMINISTRADOR' ||
+    req.user!.role === 'ADMIN'
+  );
+}
+
+async function accesoHidratado(oportunidad: any) {
+  const [final] = await hydrate([oportunidad], 'accesoPostulantes');
+  return final.accesoPostulantes || [];
+}
+
+router.get('/:id/acceso-postulantes', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    if (!(await puedeGestionarAcceso(oportunidad, req))) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    return res.json(await accesoHidratado(oportunidad));
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/acceso-postulantes', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'Falta el usuario' });
+
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    if (!(await puedeGestionarAcceso(oportunidad, req))) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const user = await User.findById(userId).select('_id username');
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    if (!oportunidad.accesoPostulantes) oportunidad.accesoPostulantes = [];
+    const yaEsta = oportunidad.accesoPostulantes.some((id: any) => (id?._id || id).toString() === userId);
+    if (yaEsta) {
+      return res.status(400).json({ error: 'Ese usuario ya tiene acceso a la planilla' });
+    }
+
+    oportunidad.accesoPostulantes.push(userId);
+    await oportunidad.save();
+
+    return res.json({ message: 'Usuario agregado', accesoPostulantes: await accesoHidratado(oportunidad) });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id/acceso-postulantes/:userId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    if (!(await puedeGestionarAcceso(oportunidad, req))) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    if (!oportunidad.accesoPostulantes) oportunidad.accesoPostulantes = [];
+    oportunidad.accesoPostulantes = oportunidad.accesoPostulantes
+      .filter((id: any) => (id?._id || id).toString() !== req.params.userId);
+    await oportunidad.save();
+
+    return res.json({ message: 'Usuario eliminado', accesoPostulantes: await accesoHidratado(oportunidad) });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

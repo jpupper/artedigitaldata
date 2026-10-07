@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/fsc-ui.css?v=4">
+  <link rel="stylesheet" href="css/planilla.css?v=1">
 </head>
 <body class="ui-con-header min-h-screen">
   <div id="app-header"></div>
@@ -269,6 +270,28 @@
               </div>
             </div>
           </div>
+
+          <!-- Acceso a la planilla de inscriptos (solo al editar) -->
+          <div id="section-acceso-planilla" class="hidden border-t border-white/10 pt-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+              <h3 class="text-lg font-bold text-white"><i class="fas fa-user-shield mr-2 text-cyan-400"></i>Acceso a la planilla de inscriptos</h3>
+              <a id="link-ver-planilla" href="#" target="_blank" class="ui-btn ui-btn--primary" style="font-size:11px;">
+                <i class="fas fa-table-list"></i> Abrir planilla
+              </a>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">
+              Además de vos y los administradores, elegí qué usuarios pueden <b>ver</b> la planilla con todas las
+              postulaciones. Aceptar o rechazar obras queda reservado al creador y a los administradores.
+            </p>
+
+            <div class="pl-acceso-wrap">
+              <input type="text" id="acceso-buscar" class="ui-input" placeholder="Buscar usuario por nombre, @usuario o email..." oninput="buscarAcceso(this.value)">
+              <div id="acceso-resultados" class="pl-acceso-resultados ui-hidden"></div>
+            </div>
+
+            <div id="acceso-lista" class="pl-acceso-chips"></div>
+            <p id="acceso-vacio" class="pl-nota">Sin usuarios autorizados todavía.</p>
+          </div>
         </div>
 
         <!-- Campos OPORTUNIDAD LABORAL -->
@@ -366,6 +389,7 @@
   <script src="js/auth.js?v=4"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="js/header.js?v=4"></script>
+  <script src="js/acceso-planilla.js?v=1"></script>
   <script>
     let selectedTipo = null;
     let uploadedImageUrl = '';
@@ -469,6 +493,9 @@
           }
           if (data.lugarExposicion) {
             updateMapPreview(data.lugarExposicion);
+          }
+          if (sistemaInterno) {
+            mostrarAccesoPlanilla(id);
           }
         } else if (data.tipo === 'oportunidad_laboral') {
           document.getElementById('opo-nombrePuesto').value = data.nombrePuesto || '';
@@ -756,6 +783,94 @@
         submitBtn.innerHTML = editingId
           ? '<i class="fas fa-save mr-2"></i>Guardar Cambios'
           : '<i class="fas fa-rocket mr-2"></i>Publicar Oportunidad';
+      }
+    });
+
+    // ─────────────────────────────────────────── ACCESO A LA PLANILLA ────
+    let accesoPlanillaLista = [];
+
+    async function mostrarAccesoPlanilla(opoId) {
+      const section = document.getElementById('section-acceso-planilla');
+      if (!section) return;
+
+      section.classList.remove('hidden');
+      const link = document.getElementById('link-ver-planilla');
+      if (link) link.href = `planilla.html?id=${opoId}`;
+
+      await AccesoPlanilla.ensureUsers();
+      const lista = await AccesoPlanilla.list(opoId);
+      accesoPlanillaLista = lista || [];
+      renderAccesoPlanillaLista();
+    }
+
+    function renderAccesoPlanillaLista() {
+      const cont = document.getElementById('acceso-lista');
+      const vacio = document.getElementById('acceso-vacio');
+      if (!cont) return;
+
+      if (!accesoPlanillaLista.length) {
+        cont.innerHTML = '';
+        if (vacio) vacio.classList.remove('ui-hidden');
+        return;
+      }
+
+      if (vacio) vacio.classList.add('ui-hidden');
+      cont.innerHTML = accesoPlanillaLista.map(u => AccesoPlanilla.userChip(u, { removable: true })).join('');
+    }
+
+    function buscarAcceso(query) {
+      const cont = document.getElementById('acceso-resultados');
+      if (!cont) return;
+
+      if (!query.trim()) {
+        cont.classList.add('ui-hidden');
+        return;
+      }
+
+      const yaIds = accesoPlanillaLista.map(u => String(u._id));
+      const matches = AccesoPlanilla.search(query, yaIds);
+
+      cont.innerHTML = matches.length
+        ? matches.map(u => AccesoPlanilla.resultRow(u)).join('')
+        : '<div style="padding:14px 16px; font-size:13px; color: var(--ui-text-mute);"><i class="fas fa-search" style="margin-right:8px;"></i>No se encontraron usuarios</div>';
+      cont.classList.remove('ui-hidden');
+    }
+
+    AccesoPlanilla.onPick = async (userId) => {
+      const cont = document.getElementById('acceso-resultados');
+      const input = document.getElementById('acceso-buscar');
+      if (cont) cont.classList.add('ui-hidden');
+      if (input) input.value = '';
+
+      const res = await AccesoPlanilla.add(editingId, userId);
+      if (res && res.ok) {
+        const data = await res.json();
+        accesoPlanillaLista = data.accesoPostulantes || [];
+        renderAccesoPlanillaLista();
+      } else {
+        const err = res ? await res.json().catch(() => ({})) : {};
+        alert(err.error || 'No se pudo agregar el usuario.');
+      }
+    };
+
+    AccesoPlanilla.onRemove = async (userId) => {
+      if (!confirm('¿Quitarle a este usuario el acceso a la planilla?')) return;
+
+      const res = await AccesoPlanilla.remove(editingId, userId);
+      if (res && res.ok) {
+        const data = await res.json();
+        accesoPlanillaLista = data.accesoPostulantes || [];
+        renderAccesoPlanillaLista();
+      } else {
+        alert('No se pudo quitar el acceso.');
+      }
+    };
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.pl-acceso-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const cont = document.getElementById('acceso-resultados');
+        if (cont) cont.classList.add('ui-hidden');
       }
     });
 

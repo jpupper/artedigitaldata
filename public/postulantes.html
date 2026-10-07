@@ -39,6 +39,9 @@
             <i class="fas fa-arrow-left"></i>
           </a>
           <span id="opo-tipo-badge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest"></span>
+          <a id="btn-ver-planilla" href="#" class="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-widest hover:bg-cyan-500/20 transition-all">
+            <i class="fas fa-table-list"></i> Ver Planilla
+          </a>
         </div>
         <h1 id="opo-titulo" class="text-2xl md:text-3xl font-black text-white mb-2"></h1>
         <p class="text-sm text-gray-400 flex items-center gap-2">
@@ -156,6 +159,7 @@
     function renderOportunidadHeader(opo) {
       document.getElementById('opo-titulo').textContent = opo.titulo;
       document.getElementById('btn-back-opo').href = `oportunidad.html?id=${opo._id}`;
+      document.getElementById('btn-ver-planilla').href = `planilla.html?id=${opo._id}`;
 
       const color = tipoColors[opo.tipo] || 'emerald';
       const badge = document.getElementById('opo-tipo-badge');

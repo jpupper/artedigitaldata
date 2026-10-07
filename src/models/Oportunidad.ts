@@ -71,6 +71,7 @@ export interface IOportunidad extends IPosteoBase {
   sistemaInterno: boolean; // Si es true, usa el sistema de inscripción interno de ADD. Si es false, usa linkExterno.
   linkExterno?: string;    // Enlace directo a la convocatoria externa
   inscripciones: Types.ObjectId[];
+  accesoPostulantes: Types.ObjectId[]; // Usuarios autorizados a VER la planilla de inscriptos (además de creador y admin)
 }
 
 // =============================================
@@ -121,6 +122,7 @@ const OportunidadSchema: Schema = new Schema(
     sistemaInterno: { type: Boolean, default: true },
     linkExterno: { type: String, default: '' },
     inscripciones: [{ type: Schema.Types.ObjectId, ref: 'Inscripcion' }],
+    accesoPostulantes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     tags: { type: [String], default: [] },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
     pinned: { type: Boolean, default: false },

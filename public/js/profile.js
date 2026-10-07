@@ -346,7 +346,10 @@ window.renderUserOportunidades = function(oportunidades) {
         <p class="text-xs text-gray-400 line-clamp-2 mb-3">${opo.descripcion || ''}</p>
         <div class="flex items-center justify-between text-[10px] text-gray-500 pt-3 border-t border-white/5">
           <span>${new Date(opo.createdAt).toLocaleDateString()}</span>
-          <a href="${CONFIG.BASE}/postulantes.html?id=${opo._id}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold">Ver postulantes <i class="fas fa-arrow-right ml-1"></i></a>
+          <div class="flex items-center gap-3">
+            ${opo.sistemaInterno !== false ? `<a href="planilla.html?id=${opo._id}" target="_blank" class="text-cyan-400 hover:text-cyan-300 font-bold">Planilla <i class="fas fa-table-list ml-1"></i></a>` : ''}
+            <a href="${CONFIG.BASE}/postulantes.html?id=${opo._id}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold">Ver postulantes <i class="fas fa-arrow-right ml-1"></i></a>
+          </div>
         </div>
       </div>`;
   }).join('');

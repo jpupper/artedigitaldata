@@ -1,0 +1,256 @@
+/* ============================================================================
+   PLANILLA DE INSCRIPTOS — vista tipo hoja de cálculo de una convocatoria.
+   Usa SOLO los tokens del sistema de diseño (--ui-*) definidos en fsc-ui.css.
+   ========================================================================== */
+
+.planilla-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap);
+  margin-bottom: 14px;
+}
+
+.planilla-toolbar .ui-input {
+  width: auto;
+  min-width: 220px;
+  flex: 1 1 240px;
+  padding: 11px 15px;
+  font-size: 13px;
+}
+
+.planilla-toolbar select.ui-input {
+  flex: 0 0 auto;
+  min-width: 165px;
+}
+
+.planilla-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap);
+  margin-bottom: 14px;
+}
+
+.pl-stat {
+  flex: 1 1 120px;
+  min-width: 110px;
+  padding: 12px 16px;
+  border-radius: var(--ui-r-md);
+  border: var(--ui-bw) solid var(--ui-line);
+  background: var(--ui-surface);
+}
+.pl-stat b { display: block; font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--ui-text); }
+.pl-stat span {
+  font-size: 10px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ui-text-mute);
+}
+.pl-stat--pend b { color: var(--ui-c-gold); }
+.pl-stat--ok b { color: #34d399; }
+.pl-stat--no b { color: var(--ui-c-red); }
+
+/* ─────────────────────────────────────────────────────── HOJA / TABLA ──── */
+.planilla-scroll {
+  border: var(--ui-bw) solid var(--ui-line);
+  border-radius: var(--ui-r-lg);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: auto;
+  max-height: calc(100vh - var(--ui-header-h) - 40px);
+}
+
+table.planilla {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  color: var(--ui-text);
+}
+
+table.planilla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--ui-bg-soft);
+  border-bottom: var(--ui-bw) solid var(--ui-line-strong);
+  padding: 13px 14px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-text-dim);
+}
+table.planilla thead th.pl-col-num { text-align: center; }
+
+table.planilla tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ui-line);
+  vertical-align: top;
+}
+
+table.planilla tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.018); }
+table.planilla tbody tr:hover { background: color-mix(in srgb, var(--ui-accent) 6%, transparent); }
+
+.pl-col-num {
+  width: 46px;
+  text-align: center;
+  color: var(--ui-text-mute);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.pl-obra-title {
+  display: block;
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--ui-text);
+  text-decoration: none;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-obra-title:hover { color: var(--ui-accent); }
+.pl-origen {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 5px; padding: 2px 9px; border-radius: var(--ui-r-pill);
+  font-size: 9px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+  border: var(--ui-bw) solid var(--ui-line);
+  color: var(--ui-text-dim);
+}
+.pl-origen--obra { border-color: var(--ui-line-accent); color: var(--ui-accent); }
+.pl-origen--form { border-color: rgba(163, 230, 53, 0.4); color: var(--ui-c-lime); }
+
+.pl-user { display: flex; align-items: center; gap: 9px; min-width: 190px; }
+.pl-user img,
+.pl-user .pl-user-inicial {
+  width: 30px; height: 30px; border-radius: var(--ui-r-pill); object-fit: cover; flex: 0 0 auto;
+  border: var(--ui-bw) solid var(--ui-line);
+}
+.pl-user .pl-user-inicial {
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--ui-accent) 16%, transparent);
+  color: var(--ui-accent); font-size: 12px; font-weight: 900;
+}
+.pl-user-nombre { font-weight: 800; color: var(--ui-text); font-size: 13px; }
+.pl-user-nombre a { color: inherit; text-decoration: none; }
+.pl-user-nombre a:hover { color: var(--ui-accent); }
+.pl-user-extra { font-size: 11px; color: var(--ui-text-mute); }
+
+.pl-desc {
+  max-width: 340px;
+  min-width: 220px;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pl-media {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 132px;
+}
+.pl-thumb {
+  position: relative;
+  width: 58px; height: 58px; flex: 0 0 auto;
+  border-radius: var(--ui-r-sm); overflow: hidden;
+  border: var(--ui-bw) solid var(--ui-line);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ui-text-mute);
+  text-decoration: none;
+}
+.pl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pl-thumb .pl-play {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 16px;
+}
+
+.pl-fecha { white-space: nowrap; color: var(--ui-text-dim); font-size: 12px; }
+.pl-fecha b { display: block; color: var(--ui-text); font-weight: 800; font-size: 12px; }
+.pl-fecha span { font-size: 10px; color: var(--ui-text-mute); }
+
+.pl-valor {
+  display: inline-block;
+  max-width: 240px;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.pl-valor--vacio { color: var(--ui-text-mute); }
+.pl-valor a { color: var(--ui-accent); text-decoration: none; }
+.pl-valor a:hover { text-decoration: underline; }
+.pl-img-mini {
+  display: block; width: 46px; height: 46px; object-fit: cover;
+  border-radius: var(--ui-r-sm); border: var(--ui-bw) solid var(--ui-line);
+}
+
+.pl-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--ui-r-pill);
+  border: var(--ui-bw) solid var(--ui-line);
+  font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.pl-badge--pendiente { border-color: rgba(250, 204, 21, 0.45); color: var(--ui-c-gold); background: rgba(250, 204, 21, 0.1); }
+.pl-badge--aceptada { border-color: rgba(52, 211, 153, 0.45); color: #34d399; background: rgba(52, 211, 153, 0.1); }
+.pl-badge--rechazada { border-color: rgba(248, 113, 113, 0.45); color: var(--ui-c-red); background: rgba(248, 113, 113, 0.1); }
+
+.pl-acciones { display: flex; gap: 6px; white-space: nowrap; }
+.pl-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: var(--ui-r-sm);
+  border: var(--ui-bw) solid var(--ui-line-strong);
+  background: var(--ui-surface); color: var(--ui-text-dim);
+  font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; transition: all var(--ui-t) var(--ui-ease);
+}
+.pl-btn:hover { transform: translateY(-1px); }
+.pl-btn--ok:hover { border-color: #34d399; color: #34d399; background: rgba(52, 211, 153, 0.12); }
+.pl-btn--no:hover { border-color: var(--ui-c-red); color: var(--ui-c-red); background: rgba(248, 113, 113, 0.12); }
+.pl-btn--reset { padding: 7px 10px; }
+.pl-btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+.pl-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--ui-text-mute);
+}
+.pl-empty i { font-size: 42px; opacity: 0.35; display: block; margin-bottom: 12px; }
+
+.pl-aviso {
+  padding: 16px 18px;
+  border-radius: var(--ui-r-md);
+  border: var(--ui-bw) solid var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.pl-aviso--lock { border-color: rgba(248, 113, 113, 0.4); }
+
+.pl-acceso-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.pl-acceso-resultados {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30;
+  max-height: 250px; overflow-y: auto;
+  border: var(--ui-bw) solid var(--ui-line-strong); border-radius: var(--ui-r-md);
+  background: var(--ui-bg-soft); box-shadow: var(--ui-shadow);
+}
+.pl-acceso-wrap { position: relative; }
+
+.pl-nota {
+  font-size: 11px;
+  color: var(--ui-text-mute);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .planilla-scroll { max-height: none; }
+  .pl-desc { max-width: 220px; min-width: 160px; }
+}
