@@ -59,6 +59,9 @@
             <button type="button" onclick="exportarCSV()" class="ui-btn" title="Descargar como CSV (Excel)">
               <i class="fas fa-file-csv"></i> <span class="pl-solo-desktop">Exportar CSV</span>
             </button>
+            <button type="button" id="btn-descargar-todo" onclick="descargarTodo()" class="ui-btn ui-btn--primary" title="Descargar el CSV y todas las imágenes en un ZIP">
+              <i class="fas fa-file-zipper"></i> <span class="pl-solo-desktop">Descargar todo (CSV + imágenes)</span>
+            </button>
             <a id="btn-ver-tarjetas" href="postulantes.html" class="ui-btn ui-hidden" title="Ver las postulaciones como tarjetas">
               <i class="fas fa-clone"></i> <span class="pl-solo-desktop">Ver tarjetas</span>
             </a>
@@ -642,6 +645,48 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    // Descarga completa: el servidor arma el ZIP (CSV + imágenes nombradas
+    // "<obra> - <artista>") y acá sólo se baja autenticado.
+    async function descargarTodo() {
+      const btn = document.getElementById('btn-descargar-todo');
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span class="pl-solo-desktop">Generando ZIP...</span>';
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/oportunidades/${oportunidadId}/descargar`, {
+          headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
+        });
+
+        if (!res.ok) {
+          let msg = 'No se pudo generar la descarga.';
+          try {
+            const err = await res.json();
+            if (err && err.error) msg = err.error;
+          } catch (e) {}
+          alert(msg);
+          return;
+        }
+
+        const blob = await res.blob();
+        const slug = (oportunidadData?.titulo || 'inscriptos').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `planilla-${slug || 'inscriptos'}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión al generar la descarga.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
     }
 
     async function copiarLink() {

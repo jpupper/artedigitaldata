@@ -6,6 +6,7 @@ import Post from '../models/Post';
 import Notification from '../models/Notification';
 import { notifyUser } from '../../server';
 import { hydrate, hydrateComments } from '../utils/userHydration';
+import { buildZip } from '../utils/zip';
 
 const router = Router();
 
@@ -503,6 +504,212 @@ router.delete('/:id/acceso-postulantes/:userId', authMiddleware, async (req: Aut
     await oportunidad.save();
 
     return res.json({ message: 'Usuario eliminado', accesoPostulantes: await accesoHidratado(oportunidad) });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// DESCARGA COMPLETA (ZIP: CSV + todas las imágenes)
+// =============================================
+// El ZIP se arma acá y no en el navegador porque las imágenes viven en el
+// bucket de R2, que no responde cabeceras CORS: el fetch del navegador queda
+// opaco. El servidor sí las puede bajar y empaquetar.
+// =============================================
+
+const INSCRIPCION_RESERVED = ['tipoInscripcion', 'obraId', 'obraTitulo', 'obraImagen', 'obraDescripcion', 'obraYoutube', 'respuesta'];
+const IMG_EXT_RE = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;
+const URL_RE = /https?:\/\/[^\s,;"'<>)\]]+/g;
+const MIME_A_EXT: Record<string, string> = {
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg',
+  'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'image/svg+xml': 'svg',
+};
+
+function nombreArchivoSeguro(txt: string, max = 70): string {
+  const limpio = String(txt || '')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[. ]+$/, '');
+  return (limpio || 'sin-nombre').slice(0, max).trim();
+}
+
+function imagenUrlsDeDatos(datos: any): string[] {
+  const urls: string[] = [];
+  for (const [clave, valor] of Object.entries(datos || {})) {
+    if (INSCRIPCION_RESERVED.includes(clave)) continue;
+    if (typeof valor !== 'string') continue;
+    for (const u of (valor.match(URL_RE) || [])) {
+      if (IMG_EXT_RE.test(u)) urls.push(u);
+    }
+  }
+  return urls;
+}
+
+async function bajarImagen(url: string): Promise<{ data: Buffer; ext: string } | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const resp = await fetch(url, { signal: controller.signal });
+    if (!resp.ok) return null;
+    const data = Buffer.from(await resp.arrayBuffer());
+    if (!data.length || data.length > 30 * 1024 * 1024) return null;
+    const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    let ext = MIME_A_EXT[ct] || '';
+    if (!ext) {
+      const m = url.match(IMG_EXT_RE);
+      ext = m ? m[1].toLowerCase().replace('jpeg', 'jpg') : 'jpg';
+    }
+    return { data, ext };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function csvEscapar(v: any): string {
+  const bruto = (v === null || v === undefined) ? '' : String(v);
+  const plano = bruto.split(String.fromCharCode(10)).join(' ').split(String.fromCharCode(13)).join(' ');
+  return '"' + plano.split('"').join('""').trim() + '"';
+}
+
+router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad: any = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) return res.status(404).json({ error: 'Oportunidad no encontrada' });
+
+    const esGestor =
+      oportunidad.creador.toString() === req.user!.id ||
+      req.user!.role === 'ADMINISTRADOR' ||
+      req.user!.role === 'ADMIN';
+    const esViewer = (oportunidad.accesoPostulantes || [])
+      .some((id: any) => (id?._id || id).toString() === req.user!.id);
+
+    if (!esGestor && !esViewer) return res.status(403).json({ error: 'No autorizado' });
+
+    const inscripciones: any[] = await Inscripcion.find({ oportunidad: oportunidad._id })
+      .populate('obra')
+      .sort({ createdAt: -1 });
+
+    const usuarios = await User.find({ _id: { $in: inscripciones.map(i => i.usuario) } })
+      .select('_id username displayName email');
+    const usuarioMap = new Map(usuarios.map(u => [u._id.toString(), u]));
+
+    // Columnas dinámicas: los mismos campos que definió el creador en el formulario
+    const params = (oportunidad.parametrosPresentacion || []).filter((p: any) => p && p.key);
+    const claves: string[] = [];
+    params.forEach((p: any) => { if (!claves.includes(p.key)) claves.push(p.key); });
+    inscripciones.forEach(insc => {
+      Object.keys(insc.datos || {}).forEach(k => {
+        if (!INSCRIPCION_RESERVED.includes(k) && !claves.includes(k)) claves.push(k);
+      });
+    });
+    const etiquetas = claves.map(k => {
+      const p = params.find((x: any) => x.key === k);
+      return p ? p.label : k.replace(/_/g, ' ');
+    });
+
+    const filas: string[] = [
+      ['#', 'Nombre de la obra', 'Artista', 'Usuario', 'Email', 'Descripción de la obra',
+        'Imagen (URL)', 'Video (URL)', 'Subido el', ...etiquetas, 'Mensaje',
+        'Aceptada por el curador', 'Archivo de imagen'].map(csvEscapar).join(';'),
+    ];
+
+    const imagenesZip: { name: string; data: Buffer }[] = [];
+    const vistos = new Set<string>();
+    const usados = new Set<string>();
+    const avisos: string[] = [];
+    const MAX_IMAGENES = 120;
+    const MAX_BYTES = 150 * 1024 * 1024;
+    let imagenesOk = 0;
+    let bytesTotales = 0;
+
+    for (let idx = 0; idx < inscripciones.length; idx++) {
+      const insc = inscripciones[idx];
+      const usuario: any = usuarioMap.get(insc.usuario.toString()) || {};
+      const obra: any = insc.obra || {};
+      const tituloObra = obra.title || insc.datos?.obraTitulo || '';
+      const artista = usuario.displayName || usuario.username || '';
+
+      const candidatas: string[] = [];
+      const principal = obra.imageUrl || insc.datos?.obraImagen || '';
+      if (principal) candidatas.push(principal);
+      imagenUrlsDeDatos(insc.datos).forEach(u => { if (!candidatas.includes(u)) candidatas.push(u); });
+
+      const archivos: string[] = [];
+      for (const url of candidatas) {
+        if (vistos.has(url)) continue;
+        if (imagenesOk >= MAX_IMAGENES || bytesTotales >= MAX_BYTES) {
+          avisos.push(`Omitida por límite de la descarga: ${url}`);
+          continue;
+        }
+        const img = await bajarImagen(url);
+        if (!img) {
+          avisos.push(`No se pudo descargar: ${url}`);
+          continue;
+        }
+        bytesTotales += img.data.length;
+
+        const base = `${nombreArchivoSeguro(tituloObra, 55)} - ${nombreArchivoSeguro(artista, 35)}`;
+        let nombre = `${base}.${img.ext}`;
+        let n = 2;
+        while (usados.has(nombre.toLowerCase())) {
+          nombre = `${base} (${n}).${img.ext}`;
+          n++;
+        }
+        usados.add(nombre.toLowerCase());
+        vistos.add(url);
+        imagenesZip.push({ name: nombre, data: img.data });
+        archivos.push(nombre);
+        imagenesOk++;
+      }
+
+      filas.push([
+        idx + 1,
+        tituloObra,
+        artista,
+        usuario.username || '',
+        usuario.email || '',
+        obra.description || insc.datos?.obraDescripcion || '',
+        principal,
+        obra.youtube_video || insc.datos?.obraYoutube || '',
+        insc.createdAt ? new Date(insc.createdAt).toLocaleString('es-AR') : '',
+        ...claves.map(k => (insc.datos || {})[k] ?? ''),
+        insc.mensaje || '',
+        ({ pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' } as any)[insc.estado] || 'Pendiente',
+        archivos.join(' | '),
+      ].map(csvEscapar).join(';'));
+    }
+
+    const slug = nombreArchivoSeguro(oportunidad.titulo, 60).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'inscriptos';
+    const CRLF = String.fromCharCode(13, 10);
+    const csv = Buffer.from(String.fromCharCode(0xFEFF) + filas.join(CRLF), 'utf8');
+
+    const leeme = [
+      `Planilla de inscriptos — ${oportunidad.titulo}`,
+      `Generado: ${new Date().toLocaleString('es-AR')}`,
+      '',
+      `Archivo planilla-${slug}.csv : todas las postulaciones con sus datos (abre en Excel/Google Sheets).`,
+      `Imágenes incluidas: ${imagenesOk}. Cada imagen se llama "<Nombre de la obra> - <Nombre del artista>".`,
+      'Si una misma obra tiene varias imágenes, se agrega " (2)", " (3)"...',
+      '',
+      'La columna "Archivo de imagen" del CSV dice qué archivo corresponde a cada postulación.',
+      avisos.length ? '' : '',
+      avisos.length ? `Avisos (${avisos.length}):` : '',
+      ...avisos.slice(0, 60),
+    ].join(CRLF);
+
+    const zip = buildZip([
+      { name: `planilla-${slug}.csv`, data: csv },
+      { name: 'LEEME.txt', data: Buffer.from(leeme, 'utf8') },
+      ...imagenesZip,
+    ]);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="planilla-${slug}.zip"`);
+    res.setHeader('Content-Length', String(zip.length));
+    return res.send(zip);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
