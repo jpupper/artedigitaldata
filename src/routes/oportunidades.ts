@@ -7,6 +7,7 @@ import Notification from '../models/Notification';
 import { notifyUser } from '../../server';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 import { buildZip } from '../utils/zip';
+import { normalizeCocreadores } from '../utils/cocreadores';
 
 const router = Router();
 
@@ -30,7 +31,8 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
     const oportunidades = await Oportunidad.find(filter)
       .sort({ createdAt: -1 });
     const final = await hydrate(oportunidades, 'creador');
-    return res.json(final);
+    const withCocreadores = await hydrate(final, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -55,7 +57,8 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res: Response) => {
     );
 
     const [hydrated] = await hydrate([oportunidad], 'creador');
-    let final: any = await hydrateComments(hydrated);
+    const [conCocreadores] = await hydrate([hydrated], 'cocreadores');
+    let final: any = await hydrateComments(conCocreadores);
 
     // Los inscriptos autorizados solo necesitan saber que están en la lista;
     // el creador/admin reciben la lista con datos de usuario para gestionarla.
@@ -109,6 +112,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       titulo,
       descripcion: descripcion || '',
       creador: req.user!.id,
+      cocreadores: normalizeCocreadores(req.body.cocreadores, req.user!.id),
       basesCondiciones: basesCondiciones || '',
       lugarExposicion: lugarExposicion || '',
       fechaDesde: fechaDesde || null,
@@ -167,8 +171,13 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       }
     });
 
+    if (req.body.cocreadores !== undefined) {
+      oportunidad.cocreadores = normalizeCocreadores(req.body.cocreadores, oportunidad.creador) as any;
+    }
+
     await oportunidad.save();
-    const [final] = await hydrate([oportunidad], 'creador');
+    const [conCreador] = await hydrate([oportunidad], 'creador');
+    const [final] = await hydrate([conCreador], 'cocreadores');
     return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -777,7 +786,8 @@ router.get('/mis-oportunidades/listar', authMiddleware, async (req: AuthRequest,
     const oportunidades = await Oportunidad.find({ creador: req.user!.id })
       .sort({ createdAt: -1 });
     const final = await hydrate(oportunidades, 'creador');
-    return res.json(final);
+    const withCocreadores = await hydrate(final, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

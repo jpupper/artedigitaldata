@@ -49,11 +49,18 @@ router.get('/pinned/list', async (_req, res: Response) => {
       hydrate(pinnedOportunidades, 'creador'),
     ]);
 
+    const [postsConCo, recursosConCo, eventosConCo, oportunidadesConCo] = await Promise.all([
+      hydrate(hydratedPosts, 'cocreadores'),
+      hydrate(hydratedRecursos, 'cocreadores'),
+      hydrate(hydratedEventos, 'cocreadores'),
+      hydrate(hydratedOportunidades, 'cocreadores'),
+    ]);
+
     const allPinned = [
-      ...hydratedPosts.map((p: any) => ({ ...p, feedType: 'post' })),
-      ...hydratedRecursos.map((r: any) => ({ ...r, feedType: 'recurso' })),
-      ...hydratedEventos.map((e: any) => ({ ...e, feedType: 'evento' })),
-      ...hydratedOportunidades.map((o: any) => ({ ...o, feedType: 'oportunidad' })),
+      ...postsConCo.map((p: any) => ({ ...p, feedType: 'post' })),
+      ...recursosConCo.map((r: any) => ({ ...r, feedType: 'recurso' })),
+      ...eventosConCo.map((e: any) => ({ ...e, feedType: 'evento' })),
+      ...oportunidadesConCo.map((o: any) => ({ ...o, feedType: 'oportunidad' })),
     ].sort((a: any, b: any) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime());
 
     return res.json(allPinned);

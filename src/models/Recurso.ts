@@ -18,6 +18,7 @@ const RecursoSchema: Schema = new Schema(
     imageUrl: { type: String, default: '' },
     youtube_video: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cocreadores: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     tags: [{ type: String, trim: true }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],

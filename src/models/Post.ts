@@ -12,6 +12,7 @@ export interface IPost extends IPosteoBase {
 const PostSchema: Schema = new Schema(
   {
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cocreadores: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     imageUrl: { type: String, default: '' },

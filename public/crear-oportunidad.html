@@ -351,6 +351,9 @@
           </div>
         </div>
 
+        <!-- Cocreadores -->
+        <div id="opo-cocreadores-root"></div>
+
         <!-- Submit -->
         <div class="flex flex-col sm:flex-row gap-4 pt-4">
           <button type="submit" class="flex-1 px-6 py-4 rounded-xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
@@ -388,6 +391,7 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js?v=4"></script>
   <script src="js/generative-avatar.js"></script>
+  <script src="js/forms.js?v=2"></script>
   <script src="js/header.js?v=4"></script>
   <script src="js/acceso-planilla.js?v=1"></script>
   <script>
@@ -404,6 +408,8 @@
 
       const urlParams = new URLSearchParams(window.location.search);
       editingId = urlParams.get('id');
+
+      renderCocreadoresSection('opo-cocreadores-root', 'opo');
 
       if (editingId) {
         await loadOportunidadToEdit(editingId);
@@ -504,6 +510,8 @@
           document.getElementById('opo-nombreProyecto').value = data.nombreProyecto || '';
           document.getElementById('opo-colaboracionPedida').value = data.colaboracionPedida || '';
         }
+
+        renderCocreadoresSection('opo-cocreadores-root', 'opo', data);
       } catch (err) {
         console.error('Error al cargar datos para edición:', err);
         alert('Error de conexión al cargar la oportunidad.');
@@ -688,6 +696,7 @@
           imagenUrl: uploadedImageUrl,
           tags: document.getElementById('opo-tags').value.split(',').map(t => t.trim()).filter(t => t),
           visibility: document.getElementById('opo-visibility').value,
+          cocreadores: (typeof getCocreadoresIds === 'function') ? getCocreadoresIds('opo') : [],
         };
 
         // Add type-specific fields

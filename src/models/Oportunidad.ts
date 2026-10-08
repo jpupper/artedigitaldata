@@ -100,6 +100,7 @@ const OportunidadSchema: Schema = new Schema(
     titulo: { type: String, required: true, trim: true },
     descripcion: { type: String, default: '' },
     creador: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cocreadores: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     
     // Convocatoria de Obra
     basesCondiciones: { type: String, default: '' },

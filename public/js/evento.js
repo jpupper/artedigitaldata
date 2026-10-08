@@ -52,6 +52,14 @@ window.renderEvent = function(ev) {
   if (creator) {
     creator.innerText = ev.creator?.username || 'Anónimo';
     creator.href = `profile.html?user=${ev.creator?.username}`;
+
+    let coEl = document.getElementById('event-cocreadores');
+    if (!coEl) {
+      coEl = document.createElement('div');
+      coEl.id = 'event-cocreadores';
+      creator.parentElement.insertBefore(coEl, creator.nextSibling);
+    }
+    coEl.innerHTML = (typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(ev) : '';
   }
 
   const avatarCont = document.getElementById('creator-avatar');

@@ -148,7 +148,7 @@
   <script src="js/generative-avatar.js"></script>
   <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
-  <script src="js/forms.js"></script>
+  <script src="js/forms.js?v=2"></script>
   <script src="js/image-cropper.js"></script>
   <script>
     if (!isLoggedIn()) { 
@@ -238,7 +238,7 @@
 
         const res = await apiRequest('/posts', {
           method: 'POST',
-          body: JSON.stringify({ title, description, imageUrl, youtube_video, tags, visibility })
+          body: JSON.stringify({ title, description, imageUrl, youtube_video, tags, visibility, cocreadores: getCocreadoresIds('post') })
         });
 
         if (res?.ok) {
@@ -287,7 +287,7 @@
 
         const res = await apiRequest('/recursos', {
           method: 'POST',
-          body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl, visibility })
+          body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl, visibility, cocreadores: getCocreadoresIds('rec') })
         });
 
         if (res?.ok) {
@@ -341,7 +341,7 @@
 
         const res = await apiRequest('/eventos', {
           method: 'POST',
-          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, visibility })
+          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, visibility, cocreadores: getCocreadoresIds('event') })
         });
 
         if (res?.ok) {

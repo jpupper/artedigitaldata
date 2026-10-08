@@ -37,6 +37,59 @@ async function loadPinnedEvents() {
   }
 }
 
+// ── Creadores de un posteo (autor + cocreadores) ────────────────────────────
+// El backend hidrata author/creator/creador y cocreadores con datos de usuario.
+function getPosteoCreators(item) {
+  const pick = (v) => (v && typeof v === 'object' && v.username) ? v : null;
+  const first = pick(item.author) || pick(item.creator) || pick(item.creador);
+  const list = [];
+  if (first) list.push(first);
+  (Array.isArray(item.cocreadores) ? item.cocreadores : []).forEach(c => {
+    if (c && typeof c === 'object' && c.username) list.push(c);
+  });
+  const seen = new Set();
+  return list.filter(u => {
+    const key = String(u._id || u.username);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function creatorNamesHtml(creators, accentColor) {
+  return creators.map((u, i) => {
+    const sep = i === 0 ? '' : (i === creators.length - 1 ? ' y ' : ', ');
+    return sep + '<a href="profile.html?user=' + encodeURIComponent(u.username) + '" class="hover:text-' + accentColor + '-400 transition-colors">@' + escapeHTML(u.username) + '</a>';
+  }).join('');
+}
+
+function creatorsAvatarsHtml(creators) {
+  const shown = creators.slice(0, 4);
+  const extra = creators.length - shown.length;
+  const avatars = shown.map((u, i) => {
+    const inner = window.GenerativeAvatar
+      ? window.GenerativeAvatar.markup(u, { className: 'w-full h-full object-cover' })
+      : '<div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">' + escapeHTML((u.username || '?')[0].toUpperCase()) + '</div>';
+    return '<div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5" style="position:relative;' + (i ? 'margin-left:-10px;' : '') + 'z-index:' + (10 - i) + '">' + inner + '</div>';
+  }).join('');
+  const extraBadge = extra > 0
+    ? '<div class="w-9 h-9 rounded-xl border border-white/10 bg-[#0d0d12] flex items-center justify-center text-[10px] font-bold text-gray-400" style="position:relative;margin-left:-10px;z-index:1">+' + extra + '</div>'
+    : '';
+  return '<div class="flex items-center shrink-0">' + avatars + extraBadge + '</div>';
+}
+
+function creatorsBylineHtml(creators, accentColor, dateStr) {
+  return `
+    <div class="flex items-center gap-3">
+      ${creatorsAvatarsHtml(creators)}
+      <div class="min-w-0">
+        <div class="text-sm font-bold text-white leading-tight line-clamp-2">${creatorNamesHtml(creators, accentColor)}</div>
+        ${dateStr ? `<span class="text-xs text-slate-300 font-semibold uppercase tracking-wider">${dateStr}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
 function renderPinnedEvents(events) {
   const container = document.getElementById('pinned-container');
   container.innerHTML = events.map(ev => {
@@ -117,14 +170,7 @@ function renderPinnedEvents(events) {
           </div>
           ` : ''}
           <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
-                ${window.GenerativeAvatar
-                  ? window.GenerativeAvatar.markup(author, { className: 'w-full h-full object-cover' })
-                  : `<span class="text-[10px] font-bold text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</span>`}
-              </div>
-              <span class="text-xs font-bold text-gray-400">${escapeHTML(author.username || 'Anónimo')}</span>
-            </div>
+            ${creatorsBylineHtml(getPosteoCreators(ev), accentColor, '')}
             ${ev.ticketConfig?.enabled ? `
               <a href="ticket-purchase?event=${ev._id}" class="group relative flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-magenta-500 to-fuchsia-500 text-white text-xs font-bold hover:scale-105 transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] overflow-hidden">
                 <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></span>
@@ -366,19 +412,7 @@ function renderFeed() {
         </div>
         <div class="p-6 flex-1 flex flex-col">
           <div class="flex items-center justify-between mb-5">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-inner bg-white/5">
-                ${window.GenerativeAvatar
-                  ? window.GenerativeAvatar.markup(author, { className: 'w-full h-full object-cover' })
-                  : `<div class="w-full h-full flex items-center justify-center text-xs font-bold bg-white/5 text-gray-500">${escapeHTML((author.username || '?')[0].toUpperCase())}</div>`}
-              </div>
-              <div>
-                <a href="profile.html?user=${encodeURIComponent(author.username)}" class="block text-sm font-bold text-white hover:text-${accentColor}-400 transition-colors">
-                  ${escapeHTML(author.username)}
-                </a>
-                <span class="text-xs text-slate-300 font-semibold uppercase tracking-wider">${date}</span>
-              </div>
-            </div>
+            ${creatorsBylineHtml(getPosteoCreators(item), accentColor, date)}
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-black text-white mb-2 leading-tight group-hover:text-${accentColor}-400 transition-colors line-clamp-1">

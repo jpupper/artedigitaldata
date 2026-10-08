@@ -98,8 +98,8 @@
   <script src="js/generative-avatar.js"></script>
   <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
-  <script src="js/forms.js"></script>
-  <script src="js/edit-logic.js"></script>
+  <script src="js/forms.js?v=2"></script>
+  <script src="js/edit-logic.js?v=2"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
   <script>
@@ -145,6 +145,15 @@
       const authorLink = document.getElementById('resource-author');
       authorLink.innerText = `@${r.author?.username || 'anónimo'}`;
       authorLink.href = `profile.html?user=${encodeURIComponent(r.author?.username || '')}`;
+
+      let coEl = document.getElementById('resource-cocreadores');
+      if (!coEl) {
+        coEl = document.createElement('div');
+        coEl.id = 'resource-cocreadores';
+        const authorP = authorLink.closest('p') || authorLink.parentElement;
+        authorP.insertAdjacentElement('afterend', coEl);
+      }
+      coEl.innerHTML = (typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(r) : '';
 
       const avatarCont = document.getElementById('author-avatar');
       avatarCont.innerHTML = r.author?.avatar ? `<img src="${sanitizeUrl(r.author.avatar)}" class="w-full h-full object-cover">` : escapeHTML((r.author?.username || '?')[0].toUpperCase());

@@ -50,6 +50,7 @@
             </div>
             <span id="opo-fecha" class="ml-auto text-xs text-gray-500"></span>
           </div>
+          <div id="opo-cocreadores"></div>
         </section>
 
         <!-- Imagen -->
@@ -361,6 +362,7 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js?v=4"></script>
   <script src="js/generative-avatar.js"></script>
+  <script src="js/forms.js?v=2"></script>
   <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
   <script>
@@ -521,6 +523,12 @@
         }
       }
       document.getElementById('opo-fecha').textContent = new Date(opo.createdAt).toLocaleDateString('es-AR');
+
+      // Cocreadores
+      const cocreadoresEl = document.getElementById('opo-cocreadores');
+      if (cocreadoresEl) {
+        cocreadoresEl.innerHTML = (typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(opo) : '';
+      }
 
       // Description
       document.getElementById('opo-descripcion').innerHTML = (typeof formatMentions === 'function' ? formatMentions(opo.descripcion) : escapeHTML(opo.descripcion)) || 'Sin descripción.';

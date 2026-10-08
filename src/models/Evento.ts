@@ -45,6 +45,7 @@ const EventoSchema: Schema = new Schema(
     imageUrl: { type: String, default: '' },
     youtube_video: { type: String, default: '' },
     creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    cocreadores: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],

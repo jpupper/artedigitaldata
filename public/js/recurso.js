@@ -47,6 +47,14 @@ window.renderResource = function(r) {
   if (authorLink) {
     authorLink.innerText = `@${r.author?.username || 'anónimo'}`;
     authorLink.href = `profile.html?user=${r.author?.username}`;
+
+    let coEl = document.getElementById('resource-cocreadores');
+    if (!coEl) {
+      coEl = document.createElement('div');
+      coEl.id = 'resource-cocreadores';
+      authorLink.parentElement.insertBefore(coEl, authorLink.nextSibling);
+    }
+    coEl.innerHTML = (typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(r) : '';
   }
 
   const avatarCont = document.getElementById('author-avatar');

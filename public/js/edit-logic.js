@@ -231,6 +231,10 @@ async function saveEdit() {
     imageUrl
   };
 
+  if (typeof getCocreadoresIds === 'function') {
+    body.cocreadores = getCocreadoresIds('edit');
+  }
+
   if (type === 'post') {
     body.tags = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
   } else if (type === 'recurso') {

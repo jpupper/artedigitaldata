@@ -72,6 +72,7 @@ window.loadPost = async function(postId) {
               <a href="${CONFIG.BASE}/profile.html?user=${post.author?.username}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
                 ${post.author?.username || 'Anónimo'}
               </a>
+              ${(typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(post) : ''}
               <p class="text-base md:text-lg font-semibold text-slate-200 mt-1 flex items-center gap-2 tracking-wide">
                 <i class="far fa-calendar-alt text-xs text-cyan-400"></i>
                 <span>${new Date(post.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} hs</span>

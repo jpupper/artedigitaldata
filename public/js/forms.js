@@ -13,6 +13,164 @@ window.formatDateForInput = (date) => {
   return localISOTime;
 };
 
+/**
+ * Cocreadores — widget reutilizable por todos los posteos (obra, recurso, evento, oportunidad).
+ * Necesita en el DOM: `${prefix}-cocreadores-search`, `${prefix}-cocreadores-suggestions`
+ * y `${prefix}-cocreadores-list`.
+ */
+const COCREADOR_CHIP_CLASS = 'cocreador-chip flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-emerald-500/30 text-sm text-white';
+
+const cocreadorEscape = (value) => (typeof escapeHTML === 'function' ? escapeHTML(String(value == null ? '' : value)) : String(value == null ? '' : value));
+
+const cocreadorChipHtml = (user) => {
+  const isObj = user && typeof user === 'object';
+  const id = isObj ? (user._id || '') : (user || '');
+  const username = isObj ? (user.username || user.displayName || '') : '';
+  const avatar = isObj ? (user.avatar || '') : '';
+  const avatarInner = (window.GenerativeAvatar && username)
+    ? window.GenerativeAvatar.markup({ _id: id, username, avatar }, { className: 'w-full h-full object-cover' })
+    : (avatar
+      ? '<img src="' + cocreadorEscape(avatar) + '" class="w-full h-full object-cover">'
+      : cocreadorEscape((username || '?')[0].toUpperCase()));
+  return '<div class="' + COCREADOR_CHIP_CLASS + '" data-id="' + cocreadorEscape(id) + '" data-username="' + cocreadorEscape(username) + '" data-avatar="' + cocreadorEscape(avatar) + '">'
+    + '<div class="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-[9px] font-bold text-emerald-400 overflow-hidden">' + avatarInner + '</div>'
+    + '<span class="font-bold text-xs">' + cocreadorEscape(username) + '</span>'
+    + '<button type="button" onclick="removeCocreadorChip(this)" class="text-gray-500 hover:text-red-400 ml-1 transition-colors"><i class="fas fa-times text-[9px]"></i></button>'
+    + '</div>';
+};
+
+window.cocreadoresSectionHtml = (prefix, item = {}) => {
+  const cocreadores = Array.isArray(item.cocreadores) ? item.cocreadores.filter(Boolean) : [];
+  const chips = cocreadores.map(cocreadorChipHtml).join('');
+  return `
+    <div class="border-t border-white/10 pt-6 mt-6">
+      <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 tracking-widest">
+        <i class="fas fa-user-friends text-emerald-400 mr-2"></i>Cocreadores
+      </h4>
+      <p class="text-[10px] text-gray-500 mb-3">Sumá a las personas que crearon esto con vos: van a figurar como autores en el feed.</p>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="${prefix}-cocreadores-search" placeholder="Buscar usuario por nombre..." autocomplete="off"
+          oninput="searchCocreadores('${prefix}', this.value)"
+          class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:border-emerald-500/50 focus:outline-none transition-colors">
+        <button type="button" onclick="addCocreadorFromSearch('${prefix}')"
+          class="px-4 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm hover:border-emerald-500/50 transition-all">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+      <div id="${prefix}-cocreadores-suggestions" class="hidden bg-[#0d0d12] border border-white/10 rounded-xl overflow-hidden mb-3 max-h-40 overflow-y-auto"></div>
+      <div id="${prefix}-cocreadores-list" class="flex flex-wrap gap-2 min-h-[2rem]">${chips}</div>
+    </div>
+  `;
+};
+
+window.renderCocreadoresSection = (rootId, prefix, item = {}) => {
+  const root = document.getElementById(rootId);
+  if (root) root.innerHTML = window.cocreadoresSectionHtml(prefix, item);
+};
+
+/**
+ * Línea compacta de cocreadores para las páginas de detalle: "con @a, @b y @c".
+ * Devuelve '' si el posteo no tiene cocreadores.
+ */
+window.cocreadoresInlineHtml = (item, opts = {}) => {
+  const prop = opts.field || 'cocreadores';
+  const list = (item && Array.isArray(item[prop]) ? item[prop] : []).filter(c => c && typeof c === 'object' && c.username);
+  if (!list.length) return '';
+  const names = list.map((u, i) => {
+    const sep = i === 0 ? '' : (i === list.length - 1 ? ' y ' : ', ');
+    return sep + '<a href="profile.html?user=' + encodeURIComponent(u.username) + '" class="font-bold underline">@' + cocreadorEscape(u.username) + '</a>';
+  }).join('');
+  const avatars = list.slice(0, 5).map((u, i) => {
+    const inner = (window.GenerativeAvatar && u.username)
+      ? window.GenerativeAvatar.markup(u, { className: 'w-full h-full object-cover' })
+      : '<span class="text-[10px] font-bold">' + cocreadorEscape((u.username || '?')[0].toUpperCase()) + '</span>';
+    return '<div class="w-5 h-5 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center text-emerald-400" style="position:relative;' + (i ? 'margin-left:-8px;' : '') + '">' + inner + '</div>';
+  }).join('');
+  return '<div class="flex items-center gap-2 mt-1 text-xs text-emerald-400 font-bold">'
+    + '<span class="flex items-center shrink-0">' + avatars + '</span>'
+    + '<span>con ' + names + '</span>'
+    + '</div>';
+};
+
+let _cocreadoresSelected = {};
+
+window.searchCocreadores = async (prefix, query) => {
+  const suggestionsEl = document.getElementById(`${prefix}-cocreadores-suggestions`);
+  if (!suggestionsEl) return;
+  const hide = () => {
+    suggestionsEl.classList.add('hidden');
+    suggestionsEl.innerHTML = '';
+    _cocreadoresSelected[prefix] = null;
+  };
+  if (!query || query.length < 2) { hide(); return; }
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/tagging?q=${encodeURIComponent(query)}&types=user`);
+    if (!res.ok) { hide(); return; }
+    const results = await res.json();
+    const selfId = (typeof getUserId === 'function') ? getUserId() : '';
+    const listEl = document.getElementById(`${prefix}-cocreadores-list`);
+    const yaAgregados = listEl ? Array.from(listEl.querySelectorAll('.cocreador-chip')).map(c => c.dataset.id) : [];
+    const users = results.filter(r => r.type === 'user' && r._id !== selfId && !yaAgregados.includes(r._id));
+    if (users.length === 0) { hide(); return; }
+    suggestionsEl.classList.remove('hidden');
+    suggestionsEl.innerHTML = users.map(u => {
+      const uid = u._id || '';
+      const uname = u.username || u.label || '';
+      const uavatar = u.avatar || '';
+      const avatarInner = uavatar
+        ? '<img src="' + cocreadorEscape(uavatar) + '" class="w-full h-full object-cover">'
+        : cocreadorEscape((uname || '?')[0].toUpperCase());
+      return '<div class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"'
+        + ' data-id="' + cocreadorEscape(uid) + '" data-username="' + cocreadorEscape(uname) + '" data-avatar="' + cocreadorEscape(uavatar) + '"'
+        + " onclick=\"selectCocreadorSuggestion('" + prefix + "', this)\">"
+        + '<div class="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400 overflow-hidden shrink-0">' + avatarInner + '</div>'
+        + '<span class="text-sm text-white font-bold">@' + cocreadorEscape(uname) + '</span>'
+        + '</div>';
+    }).join('');
+  } catch (e) {
+    hide();
+  }
+};
+
+window.selectCocreadorSuggestion = (prefix, el) => {
+  const user = { _id: el.dataset.id, username: el.dataset.username, avatar: el.dataset.avatar };
+  _cocreadoresSelected[prefix] = user;
+  const searchInput = document.getElementById(`${prefix}-cocreadores-search`);
+  if (searchInput) searchInput.value = user.username;
+  const suggestionsEl = document.getElementById(`${prefix}-cocreadores-suggestions`);
+  if (suggestionsEl) { suggestionsEl.classList.add('hidden'); suggestionsEl.innerHTML = ''; }
+  cocreadorAddChip(prefix, user);
+};
+
+window.addCocreadorFromSearch = (prefix) => {
+  const selected = _cocreadoresSelected[prefix];
+  if (!selected) return;
+  cocreadorAddChip(prefix, selected);
+  const searchInput = document.getElementById(`${prefix}-cocreadores-search`);
+  if (searchInput) searchInput.value = '';
+  _cocreadoresSelected[prefix] = null;
+};
+
+const cocreadorAddChip = (prefix, user) => {
+  const listEl = document.getElementById(`${prefix}-cocreadores-list`);
+  if (!listEl || !user || !user._id) return;
+  if (listEl.querySelector(`[data-id="${user._id}"]`)) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = cocreadorChipHtml(user);
+  listEl.appendChild(wrapper.firstElementChild);
+};
+
+window.removeCocreadorChip = (btn) => {
+  const chip = btn.closest('.cocreador-chip');
+  if (chip) chip.remove();
+};
+
+window.getCocreadoresIds = (prefix) => {
+  const listEl = document.getElementById(`${prefix}-cocreadores-list`);
+  if (!listEl) return [];
+  return Array.from(listEl.querySelectorAll('.cocreador-chip')).map(chip => chip.dataset.id).filter(Boolean);
+};
+
 const FORM_TEMPLATES = {
   post: (prefix, item = {}) => `
     <div class="space-y-4">
@@ -53,6 +211,7 @@ const FORM_TEMPLATES = {
           <option value="unlisted" ${item.visibility === 'unlisted' ? 'selected' : ''}>No Listado</option>
         </select>
       </div>
+      ${cocreadoresSectionHtml(prefix, item)}
     </div>
   `,
 
@@ -102,6 +261,7 @@ const FORM_TEMPLATES = {
         <input type="file" id="${prefix}-file" name="file" accept="image/*"
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 file:cursor-pointer">
       </div>
+      ${cocreadoresSectionHtml(prefix, item)}
     </div>
   `,
 
@@ -265,6 +425,8 @@ const FORM_TEMPLATES = {
           </div>
         </div>
       </div>
+
+      ${cocreadoresSectionHtml(prefix, item)}
     </div>
     `;
   }

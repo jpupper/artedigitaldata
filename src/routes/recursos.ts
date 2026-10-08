@@ -5,6 +5,7 @@ import { hydrate, hydrateComments } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import User from '../models/User';
 import { notifyUser } from '../../server';
+import { normalizeCocreadores } from '../utils/cocreadores';
 
 const router = Router();
 
@@ -15,7 +16,8 @@ router.get('/', async (req: Request, res: Response) => {
     else if (req.query.source === 'human') filter.source = 'human';
     const recursos = await Recurso.find(filter).sort({ createdAt: -1 });
     const final = await hydrate(recursos);
-    return res.json(final);
+    const withCocreadores = await hydrate(final, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -30,7 +32,8 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
     
     const hydrated = await hydrate([recurso]);
-    const final = await hydrateComments(hydrated[0]);
+    const conCocreadores = await hydrate(hydrated, 'cocreadores');
+    const final = await hydrateComments(conCocreadores[0]);
     return res.json(final);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -50,6 +53,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       imageUrl: imageUrl || '',
       youtube_video: youtube_video || '',
       author: req.user!.id,
+      cocreadores: normalizeCocreadores(req.body.cocreadores, req.user!.id),
       tags: tags || [],
       visibility: visibility || 'public',
     });
@@ -111,6 +115,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (imageUrl !== undefined) recurso.imageUrl = imageUrl;
     if (youtube_video !== undefined) recurso.youtube_video = youtube_video;
     if (visibility !== undefined) recurso.visibility = visibility;
+    if (req.body.cocreadores !== undefined) recurso.cocreadores = normalizeCocreadores(req.body.cocreadores, recurso.author) as any;
 
     await recurso.save();
     return res.json(recurso);

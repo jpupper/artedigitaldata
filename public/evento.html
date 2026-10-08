@@ -126,8 +126,8 @@
   <script src="js/generative-avatar.js"></script>
   <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
-  <script src="js/forms.js"></script>
-  <script src="js/edit-logic.js"></script>
+  <script src="js/forms.js?v=2"></script>
+  <script src="js/edit-logic.js?v=2"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="js/notifications.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
@@ -196,6 +196,14 @@
       const creator = document.getElementById('event-creator');
       creator.innerText = ev.creator?.username || 'Anónimo';
       creator.href = `profile.html?user=${ev.creator?.username}`;
+
+      let coEvEl = document.getElementById('event-cocreadores');
+      if (!coEvEl) {
+        coEvEl = document.createElement('div');
+        coEvEl.id = 'event-cocreadores';
+        creator.closest('span').insertAdjacentElement('afterend', coEvEl);
+      }
+      coEvEl.innerHTML = (typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(ev) : '';
 
       const avatarCont = document.getElementById('creator-avatar');
       avatarCont.innerHTML = ev.creator?.avatar ? `<img src="${sanitizeUrl(ev.creator.avatar)}" class="w-full h-full object-cover">` : escapeHTML((ev.creator?.username || '?')[0].toUpperCase());

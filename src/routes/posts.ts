@@ -5,6 +5,7 @@ import { hydrate, hydrateComments, hydrateLikes } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import User from '../models/User';
 import { notifyUser } from '../../server';
+import { normalizeCocreadores } from '../utils/cocreadores';
 
 const router = Router();
 
@@ -15,7 +16,8 @@ router.get('/', async (req: Request, res: Response) => {
     else if (req.query.source === 'human') filter.source = 'human';
     const posts = await Post.find(filter).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
-    return res.json(hydratedPosts);
+    const withCocreadores = await hydrate(hydratedPosts, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -38,7 +40,8 @@ router.get('/mis-obras', authMiddleware, async (req: AuthRequest, res: Response)
     }
     const posts = await Post.find({ author: { $in: allUserIds } }).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
-    return res.json(hydratedPosts);
+    const withCocreadores = await hydrate(hydratedPosts, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -50,6 +53,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
     
     let hydrated = await hydrate([post]);
+    hydrated = await hydrate(hydrated, 'cocreadores');
     let final = await hydrateComments(hydrated[0]);
     final = await hydrateLikes(final);
     return res.json(final);
@@ -74,6 +78,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth, visibility } = req.body;
     const post = await Post.create({
       author: req.user!.id,
+      cocreadores: normalizeCocreadores(req.body.cocreadores, req.user!.id),
       title,
       description,
       imageUrl,
@@ -108,7 +113,8 @@ router.get('/contest/:month', async (req: Request, res: Response) => {
       contestMonth: req.params.month 
     }).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
-    return res.json(hydratedPosts);
+    const withCocreadores = await hydrate(hydratedPosts, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -118,7 +124,8 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
     const posts = await Post.find({ author: req.params.userId }).sort({ createdAt: -1 });
     const hydratedPosts = await hydrate(posts);
-    return res.json(hydratedPosts);
+    const withCocreadores = await hydrate(hydratedPosts, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -214,6 +221,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (imageUrl !== undefined) post.imageUrl = imageUrl;
     if (youtube_video !== undefined) post.youtube_video = youtube_video;
     if (visibility !== undefined) post.visibility = visibility;
+    if (req.body.cocreadores !== undefined) post.cocreadores = normalizeCocreadores(req.body.cocreadores, post.author) as any;
 
     await post.save();
     return res.json(post);

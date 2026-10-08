@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const res = await apiRequest('/posts', {
       method: 'POST',
-      body: JSON.stringify({ title, description, imageUrl, youtube_video, tags })
+      body: JSON.stringify({ title, description, imageUrl, youtube_video, tags, cocreadores: getCocreadoresIds('post') })
     });
 
     if (res?.ok) {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const res = await apiRequest('/recursos', {
       method: 'POST',
-      body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl })
+      body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl, cocreadores: getCocreadoresIds('rec') })
     });
 
     if (res?.ok) {
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const res = await apiRequest('/eventos', {
       method: 'POST',
-      body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, tags: tags.split(',').map(t => t.trim()).filter(Boolean) })
+      body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, tags: tags.split(',').map(t => t.trim()).filter(Boolean), cocreadores: getCocreadoresIds('event') })
     });
 
     if (res?.ok) {

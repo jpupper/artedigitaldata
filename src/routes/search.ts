@@ -119,7 +119,7 @@ router.get('/', async (req: Request, res: Response) => {
     ]);
 
     const results = [
-      ...users.map((u: any) => ({ type: 'user', id: u.username, _id: u._id, label: u.displayName || u.username, avatar: u.avatar })),
+      ...users.map((u: any) => ({ type: 'user', id: u.username, _id: u._id, username: u.username, label: u.displayName || u.username, avatar: u.avatar })),
       ...posts.map((p: any) => ({ type: 'post', id: p._id, label: p.title, author: p.author?.username, image: p.imageUrl, date: p.createdAt, youtube_video: p.youtube_video, description: p.description, tags: p.tags || [] })),
       ...events.map((e: any) => ({ type: 'event', id: e._id, label: e.title, date: e.date, image: e.imageUrl, desc: e.description, youtube_video: e.youtube_video, tags: e.tags || [] })),
       ...resources.map((r: any) => ({ type: 'resource', id: r._id, label: r.title, author: r.author?.username, url: r.url, resourceType: r.type, youtube_video: r.youtube_video, description: r.description, tags: r.tags || [] })),

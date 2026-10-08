@@ -20,6 +20,7 @@ export interface IPosteoBase extends Document {
   title: string;
   description: string;
   author: Types.ObjectId;
+  cocreadores: Types.ObjectId[];
   imageUrl: string;
   youtube_video?: string;
   tags: string[];

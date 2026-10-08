@@ -5,6 +5,7 @@ import User from '../models/User';
 import { hydrate, hydrateComments } from '../utils/userHydration';
 import Notification from '../models/Notification';
 import { notifyUser } from '../../server';
+import { normalizeCocreadores } from '../utils/cocreadores';
 
 const router = Router();
 
@@ -12,7 +13,8 @@ router.get('/', async (_req: Request, res: Response) => {
   try {
     const eventos = await Evento.find({ visibility: 'public' }).sort({ date: 1 });
     const final = await hydrate(eventos, 'creator');
-    return res.json(final);
+    const withCocreadores = await hydrate(final, 'cocreadores');
+    return res.json(withCocreadores);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -31,7 +33,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     // Then hydrate participants (include bio and socials for gallery)
     const [withParticipants] = await hydrate([withCreator], 'participants', 'username avatar displayName bio socials');
     // Then hydrate doorUsers
-    const [hydrated] = await hydrate([withParticipants], 'doorUsers');
+    const [withDoorUsers] = await hydrate([withParticipants], 'doorUsers');
+    // Then hydrate cocreadores
+    const [hydrated] = await hydrate([withDoorUsers], 'cocreadores');
     
     // Ensure ticketConfig is always returned (for old events without this field)
     if (!hydrated.ticketConfig) {
@@ -102,6 +106,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       imageUrl,
       youtube_video: youtube_video || '',
       creator: req.user!.id,
+      cocreadores: normalizeCocreadores(req.body.cocreadores, req.user!.id),
       participants,
       ticketConfig: ticketConfig || { enabled: false },
       tags: tags || [],
@@ -165,6 +170,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (ticketConfig !== undefined) evento.ticketConfig = ticketConfig;
     if (tags !== undefined) evento.tags = tags;
     if (visibility !== undefined) evento.visibility = visibility;
+    if (req.body.cocreadores !== undefined) evento.cocreadores = normalizeCocreadores(req.body.cocreadores, evento.creator) as any;
 
     await evento.save();
     
@@ -195,6 +201,12 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       const doorUsers = await User.find({ _id: { $in: response.doorUsers } })
         .select('_id username email displayName avatar');
       (response as any).doorUsers = doorUsers;
+    }
+
+    // Hydrate cocreadores
+    if (response.cocreadores && response.cocreadores.length > 0) {
+      const [withCo] = await hydrate([response], 'cocreadores');
+      return res.json(withCo);
     }
     
     return res.json(response);
