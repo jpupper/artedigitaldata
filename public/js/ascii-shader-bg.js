@@ -10,6 +10,9 @@
   let noiseFbo = null;
   let noiseFboTexture = null;
 
+  // Fondo en blanco y negro: la paleta del shader se convierte a luminancia
+  const MONOCHROME = true;
+
   let vsSource = `#version 300 es
 in vec2 position;
 void main() {
@@ -250,6 +253,12 @@ void main() {
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
     const num = parseInt(hex, 16);
     return [(num >> 16 & 255) / 255, (num >> 8 & 255) / 255, (num & 255) / 255];
+  }
+
+  // Luminancia perceptual: convierte cualquier color a su gris equivalente
+  function toMono(rgb) {
+    const l = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+    return [l, l, l];
   }
 
   function createShader(gl, type, source) {
@@ -648,6 +657,9 @@ void main() {
           else val = u.defaultValueStr ? Number(u.defaultValueStr) || 0.5 : 0.5;
         }
 
+        // Monocromo: shaders con saturación propia (star nest) van a gris puro
+        if (MONOCHROME && (u.name === 'saturation' || u.name === 'u_saturation')) val = 0;
+
         if (u.type === 'float') {
           gl.uniform1f(loc, Number(val));
         } else if (u.type === 'int') {
@@ -655,14 +667,16 @@ void main() {
         } else if (u.type === 'bool') {
           gl.uniform1i(loc, val ? 1 : 0);
         } else if (u.type === 'vec3') {
+          let rgb;
           if (typeof val === 'string') {
-            const rgb = hexToRgb(val);
-            gl.uniform3f(loc, rgb[0], rgb[1], rgb[2]);
+            rgb = hexToRgb(val);
           } else if (Array.isArray(val)) {
-            gl.uniform3f(loc, val[0] || 0, val[1] || 0, val[2] || 0);
+            rgb = [val[0] || 0, val[1] || 0, val[2] || 0];
           } else {
-            gl.uniform3f(loc, 0.5, 0.5, 0.5);
+            rgb = [0.5, 0.5, 0.5];
           }
+          if (MONOCHROME) rgb = toMono(rgb);
+          gl.uniform3f(loc, rgb[0], rgb[1], rgb[2]);
         } else if (u.type === 'vec2') {
           if (Array.isArray(val)) gl.uniform2f(loc, val[0] || 0, val[1] || 0);
           else gl.uniform2f(loc, Number(val) || 0, Number(val) || 0);

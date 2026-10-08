@@ -37,7 +37,7 @@
         <span>Modos</span>
       </button>
       <button id="btn-save-fx" class="btn-toggle-ui" title="Guardar Proyecto de Efecto Visual">
-        <i class="fas fa-save" style="color: #06b6d4;"></i>
+        <i class="fas fa-save" style="color: #d0d0d0;"></i>
         <span>Guardar</span>
       </button>
       <button id="toggle-fullscreen-btn" class="btn-toggle-ui" title="Pantalla Completa (Atajo: F)">
@@ -74,13 +74,13 @@
       <!-- Sub-Pestaña 1: Letrasp5 (Parámetros del sistema de partículas) -->
       <div id="tab-pane-params-p5" class="tab-pane active">
         <!-- Modo de Formación (Card superior de control) -->
-        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 10px 12px; background: rgba(0, 242, 254, 0.04); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px;">
+        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 10px 12px; background: rgba(232, 232, 232, 0.04); border: 1px solid rgba(232, 232, 232, 0.2); border-radius: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
                 <i class="fas fa-cubes text-[var(--accent-cyan)]"></i> Formación de Palabra
               </span>
-              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+              <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
                 FISICS (atracción y viaje) o CODE (decodificación estática)
               </div>
             </div>
@@ -212,10 +212,10 @@
             <!-- Selector de Letras de la Palabra Activa -->
             <div id="word-letters-selector-container" class="letter-selector-wrapper" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
-                  <i class="fas fa-font text-cyan-400"></i> Letra Seleccionada:
+                <span style="font-size: 11px; font-weight: 700; color: #d3d3d3; display: flex; align-items: center; gap: 5px;">
+                  <i class="fas fa-font text-white"></i> Letra Seleccionada:
                 </span>
-                <span id="selected-letter-badge" style="font-size: 10px; color: var(--accent-cyan); font-weight: 700; background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.3); padding: 2px 8px; border-radius: 6px;">Toda la palabra</span>
+                <span id="selected-letter-badge" style="font-size: 10px; color: var(--accent-cyan); font-weight: 700; background: rgba(232, 232, 232, 0.1); border: 1px solid rgba(232, 232, 232, 0.3); padding: 2px 8px; border-radius: 6px;">Toda la palabra</span>
               </div>
               <div id="word-letters-chips" style="display: flex; flex-wrap: wrap; gap: 6px;">
                 <!-- Se llena dinámicamente según la palabra activa -->
@@ -226,41 +226,41 @@
             <div id="selected-letter-color-box" class="control-row" style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <span id="letter-color-label" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Letra Seleccionada</span>
-                  <div id="letter-color-subtext" style="font-size: 10px; color: #94a3b8; margin-top: 1px;">Elegí el color para la letra activa</div>
+                  <span id="letter-color-label" style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Letra Seleccionada</span>
+                  <div id="letter-color-subtext" style="font-size: 10px; color: #a1a1a1; margin-top: 1px;">Elegí el color para la letra activa</div>
                 </div>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-SELECTED_LETTER_COLOR" value="#40c4ff">
+                  <input type="color" id="param-SELECTED_LETTER_COLOR" value="#e0e0e0">
                 </div>
               </div>
             </div>
 
-            <div style="font-size: 11px; color: #cbd5e1; font-weight: 600; margin-bottom: 8px;">
+            <div style="font-size: 11px; color: #d3d3d3; font-weight: 600; margin-bottom: 8px;">
               <span>Paleta Cromática (Degradado):</span>
             </div>
             <div class="palette-grid">
               <div class="color-picker-box">
                 <label>Color 1</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-COLOR_1" value="#40c4ff">
+                  <input type="color" id="param-COLOR_1" value="#e0e0e0">
                 </div>
               </div>
               <div class="color-picker-box">
                 <label>Color 2</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-COLOR_2" value="#ff9100">
+                  <input type="color" id="param-COLOR_2" value="#b0b0b0">
                 </div>
               </div>
               <div class="color-picker-box">
                 <label>Color 3</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-COLOR_3" value="#e040fb">
+                  <input type="color" id="param-COLOR_3" value="#9c9c9c">
                 </div>
               </div>
               <div class="color-picker-box">
                 <label>Color 4</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-COLOR_4" value="#00e676">
+                  <input type="color" id="param-COLOR_4" value="#c8c8c8">
                 </div>
               </div>
             </div>
@@ -269,8 +269,8 @@
             <div class="control-row" style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <span style="font-size: 11px; color: #cbd5e1;">Fondo Cuadrado (Bounding Box)</span>
-                  <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  <span style="font-size: 11px; color: #d3d3d3;">Fondo Cuadrado (Bounding Box)</span>
+                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
                     Dibuja un marco/cuadrado detrás de cada letra.
                   </div>
                 </div>
@@ -283,7 +283,7 @@
 
             <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
               <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #94a3b8;">Color de Fondo</label>
+                <label style="font-size: 10px; color: #a1a1a1;">Color de Fondo</label>
                 <div class="color-input-wrap">
                   <input type="color" id="param-CHAR_BG_COLOR" value="#000000">
                 </div>
@@ -301,10 +301,9 @@
 
             </div>
           </div>
-        </div>
 
         <!-- Efecto Bounding Box por Palabra (Grupo Independiente Principal) -->
-        <div class="param-group collapsed" style="margin-top: 10px; border: 1px solid rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.04);">
+        <div class="param-group collapsed" style="margin-top: 10px; border: 1px solid rgba(232, 232, 232, 0.3); background: rgba(232, 232, 232, 0.04);">
           <div class="group-title">
             <i class="fas fa-vector-square" style="color: var(--accent-cyan);"></i>
             <span style="color: var(--accent-cyan);">Efecto Bounding Box por Palabra</span>
@@ -315,7 +314,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <span style="font-size: 11px; font-weight: 700; color: #fff;">Activar Bounding Box</span>
-                  <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Dibuja un fondo/borde a nivel de la palabra seleccionada</div>
+                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">Dibuja un fondo/borde a nivel de la palabra seleccionada</div>
                 </div>
                 <label class="switch-ui" style="transform: scale(0.85);" title="Activar/Desactivar Bounding Box por palabra">
                   <input type="checkbox" id="param-WORD_BOX_ENABLED">
@@ -327,9 +326,9 @@
             <!-- Fill Color & Opacity -->
             <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
               <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #94a3b8;">Color Relleno (Fill)</label>
+                <label style="font-size: 10px; color: #a1a1a1;">Color Relleno (Fill)</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-GLOBAL_WORD_BOX_FILL_COLOR" value="#0f172a">
+                  <input type="color" id="param-GLOBAL_WORD_BOX_FILL_COLOR" value="#171717">
                 </div>
               </div>
               <div style="flex: 2;">
@@ -344,9 +343,9 @@
             <!-- Stroke Color & Width -->
             <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
               <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #94a3b8;">Color Borde (Stroke)</label>
+                <label style="font-size: 10px; color: #a1a1a1;">Color Borde (Stroke)</label>
                 <div class="color-input-wrap">
-                  <input type="color" id="param-GLOBAL_WORD_BOX_STROKE_COLOR" value="#00f2fe">
+                  <input type="color" id="param-GLOBAL_WORD_BOX_STROKE_COLOR" value="#e8e8e8">
                 </div>
               </div>
               <div style="flex: 2;">
@@ -407,7 +406,6 @@
             </div>
           </div>
         </div>
-        </div>
 
         <!-- Parámetros Modo CODE (Solo visible cuando el modo CODE está activo) -->
         <div id="group-mode-code" class="param-group group-mode-code collapsed" style="display: none;">
@@ -461,8 +459,8 @@
             <!-- Re-scramble con Mouse -->
             <div class="control-row" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <span style="font-size: 11px; color: #cbd5e1;">Re-scramble con Mouse</span>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                <span style="font-size: 11px; color: #d3d3d3;">Re-scramble con Mouse</span>
+                <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
                   Vuelve a mutar al pasar el cursor sobre las letras.
                 </div>
               </div>
@@ -710,7 +708,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Shader ASCII</span>
-                  <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
                     Matriz de caracteres ASCII animados con ruido GLSL detrás del texto.
                   </div>
                 </div>
@@ -724,7 +722,7 @@
             <div class="control-row" style="margin-top: 8px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <span style="font-size: 11px; color: #cbd5e1;">Solo buffer de fondo</span>
+                  <span style="font-size: 11px; color: #d3d3d3;">Solo buffer de fondo</span>
                 </div>
                 <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el buffer generativo de fondo">
                   <input type="checkbox" id="param-ASCII_NOISE_ONLY">
@@ -745,7 +743,7 @@
               </select>
               <div style="margin-top: 6px; display: flex; gap: 6px;">
                 <input type="file" id="input-upload-shader" accept=".frag,.glsl,.txt" style="display: none;">
-                <button id="btn-upload-shader" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px;" title="Subir tu propio shader (.frag)">
+                <button id="btn-upload-shader" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(232, 232, 232, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px;" title="Subir tu propio shader (.frag)">
                   <i class="fas fa-file-upload"></i> Subir Shader (.frag)
                 </button>
               </div>
@@ -804,7 +802,7 @@
             </div>
 
             <div class="control-row" style="margin-top: 14px;">
-              <button id="btn-reload-ascii-shaders" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.4); color: #00e676; padding: 8px 12px; font-weight: 600; gap: 8px; cursor: pointer;" title="Atajo de teclado: R">
+              <button id="btn-reload-ascii-shaders" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(200, 200, 200, 0.15); border: 1px solid rgba(200, 200, 200, 0.4); color: #c8c8c8; padding: 8px 12px; font-weight: 600; gap: 8px; cursor: pointer;" title="Atajo de teclado: R">
                 <i class="fas fa-sync-alt"></i> Recargar Shaders en Vivo ⚡ (R)
               </button>
             </div>
@@ -815,28 +813,28 @@
       <!-- Sub-Pestaña 3: Imagen (Gestión y manipulación de imágenes/logo en la composición) -->
       <div id="tab-pane-params-image" class="tab-pane" style="display: none;">
         <!-- Card de Carga & Presets -->
-        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 12px; background: rgba(224, 64, 251, 0.05); border: 1px solid rgba(224, 64, 251, 0.25); border-radius: 12px;">
+        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 12px; background: rgba(156, 156, 156, 0.05); border: 1px solid rgba(156, 156, 156, 0.25); border-radius: 12px;">
           <div style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
             <i class="fas fa-image text-[var(--accent-magenta)]"></i> Añadir Imagen a la Composición
           </div>
-          <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">
+          <div style="font-size: 10px; color: #a1a1a1; margin-bottom: 10px;">
             Subí tu propia imagen, arrastrala hacia la pantalla o usá el LOGO oficial con su aura neón.
           </div>
 
           <!-- DropZone para arrastrar y soltar imágenes -->
-          <div id="fx-image-dropzone" onclick="document.getElementById('fx-image-file-input').click()" style="border: 2px dashed rgba(0, 242, 254, 0.4); border-radius: 10px; padding: 14px 10px; text-align: center; background: rgba(0, 242, 254, 0.05); cursor: pointer; transition: all 0.25s ease; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
-            <i class="fas fa-cloud-upload-alt text-xl text-cyan-400"></i>
+          <div id="fx-image-dropzone" onclick="document.getElementById('fx-image-file-input').click()" style="border: 2px dashed rgba(232, 232, 232, 0.4); border-radius: 10px; padding: 14px 10px; text-align: center; background: rgba(232, 232, 232, 0.05); cursor: pointer; transition: all 0.25s ease; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+            <i class="fas fa-cloud-upload-alt text-xl text-white"></i>
             <div style="font-size: 11px; font-weight: 800; color: #fff;">Arrastrá tu imagen acá</div>
-            <div style="font-size: 9px; color: #94a3b8;">o hacé click para explorar tus archivos</div>
+            <div style="font-size: 9px; color: #a1a1a1;">o hacé click para explorar tus archivos</div>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <input type="file" id="fx-image-file-input" accept="image/*" style="display: none;" onchange="if(window.handleImageUploadFile) window.handleImageUploadFile(this);">
-            <button type="button" id="btn-fx-upload-image" onclick="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
+            <button type="button" id="btn-fx-upload-image" onclick="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(232, 232, 232, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
               <i class="fas fa-upload mr-1"></i> Cargar Imagen Personalizada
             </button>
-            <button type="button" id="btn-fx-add-logo-preset" onclick="if(window.addImageLayer) window.addImageLayer('img/artedigital.png', 'LOGO con Energía', true);" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(224, 64, 251, 0.25)); border: 1px solid #e040fb; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(224, 64, 251, 0.3);">
-              <i class="fas fa-sun mr-1 text-cyan-400"></i> Cargar LOGO con Energía Aura
+            <button type="button" id="btn-fx-add-logo-preset" onclick="if(window.addImageLayer) window.addImageLayer('img/artedigital.png', 'LOGO con Energía', true);" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(232, 232, 232, 0.25), rgba(156, 156, 156, 0.25)); border: 1px solid #9c9c9c; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(156, 156, 156, 0.3);">
+              <i class="fas fa-sun mr-1 text-white"></i> Cargar LOGO con Energía Aura
             </button>
           </div>
         </div>
@@ -850,7 +848,7 @@
           </div>
           <div class="group-content">
             <div id="fx-images-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #64748b; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>
+              <div style="font-size: 11px; color: #727272; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>
             </div>
 
             <!-- Controles de Transformación de la Capa de Imagen Seleccionada -->
@@ -930,7 +928,7 @@
                 <button type="button" id="btn-img-center" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(255, 255, 255, 0.08); border-color: rgba(255,255,255,0.2); color: #fff; font-size: 11px;">
                   <i class="fas fa-crosshairs mr-1"></i> Centrar
                 </button>
-                <button type="button" id="btn-img-delete" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(255, 82, 82, 0.2); border-color: #ff5252; color: #ff5252; font-size: 11px;">
+                <button type="button" id="btn-img-delete" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(160, 160, 160, 0.2); border-color: #a0a0a0; color: #a0a0a0; font-size: 11px;">
                   <i class="fas fa-trash mr-1"></i> Eliminar
                 </button>
               </div>
@@ -941,11 +939,11 @@
 
       <!-- Sub-Pestaña 4: PUNTERO (Configuración del Puntero y Radios de Influencia) -->
       <div id="tab-pane-params-pointer" class="tab-pane" style="display: none;">
-        <div style="padding: 10px 12px; background: rgba(0, 242, 254, 0.04); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 12px; margin-bottom: 12px;">
+        <div style="padding: 10px 12px; background: rgba(232, 232, 232, 0.04); border: 1px solid rgba(232, 232, 232, 0.2); border-radius: 12px; margin-bottom: 12px;">
           <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
             <i class="fas fa-mouse-pointer text-[var(--accent-cyan)]"></i> Radio e Interacción del Puntero
           </span>
-          <div style="font-size: 10px; color: #94a3b8; line-height: 1.3;">
+          <div style="font-size: 10px; color: #a1a1a1; line-height: 1.3;">
             Ajustá el radio de repulsión e interacción que afecta a las palabras al pasar el mouse por encima en modo FISICS y CODE.
           </div>
         </div>
@@ -1064,7 +1062,7 @@
               <input type="range" id="param-COLLAB_WORD_LIFESPAN" min="1" max="60" step="1" value="8">
               <input type="number" id="num-COLLAB_WORD_LIFESPAN" class="val-input" min="1" max="60" step="1" value="8">
             </div>
-            <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">
+            <div style="font-size: 10px; color: #a1a1a1; margin-top: 3px;">
               Tiempo que permanece cada palabra antes de desvanecerse (en segundos).
             </div>
           </div>
@@ -1081,16 +1079,16 @@
         <!-- Modo de Selección e Índice de Palabras (CollabMode) -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 8px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Modo:</span>
+            <span style="font-size: 10px; color: #a1a1a1; font-weight: 700; text-transform: uppercase;">Modo:</span>
             <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
               <input type="checkbox" id="param-WORD_SPAWN_MODE_COLLAB">
               <span class="slider-ui"></span>
             </label>
-            <span id="label-word-spawn-mode-collab" style="font-size: 10px; color: #00f2fe; font-weight: 700;">Random</span>
+            <span id="label-word-spawn-mode-collab" style="font-size: 10px; color: #e8e8e8; font-weight: 700;">Random</span>
           </div>
           <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Índice:</span>
-            <input type="text" id="num-WORD_SPAWN_INDEX_COLLAB" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+            <span style="font-size: 10px; color: #d3d3d3; font-weight: 700;">Índice:</span>
+            <input type="text" id="num-WORD_SPAWN_INDEX_COLLAB" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
           </div>
         </div>
 
@@ -1120,7 +1118,7 @@
           <div class="group-title"><i class="fas fa-user-friends"></i> Usuarios y Palabras de la Comunidad</div>
           <input type="text" id="filter-contributors-input" class="text-input" placeholder="Buscar por usuario o palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 11px; margin-bottom: 8px;">
           <div id="contributors-list" class="contributors-list" style="max-height: 200px; overflow-y: auto;">
-            <div style="text-align: center; color: #64748b; font-size: 11px; padding: 15px;">
+            <div style="text-align: center; color: #727272; font-size: 11px; padding: 15px;">
               <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
             </div>
           </div>
@@ -1129,7 +1127,7 @@
 
       <!-- Botón Guardar Collab -->
       <div style="margin-top: 16px;">
-        <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #00f2fe, #4facfe); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);">
+        <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #e8e8e8, #b0b0b0); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(232, 232, 232, 0.3);">
           <i class="fas fa-save"></i> Guardar Palabras Collab
         </button>
       </div>
@@ -1140,33 +1138,33 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
             <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-file-image"></i> Módulo Flyer Mode</div>
             <div style="display: flex; gap: 6px; align-items: center;">
-              <button id="btn-toggle-hastimeline" class="btn-toggle-ui" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Activar/Desactivar animación por Timeline (Si está OFF, todas las palabras quedan fijas siempre)">
+              <button id="btn-toggle-hastimeline" class="btn-toggle-ui" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #d3d3d3; font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Activar/Desactivar animación por Timeline (Si está OFF, todas las palabras quedan fijas siempre)">
                 <i class="fas fa-toggle-off"></i> Timeline OFF
               </button>
-              <button id="btn-toggle-timeline-panel" class="btn-toggle-ui" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Mostrar u ocultar la interfaz gráfica de la línea de tiempo">
+              <button id="btn-toggle-timeline-panel" class="btn-toggle-ui" style="background: linear-gradient(135deg, rgba(232, 232, 232, 0.2), rgba(156, 156, 156, 0.2)); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Mostrar u ocultar la interfaz gráfica de la línea de tiempo">
                 <i class="fas fa-film"></i> Ver Timeline
               </button>
             </div>
           </div>
-          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">
+          <p style="font-size: 11px; color: #a1a1a1; margin-bottom: 12px;">
             Diseñá composiciones tipográficas animadas con la línea de tiempo.
           </p>
 
           <!-- Subtabs de Flyer Mode: WORDLIST, SECUENCIAS, SELECCION, EXPORT, IMPORT -->
           <div class="flyer-subtabs" style="display: flex; background: rgba(0, 0, 0, 0.4); padding: 3px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1); gap: 2px;">
-            <button id="btn-flyer-subtab-wordlist" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 3px; border: none; background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2)); color: #fff; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Gestión de palabras del flyer">
+            <button id="btn-flyer-subtab-wordlist" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 3px; border: none; background: linear-gradient(135deg, rgba(232, 232, 232, 0.2), rgba(156, 156, 156, 0.2)); color: #fff; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Gestión de palabras del flyer">
               <i class="fas fa-font"></i> WORDLIST
             </button>
-            <button id="btn-flyer-subtab-secuencias" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Secuencias y proyectos guardados">
+            <button id="btn-flyer-subtab-secuencias" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Secuencias y proyectos guardados">
               <i class="fas fa-bookmark"></i> SECUENCIAS
             </button>
-            <button id="btn-flyer-subtab-seleccion" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Configuración visual del recuadro de selección">
+            <button id="btn-flyer-subtab-seleccion" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Configuración visual del recuadro de selección">
               <i class="fas fa-vector-square"></i> SELECCIÓN
             </button>
-            <button id="btn-flyer-subtab-export" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Formatos y exportación PNG/ZIP">
+            <button id="btn-flyer-subtab-export" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Formatos y exportación PNG/ZIP">
               <i class="fas fa-file-export"></i> EXPORT
             </button>
-            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #94a3b8; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Importar publicación por ID">
+            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Importar publicación por ID">
               <i class="fas fa-file-import"></i> IMPORT
             </button>
           </div>
@@ -1175,12 +1173,12 @@
           <div id="flyer-subtab-content-wordlist">
             <!-- Input de texto para Flyer -->
             <div style="margin-bottom: 14px;">
-              <label style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px;">
+              <label style="font-size: 11px; color: #d3d3d3; font-weight: 600; display: block; margin-bottom: 4px;">
                 Texto / Frase para el Flyer
               </label>
               <div class="add-word-row">
                 <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
-                <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; font-weight: 700;">
+                <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #c8c8c8, #c6c6c6); color: #000; font-weight: 700;">
                   <i class="fas fa-plus"></i> Agregar
                 </button>
               </div>
@@ -1189,16 +1187,16 @@
             <!-- Modo de Selección e Índice de Palabras -->
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Modo:</span>
+                <span style="font-size: 10px; color: #a1a1a1; font-weight: 700; text-transform: uppercase;">Modo:</span>
                 <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
                   <input type="checkbox" id="param-WORD_SPAWN_MODE">
                   <span class="slider-ui"></span>
                 </label>
-                <span id="label-word-spawn-mode" style="font-size: 10px; color: #00f2fe; font-weight: 700;">Random</span>
+                <span id="label-word-spawn-mode" style="font-size: 10px; color: #e8e8e8; font-weight: 700;">Random</span>
               </div>
               <div style="display: flex; align-items: center; gap: 4px;">
-                <span style="font-size: 10px; color: #cbd5e1; font-weight: 700;">Índice:</span>
-                <input type="text" id="num-WORD_SPAWN_INDEX" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+                <span style="font-size: 10px; color: #d3d3d3; font-weight: 700;">Índice:</span>
+                <input type="text" id="num-WORD_SPAWN_INDEX" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
               </div>
             </div>
 
@@ -1207,13 +1205,13 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
                 <div style="display: flex; gap: 4px;">
-                  <button type="button" id="btn-select-prev-flyer-word" onclick="if(window.selectPrevFlyerWord) window.selectPrevFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #cbd5e1;" title="Palabra anterior (Ctrl + Flecha Izquierda)">
+                  <button type="button" id="btn-select-prev-flyer-word" onclick="if(window.selectPrevFlyerWord) window.selectPrevFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #d3d3d3;" title="Palabra anterior (Ctrl + Flecha Izquierda)">
                     <i class="fas fa-chevron-left"></i>
                   </button>
-                  <button type="button" id="btn-select-next-flyer-word" onclick="if(window.selectNextFlyerWord) window.selectNextFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #cbd5e1;" title="Palabra siguiente (Ctrl + Flecha Derecha)">
+                  <button type="button" id="btn-select-next-flyer-word" onclick="if(window.selectNextFlyerWord) window.selectNextFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #d3d3d3;" title="Palabra siguiente (Ctrl + Flecha Derecha)">
                     <i class="fas fa-chevron-right"></i>
                   </button>
-                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras (Ctrl + E)">
+                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(232, 232, 232, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras (Ctrl + E)">
                     <i class="fas fa-check-double"></i> Todas
                   </button>
                   <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
@@ -1230,24 +1228,24 @@
           <!-- SUBTAB CONTENT 2: SECUENCIAS -->
           <div id="flyer-subtab-content-secuencias" style="display: none;">
             <!-- Banner Indicador de Secuencia / Proyecto Activo -->
-            <div id="active-sequence-banner" style="margin-bottom: 12px; padding: 10px 12px; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
+            <div id="active-sequence-banner" style="margin-bottom: 12px; padding: 10px 12px; background: rgba(232, 232, 232, 0.08); border: 1px solid rgba(232, 232, 232, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
               <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; max-width: 70%;">
-                <div id="active-seq-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe; flex-shrink: 0;"></div>
+                <div id="active-seq-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #e8e8e8; box-shadow: 0 0 8px #e8e8e8; flex-shrink: 0;"></div>
                 <div style="overflow: hidden;">
-                  <div style="font-size: 9px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Secuencia en Editor</div>
+                  <div style="font-size: 9px; color: #a1a1a1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Secuencia en Editor</div>
                   <div id="active-sequence-name" style="font-size: 12px; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sin Guardar (Nuevo Proyecto)</div>
                 </div>
               </div>
-              <span id="active-sequence-badge" style="font-size: 9px; padding: 3px 8px; background: rgba(0, 242, 254, 0.2); color: var(--accent-cyan); border-radius: 6px; font-weight: 800; border: 1px solid rgba(0, 242, 254, 0.4); text-transform: uppercase;">NUEVO</span>
+              <span id="active-sequence-badge" style="font-size: 9px; padding: 3px 8px; background: rgba(232, 232, 232, 0.2); color: var(--accent-cyan); border-radius: 6px; font-weight: 800; border: 1px solid rgba(232, 232, 232, 0.4); text-transform: uppercase;">NUEVO</span>
             </div>
 
             <!-- Botones Guardar Flyer -->
             <div style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #e040fb, #7c4dff); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(224, 64, 251, 0.3);">
+              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #9c9c9c, #a4a4a4); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(156, 156, 156, 0.3);">
                 <i class="fas fa-save"></i> Guardar / Actualizar Secuencia
               </button>
               <div style="display: flex; gap: 8px;">
-                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
+                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(232, 232, 232, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
                   <i class="fas fa-copy"></i> Guardar como Nuevo
                 </button>
                 <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
@@ -1260,7 +1258,7 @@
             <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
               <div class="group-title" style="margin-bottom: 8px;"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
               <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto;">
-                <div style="text-align: center; color: #64748b; font-size: 11px; padding: 10px;">
+                <div style="text-align: center; color: #727272; font-size: 11px; padding: 10px;">
                   Cargando secuencias guardadas...
                 </div>
               </div>
@@ -1270,7 +1268,7 @@
           <!-- SUBTAB CONTENT 3: SELECCIÓN -->
           <div id="flyer-subtab-content-seleccion" style="display: none;">
             <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
-              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e7e7e7; display: flex; justify-content: space-between; align-items: center;">
                 <span><i class="fas fa-vector-square" style="color: var(--accent-magenta);"></i> Estilo Bounding Box / Selección</span>
                 <label class="switch-ui" title="Activar/Desactivar efecto de Bounding Box">
                   <input type="checkbox" id="param-WORD_BOX_EFFECT_ENABLED">
@@ -1281,9 +1279,9 @@
               <!-- Color de Relleno -->
               <div class="control-row" style="margin-top: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Relleno (Fill)</span>
+                  <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Relleno (Fill)</span>
                   <div class="color-input-wrap">
-                    <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#0f172a">
+                    <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#171717">
                   </div>
                 </div>
               </div>
@@ -1302,9 +1300,9 @@
               <!-- Color de Borde -->
               <div class="control-row" style="margin-top: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">Color de Borde (Stroke)</span>
+                  <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Borde (Stroke)</span>
                   <div class="color-input-wrap">
-                    <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#00f2fe">
+                    <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#e8e8e8">
                   </div>
                 </div>
               </div>
@@ -1325,7 +1323,7 @@
                 <div class="control-label-wrap">
                   <span>Patrón de Línea</span>
                 </div>
-                <select id="param-WORD_BOX_LINE_PATTERN" class="text-input" style="padding: 4px 8px; font-size: 11px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px;">
+                <select id="param-WORD_BOX_LINE_PATTERN" class="text-input" style="padding: 4px 8px; font-size: 11px; background: #171717; border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px;">
                   <option value="solid">Línea Sólida</option>
                   <option value="dashed">Punteado Discontinuo</option>
                   <option value="marching-ants">Hormigas Marchantes</option>
@@ -1375,41 +1373,41 @@
           <!-- SUBTAB CONTENT 3: EXPORT -->
           <div id="flyer-subtab-content-export" style="display: none;">
             <!-- Módulo Proporción de Aspecto (Aspect Ratio Layout) -->
-            <div style="margin-bottom: 14px; padding: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px;">
+            <div style="margin-bottom: 14px; padding: 12px; background: rgba(232, 232, 232, 0.05); border: 1px solid rgba(232, 232, 232, 0.25); border-radius: 12px;">
               <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <span><i class="fas fa-shapes mr-1"></i> Formato y Proporción</span>
-                <span id="current-aspect-badge" style="font-size: 9px; padding: 2px 6px; background: rgba(0, 242, 254, 0.2); color: #00f2fe; border-radius: 4px; font-weight: 800;">16:9 (1920x1080)</span>
+                <span id="current-aspect-badge" style="font-size: 9px; padding: 2px 6px; background: rgba(232, 232, 232, 0.2); color: #e8e8e8; border-radius: 4px; font-weight: 800;">16:9 (1920x1080)</span>
               </div>
-              <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">
+              <div style="font-size: 10px; color: #a1a1a1; margin-bottom: 10px;">
                 Elegí la proporción para reacomodar automáticamente la secuencia de texto, imágenes y logo.
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <button type="button" id="btn-aspect-169" class="aspect-btn active" onclick="setFlyerAspectRatio('16:9')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(0, 242, 254, 0.25); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                  <i class="fas fa-desktop text-cyan-400"></i> 16:9 (Horizontal)
+                <button type="button" id="btn-aspect-169" class="aspect-btn active" onclick="setFlyerAspectRatio('16:9')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(232, 232, 232, 0.25); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-desktop text-white"></i> 16:9 (Horizontal)
                 </button>
-                <button type="button" id="btn-aspect-916" class="aspect-btn" onclick="setFlyerAspectRatio('9:16')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                  <i class="fas fa-mobile-alt text-magenta-400"></i> 9:16 (Celu/Story)
+                <button type="button" id="btn-aspect-916" class="aspect-btn" onclick="setFlyerAspectRatio('9:16')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-mobile-alt text-white"></i> 9:16 (Celu/Story)
                 </button>
-                <button type="button" id="btn-aspect-11" class="aspect-btn" onclick="setFlyerAspectRatio('1:1')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                  <i class="fas fa-square text-emerald-400"></i> 1:1 (Cuadrado)
+                <button type="button" id="btn-aspect-11" class="aspect-btn" onclick="setFlyerAspectRatio('1:1')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-square text-white"></i> 1:1 (Cuadrado)
                 </button>
-                <button type="button" id="btn-aspect-45" class="aspect-btn" onclick="setFlyerAspectRatio('4:5')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                  <i class="fas fa-portrait text-amber-400"></i> 4:5 (Feed)
+                <button type="button" id="btn-aspect-45" class="aspect-btn" onclick="setFlyerAspectRatio('4:5')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                  <i class="fas fa-portrait text-white"></i> 4:5 (Feed)
                 </button>
               </div>
             </div>
 
             <!-- Módulo de Descarga (Exportación PNG) -->
-            <div style="margin-top: 10px; margin-bottom: 14px; padding: 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px;">
-              <div style="font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <div style="margin-top: 10px; margin-bottom: 14px; padding: 12px; background: rgba(192, 192, 192, 0.06); border: 1px solid rgba(192, 192, 192, 0.25); border-radius: 12px;">
+              <div style="font-size: 11px; font-weight: 800; color: #c0c0c0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
                 <i class="fas fa-download"></i> Descargar Composición PNG
               </div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button type="button" id="btn-download-flyer-png" onclick="downloadFlyerPNG()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; padding: 10px; font-size: 12px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 8px;">
+                <button type="button" id="btn-download-flyer-png" onclick="downloadFlyerPNG()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #c0c0c0, #9e9e9e); border: none; color: #fff; padding: 10px; font-size: 12px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3); display: flex; align-items: center; gap: 8px;">
                   <i class="fas fa-download"></i> DOWNLOAD (Formato Actual)
                 </button>
-                <button type="button" id="btn-download-flyer-all-png" onclick="downloadFlyerAllFormats()" style="width: 100%; justify-content: center; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  <i class="fas fa-layer-group text-cyan-400"></i> Descargar Todos los Formatos (ZIP Pack)
+                <button type="button" id="btn-download-flyer-all-png" onclick="downloadFlyerAllFormats()" style="width: 100%; justify-content: center; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #d3d3d3; padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <i class="fas fa-layer-group text-white"></i> Descargar Todos los Formatos (ZIP Pack)
                 </button>
               </div>
             </div>
@@ -1418,86 +1416,86 @@
           <!-- SUBTAB CONTENT 2: IMPORT -->
           <div id="flyer-subtab-content-import" style="display: none;">
             <!-- Importar Publicación por ID -->
-            <div style="margin-bottom: 14px; background: rgba(0, 242, 254, 0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.2);">
+            <div style="margin-bottom: 14px; background: rgba(232, 232, 232, 0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(232, 232, 232, 0.2);">
               <label style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
                 <i class="fas fa-file-import"></i> Importar Publicación por ID
               </label>
               <div class="add-word-row" style="margin-bottom: 8px;">
                 <input type="text" id="import-post-id-input" class="text-input" placeholder="ID de publicación (ej: 6a9eeb98...)..." spellcheck="false" style="padding: 7px 10px; font-size: 11px;">
-                <button id="import-post-id-btn" class="btn-add-word" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 11px; padding: 7px 12px; white-space: nowrap;">
+                <button id="import-post-id-btn" class="btn-add-word" style="background: linear-gradient(135deg, #e8e8e8, #b0b0b0); color: #000; font-weight: 800; font-size: 11px; padding: 7px 12px; white-space: nowrap;">
                   <i class="fas fa-magic"></i> Importar
                 </button>
               </div>
-              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">
+              <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
                 Mapea el contenido a líneas y hojas paginadas automáticamente en la línea de tiempo.
               </div>
             </div>
 
             <!-- Parámetros de Maquetación y Distribución -->
             <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 14px;">
-              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e2e8f0;">
+              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e7e7e7;">
                 <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i> Configuración de Importación
               </div>
 
               <!-- Posición Central X -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Posición X Central (px)</span>
-                  <input type="number" id="import-num-center-x" value="960" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-center-x" value="960" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-center-x" min="0" max="1920" value="960" style="width: 100%;">
               </div>
 
               <!-- Posición Central Y -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Posición Y Central (px)</span>
-                  <input type="number" id="import-num-center-y" value="540" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-center-y" value="540" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-center-y" min="0" max="1080" value="540" style="width: 100%;">
               </div>
 
               <!-- Separación entre Frases -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Separación entre frases (px)</span>
-                  <input type="number" id="import-num-line-spacing" value="60" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-line-spacing" value="60" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-line-spacing" min="0" max="150" value="60" style="width: 100%;">
               </div>
 
               <!-- Ancho Máximo de Frase -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Ancho máximo de frase (px)</span>
-                  <input type="number" id="import-num-max-width" value="750" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-max-width" value="750" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-max-width" min="0" max="1800" value="750" style="width: 100%;">
               </div>
 
               <!-- Alto Máximo por Hoja -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Alto máximo por hoja (px)</span>
-                  <input type="number" id="import-num-max-height" value="450" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-max-height" value="450" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-max-height" min="0" max="1000" value="450" style="width: 100%;">
               </div>
 
               <!-- Duración por Hoja -->
               <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Duración de cada hoja (seg)</span>
-                  <input type="number" id="import-num-page-duration" value="2.0" step="0.1" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-page-duration" value="2.0" step="0.1" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-page-duration" min="0" max="30" step="0.1" value="2.0" style="width: 100%;">
               </div>
 
               <!-- Tamaño de Fuente -->
               <div style="margin-bottom: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
                   <span>Tamaño de fuente (px)</span>
-                  <input type="number" id="import-num-font-size" value="32" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #0f172a; border: 1px solid var(--accent-cyan); color: #00f2fe; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-font-size" value="32" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
                 </div>
                 <input type="range" id="import-font-size" min="0" max="100" value="32" style="width: 100%;">
               </div>
@@ -1525,21 +1523,21 @@
       </div>
 
       <div class="timeline-actions">
-        <div style="display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(0, 242, 254, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento y ajustar duración (Atajo: Shift + T)">
+        <div style="display: flex; align-items: center; gap: 6px; background: rgba(23, 23, 23, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(232, 232, 232, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento y ajustar duración (Atajo: Shift + T)">
           <span style="font-size: 10px; color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-layer-group"></i> Solapamiento:</span>
           <input type="range" id="tl-slider-overlap" min="0" max="100" value="20" style="width: 60px; cursor: pointer;">
           <span id="tl-val-overlap" style="font-size: 10px; color: #fff; font-weight: 700; min-width: 26px;">20%</span>
-          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Shift + T)">
+          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(232, 232, 232, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Shift + T)">
             <i class="fas fa-magic"></i> Shift + T
           </button>
         </div>
-        <button id="tl-btn-open-sources" class="tl-btn" style="background: rgba(236, 72, 153, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta);" title="Biblioteca de Fuentes / Capas Guardadas">
+        <button id="tl-btn-open-sources" class="tl-btn" style="background: rgba(180, 180, 180, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta);" title="Biblioteca de Fuentes / Capas Guardadas">
           <i class="fas fa-bookmark"></i> Fuentes
         </button>
         <button id="tl-btn-add-layer" class="tl-btn tl-btn-accent" title="Agregar una nueva capa vacía a la línea de tiempo">
           <i class="fas fa-plus"></i> + Agregar Capa
         </button>
-        <button id="tl-btn-add-kf" class="tl-btn tl-btn-accent" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 230, 118, 0.3)); border-color: var(--accent-cyan);" title="Agregar Keyframe a la capa seleccionada en el tiempo actual">
+        <button id="tl-btn-add-kf" class="tl-btn tl-btn-accent" style="background: linear-gradient(135deg, rgba(232, 232, 232, 0.3), rgba(200, 200, 200, 0.3)); border-color: var(--accent-cyan);" title="Agregar Keyframe a la capa seleccionada en el tiempo actual">
           <i class="fas fa-gem"></i> Add Keyframe
         </button>
         <button id="tl-btn-del-kf" class="tl-btn" title="Eliminar Keyframe o Capa seleccionada">
@@ -1553,7 +1551,7 @@
       <!-- Time Ruler -->
       <div id="timeline-ruler" class="timeline-ruler">
         <div class="ruler-header">
-          <span style="font-size: 10px; color: #94a3b8; font-weight: 600;"><i class="fas fa-clock"></i> Tiempo</span>
+          <span style="font-size: 10px; color: #a1a1a1; font-weight: 600;"><i class="fas fa-clock"></i> Tiempo</span>
         </div>
         <div id="ruler-lane" class="ruler-lane">
           <div id="timeline-playhead" class="timeline-playhead">
@@ -1574,12 +1572,12 @@
 
   <!-- Modal de Fuentes / Capas Guardadas -->
   <div id="layer-sources-modal" class="layer-sources-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 99999; justify-content: center; align-items: center; padding: 20px;">
-    <div style="background: #0f172a; border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 16px; width: 100%; max-width: 560px; box-shadow: 0 0 30px rgba(0, 242, 254, 0.25); overflow: hidden; display: flex; flex-direction: column; max-height: 80vh;">
+    <div style="background: #171717; border: 1px solid rgba(232, 232, 232, 0.3); border-radius: 16px; width: 100%; max-width: 560px; box-shadow: 0 0 30px rgba(232, 232, 232, 0.25); overflow: hidden; display: flex; flex-direction: column; max-height: 80vh;">
       <div style="padding: 14px 18px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
           <i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Biblioteca de Fuentes (Capas Guardadas)
         </h3>
-        <button id="close-layer-sources-modal" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer;"><i class="fas fa-times"></i></button>
+        <button id="close-layer-sources-modal" style="background: none; border: none; color: #a1a1a1; font-size: 16px; cursor: pointer;"><i class="fas fa-times"></i></button>
       </div>
       <div id="layer-sources-list" style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; flex: 1; max-height: 60vh;">
         <!-- Se inyectan las fuentes dinámicamente -->

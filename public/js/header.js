@@ -15,7 +15,6 @@
 // Ítems que NO entran en la fila: van al desplegable "MÁS".
 const NAV_MAS = [
   { href: '/search.html', label: 'Buscar', icon: 'fa-magnifying-glass' },
-  { href: '/calendario.html', label: 'Calendario', icon: 'fa-calendar-days' },
   { href: '/visualeffects.html', label: 'Efectos', icon: 'fa-wand-magic-sparkles' },
   { href: '/concurso.html', label: 'Concurso', icon: 'fa-trophy' },
   { href: '/quienessomos.html', label: 'Quiénes somos', icon: 'fa-circle-info' }
@@ -27,7 +26,9 @@ function navActivo(href) {
   let rel = p.startsWith(base) ? p.slice(base.length) : p;
   if (!rel || rel === '/') rel = '/index.html';
   if (rel.startsWith('/') === false) rel = '/' + rel;
-  return rel === href ? ' is-active' : '';
+  const cleanRel = rel.replace(/\.html$/, '');
+  const cleanHref = href.replace(/\.html$/, '');
+  return cleanRel === cleanHref ? ' is-active' : '';
 }
 
 function renderHeader() {
@@ -59,8 +60,9 @@ function renderHeader() {
         <a class="ui-navlink${navActivo('/obras.html')}" href="${CONFIG.BASE}/obras.html">Obras</a>
         <a class="ui-navlink${navActivo('/recursos.html')}" href="${CONFIG.BASE}/recursos.html">Recursos</a>
         <a class="ui-navlink is-chances${navActivo('/oportunidades.html')}" href="${CONFIG.BASE}/oportunidades.html">Chances</a>
+        <a class="ui-navlink${navActivo('/calendario.html')}" href="${CONFIG.BASE}/calendario.html">Calendario</a>
         <a class="ui-navlink${navActivo('/artistas.html')}" href="${CONFIG.BASE}/artistas.html">Artistas</a>
-        ${loggedIn ? `<a class="ui-navlink is-chat${navActivo('/chat.html')}" href="${CONFIG.BASE}/chat.html"><i class="fas fa-comments"></i> Chat</a>` : ''}
+        ${loggedIn ? `<a class="ui-navlink is-chat${navActivo('/chat.html')}" href="${CONFIG.BASE}/chat.html">Chat</a>` : ''}
         <div class="ui-menu" id="ui-menu-mas">
           <button type="button" class="ui-navlink" data-ui-menu-btn aria-expanded="false">
             Más <i class="fas fa-chevron-down" style="font-size:9px"></i>
@@ -98,6 +100,7 @@ function renderHeader() {
         <a href="${CONFIG.BASE}/obras.html">Obras</a>
         <a href="${CONFIG.BASE}/recursos.html">Recursos</a>
         <a href="${CONFIG.BASE}/oportunidades.html">Chances</a>
+        <a href="${CONFIG.BASE}/calendario.html">Calendario</a>
         <a href="${CONFIG.BASE}/artistas.html">Artistas</a>
         ${loggedIn ? `<a href="${CONFIG.BASE}/chat.html">Chat</a><a href="${CONFIG.BASE}/create.html">Crear</a>` : ''}
         ${NAV_MAS.map(i => `<a href="${CONFIG.BASE}${i.href}"><i class="fas ${i.icon}"></i> ${i.label}</a>`).join('')}

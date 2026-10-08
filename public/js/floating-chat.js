@@ -48,12 +48,12 @@
   function initFloatingChat() {
     if (document.getElementById('floating-chat-root')) return;
 
-    // Verificar preferencia guardada en localStorage
+    // Verificar preferencia guardada en localStorage (minimizado por defecto)
     const savedState = localStorage.getItem('add_floating_chat_state');
-    if (savedState === 'minimized') {
-      isWindowOpen = false;
-    } else {
+    if (savedState === 'open') {
       isWindowOpen = true;
+    } else {
+      isWindowOpen = false;
     }
 
     const root = document.createElement('div');
@@ -62,10 +62,10 @@
       <style>
         #floating-chat-root {
           position: fixed;
-          bottom: 16px;
-          right: 16px;
+          bottom: 20px;
+          right: 20px;
           z-index: 99999;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
           display: flex;
           flex-direction: column;
           align-items: flex-end;
@@ -73,6 +73,60 @@
         }
         #floating-chat-window, #floating-chat-dock, #floating-chat-toast {
           pointer-events: auto;
+        }
+        .float-dock-btn {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          background: rgba(13, 13, 20, 0.94);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          border-radius: 12px;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(0, 242, 254, 0.2);
+          color: #00f2fe;
+          cursor: pointer;
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          padding: 0;
+          outline: none;
+        }
+        .float-dock-btn:hover {
+          transform: translateY(-2px);
+          background: rgba(18, 18, 28, 0.98);
+          border-color: rgba(0, 242, 254, 0.6);
+          color: #38bdf8;
+          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.75), 0 0 18px rgba(0, 242, 254, 0.32);
+        }
+        .float-dock-btn:active {
+          transform: translateY(0) scale(0.96);
+        }
+        .float-dock-icon {
+          transition: transform 0.2s ease;
+        }
+        .float-dock-btn:hover .float-dock-icon {
+          transform: scale(1.08);
+        }
+        .float-dock-badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          min-width: 17px;
+          height: 17px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #ef4444;
+          color: #ffffff;
+          font-size: 9px;
+          font-weight: 900;
+          border-radius: 5px;
+          padding: 0 4px;
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          pointer-events: none;
         }
         .float-chat-scrollbar::-webkit-scrollbar {
           width: 5px;
@@ -89,7 +143,7 @@
         }
         @keyframes floatPulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.92); }
+          50% { opacity: 0.4; transform: scale(0.9); }
         }
         .float-live-pulse {
           animation: floatPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -97,23 +151,24 @@
       </style>
 
       <!-- Toast de mensaje entrante si la ventana está minimizada -->
-      <div id="floating-chat-toast" style="display: none; margin-bottom: 10px; max-width: 320px; background: #0e0e17; border: 1px solid rgba(0,242,254,0.4); border-radius: 16px; padding: 10px 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.7), 0 0 15px rgba(0,242,254,0.25); color: #fff; font-size: 12px; cursor: pointer; transition: all 0.25s ease;">
+      <div id="floating-chat-toast" style="display: none; margin-bottom: 10px; max-width: 320px; background: rgba(13, 13, 20, 0.95); border: 1px solid rgba(0,242,254,0.35); border-radius: 12px; padding: 10px 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.8), 0 0 15px rgba(0,242,254,0.15); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: #fff; font-size: 12px; cursor: pointer; transition: all 0.25s ease;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
           <span id="float-toast-title" style="font-weight: 800; color: #00f2fe; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-            <i class="fas fa-comment-dots"></i> Nuevo mensaje
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" /></svg>
+            Nuevo mensaje
           </span>
-          <span style="font-size: 9px; color: #888;">Ahora</span>
+          <span style="font-size: 9px; color: #64748b;">Ahora</span>
         </div>
         <p id="float-toast-body" style="color: #cbd5e1; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px;"></p>
       </div>
 
       <!-- Ventana de Chat Flotante / Emergente -->
-      <div id="floating-chat-window" style="display: ${isWindowOpen ? 'flex' : 'none'}; width: 360px; max-width: calc(100vw - 32px); height: 490px; max-height: calc(85vh - 32px); background: rgba(13, 13, 22, 0.96); border: 1px solid rgba(0, 242, 254, 0.35); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.85), 0 0 25px rgba(0,242,254,0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); flex-direction: column; overflow: hidden; margin-bottom: 0; transition: transform 0.25s ease, opacity 0.25s ease;">
+      <div id="floating-chat-window" style="display: ${isWindowOpen ? 'flex' : 'none'}; width: 360px; max-width: calc(100vw - 32px); height: 500px; max-height: calc(85vh - 32px); background: rgba(12, 12, 18, 0.96); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 1px 1px rgba(0,242,254,0.22); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); flex-direction: column; overflow: hidden; margin-bottom: 0; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;">
         
         <!-- Header de la ventana -->
-        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.03); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+        <div style="padding: 11px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
           <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-            <button id="float-back-btn" style="display: none; width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.06); border: none; color: #94a3b8; cursor: pointer; align-items: center; justify-content: center; transition: all 0.2s;" title="Volver a la lista">
+            <button id="float-back-btn" style="display: none; width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; cursor: pointer; align-items: center; justify-content: center; transition: all 0.2s;" title="Volver a la lista">
               <i class="fas fa-arrow-left" style="font-size: 11px;"></i>
             </button>
             <div class="float-live-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe; flex-shrink: 0;"></div>
@@ -123,10 +178,10 @@
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 4px;">
-            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/chat.html" target="_blank" style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #94a3b8; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s;" title="Abrir en pantalla completa">
+            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/chat.html" target="_blank" style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); color: #94a3b8; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s;" title="Abrir en pantalla completa">
               <i class="fas fa-expand-alt" style="font-size: 11px;"></i>
             </a>
-            <button id="float-minimize-btn" style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); border: none; color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" title="Minimizar">
+            <button id="float-minimize-btn" style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" title="Minimizar">
               <i class="fas fa-minus" style="font-size: 11px;"></i>
             </button>
           </div>
@@ -134,18 +189,20 @@
 
         <!-- Vista cuando NO está logueado -->
         <div id="float-guest-view" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
-          <div style="width: 56px; height: 56px; border-radius: 18px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #00f2fe; font-size: 22px;">
-            <i class="fas fa-comments"></i>
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.25); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #00f2fe;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+            </svg>
           </div>
           <h3 style="margin: 0 0 6px 0; color: #fff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Comunidad en Vivo</h3>
           <p style="margin: 0 0 20px 0; color: #94a3b8; font-size: 11px; line-height: 1.5; max-width: 260px;">
-            Inicia sesión para chatear con otros artistas y creadores mientras recorres la plataforma.
+            Inicia sesión para chatear con otros artistas y creadores en tiempo real.
           </p>
           <div style="display: flex; gap: 8px; width: 100%; max-width: 240px;">
-            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/login.html" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; font-weight: 800; font-size: 11px; border-radius: 12px; text-decoration: none; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/login.html" style="flex: 1; padding: 10px; background: #00f2fe; color: #000; font-weight: 800; font-size: 11px; border-radius: 10px; text-decoration: none; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
               Ingresar
             </a>
-            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/register.html" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-weight: 800; font-size: 11px; border-radius: 12px; text-decoration: none; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
+            <a href="${(window.CONFIG ? CONFIG.BASE : '')}/register.html" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-weight: 800; font-size: 11px; border-radius: 10px; text-decoration: none; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
               Crear Cuenta
             </a>
           </div>
@@ -182,30 +239,38 @@
           <!-- Contenedor de mensajes con scroll independiente de la página -->
           <div id="float-messages" style="flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 11px;" class="float-chat-scrollbar">
             <div style="text-align: center; color: #64748b; padding: 50px 0;">
-              <i class="fas fa-comments" style="font-size: 24px; color: rgba(0,242,254,0.3); margin-bottom: 8px; display: block;"></i>
-              Inicia la conversación
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(0,242,254,0.3); margin-bottom: 8px; display: inline-block;">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+              </svg>
+              <div>Inicia la conversación</div>
             </div>
           </div>
 
           <!-- Formulario de envío de mensajes -->
           <form id="float-msg-form" style="padding: 10px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.3); display: flex; gap: 8px; flex-shrink: 0; margin: 0;">
-            <input type="text" id="float-msg-input" placeholder="Escribe un mensaje..." autocomplete="off" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 8px 12px; font-size: 11px; color: #fff; outline: none; transition: border-color 0.2s;">
-            <button type="submit" style="width: 36px; height: 36px; border-radius: 12px; background: #00f2fe; border: none; color: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.15s, background-color 0.15s;">
-              <i class="fas fa-paper-plane" style="font-size: 11px;"></i>
+            <input type="text" id="float-msg-input" placeholder="Escribe un mensaje..." autocomplete="off" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 12px; font-size: 11px; color: #fff; outline: none; transition: border-color 0.2s;">
+            <button type="submit" style="width: 36px; height: 36px; border-radius: 10px; background: #00f2fe; border: none; color: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.15s, background-color 0.15s;" title="Enviar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
           </form>
         </div>
 
       </div>
 
-      <!-- Dock Bar / Botón Emergente (Cuando la ventana está minimizada) -->
-      <button id="floating-chat-dock" style="display: ${isWindowOpen ? 'none' : 'flex'}; position: relative; align-items: center; justify-content: center; width: 56px; height: 56px; background: rgba(13, 13, 22, 0.95); border: 1px solid rgba(0, 242, 254, 0.45); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.7), 0 0 15px rgba(0,242,254,0.25); color: #fff; cursor: pointer; transition: all 0.25s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);" title="Abrir mensajes" aria-label="Abrir mensajes">
-        <i class="fas fa-comments" style="color: #00f2fe; font-size: 22px;"></i>
-        <span id="floating-chat-badge" style="position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.35); color: #fff; font-size: 10px; font-weight: 900; border-radius: 9999px; padding: 0 5px; box-shadow: none; transition: all 0.2s ease;">0</span>
+      <!-- Dock Bar / Botón Emergente Cuadrado Minimalista -->
+      <button id="floating-chat-dock" class="float-dock-btn" style="display: ${isWindowOpen ? 'none' : 'flex'};" title="Chat en Vivo" aria-label="Abrir chat">
+        <svg class="float-dock-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+        </svg>
+        <span id="floating-chat-badge" class="float-dock-badge" style="display: ${floatUnreadCount > 0 ? 'flex' : 'none'};">${floatUnreadCount > 99 ? '99+' : floatUnreadCount}</span>
       </button>
     `;
 
     document.body.appendChild(root);
+    updateBadge();
 
     // Conectar eventos
     const dockBtn = document.getElementById('floating-chat-dock');
@@ -301,6 +366,7 @@
     localStorage.setItem('add_floating_chat_state', 'minimized');
     document.getElementById('floating-chat-window').style.display = 'none';
     document.getElementById('floating-chat-dock').style.display = 'flex';
+    updateBadge();
   }
 
   function showGuestView() {
@@ -564,14 +630,13 @@
     if (toast) toast.style.display = 'none';
   }
 
-  // El contador vive siempre visible sobre el icono: muestra cuántos mensajes nuevos hay.
+  // El contador vive sobre el icono: solo visible cuando hay mensajes sin leer.
   function updateBadge() {
     const badge = document.getElementById('floating-chat-badge');
     if (!badge) return;
     badge.textContent = floatUnreadCount > 99 ? '99+' : String(floatUnreadCount);
     const hasUnread = floatUnreadCount > 0;
-    badge.style.background = hasUnread ? '#e040fb' : 'rgba(148, 163, 184, 0.35)';
-    badge.style.boxShadow = hasUnread ? '0 0 8px rgba(224,64,251,0.6)' : 'none';
+    badge.style.display = hasUnread ? 'flex' : 'none';
   }
 
   function persistUnread() {

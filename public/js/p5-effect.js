@@ -80,10 +80,10 @@
     CODE_GLITCH_CHARS: '01<>{}#*+%$&?XZ7@!',
     CODE_MOUSE_RETRIGGER: true,
     CODE_MOUSE_RADIUS: 60,
-    COLOR_1: '#40c4ff', // Cyan
-    COLOR_2: '#ff9100', // Naranja
-    COLOR_3: '#e040fb', // Magenta
-    COLOR_4: '#00e676', // Verde
+    COLOR_1: '#e0e0e0', // Cyan
+    COLOR_2: '#b0b0b0', // Naranja
+    COLOR_3: '#9c9c9c', // Magenta
+    COLOR_4: '#c8c8c8', // Verde
     WORDS: [
       // Categories
       "ENGINES", "FRAMEWORKS", "IA", "SHADERS", "DB", "IDES", "LANGUAGES", "LLM", 
@@ -405,10 +405,10 @@
   function updatePalette() {
     if (typeof color === 'function') {
       palette = [
-        color(CFG.COLOR_1 || '#40c4ff'),
-        color(CFG.COLOR_2 || '#ff9100'),
-        color(CFG.COLOR_3 || '#e040fb'),
-        color(CFG.COLOR_4 || '#00e676')
+        color(CFG.COLOR_1 || '#e0e0e0'),
+        color(CFG.COLOR_2 || '#b0b0b0'),
+        color(CFG.COLOR_3 || '#9c9c9c'),
+        color(CFG.COLOR_4 || '#c8c8c8')
       ];
     }
   }
@@ -899,9 +899,9 @@
 
       if (!enabled) return;
 
-      const fillColor = (wordObj && wordObj.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#0f172a');
+      const fillColor = (wordObj && wordObj.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#171717');
       const fillOpacity = (wordObj && wordObj.boxFillOpacity !== undefined) ? Number(wordObj.boxFillOpacity) : ((CFG && CFG.WORD_BOX_FILL_OPACITY !== undefined) ? Number(CFG.WORD_BOX_FILL_OPACITY) : 0.7);
-      const strokeColor = (wordObj && wordObj.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#00f2fe');
+      const strokeColor = (wordObj && wordObj.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#e8e8e8');
       const strokeWidth = (wordObj && wordObj.boxStrokeWidth !== undefined) ? Number(wordObj.boxStrokeWidth) : ((CFG && CFG.WORD_BOX_STROKE_WIDTH !== undefined) ? Number(CFG.WORD_BOX_STROKE_WIDTH) : 2);
       const rounding = (wordObj && wordObj.boxRounding !== undefined) ? Number(wordObj.boxRounding) : ((CFG && CFG.WORD_BOX_ROUNDING !== undefined) ? Number(CFG.WORD_BOX_ROUNDING) : 8);
       const pattern = (wordObj && wordObj.boxLinePattern) || ((CFG && CFG.WORD_BOX_LINE_PATTERN) || 'solid');
@@ -981,9 +981,9 @@
 
       const padX = (matchingWord && matchingWord.boxPaddingX !== undefined) ? Number(matchingWord.boxPaddingX) : ((matchingWord && matchingWord.boxPadding !== undefined) ? Number(matchingWord.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_X !== undefined) ? Number(CFG.WORD_BOX_PADDING_X) : 16));
       const padY = (matchingWord && matchingWord.boxPaddingY !== undefined) ? Number(matchingWord.boxPaddingY) : ((matchingWord && matchingWord.boxPadding !== undefined) ? Number(matchingWord.boxPadding) : ((CFG && CFG.WORD_BOX_PADDING_Y !== undefined) ? Number(CFG.WORD_BOX_PADDING_Y) : 16));
-      const strokeColor = (matchingWord && matchingWord.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#00f2fe');
+      const strokeColor = (matchingWord && matchingWord.boxStrokeColor) || ((CFG && CFG.WORD_BOX_STROKE_COLOR) || '#e8e8e8');
       const strokeWidth = (matchingWord && matchingWord.boxStrokeWidth !== undefined) ? Number(matchingWord.boxStrokeWidth) : ((CFG && CFG.WORD_BOX_STROKE_WIDTH !== undefined) ? Number(CFG.WORD_BOX_STROKE_WIDTH) : 2);
-      const fillColor = (matchingWord && matchingWord.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#0f172a');
+      const fillColor = (matchingWord && matchingWord.boxFillColor) || ((CFG && CFG.WORD_BOX_FILL_COLOR) || '#171717');
       const fillOpacity = (matchingWord && matchingWord.boxFillOpacity !== undefined) ? Number(matchingWord.boxFillOpacity) : ((CFG && CFG.WORD_BOX_FILL_OPACITY !== undefined) ? Number(CFG.WORD_BOX_FILL_OPACITY) : 0.2);
       const pattern = (matchingWord && matchingWord.boxLinePattern) || ((CFG && CFG.WORD_BOX_LINE_PATTERN) || 'solid');
       const rounding = (matchingWord && matchingWord.boxRounding !== undefined) ? Number(matchingWord.boxRounding) : ((CFG && CFG.WORD_BOX_ROUNDING !== undefined) ? Number(CFG.WORD_BOX_ROUNDING) : 8);

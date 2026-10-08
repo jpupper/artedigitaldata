@@ -255,14 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const span = toast.querySelector('span');
     if (span) span.innerHTML = msg;
     if (type === 'success') {
-      toast.style.background = '#00e676';
-      toast.style.color = '#032b13';
+      toast.style.background = '#c8c8c8';
+      toast.style.color = '#111111';
     } else if (type === 'error') {
-      toast.style.background = '#ff5252';
+      toast.style.background = '#a0a0a0';
       toast.style.color = '#fff';
     } else {
-      toast.style.background = '#00f2fe';
-      toast.style.color = '#050b14';
+      toast.style.background = '#e8e8e8';
+      toast.style.color = '#0a0a0a';
     }
     toast.classList.add('show');
     if (toastTimer) clearTimeout(toastTimer);
@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const listEl = document.getElementById('fx-images-list');
     if (!listEl) return;
     if (!window.activeImageLayers || window.activeImageLayers.length === 0) {
-      listEl.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>';
+      listEl.innerHTML = '<div style="font-size: 11px; color: #727272; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>';
       const controls = document.getElementById('fx-image-controls');
       if (controls) controls.style.display = 'none';
       return;
@@ -406,13 +406,13 @@ document.addEventListener('DOMContentLoaded', () => {
     listEl.innerHTML = window.activeImageLayers.map(img => {
       const isSelected = img.id === window.selectedImageId;
       return `
-        <div onclick="window.selectImageLayer('${img.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: ${isSelected ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isSelected ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+        <div onclick="window.selectImageLayer('${img.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: ${isSelected ? 'rgba(232, 232, 232, 0.15)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isSelected ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <img src="${img.src}" style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px; background: rgba(0,0,0,0.5);">
-            <span style="font-size: 11px; font-weight: 700; color: ${isSelected ? '#fff' : '#cbd5e1'}; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${img.name}</span>
-            ${img.hasAura ? '<span style="font-size: 9px; padding: 1px 4px; background: rgba(224,64,251,0.2); color: #e040fb; border-radius: 4px; font-weight: 800;">AURA</span>' : ''}
+            <span style="font-size: 11px; font-weight: 700; color: ${isSelected ? '#fff' : '#d3d3d3'}; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${img.name}</span>
+            ${img.hasAura ? '<span style="font-size: 9px; padding: 1px 4px; background: rgba(156, 156, 156, 0.2); color: #9c9c9c; border-radius: 4px; font-weight: 800;">AURA</span>' : ''}
           </div>
-          <button onclick="event.stopPropagation(); window.deleteImageLayer('${img.id}')" style="background: none; border: none; color: #ff5252; cursor: pointer; padding: 4px;" title="Eliminar imagen">
+          <button onclick="event.stopPropagation(); window.deleteImageLayer('${img.id}')" style="background: none; border: none; color: #a0a0a0; cursor: pointer; padding: 4px;" title="Eliminar imagen">
             <i class="fas fa-trash text-xs"></i>
           </button>
         </div>
@@ -508,14 +508,14 @@ document.addEventListener('DOMContentLoaded', () => {
     ['dragenter', 'dragover'].forEach(eventName => {
       dropzone.addEventListener(eventName, () => {
         dropzone.style.borderColor = 'var(--accent-magenta)';
-        dropzone.style.background = 'rgba(224, 64, 251, 0.15)';
+        dropzone.style.background = 'rgba(156, 156, 156, 0.15)';
       }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
       dropzone.addEventListener(eventName, () => {
-        dropzone.style.borderColor = 'rgba(0, 242, 254, 0.4)';
-        dropzone.style.background = 'rgba(0, 242, 254, 0.05)';
+        dropzone.style.borderColor = 'rgba(232, 232, 232, 0.4)';
+        dropzone.style.background = 'rgba(232, 232, 232, 0.05)';
       }, false);
     });
 
@@ -935,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.innerHTML = '';
 
     if (!Array.isArray(uniforms) || uniforms.length === 0) {
-      container.innerHTML = '<div style="font-size: 10px; color: #64748b; padding: 4px;">Este shader no requiere parámetros adicionales.</div>';
+      container.innerHTML = '<div style="font-size: 10px; color: #727272; padding: 4px;">Este shader no requiere parámetros adicionales.</div>';
       return;
     }
 
@@ -962,16 +962,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isColor) {
         let val = currentCfg[u.name];
         if (!val || typeof val !== 'string') {
-          if (u.name === 'u_color1') val = currentCfg.u_color1 || '#40c4ff';
-          else if (u.name === 'u_color2') val = currentCfg.u_color2 || '#ff9100';
-          else if (u.name === 'u_color3') val = currentCfg.u_color3 || '#e040fb';
-          else if (u.name === 'u_color4') val = currentCfg.u_color4 || '#00e676';
-          else val = '#00f2fe';
+          if (u.name === 'u_color1') val = currentCfg.u_color1 || '#e0e0e0';
+          else if (u.name === 'u_color2') val = currentCfg.u_color2 || '#b0b0b0';
+          else if (u.name === 'u_color3') val = currentCfg.u_color3 || '#9c9c9c';
+          else if (u.name === 'u_color4') val = currentCfg.u_color4 || '#c8c8c8';
+          else val = '#e8e8e8';
         }
 
         row.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+            <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">${labelText}</span>
             <div class="color-input-wrap">
               <input type="color" id="dyn-param-${u.name}" value="${val}">
             </div>
@@ -989,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = currentCfg[u.name] !== undefined ? !!currentCfg[u.name] : false;
         row.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+            <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">${labelText}</span>
             <label class="switch-ui" style="transform: scale(0.85);">
               <input type="checkbox" id="dyn-param-${u.name}" ${val ? 'checked' : ''}>
               <span class="slider-toggle"></span>
@@ -1039,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         row.innerHTML = `
           <div class="control-label-wrap">
-            <span style="font-size: 11px; color: #cbd5e1; font-weight: 600;">${labelText}</span>
+            <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">${labelText}</span>
           </div>
           <div class="slider-text-combo">
             <input type="range" id="dyn-param-${u.name}" min="${min}" max="${max}" step="${step}" value="${val}">
@@ -1200,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pill.title = 'Hacé click (o Ctrl+Click para selección múltiple), doble click para renombrar, o arrastrá al Timeline';
 
       pill.innerHTML = `
-        <i class="fas fa-grip-vertical" style="color: #64748b; font-size: 11px; margin-right: 4px; cursor: grab;" title="Arrastrar al Timeline"></i>
+        <i class="fas fa-grip-vertical" style="color: #727272; font-size: 11px; margin-right: 4px; cursor: grab;" title="Arrastrar al Timeline"></i>
         <span class="pill-word-text">${itemObj.text}</span>
         <i class="fas fa-times remove-word-btn" style="margin-left: 6px;" title="Eliminar palabra"></i>
       `;
@@ -1270,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (flyerWords.length === 0) {
-      flyerWordsListEl.innerHTML = '<div style="padding: 10px; font-size: 11px; color: #64748b; width: 100%; text-align: center;">No hay palabras en la lista del flyer</div>';
+      flyerWordsListEl.innerHTML = '<div style="padding: 10px; font-size: 11px; color: #727272; width: 100%; text-align: center;">No hay palabras en la lista del flyer</div>';
     }
   }
 
@@ -1292,7 +1292,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function interpolatePalette(paletteColors, t) {
-    if (!paletteColors || !paletteColors.length) return '#40c4ff';
+    if (!paletteColors || !paletteColors.length) return '#e0e0e0';
     if (paletteColors.length === 1) return paletteColors[0];
     const n = paletteColors.length - 1;
     const scaled = Math.max(0, Math.min(1, t)) * n;
@@ -1309,10 +1309,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function getChromaticPalette() {
     const cfg = (window.ParticlesConfig && window.ParticlesConfig.get) ? window.ParticlesConfig.get() : {};
     return [
-      cfg.COLOR_1 || '#40c4ff',
-      cfg.COLOR_2 || '#ff9100',
-      cfg.COLOR_3 || '#e040fb',
-      cfg.COLOR_4 || '#00e676'
+      cfg.COLOR_1 || '#e0e0e0',
+      cfg.COLOR_2 || '#b0b0b0',
+      cfg.COLOR_3 || '#9c9c9c',
+      cfg.COLOR_4 || '#c8c8c8'
     ];
   }
 
@@ -1384,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = String(matchingWord.text || matchingWord.word || '');
       const chars = Array.from(text);
       if (!Array.isArray(matchingWord.letterColors)) {
-        matchingWord.letterColors = new Array(chars.length).fill(matchingWord.color || '#40c4ff');
+        matchingWord.letterColors = new Array(chars.length).fill(matchingWord.color || '#e0e0e0');
       }
       matchingWord.letterColors[selectedFlyerLetterIndex] = newColor;
 
@@ -1454,7 +1454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'letter-chip' + (selectedFlyerLetterIndex === idx ? ' active' : '');
-      const charColor = (wordItem.letterColors && wordItem.letterColors[idx]) ? wordItem.letterColors[idx] : (wordItem.color || '#40c4ff');
+      const charColor = (wordItem.letterColors && wordItem.letterColors[idx]) ? wordItem.letterColors[idx] : (wordItem.color || '#e0e0e0');
       chip.innerHTML = `
         <span class="chip-color-dot" style="background-color: ${charColor};"></span>
         <span>${char}</span>
@@ -1479,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const selChar = chars[selectedFlyerLetterIndex] || '';
         badge.textContent = `Letra ${selectedFlyerLetterIndex + 1}: '${selChar}'`;
-        badge.style.color = '#e040fb';
+        badge.style.color = '#9c9c9c';
       }
     }
   }
@@ -1800,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fontSize: fontSz,
       letterSpacing: spacePx,
       formationMode: (window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS',
-      color: '#40c4ff',
+      color: '#e0e0e0',
       palette: getChromaticPalette(),
       letterColors: null,
       startTime: 0.0,
@@ -2596,7 +2596,7 @@ document.addEventListener('DOMContentLoaded', () => {
       input.value = currentVal;
       input.min = '1';
       input.max = '300';
-      input.style.cssText = 'background: #0f172a; color: #00f2fe; border: 1px solid #00f2fe; border-radius: 4px; padding: 2px 4px; font-size: 11px; font-weight: 700; width: 60px; outline: none; text-align: center;';
+      input.style.cssText = 'background: #171717; color: #e8e8e8; border: 1px solid #e8e8e8; border-radius: 4px; padding: 2px 4px; font-size: 11px; font-weight: 700; width: 60px; outline: none; text-align: center;';
 
       tlTimeReadout.textContent = '';
       tlTimeReadout.appendChild(input);
@@ -2820,7 +2820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fontSize: clonedClip.fontSize || 36,
         letterSpacing: clonedClip.letterSpacing || 4,
         formationMode: clonedClip.formationMode || 'FISICS',
-        color: clonedClip.color || '#40c4ff',
+        color: clonedClip.color || '#e0e0e0',
         palette: clonedClip.palette ? [...clonedClip.palette] : getChromaticPalette(),
         letterColors: clonedClip.letterColors ? [...clonedClip.letterColors] : null,
         startTime: clonedClip.startTime || 0,
@@ -2873,10 +2873,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sources.length === 0) {
       listEl.innerHTML = `
-        <div style="text-align: center; color: #64748b; padding: 24px; font-size: 12px;">
+        <div style="text-align: center; color: #727272; padding: 24px; font-size: 12px;">
           <i class="fas fa-bookmark" style="font-size: 28px; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
           No hay capas guardadas en Fuentes todavía.<br>
-          <span style="font-size: 11px; opacity: 0.7;">Podes guardar cualquier capa usando el botón de marcador <i class="fas fa-bookmark" style="color: #ec4899;"></i>.</span>
+          <span style="font-size: 11px; opacity: 0.7;">Podes guardar cualquier capa usando el botón de marcador <i class="fas fa-bookmark" style="color: #b4b4b4;"></i>.</span>
         </div>
       `;
       return;
@@ -2884,7 +2884,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sources.forEach(src => {
       const card = document.createElement('div');
-      card.style.cssText = 'background: rgba(255,255,255,0.04); border: 1px solid rgba(0,242,254,0.2); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;';
+      card.style.cssText = 'background: rgba(255,255,255,0.04); border: 1px solid rgba(232, 232, 232, 0.2); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;';
 
       const dateStr = src.savedAt ? new Date(src.savedAt).toLocaleDateString() : '';
       const clipsCount = (src.clips && src.clips.length) ? src.clips.length : 0;
@@ -2895,16 +2895,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-weight: 800; font-size: 13px; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
             <i class="fas fa-layer-group" style="color: var(--accent-cyan);"></i> ${src.name}
           </div>
-          <div style="font-size: 10px; color: #94a3b8; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+          <div style="font-size: 10px; color: #a1a1a1; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
             ${clipsCount} clip(s): <span style="color: var(--accent-magenta); font-weight: 600;">${clipsNames}</span>
           </div>
-          ${dateStr ? `<div style="font-size: 9px; color: #64748b; margin-top: 2px;">Guardado: ${dateStr}</div>` : ''}
+          ${dateStr ? `<div style="font-size: 9px; color: #727272; margin-top: 2px;">Guardado: ${dateStr}</div>` : ''}
         </div>
         <div style="display: flex; gap: 6px; align-items: center;">
-          <button class="btn-load-src" style="background: linear-gradient(135deg, #00f2fe, #4facfe); color: #000; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 800; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+          <button class="btn-load-src" style="background: linear-gradient(135deg, #e8e8e8, #b0b0b0); color: #000; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 800; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
             <i class="fas fa-plus-circle"></i> Cargar
           </button>
-          <button class="btn-del-src" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 6px 8px; font-size: 11px; cursor: pointer;">
+          <button class="btn-del-src" style="background: rgba(160, 160, 160, 0.2); color: #a0a0a0; border: 1px solid rgba(160, 160, 160, 0.4); border-radius: 6px; padding: 6px 8px; font-size: 11px; cursor: pointer;">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>
@@ -2979,7 +2979,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Botón para Guardar Capa en Fuentes
       const saveLayerBtn = document.createElement('button');
       saveLayerBtn.className = 'btn-save-layer-source';
-      saveLayerBtn.style.cssText = 'background: none; border: none; color: #ec4899; font-size: 11px; cursor: pointer; padding: 2px 4px; opacity: 0.85; margin-left: 4px; pointer-events: auto;';
+      saveLayerBtn.style.cssText = 'background: none; border: none; color: #b4b4b4; font-size: 11px; cursor: pointer; padding: 2px 4px; opacity: 0.85; margin-left: 4px; pointer-events: auto;';
       saveLayerBtn.innerHTML = '<i class="fas fa-bookmark"></i>';
       saveLayerBtn.title = 'Guardar esta capa en Fuentes (Biblioteca de Capas)';
       saveLayerBtn.addEventListener('click', (e) => {
@@ -2991,7 +2991,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Botón para eliminar capa
       const delLayerBtn = document.createElement('button');
       delLayerBtn.className = 'btn-del-layer';
-      delLayerBtn.style.cssText = 'background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; padding: 2px 4px; opacity: 0.7; margin-left: 4px; pointer-events: auto;';
+      delLayerBtn.style.cssText = 'background: none; border: none; color: #a0a0a0; font-size: 11px; cursor: pointer; padding: 2px 4px; opacity: 0.7; margin-left: 4px; pointer-events: auto;';
       delLayerBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
       delLayerBtn.title = 'Eliminar esta capa';
       delLayerBtn.addEventListener('click', (e) => {
@@ -3021,7 +3021,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = document.createElement('input');
         input.type = 'text';
         input.value = layerObj.name || ('Capa ' + (layerIndex + 1));
-        input.style.cssText = 'background: #0f172a; color: #00f2fe; border: 1px solid #00f2fe; border-radius: 4px; padding: 2px 4px; font-size: 11px; font-weight: 700; width: 80px; outline: none; box-shadow: 0 0 6px rgba(0,242,254,0.4);';
+        input.style.cssText = 'background: #171717; color: #e8e8e8; border: 1px solid #e8e8e8; border-radius: 4px; padding: 2px 4px; font-size: 11px; font-weight: 700; width: 80px; outline: none; box-shadow: 0 0 6px rgba(232, 232, 232, 0.4);';
 
         spanText.replaceWith(input);
         input.focus();
@@ -3070,7 +3070,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lane.addEventListener('dragover', (e) => {
         e.preventDefault();
         if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-        lane.style.background = 'rgba(0, 242, 254, 0.15)';
+        lane.style.background = 'rgba(232, 232, 232, 0.15)';
       });
 
       lane.addEventListener('dragleave', () => {
@@ -3098,7 +3098,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
         const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
         const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
-        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#e0e0e0';
         const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
         const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
         let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
@@ -3198,7 +3198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
         const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
         const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
-        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#e0e0e0';
         const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
         const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
         let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
@@ -3294,7 +3294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clipTextSpan.style.cssText = 'pointer-events:none; flex:1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; padding: 0 4px; font-weight: 700; display: flex; align-items: center; gap: 4px;';
         
         const modeBadge = (clipObj.formationMode || clipObj.type || 'CODE').toUpperCase();
-        const modeColor = (modeBadge === 'IMAGE' || modeBadge === 'IMAGEN') ? '#ec4899' : (modeBadge === 'FISICS' ? '#a855f7' : '#00f2fe');
+        const modeColor = (modeBadge === 'IMAGE' || modeBadge === 'IMAGEN') ? '#b4b4b4' : (modeBadge === 'FISICS' ? '#a4a4a4' : '#e8e8e8');
         
         clipTextSpan.innerHTML = `<span style="font-size: 8px; font-weight: 900; padding: 1px 4px; border-radius: 3px; background: rgba(0,0,0,0.6); color: ${modeColor}; border: 1px solid ${modeColor}66;">${modeBadge}</span> <span>${clipObj.text || clipObj.word || 'PALABRA'}</span>`;
 
@@ -3314,7 +3314,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const input = document.createElement('input');
           input.type = 'text';
           input.value = clipObj.text || 'PALABRA';
-          input.style.cssText = 'background: #0f172a; color: #00f2fe; border: 1px solid #00f2fe; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: 700; width: 90%; outline: none; z-index: 50; box-shadow: 0 0 6px rgba(0,242,254,0.4);';
+          input.style.cssText = 'background: #171717; color: #e8e8e8; border: 1px solid #e8e8e8; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: 700; width: 90%; outline: none; z-index: 50; box-shadow: 0 0 6px rgba(232, 232, 232, 0.4);';
 
           clipTextSpan.replaceWith(input);
           input.focus();
@@ -3545,7 +3545,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (timelineLayers.length === 0) {
-      tracksEl.innerHTML = '<div style="padding: 16px; font-size: 11px; color: #64748b; text-align: center;">No hay capas agregadas. Podés arrastrar palabras de la WordList o hacer click en "+ Agregar Capa".</div>';
+      tracksEl.innerHTML = '<div style="padding: 16px; font-size: 11px; color: #727272; text-align: center;">No hay capas agregadas. Podés arrastrar palabras de la WordList o hacer click en "+ Agregar Capa".</div>';
     }
   }
 
@@ -3602,7 +3602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const spacePx = (sourceWord && sourceWord.letterSpacing !== undefined) ? sourceWord.letterSpacing : (spaceSlider ? parseFloat(spaceSlider.value) : 4);
         const posX = (sourceWord && sourceWord.x !== undefined) ? sourceWord.x : Math.round(window.innerWidth / 2);
         const posY = (sourceWord && sourceWord.y !== undefined) ? sourceWord.y : Math.round(window.innerHeight / 2);
-        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#40c4ff';
+        const wordColor = (sourceWord && sourceWord.color) ? sourceWord.color : '#e0e0e0';
         const wordPalette = (sourceWord && sourceWord.palette) ? [...sourceWord.palette] : getChromaticPalette();
         const wordFormation = (sourceWord && sourceWord.formationMode) ? sourceWord.formationMode : ((window.ParticlesConfig && window.ParticlesConfig.get().FORMATION_MODE) || 'FISICS');
         let wordLetterColors = (sourceWord && sourceWord.letterColors) ? [...sourceWord.letterColors] : null;
@@ -3771,10 +3771,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ? '<i class="fas fa-toggle-on"></i> Timeline ON'
         : '<i class="fas fa-toggle-off"></i> Timeline OFF';
       btnToggleHasTimeline.style.background = hasTimeline
-        ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 230, 118, 0.3))'
+        ? 'linear-gradient(135deg, rgba(232, 232, 232, 0.3), rgba(200, 200, 200, 0.3))'
         : 'rgba(255, 255, 255, 0.08)';
       btnToggleHasTimeline.style.borderColor = hasTimeline ? 'var(--accent-cyan)' : 'rgba(255, 255, 255, 0.2)';
-      btnToggleHasTimeline.style.color = hasTimeline ? 'var(--accent-cyan)' : '#cbd5e1';
+      btnToggleHasTimeline.style.color = hasTimeline ? 'var(--accent-cyan)' : '#d3d3d3';
     }
   }
 
@@ -4062,11 +4062,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (wordSpawnModeCollabToggle) wordSpawnModeCollabToggle.checked = isLinear;
     if (wordSpawnModeLabel) {
       wordSpawnModeLabel.textContent = isLinear ? 'Lineal' : 'Random';
-      wordSpawnModeLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#00f2fe';
+      wordSpawnModeLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#e8e8e8';
     }
     if (wordSpawnModeCollabLabel) {
       wordSpawnModeCollabLabel.textContent = isLinear ? 'Lineal' : 'Random';
-      wordSpawnModeCollabLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#00f2fe';
+      wordSpawnModeCollabLabel.style.color = isLinear ? 'var(--accent-magenta)' : '#e8e8e8';
     }
   }
 
@@ -4141,9 +4141,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const isEnabled = sourceObj ? ((sourceObj.boxEffectEnabled !== undefined) ? sourceObj.boxEffectEnabled : true) : true;
-    const fillColor = sourceObj ? (sourceObj.boxFillColor || cfg.WORD_BOX_FILL_COLOR || '#0f172a') : (cfg.WORD_BOX_FILL_COLOR || '#0f172a');
+    const fillColor = sourceObj ? (sourceObj.boxFillColor || cfg.WORD_BOX_FILL_COLOR || '#171717') : (cfg.WORD_BOX_FILL_COLOR || '#171717');
     const fillOpacity = sourceObj ? ((sourceObj.boxFillOpacity !== undefined) ? sourceObj.boxFillOpacity : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2)) : ((cfg.WORD_BOX_FILL_OPACITY !== undefined) ? cfg.WORD_BOX_FILL_OPACITY : 0.2);
-    const strokeColor = sourceObj ? (sourceObj.boxStrokeColor || cfg.WORD_BOX_STROKE_COLOR || '#00f2fe') : (cfg.WORD_BOX_STROKE_COLOR || '#00f2fe');
+    const strokeColor = sourceObj ? (sourceObj.boxStrokeColor || cfg.WORD_BOX_STROKE_COLOR || '#e8e8e8') : (cfg.WORD_BOX_STROKE_COLOR || '#e8e8e8');
     const strokeWidth = sourceObj ? ((sourceObj.boxStrokeWidth !== undefined) ? sourceObj.boxStrokeWidth : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2)) : ((cfg.WORD_BOX_STROKE_WIDTH !== undefined) ? cfg.WORD_BOX_STROKE_WIDTH : 2);
     const linePattern = sourceObj ? (sourceObj.boxLinePattern || cfg.WORD_BOX_LINE_PATTERN || 'solid') : (cfg.WORD_BOX_LINE_PATTERN || 'solid');
     const rounding = sourceObj ? ((sourceObj.boxRounding !== undefined) ? sourceObj.boxRounding : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8)) : ((cfg.WORD_BOX_ROUNDING !== undefined) ? cfg.WORD_BOX_ROUNDING : 8);
@@ -4334,7 +4334,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtered.length === 0) {
-      wordsListEl.innerHTML = '<div style="padding: 10px; font-size: 11px; color: #64748b; width: 100%; text-align: center;">No se encontraron palabras</div>';
+      wordsListEl.innerHTML = '<div style="padding: 10px; font-size: 11px; color: #727272; width: 100%; text-align: center;">No se encontraron palabras</div>';
     }
   }
 
@@ -4563,7 +4563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (users.length === 0) {
-      contributorsListEl.innerHTML = '<div style="padding: 16px; font-size: 11px; color: #64748b; text-align: center;">No se encontraron usuarios o palabras</div>';
+      contributorsListEl.innerHTML = '<div style="padding: 16px; font-size: 11px; color: #727272; text-align: center;">No se encontraron usuarios o palabras</div>';
       return;
     }
 
@@ -5105,25 +5105,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bannerBadge && statusDot) {
       if (!currentVisualEffectId) {
         bannerBadge.textContent = 'NUEVO PROYECTO';
-        bannerBadge.style.background = 'rgba(0, 242, 254, 0.15)';
+        bannerBadge.style.background = 'rgba(232, 232, 232, 0.15)';
         bannerBadge.style.color = 'var(--accent-cyan)';
-        bannerBadge.style.borderColor = 'rgba(0, 242, 254, 0.4)';
-        statusDot.style.background = '#00f2fe';
-        statusDot.style.boxShadow = '0 0 8px #00f2fe';
+        bannerBadge.style.borderColor = 'rgba(232, 232, 232, 0.4)';
+        statusDot.style.background = '#e8e8e8';
+        statusDot.style.boxShadow = '0 0 8px #e8e8e8';
       } else if (currentVisualEffectOwner) {
         bannerBadge.textContent = 'MI SECUENCIA (CARGADA)';
-        bannerBadge.style.background = 'rgba(0, 230, 118, 0.2)';
-        bannerBadge.style.color = '#00e676';
-        bannerBadge.style.borderColor = 'rgba(0, 230, 118, 0.5)';
-        statusDot.style.background = '#00e676';
-        statusDot.style.boxShadow = '0 0 8px #00e676';
+        bannerBadge.style.background = 'rgba(200, 200, 200, 0.2)';
+        bannerBadge.style.color = '#c8c8c8';
+        bannerBadge.style.borderColor = 'rgba(200, 200, 200, 0.5)';
+        statusDot.style.background = '#c8c8c8';
+        statusDot.style.boxShadow = '0 0 8px #c8c8c8';
       } else {
         bannerBadge.textContent = 'PRESET / RECURSO';
-        bannerBadge.style.background = 'rgba(234, 179, 8, 0.2)';
-        bannerBadge.style.color = '#facc15';
-        bannerBadge.style.borderColor = 'rgba(234, 179, 8, 0.5)';
-        statusDot.style.background = '#facc15';
-        statusDot.style.boxShadow = '0 0 8px #facc15';
+        bannerBadge.style.background = 'rgba(176, 176, 176, 0.2)';
+        bannerBadge.style.color = '#dcdcdc';
+        bannerBadge.style.borderColor = 'rgba(176, 176, 176, 0.5)';
+        statusDot.style.background = '#dcdcdc';
+        statusDot.style.boxShadow = '0 0 8px #dcdcdc';
       }
     }
   }
@@ -5384,7 +5384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startTime: w.startTime !== undefined ? w.startTime : 0.0,
                 duration: w.duration !== undefined ? w.duration : 2.0,
                 formationMode: w.formationMode || 'physics',
-                color: w.color || '#40c4ff',
+                color: w.color || '#e0e0e0',
                 letterColors: Array.isArray(w.letterColors) ? w.letterColors : null,
                 palette: Array.isArray(w.palette) ? w.palette : null,
                 keyframes: Array.isArray(w.keyframes) ? w.keyframes : []
@@ -5403,7 +5403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startTime: 0.0,
                 duration: 2.0,
                 formationMode: 'physics',
-                color: '#40c4ff',
+                color: '#e0e0e0',
                 letterColors: null,
                 palette: null,
                 keyframes: []
@@ -5448,7 +5448,7 @@ document.addEventListener('DOMContentLoaded', () => {
               fontSize: w.fontSize,
               letterSpacing: w.letterSpacing,
               formationMode: w.formationMode || 'physics',
-              color: w.color || '#40c4ff',
+              color: w.color || '#e0e0e0',
               letterColors: w.letterColors || null,
               keyframes: Array.isArray(w.keyframes) ? w.keyframes : []
             }))
@@ -5580,7 +5580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = getAuthToken();
     if (!token) {
       container.innerHTML = `
-        <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 10px;">
+        <div style="font-size: 11px; color: #a1a1a1; text-align: center; padding: 10px;">
           <a href="login.html" style="color: var(--accent-cyan); font-weight:700;">Iniciá sesión</a> para ver tus secuencias guardadas.
         </div>`;
       return;
@@ -5594,7 +5594,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const effects = await res.json();
       if (!Array.isArray(effects) || effects.length === 0) {
         container.innerHTML = `
-          <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 10px;">
+          <div style="font-size: 11px; color: #a1a1a1; text-align: center; padding: 10px;">
             No tenés secuencias guardadas aún.
           </div>`;
         return;
@@ -5614,61 +5614,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedWordTexts = wordList.map(w => (w && w.text) ? String(w.text).trim() : '').filter(Boolean);
         const wordsBadgeHtml = savedWordTexts.length > 0
           ? `<div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding: 6px 8px; background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 9px; color: #94a3b8; font-weight: 700; width: 100%; text-transform: uppercase; margin-bottom: 2px;">
+              <div style="font-size: 9px; color: #a1a1a1; font-weight: 700; width: 100%; text-transform: uppercase; margin-bottom: 2px;">
                 <i class="fas fa-font mr-1" style="color: var(--accent-magenta);"></i>Palabras guardadas (${savedWordTexts.length}):
               </div>
               <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${savedWordTexts.map(w => `<span style="background: rgba(0, 242, 254, 0.12); color: #e2e8f0; border: 1px solid rgba(0, 242, 254, 0.25); padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.3px;">${w.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`).join('')}
+                ${savedWordTexts.map(w => `<span style="background: rgba(232, 232, 232, 0.12); color: #e7e7e7; border: 1px solid rgba(232, 232, 232, 0.25); padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: monospace; letter-spacing: 0.3px;">${w.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`).join('')}
               </div>
             </div>`
-          : `<div style="font-size: 9px; color: #64748b; font-style: italic; margin-top: 4px;"><i class="fas fa-info-circle mr-1"></i>Sin palabras guardadas en esta secuencia</div>`;
+          : `<div style="font-size: 9px; color: #727272; font-style: italic; margin-top: 4px;"><i class="fas fa-info-circle mr-1"></i>Sin palabras guardadas en esta secuencia</div>`;
 
         return `
-          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 6px; background: ${isActive ? 'rgba(0, 242, 254, 0.12)' : 'rgba(0,0,0,0.4)'}; border: ${isActive ? '2px solid var(--accent-cyan)' : (isPinned ? '1px solid rgba(234, 179, 8, 0.4)' : '1px solid rgba(255,255,255,0.08)')}; box-shadow: ${isActive ? '0 0 16px rgba(0, 242, 254, 0.35)' : 'none'}; padding: 10px 12px; border-radius: 10px; font-size: 11px; cursor: pointer; transition: all 0.2s;" title="Doble click para renombrar esta secuencia">
+          <div ondblclick="window.renameVisualEffect('${fx._id}', '${escapedTitle}')" style="display: flex; flex-direction: column; gap: 6px; background: ${isActive ? 'rgba(232, 232, 232, 0.12)' : 'rgba(0,0,0,0.4)'}; border: ${isActive ? '2px solid var(--accent-cyan)' : (isPinned ? '1px solid rgba(176, 176, 176, 0.4)' : '1px solid rgba(255,255,255,0.08)')}; box-shadow: ${isActive ? '0 0 16px rgba(232, 232, 232, 0.35)' : 'none'}; padding: 10px 12px; border-radius: 10px; font-size: 11px; cursor: pointer; transition: all 0.2s;" title="Doble click para renombrar esta secuencia">
             <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 140px;">
                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
                   <strong style="color: ${isActive ? 'var(--accent-cyan)' : '#fff'}; font-size: 13px; font-weight: 800; word-break: break-word; white-space: normal; line-height: 1.3;" title="Doble click para modificar el nombre">${fx.title}</strong>
-                  ${isActive ? `<span style="background: rgba(0, 242, 254, 0.3); color: #00f2fe; border: 1px solid var(--accent-cyan); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-play-circle mr-1"></i>CARGADO</span>` : ''}
-                  ${isPinned ? `<span style="background: rgba(234, 179, 8, 0.25); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.5); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-thumbtack mr-1"></i>Default Front</span>` : ''}
+                  ${isActive ? `<span style="background: rgba(232, 232, 232, 0.3); color: #e8e8e8; border: 1px solid var(--accent-cyan); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-play-circle mr-1"></i>CARGADO</span>` : ''}
+                  ${isPinned ? `<span style="background: rgba(176, 176, 176, 0.25); color: #dcdcdc; border: 1px solid rgba(176, 176, 176, 0.5); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase;"><i class="fas fa-thumbtack mr-1"></i>Default Front</span>` : ''}
                 </div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 3px;"><i class="fas fa-layer-group mr-1"></i>${wordCount} ${wordCount === 1 ? 'capa' : 'capas'} • ${dateStr}</div>
+                <div style="font-size: 10px; color: #a1a1a1; margin-top: 3px;"><i class="fas fa-layer-group mr-1"></i>${wordCount} ${wordCount === 1 ? 'capa' : 'capas'} • ${dateStr}</div>
               </div>
               <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;" onclick="event.stopPropagation();" ondblclick="event.stopPropagation();">
                 ${userIsAdmin ? `
-                  <button onclick="window.togglePinDefaultEffect('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: ${isPinned ? 'rgba(234, 179, 8, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-color: ${isPinned ? '#facc15' : 'rgba(255,255,255,0.2)'}; color: ${isPinned ? '#facc15' : '#94a3b8'}; cursor: pointer;" title="${isPinned ? 'Secuencia activa en el FRONT de todas las páginas (Click para desfijar)' : 'Fijar esta secuencia como template por defecto en el FRONT de todas las páginas'}">
-                    <i class="fas fa-thumbtack ${isPinned ? 'text-amber-400' : ''}"></i> ${isPinned ? 'Front Activo' : 'Pinear Front'}
+                  <button onclick="window.togglePinDefaultEffect('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: ${isPinned ? 'rgba(176, 176, 176, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-color: ${isPinned ? '#dcdcdc' : 'rgba(255,255,255,0.2)'}; color: ${isPinned ? '#dcdcdc' : '#a1a1a1'}; cursor: pointer;" title="${isPinned ? 'Secuencia activa en el FRONT de todas las páginas (Click para desfijar)' : 'Fijar esta secuencia como template por defecto en el FRONT de todas las páginas'}">
+                    <i class="fas fa-thumbtack ${isPinned ? 'text-white' : ''}"></i> ${isPinned ? 'Front Activo' : 'Pinear Front'}
                   </button>
                 ` : ''}
                 ${isActive ? `
-                  <span class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.3); border-color: var(--accent-cyan); color: #fff; cursor: default; font-weight: 800;" title="Secuencia cargada actualmente en el editor">
+                  <span class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(232, 232, 232, 0.3); border-color: var(--accent-cyan); color: #fff; cursor: default; font-weight: 800;" title="Secuencia cargada actualmente en el editor">
                     <i class="fas fa-check"></i> Activa
                   </span>
                 ` : `
-                  <button onclick="window.loadVisualEffectById('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(224, 64, 251, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta); cursor: pointer;" title="Cargar en el editor">
+                  <button onclick="window.loadVisualEffectById('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(156, 156, 156, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta); cursor: pointer;" title="Cargar en el editor">
                     <i class="fas fa-play"></i> Cargar
                   </button>
                 `}
-                <a href="${outputUrl}" target="_blank" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(0, 242, 254, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;" title="Abrir reproducción independiente en loop">
+                <a href="${outputUrl}" target="_blank" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(232, 232, 232, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;" title="Abrir reproducción independiente en loop">
                   <i class="fas fa-external-link-alt"></i> Output
                 </a>
                 <button onclick="window.copyOutputLink('${fx._id}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.2); color: #fff; cursor: pointer;" title="Copiar enlace ?outputeffect=${fx._id}">
                   <i class="fas fa-copy"></i>
                 </button>
-                <button onclick="window.deleteVisualEffect('${fx._id}', '${escapedTitle}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); color: #f87171; cursor: pointer;" title="Eliminar esta secuencia guardada">
+                <button onclick="window.deleteVisualEffect('${fx._id}', '${escapedTitle}')" class="btn-toggle-ui" style="padding: 4px 8px; font-size: 10px; background: rgba(160, 160, 160, 0.2); border-color: rgba(160, 160, 160, 0.5); color: #b0b0b0; cursor: pointer;" title="Eliminar esta secuencia guardada">
                   <i class="fas fa-trash-alt"></i> Borrar
                 </button>
               </div>
             </div>
             ${wordsBadgeHtml}
-            <div style="font-size: 9px; color: #64748b; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">
+            <div style="font-size: 9px; color: #727272; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">
               ?outputeffect=${fx._id}
             </div>
           </div>`;
       }).join('');
     } catch (err) {
       console.error(err);
-      container.innerHTML = `<div style="font-size: 11px; color: #ff5252; text-align: center; padding: 6px;">${err.message || 'Error al cargar secuencias.'}</div>`;
+      container.innerHTML = `<div style="font-size: 11px; color: #a0a0a0; text-align: center; padding: 6px;">${err.message || 'Error al cargar secuencias.'}</div>`;
     }
   }
 
@@ -5810,12 +5810,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btn) {
         if (isActive) {
           btn.classList.add('active');
-          btn.style.background = 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(224, 64, 251, 0.2))';
+          btn.style.background = 'linear-gradient(135deg, rgba(232, 232, 232, 0.2), rgba(156, 156, 156, 0.2))';
           btn.style.color = '#fff';
         } else {
           btn.classList.remove('active');
           btn.style.background = 'transparent';
-          btn.style.color = '#94a3b8';
+          btn.style.color = '#a1a1a1';
         }
       }
     });
@@ -6067,7 +6067,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.timelineActive = true;
       const btnToggleTimeline = document.getElementById('btn-toggle-hastimeline');
       if (btnToggleTimeline) {
-        btnToggleTimeline.innerHTML = '<i class="fas fa-toggle-on text-emerald-400"></i> Timeline ON';
+        btnToggleTimeline.innerHTML = '<i class="fas fa-toggle-on text-white"></i> Timeline ON';
         btnToggleTimeline.style.borderColor = 'var(--accent-cyan)';
       }
 
@@ -6360,14 +6360,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnRatio = id === '169' ? '16:9' : id === '916' ? '9:16' : id === '11' ? '1:1' : '4:5';
       if (btnRatio === ratio) {
         btn.classList.add('active');
-        btn.style.background = 'rgba(0, 242, 254, 0.25)';
+        btn.style.background = 'rgba(232, 232, 232, 0.25)';
         btn.style.borderColor = 'var(--accent-cyan)';
         btn.style.color = '#fff';
       } else {
         btn.classList.remove('active');
         btn.style.background = 'rgba(255, 255, 255, 0.05)';
         btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-        btn.style.color = '#cbd5e1';
+        btn.style.color = '#d3d3d3';
       }
     });
 
@@ -6439,9 +6439,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Dibujar fondo base radial neón cyber por si el shader está deshabilitado
     const grad = ctx.createRadialGradient(exportW / 2, exportH / 2, exportW * 0.1, exportW / 2, exportH / 2, exportW * 0.7);
-    grad.addColorStop(0, '#131828');
-    grad.addColorStop(0.5, '#0d0d14');
-    grad.addColorStop(1, '#050608');
+    grad.addColorStop(0, '#181818');
+    grad.addColorStop(0.5, '#0e0e0e');
+    grad.addColorStop(1, '#060606');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, exportW, exportH);
 
@@ -6491,12 +6491,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (layer.hasAura) {
           ctx.save();
           ctx.lineWidth = 5 * layerScale;
-          ctx.strokeStyle = 'rgba(0, 242, 254, 0.9)';
-          ctx.shadowColor = '#00f2fe';
+          ctx.strokeStyle = 'rgba(232, 232, 232, 0.9)';
+          ctx.shadowColor = '#e8e8e8';
           ctx.shadowBlur = 24;
           ctx.strokeRect(-w / 2 - 12, -h / 2 - 12, w + 24, h + 24);
-          ctx.strokeStyle = 'rgba(224, 64, 251, 0.9)';
-          ctx.shadowColor = '#e040fb';
+          ctx.strokeStyle = 'rgba(156, 156, 156, 0.9)';
+          ctx.shadowColor = '#9c9c9c';
           ctx.strokeRect(-w / 2 - 20, -h / 2 - 20, w + 40, h + 40);
           ctx.restore();
         }
