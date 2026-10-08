@@ -51,9 +51,14 @@
   }
 
   // El índice externo depende de la sesión (fscauth no indexa datos ajenos).
+  // `tokenPlausible` (auth.js) descarta el caso de tener guardado el texto
+  // "undefined"/"null" de un retorno de SSO incompleto: eso hacía creer que había
+  // sesión y el pedido salía con `Bearer undefined` → 401 de fscauth.
   function canUse() {
-    return typeof isLoggedIn === 'function' && isLoggedIn() &&
-           typeof getToken === 'function' && !!getToken() &&
+    var tokenOk = typeof tokenPlausible === 'function'
+      ? tokenPlausible(getToken())
+      : (typeof getToken === 'function' && !!getToken());
+    return typeof isLoggedIn === 'function' && isLoggedIn() && tokenOk &&
            typeof getUserUsername === 'function' && !!getUserUsername();
   }
 
@@ -122,6 +127,14 @@
     });
     var data = await res.json().catch(function () { return {}; });
     if (res.status === 401 || res.status === 403) {
+      // La copia local de la sesión no le sirve a fscauth (venció, se revocó o su
+      // usuario ya no existe). Antes esto SOLO mostraba un cartel y el token muerto
+      // se quedaba ahí para siempre: este pedido es un fetch crudo, no pasa por
+      // apiRequest, que es el único que limpia la sesión muerta y re-loguea. Ahora
+      // se autocurra solo: rehace la sesión con la cookie de fscauth (sin pedir
+      // usuario y contraseña) y vuelve a esta página; si la cookie también murió,
+      // el mensaje queda con el botón "Volver a entrar".
+      if (typeof sesionLocalMuerta === 'function') sesionLocalMuerta();
       throw error('Tu sesión de FSCAUTH venció o no es válida en este navegador. Entrá de nuevo para indexar tus creaciones del resto del ecosistema.', 'sesion');
     }
     if (res.status === 504 || res.status === 502) {

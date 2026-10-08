@@ -45,6 +45,15 @@ window.CONFIG = {
         return 'https://fullscreencode.com/fscauth';
     },
 
+    // La API de fscauth (sso-check, verify, login...) va SIEMPRE directo al VPS:
+    // en fullscreencode.com vive solo el FRONT (links y redirects para humanos).
+    // Su /fscauth/api/* reenvia al VPS con 307 (y ese salto cross-origin borra el
+    // Authorization); cuando esa regla del .htaccess se cae —devuelve la pagina
+    // 404— cualquier visitante sin sesion local terminaba en un 404.
+    get FSCAUTH_API() {
+        return VPS_ORIGIN + '/fscauth/api';
+    },
+
     get DONATIONS() {
         return {
             CAFECITO: 'https://cafecito.app/artedigitaldata',

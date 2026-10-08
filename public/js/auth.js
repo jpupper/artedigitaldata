@@ -23,8 +23,17 @@ function removeUser() {
   localStorage.removeItem('artedigitaldata_user');
 }
 
+// Un token sano es un JWT (3 partes separadas por punto). Si el retorno del SSO
+// llegó incompleto, localStorage puede guardar el TEXTO "undefined"/"null": eso
+// pasaba por sesión válida y la app mandaba `Bearer undefined` a todo el
+// ecosistema, que contestaba 401 (y el token muerto quedaba enquistado).
+function tokenPlausible(t) {
+  if (typeof t !== 'string' || !t) t = getToken();
+  return typeof t === 'string' && t.length > 40 && t.split('.').length === 3;
+}
+
 function isLoggedIn() {
-  return !!getToken();
+  return tokenPlausible();
 }
 
 function isAdmin() {
@@ -82,6 +91,41 @@ function irALoginPorSesionVencida() {
   window.location.href = urlLoginFsc('vencida');
 }
 
+// ── Sesión local muerta: rehacerla SIN pedir usuario y contraseña ────────────
+// La copia que guarda esta app puede morir (el token vence a los 7 días, se
+// revoca o se rota el secreto) mientras la cookie de fscauth sigue viva. En ese
+// caso fscauth reemite la sesión y vuelve a esta misma página con un token
+// nuevo: es el mismo camino que usa checkSSO (la cookie viaja cross-site porque
+// es SameSite=None). Si la cookie también murió, sso-check vuelve con
+// `nosession=true`, el contador corta el reintento y se ofrece el login normal.
+function refrescarSesionSilenciosa() {
+  var intentos = 0;
+  try { intentos = Number(sessionStorage.getItem('add_reauth_intentos') || '0'); } catch (e) {}
+  if (intentos >= 1) return false;    // ya lo intentamos: se resuelve con el login
+  // No rebotar desde las propias páginas de acceso (evita el ping-pong).
+  if (/login\.html|register\.html|reset-password\.html|forgot-password\.html/.test(window.location.pathname)) return false;
+  try {
+    sessionStorage.setItem('add_reauth_intentos', String(intentos + 1));
+    sessionStorage.removeItem('fsc_sso_checked');   // destrabar el checkSSO de arranque
+  } catch (e) { /* modo privado: seguimos */ }
+  var base = (window.CONFIG && CONFIG.FSCAUTH_API) || 'https://vps-4455523-x.dattaweb.com/fscauth/api';
+  var back = window.location.href.replace(/[?&](token|username|userId|ssoset)=[^&]*/g, '');
+  window.location.href = `${base}/auth/sso-check?redirect=${encodeURIComponent(back)}`;
+  return true;
+}
+
+/**
+ * Borra la copia local que ya no sirve y trata de rehacer la sesión sola.
+ * Lo llaman las rutas que NO pasan por apiRequest (el fetch del índice externo)
+ * y la validación de arranque, para que un token muerto no quede enquistado.
+ */
+function sesionLocalMuerta() {
+  removeToken();
+  removeUser();
+  if (refrescarSesionSilenciosa()) return;
+  irALoginPorSesionVencida();
+}
+
 // Centralized Redirection logic
 function showLogin() {
     // If we already have a token in URL, don't redirect (let the loader handle it)
@@ -121,7 +165,7 @@ async function checkSSO() {
 
     const currentUrl = window.location.href;
     // Redirigir al endpoint de sso-check del centralizador
-    window.location.href = `${CONFIG.FSCAUTH_URL}/api/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
+    window.location.href = `${CONFIG.FSCAUTH_API}/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
 }
 
 /**
@@ -138,7 +182,7 @@ async function syncSession() {
     }
 
     try {
-        const res = await fetch(`${CONFIG.FSCAUTH_URL}/api/auth/verify`, { credentials: 'include' });
+        const res = await fetch(`${CONFIG.FSCAUTH_API}/auth/verify`, { credentials: 'include' });
         const data = await res.json();
 
         const localLoggedIn = isLoggedIn();
@@ -172,10 +216,11 @@ async function syncSession() {
     if (urlToken && urlUsername) {
         setToken(urlToken);
         setUser({ username: urlUsername, id: urlUserId, _id: urlUserId });
-        // Volvimos bien del login: se resetean los contadores del rebote por sesión vencida.
+        // Volvemos bien del login: se resetean los contadores del rebote por sesión vencida.
         try {
             sessionStorage.removeItem('add_login_intentos');
             sessionStorage.removeItem('add_sesion_vencida');
+            sessionStorage.removeItem('add_reauth_intentos');
         } catch (e) {}
         
         // Limpiar URL sin recargar
@@ -195,22 +240,29 @@ async function syncSession() {
         // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
         document.addEventListener('DOMContentLoaded', () => {
             if (isLoggedIn()) {
-                // Update profile in background to get roles and fresh data
-                if (typeof apiRequest === 'function') {
-                    apiRequest('/auth/me')
-                        .then(res => (res && res.ok) ? res.json() : null)
-                        .then(data => {
-                            if (data && !data.error) {
-                                const currentUser = getUser();
-                                const hasChanges = !currentUser || currentUser.role !== data.role || currentUser.avatar !== data.avatar;
-                                setUser({ ...data, id: data._id || data.id });
-                                if (hasChanges && typeof window.renderHeader === 'function') {
-                                    window.renderHeader();
-                                }
+                // Validación REAL de la sesión al arrancar. /auth/me contesta 401
+                // si el token venció y 404 si su usuario ya no existe (migración de
+                // identidades): en los dos casos la copia local está muerta y hay
+                // que rehacerla. Antes solo se limpiaba con 401 (apiRequest), así
+                // que un token huérfano quedaba enquistado y todo lo que sí usa
+                // sesión —el índice externo— fallaba para siempre.
+                const token = getToken();
+                fetch(CONFIG.API_URL + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(res => {
+                        if (res.status === 401 || res.status === 404) { sesionLocalMuerta(); return null; }
+                        return res.ok ? res.json() : null;
+                    })
+                    .then(data => {
+                        if (data && !data.error) {
+                            const currentUser = getUser();
+                            const hasChanges = !currentUser || currentUser.role !== data.role || currentUser.avatar !== data.avatar;
+                            setUser({ ...data, id: data._id || data.id });
+                            if (hasChanges && typeof window.renderHeader === 'function') {
+                                window.renderHeader();
                             }
-                        })
-                        .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
-                }
+                        }
+                    })
+                    .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
             } else if (!urlParams.has('nosession')) {
                 checkSSO();
             }
@@ -251,9 +303,13 @@ async function apiRequest(endpoint, options = {}) {
   const res = await fetch(CONFIG.API_URL + endpoint, { ...options, headers });
   if (res.status === 401) {
     // 401 (no 403: eso es permiso, no sesión muerta) + creíamos estar logueados
-    // = el token venció o se rotó el JWT_SECRET. Se limpia y se vuelve al login
-    // con retorno, en vez de dejar al usuario en el inicio sin explicación.
-    if (token) irALoginPorSesionVencida();
+    // = el token venció, se revocó o su usuario ya no existe. Primero se intenta
+    // REHACER la sesión en silencio (la cookie de fscauth puede seguir viva: no
+    // hace falta pedir la contraseña de nuevo); recién si eso no es posible se
+    // vuelve al login con retorno.
+    if (token) {
+      if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
+    }
     return null;
   }
   return res;
