@@ -379,16 +379,15 @@
         const file = document.getElementById('edit-avatar-file').files[0];
 
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData
-          });
-          if (uploadRes.ok) {
-            const data = await uploadRes.json();
-            avatar = data.url;
+          const up = await apiUpload(file);
+          if (up.ok) {
+            avatar = up.url;
+          } else if (up.status === 401) {
+            alert('Tu sesión venció: volvé a entrar y guardá los cambios de nuevo.');
+            return;
+          } else {
+            alert('No se pudo subir la foto de perfil. Probá de nuevo en un momento.');
+            return;
           }
         }
 

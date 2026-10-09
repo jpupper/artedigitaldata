@@ -314,3 +314,46 @@ async function apiRequest(endpoint, options = {}) {
   }
   return res;
 }
+
+/**
+ * Subida de archivos con el mismo manejo de sesión que apiRequest.
+ * Antes cada página hacía su propio fetch a /upload y, si la sesión local estaba
+ * muerta, la subida fallaba EN SILENCIO (el usuario no veía nada y el problema
+ * reaparecía más tarde como un rebote raro al guardar). Devuelve siempre
+ * { ok, status, url } para poder avisar en pantalla.
+ */
+async function apiUpload(file, fields = {}) {
+  if (!file) return { ok: false, status: 0, url: '' };
+
+  const formData = new FormData();
+  formData.append('file', file, file.name || 'archivo.jpg');
+  Object.keys(fields).forEach(k => {
+    const v = fields[k];
+    if (v !== undefined && v !== null && v !== '') formData.append(k, v);
+  });
+
+  const token = getToken();
+  try {
+    const res = await fetch(CONFIG.API_URL + '/upload', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      // Igual que apiRequest: primero rehacer la sesión en silencio, después el login.
+      if (token) {
+        if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
+      }
+      return { ok: false, status: 401, url: '' };
+    }
+    if (!res.ok) return { ok: false, status: res.status, url: '' };
+
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, status: res.status, url: data.url || '' };
+  } catch (err) {
+    return { ok: false, status: 0, url: '', error: String((err && err.message) || err) };
+  }
+}
+
+window.apiUpload = apiUpload;

@@ -219,20 +219,11 @@
 
         let imageUrl = '';
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          try {
-            const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${getToken()}` },
-              body: formData
-            });
-            if (uploadRes.ok) {
-              const data = await uploadRes.json();
-              imageUrl = data.url;
-            }
-          } catch (err) {
-            console.error("Upload error:", err);
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
           }
         }
 
@@ -268,20 +259,11 @@
 
         let imageUrl = '';
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          try {
-            const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${getToken()}` },
-              body: formData
-            });
-            if (uploadRes.ok) {
-              const data = await uploadRes.json();
-              imageUrl = data.url;
-            }
-          } catch (err) {
-            console.error("Upload error:", err);
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
           }
         }
 
@@ -320,20 +302,11 @@
         showStatus('Publicando Evento', 'Notificando a los artistas etiquedados...');
 
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          try {
-            const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${getToken()}` },
-              body: formData
-            });
-            if (uploadRes.ok) {
-              const data = await uploadRes.json();
-              imageUrl = data.url;
-            }
-          } catch (err) {
-             console.error("Upload error:", err);
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
           }
         }
 

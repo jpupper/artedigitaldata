@@ -673,18 +673,11 @@
         // Upload image if selected
         const imageInput = document.getElementById('opo-imagen');
         if (imageInput.files && imageInput.files[0]) {
-          const formData = new FormData();
-          formData.append('file', imageInput.files[0]);
-          
-          const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData
-          });
-          
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            uploadedImageUrl = uploadData.url;
+          const up = await apiUpload(imageInput.files[0]);
+          if (up.ok) {
+            uploadedImageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
           }
         }
 

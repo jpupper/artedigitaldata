@@ -203,17 +203,16 @@ async function saveEdit() {
         });
       }
 
-      const formData = new FormData();
-      formData.append('file', blobToUpload, editNewImageBlob.name);
+      // El cropper devuelve un Blob sin nombre: se le pone el original para no perder la extensión.
+      const archivo = (typeof File !== 'undefined' && blobToUpload instanceof File)
+        ? blobToUpload
+        : new File([blobToUpload], editNewImageBlob.name || 'imagen.png', { type: blobToUpload.type || 'image/png' });
 
-      const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-        body: formData
-      });
-      if (uploadRes.ok) {
-        const data = await uploadRes.json();
-        imageUrl = data.url;
+      const up = await apiUpload(archivo, {});
+      if (up.ok) {
+        imageUrl = up.url;
+      } else if (up.status !== 401) {
+        console.error('Error uploading image:', up);
       }
     } catch (err) {
       console.error('Error uploading image:', err);
