@@ -352,14 +352,19 @@
     <!-- Error -->
     <div id="error-message" class="hidden text-center py-20">
       <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
-      <p class="text-gray-400">Oportunidad no encontrada.</p>
-      <a href="oportunidades.html" class="inline-block mt-4 px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/20 transition-all">
-        <i class="fas fa-arrow-left mr-2"></i>Volver
-      </a>
+      <p id="error-texto" class="text-gray-400">Oportunidad no encontrada.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+        <button id="error-reintentar" onclick="loadOportunidad()" class="hidden px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm uppercase tracking-widest hover:bg-emerald-600 transition-all">
+          <i class="fas fa-rotate-right mr-2"></i>Reintentar
+        </button>
+        <a href="oportunidades.html" class="inline-block px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-widest hover:bg-emerald-500/20 transition-all">
+          <i class="fas fa-arrow-left mr-2"></i>Volver
+        </a>
+      </div>
     </div>
   </main>
 
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=5"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="js/forms.js?v=2"></script>
@@ -402,10 +407,22 @@
     });
 
     async function loadOportunidad() {
+      const errorEl = document.getElementById('error-message');
+      const loadingEl = document.getElementById('loading');
+      if (errorEl) errorEl.classList.add('hidden');
+      if (loadingEl) loadingEl.classList.remove('hidden');
       try {
-        const res = await fetch(CONFIG.API_URL + '/oportunidades/' + oportunidadId);
+        let res;
+        try {
+          res = await fetch(CONFIG.API_URL + '/oportunidades/' + oportunidadId);
+        } catch (errRed) {
+          console.error('No se pudo conectar con la API:', errRed);
+          showError('red');
+          return;
+        }
         if (!res.ok) {
-          showError();
+          console.error('La API respondió', res.status, 'para la oportunidad', oportunidadId);
+          showError(res.status === 404 ? 'no-existe' : 'red');
           return;
         }
 
@@ -486,7 +503,7 @@
         document.getElementById('oportunidad-content').classList.remove('hidden');
       } catch (err) {
         console.error(err);
-        showError();
+        showError('error');
       }
     }
 
@@ -1143,7 +1160,18 @@
       }
     }
 
-    function showError() {
+    // motivo: 'no-existe' (404 o sin id) | 'red' (no se pudo conectar) | 'error' (algo falló al renderizar)
+    function showError(motivo) {
+      const textos = {
+        'no-existe': 'Oportunidad no encontrada.',
+        'red': 'No pudimos conectar con el servidor. Revisá tu conexión y reintentá.',
+        'error': 'Algo salió mal al mostrar la oportunidad. Reintentá en un momento.'
+      };
+      const reintentar = (motivo === 'red' || motivo === 'error');
+      const textoEl = document.getElementById('error-texto');
+      if (textoEl) textoEl.textContent = textos[motivo] || textos['no-existe'];
+      const btnReintentar = document.getElementById('error-reintentar');
+      if (btnReintentar) btnReintentar.classList.toggle('hidden', !reintentar);
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error-message').classList.remove('hidden');
     }

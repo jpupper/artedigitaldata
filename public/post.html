@@ -22,7 +22,7 @@
     </div>
   </main>
 
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=5"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="js/header.js?v=4"></script>
@@ -81,7 +81,14 @@
 
       const container = document.getElementById('post-detail-container');
       try {
-        const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
+        let res;
+        try {
+          res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
+        } catch (errRed) {
+          console.error('No se pudo conectar con la API:', errRed);
+          if (container) container.innerHTML = `<div class="text-center py-20"><i class="fas fa-wifi text-4xl text-red-400/60 mb-4"></i><p class="text-gray-400 mb-4">No pudimos conectar con el servidor.</p><button onclick="loadPost('${postId}')" class="px-6 py-3 rounded-xl bg-cyan-500 text-black font-bold text-sm uppercase tracking-widest">Reintentar</button></div>`;
+          return;
+        }
         if (!res.ok) throw new Error('Post no encontrado');
         const post = await res.json();
         currentPostLikesUsers = post.likesUsers || [];
