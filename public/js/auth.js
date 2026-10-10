@@ -57,6 +57,24 @@ function logout() {
   window.location.href = CONFIG.BASE + '/';
 }
 
+// ── Base de la API de FSCAUTH ───────────────────────────────────────────────
+// Antes cada llamada usaba CONFIG.FSCAUTH_API a secas. En las páginas del dominio
+// público (fullscreencode.com) ese campo NO existe en config.js, así que el
+// navegador terminaba en https://fullscreencode.com/undefined/auth/sso-check (404)
+// y el usuario quedaba varado ahí. Ahora se resuelve en cascada:
+//   1) CONFIG.FSCAUTH_API  (artedigitaldata apunta directo al VPS)
+//   2) CONFIG.FSCAUTH_URL + '/api'  (fullscreencode.com sirve /fscauth y proxya al VPS)
+//   3) el VPS directo
+// Nunca puede salir "undefined".
+function fscAuthApi() {
+  var cfg = window.CONFIG || {};
+  var base = cfg.FSCAUTH_API;
+  if (!base && cfg.FSCAUTH_URL) base = String(cfg.FSCAUTH_URL).replace(/\/+$/, '') + '/api';
+  if (!base) base = 'https://vps-4455523-x.dattaweb.com/fscauth/api';
+  return String(base).replace(/\/+$/, '');
+}
+window.fscAuthApi = fscAuthApi;
+
 // ── Sesión de FSCAUTH vencida ───────────────────────────────────────────────
 // El login del ecosistema lo emite fscauth y dura 7 días; si el token venció (o
 // se rotó el JWT_SECRET, que invalida TODOS los tokens viejos), la app se quedaba
@@ -108,7 +126,7 @@ function refrescarSesionSilenciosa() {
     sessionStorage.setItem('add_reauth_intentos', String(intentos + 1));
     sessionStorage.removeItem('fsc_sso_checked');   // destrabar el checkSSO de arranque
   } catch (e) { /* modo privado: seguimos */ }
-  var base = (window.CONFIG && CONFIG.FSCAUTH_API) || 'https://vps-4455523-x.dattaweb.com/fscauth/api';
+  var base = fscAuthApi();
   var back = window.location.href.replace(/[?&](token|username|userId|ssoset)=[^&]*/g, '');
   window.location.href = `${base}/auth/sso-check?redirect=${encodeURIComponent(back)}`;
   return true;
@@ -124,6 +142,36 @@ function sesionLocalMuerta() {
   removeUser();
   if (refrescarSesionSilenciosa()) return;
   irALoginPorSesionVencida();
+}
+
+// ── Perfil completo: la FOTO del header ────────────────────────────────────
+// La copia local se guarda con lo mínimo (username/id). El avatar, el rol y el
+// displayName viven en /auth/me, que antes se pedía SOLO en la carga normal de la
+// página: al volver del login —o de un re-login silencioso, que también vuelve
+// con ?token=...— el header quedaba con el avatar generativo en lugar de la foto.
+// Ahora se pide también en ese camino.
+function refrescarPerfil() {
+    if (!isLoggedIn()) return;
+    const token = getToken();
+    fetch(CONFIG.API_URL + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(res => {
+            if (res.status === 401 || res.status === 404) { sesionLocalMuerta(); return null; }
+            return res.ok ? res.json() : null;
+        })
+        .then(data => {
+            if (data && !data.error) {
+                const currentUser = getUser();
+                const hasChanges = !currentUser || currentUser.role !== data.role ||
+                    currentUser.avatar !== data.avatar || currentUser.username !== data.username;
+                setUser({ ...data, id: data._id || data.id });
+                if (!hasChanges) return;
+                if (typeof window.renderHeader === 'function') window.renderHeader();
+                else document.addEventListener('DOMContentLoaded', () => {
+                    if (typeof window.renderHeader === 'function') window.renderHeader();
+                });
+            }
+        })
+        .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
 }
 
 // Centralized Redirection logic
@@ -165,7 +213,7 @@ async function checkSSO() {
 
     const currentUrl = window.location.href;
     // Redirigir al endpoint de sso-check del centralizador
-    window.location.href = `${CONFIG.FSCAUTH_API}/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
+    window.location.href = `${fscAuthApi()}/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
 }
 
 /**
@@ -182,7 +230,7 @@ async function syncSession() {
     }
 
     try {
-        const res = await fetch(`${CONFIG.FSCAUTH_API}/auth/verify`, { credentials: 'include' });
+        const res = await fetch(`${fscAuthApi()}/auth/verify`, { credentials: 'include' });
         const data = await res.json();
 
         const localLoggedIn = isLoggedIn();
@@ -236,33 +284,17 @@ async function syncSession() {
         if (window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html')) {
             window.location.href = CONFIG.BASE + '/';
         }
+
+        // Recién logueado: traer el perfil completo para que el header muestre la
+        // FOTO de perfil (no el avatar generativo) sin esperar a otra navegación.
+        refrescarPerfil();
     } else {
         // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
         document.addEventListener('DOMContentLoaded', () => {
             if (isLoggedIn()) {
-                // Validación REAL de la sesión al arrancar. /auth/me contesta 401
-                // si el token venció y 404 si su usuario ya no existe (migración de
-                // identidades): en los dos casos la copia local está muerta y hay
-                // que rehacerla. Antes solo se limpiaba con 401 (apiRequest), así
-                // que un token huérfano quedaba enquistado y todo lo que sí usa
-                // sesión —el índice externo— fallaba para siempre.
-                const token = getToken();
-                fetch(CONFIG.API_URL + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-                    .then(res => {
-                        if (res.status === 401 || res.status === 404) { sesionLocalMuerta(); return null; }
-                        return res.ok ? res.json() : null;
-                    })
-                    .then(data => {
-                        if (data && !data.error) {
-                            const currentUser = getUser();
-                            const hasChanges = !currentUser || currentUser.role !== data.role || currentUser.avatar !== data.avatar;
-                            setUser({ ...data, id: data._id || data.id });
-                            if (hasChanges && typeof window.renderHeader === 'function') {
-                                window.renderHeader();
-                            }
-                        }
-                    })
-                    .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
+                // Validación REAL de la sesión al arrancar (/auth/me contesta 401 si
+                // el token venció y 404 si su usuario ya no existe) + trae el avatar.
+                refrescarPerfil();
             } else if (!urlParams.has('nosession')) {
                 checkSSO();
             }
@@ -314,3 +346,46 @@ async function apiRequest(endpoint, options = {}) {
   }
   return res;
 }
+
+/**
+ * Subida de archivos con el mismo manejo de sesión que apiRequest.
+ * Antes cada página hacía su propio fetch a /upload y, si la sesión local estaba
+ * muerta, la subida fallaba EN SILENCIO (el usuario no veía nada y el problema
+ * reaparecía más tarde como un rebote raro al guardar). Devuelve siempre
+ * { ok, status, url } para poder avisar en pantalla.
+ */
+async function apiUpload(file, fields = {}) {
+  if (!file) return { ok: false, status: 0, url: '' };
+
+  const formData = new FormData();
+  formData.append('file', file, file.name || 'archivo.jpg');
+  Object.keys(fields).forEach(k => {
+    const v = fields[k];
+    if (v !== undefined && v !== null && v !== '') formData.append(k, v);
+  });
+
+  const token = getToken();
+  try {
+    const res = await fetch(CONFIG.API_URL + '/upload', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (res.status === 401) {
+      // Igual que apiRequest: primero rehacer la sesión en silencio, después el login.
+      if (token) {
+        if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
+      }
+      return { ok: false, status: 401, url: '' };
+    }
+    if (!res.ok) return { ok: false, status: res.status, url: '' };
+
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, status: res.status, url: data.url || '' };
+  } catch (err) {
+    return { ok: false, status: 0, url: '', error: String((err && err.message) || err) };
+  }
+}
+
+window.apiUpload = apiUpload;

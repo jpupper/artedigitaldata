@@ -3,7 +3,9 @@
 
 (function(window) {
   // Auto-cargar ascii-shader-bg.js si no está cargado en la página
-  if (!window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
+  // FSC_NO_ASCII_BG lo pone la pagina cuando el fondo lo sirve el JP Shader Editor
+  // (jpshadereditorInclude): en ese caso NO hay que re-inyectar ascii-shader-bg.js.
+  if (!window.FSC_NO_ASCII_BG && !window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
     const script = document.createElement('script');
     const basePath = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE + '/' : '';
     const currentPath = window.location.pathname;
@@ -17,6 +19,69 @@
     };
     document.head.appendChild(script);
   }
+
+  // ── Puente p5 ↔ Math ───────────────────────────────────────────────────────
+  // p5 en modo global recién publica floor(), random(), dist(), color(), etc.
+  // cuando el sketch arranca, y eso pasa en el evento `load` de la ventana.
+  // Este archivo registra sus handlers de puntero al evaluarse (líneas de
+  // addEventListener más abajo), así que un click ANTES de que p5 arranque
+  // llegaba a spawnWordFromPool() sin `floor` en el scope y tiraba
+  // "ReferenceError: floor is not defined" (p5 lo reporta como "Did you just try
+  // to use p5.js's floor()?"). En esta página el `load` tarda ~10s (socket.io,
+  // el include del JP Shader Editor, el boton de fscauth), así que el click
+  // temprano era lo normal, no la excepción.
+  // Estas envolturas delegan en la función de p5 cuando ya existe y, si todavía
+  // no existe, usan el equivalente de Math (mismas fórmulas que p5).
+  const _shims = {};
+  function _p5Shim(name, fallback) {
+    const fn = function(...args) {
+      const p5fn = window[name];
+      if (typeof p5fn === 'function' && p5fn !== _shims[name]) {
+        return p5fn.apply(window, args);
+      }
+      return fallback.apply(null, args);
+    };
+    _shims[name] = fn;
+    return fn;
+  }
+
+  const floor = _p5Shim('floor', Math.floor);
+  const ceil = _p5Shim('ceil', Math.ceil);
+  const round = _p5Shim('round', Math.round);
+  const abs = _p5Shim('abs', Math.abs);
+  const sqrt = _p5Shim('sqrt', Math.sqrt);
+  const pow = _p5Shim('pow', Math.pow);
+  const sin = _p5Shim('sin', Math.sin);
+  const cos = _p5Shim('cos', Math.cos);
+  const tan = _p5Shim('tan', Math.tan);
+  const atan2 = _p5Shim('atan2', Math.atan2);
+  const dist = _p5Shim('dist', (x1, y1, x2, y2) => Math.hypot(x1 - x2, y1 - y2));
+  const map = _p5Shim('map', (value, start1, stop1, start2, stop2) =>
+    ((value - start1) * (stop2 - start2)) / (stop1 - start1) + start2);
+  const constrain = _p5Shim('constrain', (value, min, max) => Math.min(Math.max(value, min), max));
+  const lerp = _p5Shim('lerp', (start, stop, amt) => start + (stop - start) * amt);
+  const min = _p5Shim('min', (a, b) => (Array.isArray(a) ? Math.min(...a) : Math.min(a, b)));
+  const max = _p5Shim('max', (a, b) => (Array.isArray(a) ? Math.max(...a) : Math.max(a, b)));
+  const random = _p5Shim('random', function(...args) {
+    // Fallback con la misma semántica que p5.random()
+    if (args.length === 0) return Math.random();
+    if (Array.isArray(args[0])) return args[0][Math.floor(Math.random() * args[0].length)];
+    if (args.length === 1) return Math.random() * args[0];
+    return args[0] + Math.random() * (args[1] - args[0]);
+  });
+  const randomGaussian = _p5Shim('randomGaussian', function(mean = 0, sd = 1) {
+    // Box-Muller (equivalente práctico al generador de p5)
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return mean + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  });
+
+  // El sketch (window.setup) marca cuándo p5 ya está listo: hasta que no corra
+  // setup no hay canvas ni partículas, así que los handlers de puntero salen
+  // temprano en vez de trabajar contra p5 a medias.
+  let sketchReady = false;
+  window.p5EffectReady = () => sketchReady;
 
   // Valores por defecto
   const DEFAULT_CONFIG = {
@@ -714,6 +779,10 @@
     textAlign(CENTER, CENTER);
 
     updatePalette();
+
+    // p5 ya publicó sus globales (floor, random, color, ...) y existe el canvas:
+    // desde acá los handlers de puntero pueden spawnear.
+    sketchReady = true;
   };
 
   window.draw = function() {
@@ -1192,6 +1261,10 @@
   // Click handler unificado para generar palabras con atractor, arrastrar y escalar
   function handleGlobalPointerSpawn(e) {
     if (e && e.button !== undefined && e.button !== 0) return;
+
+    // Sin sketch no hay canvas ni partículas: el click temprano (p5 todavía no
+    // arrancó) se ignora en lugar de tirar ReferenceError.
+    if (!sketchReady) return;
 
     if (Date.now() - lastTouchTimestamp < 650) {
       return;

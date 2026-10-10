@@ -31,6 +31,13 @@
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/fsc-ui.css?v=5">
   <style>
+    /* La composicion del JP Shader Editor sale con ALPHA (el pase ASCII escribe
+       vec4(col*a, a)): lo que se ve detras del shader es la BASE de la pagina. La base
+       tiene que ser el #0d0d12 del sitio (como el negro del visor del nodeeditor) y NO
+       el blanco del navegador. Se fuerza a proposito porque el include.js pone
+       html/body en transparent para que se vea su canvas. */
+    html, body { background-color: #0d0d12 !important; }
+    #jpsi-canvas { background: #0d0d12 !important; }
     /* Canvas de p5 - por encima del fondo, debajo del contenido */
     #p5-canvas {
       position: fixed !important;
@@ -172,82 +179,29 @@
       pointer-events: none;
     }
 
-    /* Moons Orbit Rotator */
-    .orbit-rotator {
-      position: absolute;
-      inset: 8px;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: moonsOrbit 80s linear infinite;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    /* Moons Counter-Rotation (para mantener los textos siempre nivelados) */
-    .moon-unit {
-      position: absolute;
-      pointer-events: auto;
-      transform-origin: center center;
-    }
-    .moon-counter {
-      animation: moonsCounter 80s linear infinite;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    /* Ubicaciones de las 4 Lunas (Norte, Este, Sur, Oeste) */
-    .moon-north {
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    .moon-east {
-      top: 50%;
-      right: 0;
-      transform: translate(50%, -50%);
-    }
-    .moon-south {
-      bottom: 0;
-      left: 50%;
-      transform: translate(-50%, 50%);
-    }
-    .moon-west {
-      top: 50%;
-      left: 0;
-      transform: translate(-50%, -50%);
-    }
-
-    @keyframes moonsOrbit {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes moonsCounter {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
-    }
-
-    /* Moon Buttons */
-    .moon-pill {
+    /* Pills de categoría del feed (Obras / Recursos / Chances / Eventos).
+       Antes orbitaban como "lunas" alrededor del logo del hero; ahora viven en
+       la barra de filtros del feed, junto al switch humano/IA y Data Externa.
+       El color y el fondo de cada una los sigue dando .filter-switch + .filter-<tipo>.active */
+    .feed-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 7px 14px;
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
       cursor: pointer;
       user-select: none;
       transition: all 0.25s ease;
     }
-    .moon-pill:hover {
-      transform: scale(1.12);
+    .feed-pill:hover {
+      transform: translateY(-1px) scale(1.04);
     }
   </style>
 </head>
@@ -272,46 +226,9 @@
         <!-- Anillo Orbital -->
         <div class="orbit-ring"></div>
 
-        <!-- Orbiting Moons Carrier (4 categorías que orbitan muy lentamente alrededor del sol) -->
-        <div id="orbit-rotator" class="orbit-rotator">
-          
-          <!-- Luna 1: Obras (Norte) -->
-          <div class="moon-unit moon-north">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active moon-pill">
-                <span>Obras</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 2: Chances (Este) -->
-          <div class="moon-unit moon-east">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active moon-pill">
-                <span>Chances</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 3: Eventos (Sur) -->
-          <div class="moon-unit moon-south">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active moon-pill">
-                <span>Eventos</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 4: Recursos (Oeste) -->
-          <div class="moon-unit moon-west">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active moon-pill">
-                <span>Recursos</span>
-              </button>
-            </div>
-          </div>
-
-        </div>
+        <!-- Las 4 categorías (Obras / Recursos / Chances / Eventos) ya NO orbitan
+             alrededor del logo: viven en la barra de filtros del feed, al lado del
+             switch humano/IA y Data Externa (buscá .feed-pill más abajo). -->
 
       </div>
 
@@ -328,13 +245,29 @@
 
     <!-- Feed -->
     <section>
-      <div class="flex items-center gap-3 mb-6">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
         <button onclick="toggleHumanAI()" id="filter-human-ai" class="w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0" title="Mostrando contenido Humano (Click para cambiar a IA)">
           <i class="fas fa-user text-sm"></i>
         </button>
         <button onclick="toggleExternalData()" id="filter-external" class="h-9 px-3.5 rounded-xl border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2 transition-all hover:border-cyan-500/50 hover:bg-white/10 shrink-0" title="Data Externa: sumar al feed las creaciones del resto de las apps del ecosistema (apagado por defecto)">
           <span id="filter-external-knob" class="w-3.5 h-3.5 rounded-full bg-gray-600 transition-all"></span>
           <span class="text-[10px] font-black uppercase tracking-widest">Data Externa</span>
+        </button>
+
+        <span class="hidden sm:block w-px h-6 bg-white/10 shrink-0" aria-hidden="true"></span>
+
+        <!-- Categorías del feed (antes orbitaban como lunas en el hero) -->
+        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active feed-pill" title="Obras: mostrar/ocultar las obras publicadas">
+          <span>Obras</span>
+        </button>
+        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active feed-pill" title="Recursos: mostrar/ocultar los recursos del ecosistema">
+          <span>Recursos</span>
+        </button>
+        <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active feed-pill" title="Chances: mostrar/ocultar las convocatorias y oportunidades">
+          <span>Chances</span>
+        </button>
+        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active feed-pill" title="Eventos: mostrar/ocultar los eventos">
+          <span>Eventos</span>
         </button>
       </div>
       <p id="external-status" class="hidden text-[11px] font-bold text-cyan-400 mb-4"></p>
@@ -351,8 +284,18 @@
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <!-- FONDO: lo sirve el JP Shader Editor (jpshadereditorInclude), igual que en
+       vuelapelucas3000 y jpshadereditor. Es una COMPOSICION del NodeEditor:
+         composicion: artedigital-ascii ("Arte Digital Data - ASCII (patron + tipografia)", autor jpupper)
+         caja de fondo: ascii1 (su OUTPUT)
+       Se edita en https://fullscreencode.com/jpshadereditor/nodeeditor.html?comp=artedigital-ascii
+       y la pagina pide el plan al backend y lo aplica sola (panel en vivo: tecla S).
+       Antes: js/ascii-shader-bg.js (shader fijo, se saco). -->
+  <script>window.FSC_NO_ASCII_BG = true; /* que p5-effect.js no vuelva a inyectar el fondo viejo */</script>
+  <script src="js/p5-effect.js?v=4"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js?v=5"></script>
   <script src="js/external-data.js?v=5"></script>
