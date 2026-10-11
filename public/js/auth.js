@@ -133,11 +133,30 @@ function refrescarSesionSilenciosa() {
 }
 
 /**
- * Borra la copia local que ya no sirve y trata de rehacer la sesión sola.
- * Lo llaman las rutas que NO pasan por apiRequest (el fetch del índice externo)
- * y la validación de arranque, para que un token muerto no quede enquistado.
+ * ¿El token local venció DE VERDAD? Se mira su propio `exp` (no se valida firma:
+ * la firma la valida el servidor). Un 401 o un 404 puntual NO es una sesión muerta:
+ * es ESE request el que falló.
+ */
+function localTokenExpired(t) {
+  const payload = parseJwt(t || getToken());
+  if (!payload || typeof payload.exp !== 'number') return true;
+  return payload.exp * 1000 <= Date.now();
+}
+
+/**
+ * Cierra la sesión local SÓLO cuando corresponde (token vencido o ilegible). Con el
+ * token todavía vigente se revalida y se renueva en silencio: antes cualquier 401
+ * —o un 404 de /auth/me— borraba la sesión, y como la cookie fsc_token es de
+ * TERCEROS en los dominios de las apps (el navegador la bloquea), el usuario
+ * terminaba en el formulario de login con la sesión todavía viva (deslogueo fantasma).
  */
 function sesionLocalMuerta() {
+  const t = getToken();
+  if (tokenPlausible(t) && !localTokenExpired(t)) {
+    console.warn('[AUTH] 401/404 con el token local vigente: se revalida la sesión, NO se cierra.');
+    syncSession();
+    return;
+  }
   removeToken();
   removeUser();
   if (refrescarSesionSilenciosa()) return;
@@ -217,39 +236,36 @@ async function checkSSO() {
 }
 
 /**
- * Silent Session Sync: Checks if the central session matches the local state
- * without redirecting. Used on window focus to catch logout from other tabs.
- * NOTE: Only works when on same origin as auth server due to CORS/cookie restrictions.
+ * Silent Session Sync: renueva la ventana de la sesión contra fscauth y detecta
+ * logouts hechos en otra pestaña. Se apoya en el token local (Bearer), NO en la
+ * cookie fsc_token: la cookie es de TERCEROS en los dominios de las apps y el
+ * navegador la bloquea, así que no se puede depender de ella.
  */
 async function syncSession() {
-    // Only attempt sync when on same origin as auth server
-    // Cross-origin fetch will fail CORS and cookies won't be sent anyway
-    const isSameOrigin = new URL(CONFIG.FSCAUTH_URL).origin === window.location.origin;
-    if (!isSameOrigin) {
-        return; // Skip sync for cross-origin scenarios
-    }
+    // RENOVACIÓN DESLIZANTE (esto es lo que hace que la sesión dure los 10 días y no
+    // se caiga antes): se manda el token local como Bearer y el servidor devuelve un
+    // token con la ventana completa otra vez. NO se usa la cookie fsc_token: en
+    // fullscreencode.com / artedigitaldata.com vive en OTRO host (vps-...) y el
+    // navegador la bloquea por ser de terceros. Antes esta función se saltaba todo
+    // cuando el origen no era el del VPS (return temprano), así que el token nunca se
+    // renovaba: vencía a los SESSION_DAYS y el usuario aparecía deslogueado sin motivo.
+    const token = getToken();
+    if (!tokenPlausible(token)) return;
 
     try {
-        const res = await fetch(`${fscAuthApi()}/auth/verify`, { credentials: 'include' });
-        const data = await res.json();
-
-        const localLoggedIn = isLoggedIn();
-
-        if (data.loggedIn) {
-            // Un-authenticated locally but logged in centrally -> Trigger SSO Flow (redirect for token)
-            if (!localLoggedIn) {
-                console.log("[AUTH] Nueva sesión detectada en FSC. Sincronizando...");
-                checkSSO();
-            }
-        } else {
-            // Authenticated locally but NOT centrally -> Logout
-            if (localLoggedIn) {
-                console.warn("[AUTH] Sesión central cerrada. Cerrando local...");
-                logout();
-            }
+        const res = await fetch(`${fscAuthApi()}/auth/verify`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;                                  // 401/5xx/proxy: no se toca la sesión
+        const data = await res.json().catch(() => null);
+        if (!data) return;
+        if (data.token && data.token !== token) {
+            setToken(data.token);                             // ventana renovada
         }
+        // Si el servidor no pudo resolver la sesión pero el token local sigue vigente
+        // (no venció por `exp`), NO se cierra nada: puede ser un 401 puntual.
     } catch (err) {
-        console.error("[AUTH] Error syncSession:", err);
+        // Sin red: tampoco se cierra la sesión (antes este catch deslogueaba).
     }
 }
 
@@ -292,8 +308,9 @@ async function syncSession() {
         // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
         document.addEventListener('DOMContentLoaded', () => {
             if (isLoggedIn()) {
-                // Validación REAL de la sesión al arrancar (/auth/me contesta 401 si
-                // el token venció y 404 si su usuario ya no existe) + trae el avatar.
+                // Renovar la ventana de la sesión (deslizante) y después validar el
+                // perfil: /auth/me contesta 401 si el token venció y trae el avatar.
+                syncSession();
                 refrescarPerfil();
             } else if (!urlParams.has('nosession')) {
                 checkSSO();
@@ -340,6 +357,13 @@ async function apiRequest(endpoint, options = {}) {
     // hace falta pedir la contraseña de nuevo); recién si eso no es posible se
     // vuelve al login con retorno.
     if (token) {
+      // Con el token todavía vigente, el 401 es de ESE endpoint: se revalida en
+      // silencio (y se renueva) y NO se desloguea. Solo con el token vencido se
+      // rehace la sesión con la cookie o se vuelve al login con retorno.
+      if (tokenPlausible(token) && !localTokenExpired(token)) {
+        syncSession();
+        return null;
+      }
       if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
     }
     return null;
@@ -373,8 +397,14 @@ async function apiUpload(file, fields = {}) {
     });
 
     if (res.status === 401) {
-      // Igual que apiRequest: primero rehacer la sesión en silencio, después el login.
+      // Igual que apiRequest: si el token local sigue vigente NO se desloguea (se
+      // revalida y renueva en silencio); con el token vencido se rehace la sesión
+      // y, si no hay forma, se vuelve al login con retorno.
       if (token) {
+        if (tokenPlausible(token) && !localTokenExpired(token)) {
+          syncSession();
+          return { ok: false, status: 401, url: '' };
+        }
         if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
       }
       return { ok: false, status: 401, url: '' };
