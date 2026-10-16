@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Arte Digital Data — 3 direcciones de diseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --bg:#0b0c11; --ink:#e8eaf0; --dim:#98a1b2; --hair:rgba(255,255,255,.09);
+    --accent:#37e0e8;
+    /* paleta de categorias, apagada: se usan como puntos/labels, no como relleno */
+    --obra:#37e0e8; --recurso:#a3e635; --chance:#f2c14b; --evento:#f472d0;
+  }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  /* ── Fondo: aproximación del shader real (ribbons de color sobre negro) ── */
+  .fondo{ position:fixed; inset:0; z-index:-1; overflow:hidden; background:#05060a; }
+  .fondo i{ position:absolute; display:block; filter:blur(28px); opacity:.55; border-radius:50%; }
+  .fondo i:nth-child(1){ width:70vw; height:70vw; left:-10vw; top:-20vw; background:conic-gradient(from 30deg,#ff2d55,#ff8a00,#37e0e8,#0a0a0a); }
+  .fondo i:nth-child(2){ width:55vw; height:55vw; right:-8vw; top:5vw; background:conic-gradient(from 200deg,#37e0e8,#7c4dff,#0a0a0a,#a3e635); opacity:.45; }
+  .fondo i:nth-child(3){ width:80vw; height:60vw; left:10vw; bottom:-30vw; background:conic-gradient(from 90deg,#0a0a0a,#ff2d55,#37e0e8,#0a0a0a); opacity:.4; }
+  .grano{ position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.22;
+    background-image:radial-gradient(rgba(255,255,255,.11) 1px, transparent 1px); background-size:3px 3px; }
+
+  /* ── Barra de variantes ── */
+  .switcher{ position:sticky; top:0; z-index:50; display:flex; gap:8px; align-items:center; padding:10px 22px;
+    background:rgba(5,6,10,.72); backdrop-filter:blur(14px); border-bottom:1px solid var(--hair); }
+  .switcher b{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); font-weight:600; margin-right:6px; }
+  .switcher button{ font:inherit; font-size:12px; font-weight:500; color:var(--dim); background:transparent;
+    border:1px solid var(--hair); border-radius:9px; padding:7px 13px; cursor:pointer; }
+  .switcher button.on{ color:var(--ink); background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.2); }
+  .v{ display:none; } .v.on{ display:block; }
+
+  /* ───────────────────────── VARIANTE A · VIDRIO DISCIPLINADO ───────────────────────── */
+  .A .header{ display:flex; align-items:center; gap:26px; padding:14px 28px;
+    background:rgba(8,9,13,.55); backdrop-filter:blur(22px) saturate(130%); border-bottom:1px solid var(--hair); }
+  .A .marca{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:14px; letter-spacing:.01em; }
+  .A .marca s{ width:26px; height:26px; border-radius:8px; background:linear-gradient(140deg,#37e0e8,#f472d0); text-decoration:none; display:block; }
+  .A .nav{ display:flex; gap:20px; margin-left:14px; font-size:12.5px; color:var(--dim); font-weight:500; }
+  .A .nav span{ position:relative; cursor:pointer; }
+  .A .nav span.on{ color:var(--ink); }
+  .A .nav span.on:after{ content:""; position:absolute; left:0; right:0; bottom:-19px; height:1px; background:var(--accent); }
+  .A .acciones{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .btn{ font:inherit; font-size:12px; font-weight:500; color:var(--ink); background:rgba(255,255,255,.05);
+    border:1px solid var(--hair); border-radius:10px; padding:9px 14px; cursor:pointer; transition:.18s; }
+  .btn:hover{ background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.2); }
+  .btn.acento{ background:rgba(55,224,232,.12); border-color:rgba(55,224,232,.45); color:#a8f5f8; }
+  .A main{ max-width:1180px; margin:0 auto; padding:40px 28px 80px; }
+  .A .hero{ display:flex; align-items:flex-end; justify-content:space-between; gap:30px; padding:34px 0 30px; border-bottom:1px solid var(--hair); }
+  .A h1{ font-size:34px; font-weight:600; letter-spacing:-.02em; line-height:1.12; max-width:16ch; }
+  .A h1 em{ font-style:normal; color:var(--dim); display:block; font-size:15px; font-weight:400; letter-spacing:0; margin-top:12px; max-width:44ch; line-height:1.5; }
+  .A .sec{ display:flex; align-items:baseline; gap:12px; margin:36px 0 18px; }
+  .A .sec h2{ font-size:15px; font-weight:600; letter-spacing:.01em; }
+  .A .sec u{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); text-decoration:none; }
+  .A .sec:after{ content:""; flex:1; height:1px; background:var(--hair); }
+  /* control segmentado */
+  .seg{ display:inline-flex; align-items:center; padding:3px; gap:2px; background:rgba(255,255,255,.04);
+    border:1px solid var(--hair); border-radius:12px; backdrop-filter:blur(18px); }
+  .seg button{ display:flex; align-items:center; gap:7px; font:inherit; font-size:11.5px; font-weight:500; color:var(--dim);
+    background:transparent; border:0; padding:8px 14px; border-radius:9px; cursor:pointer; }
+  .seg button i{ width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.5; }
+  .seg button.on{ background:rgba(255,255,255,.08); color:var(--ink); }
+  .seg button.on i{ opacity:1; }
+  .seg button[data-c=obra].on i{ background:var(--obra); color:var(--obra); }
+  .seg button[data-c=recurso].on i{ background:var(--recurso); color:var(--recurso); }
+  .seg button[data-c=chance].on i{ background:var(--chance); color:var(--chance); }
+  .seg button[data-c=evento].on i{ background:var(--evento); color:var(--evento); }
+  .fila{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ico{ width:36px; height:36px; border-radius:10px; border:1px solid var(--hair); background:rgba(255,255,255,.05);
+    display:flex; align-items:center; justify-content:center; color:var(--dim); cursor:pointer; }
+  .ico.on{ color:var(--accent); border-color:rgba(55,224,232,.4); background:rgba(55,224,232,.1); }
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .cardA{ border:1px solid var(--hair); border-radius:16px; overflow:hidden; background:rgba(11,12,17,.5);
+    backdrop-filter:blur(22px) saturate(120%); transition:.2s; }
+  .cardA:hover{ border-color:rgba(255,255,255,.2); transform:translateY(-2px); }
+  .cardA .img{ height:190px; background:linear-gradient(120deg,#1b2a4a,#3b1f45 60%,#0e3b3d); }
+  .cardA .cuerpo{ padding:16px 18px 18px; }
+  .cardA .meta{ display:flex; align-items:center; gap:8px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--dim); font-weight:500; }
+  .cardA .meta i{ width:5px; height:5px; border-radius:50%; background:var(--obra); }
+  .cardA h3{ font-size:17px; font-weight:600; margin:10px 0 6px; letter-spacing:-.01em; }
+  .cardA p{ font-size:13px; color:var(--dim); line-height:1.55; }
+  .cardA .pie{ display:flex; align-items:center; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--hair);
+    font-size:12px; color:var(--dim); }
+  .cardA .pie a{ margin-left:auto; color:var(--accent); text-decoration:none; font-weight:500; }
+  .avatar{ width:22px; height:22px; border-radius:7px; background:#243040; }
+
+  /* ───────────────────────── VARIANTE B · FICHA TÉCNICA ───────────────────────── */
+  .B{ font-family:'JetBrains Mono',monospace; }
+  .B .header{ display:flex; gap:18px; align-items:center; padding:12px 26px; border-bottom:1px solid var(--hair); background:rgba(5,6,10,.86); }
+  .B .nav{ display:flex; gap:16px; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  .B .nav span.on{ color:var(--ink); border-bottom:1px solid var(--accent); }
+  .B main{ max-width:1180px; margin:0 auto; padding:26px 26px 70px; }
+  .B .hero{ padding:28px 0; border-bottom:1px solid var(--hair); }
+  .B h1{ font-family:Inter,sans-serif; font-size:30px; font-weight:600; letter-spacing:-.02em; }
+  .B h1 em{ display:block; font-family:'JetBrains Mono',monospace; font-style:normal; font-size:11.5px; color:var(--dim); letter-spacing:.04em; margin-top:10px; }
+  .B .sec{ display:flex; gap:10px; align-items:baseline; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin:30px 0 12px; }
+  .B .sec b{ color:var(--ink); font-weight:500; }
+  .B .tabs{ display:flex; gap:0; border-bottom:1px solid var(--hair); margin-bottom:18px; }
+  .B .tabs button{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); background:transparent;
+    border:0; border-bottom:1px solid transparent; padding:10px 16px 10px 0; margin-right:16px; cursor:pointer; }
+  .B .tabs button.on{ color:var(--ink); border-bottom-color:var(--accent); }
+  .B .row{ display:grid; grid-template-columns:64px 1fr 150px 90px; gap:18px; align-items:center; padding:14px 12px;
+    border-bottom:1px solid var(--hair); background:rgba(8,9,13,.62); }
+  .B .row:nth-child(odd){ background:rgba(8,9,13,.78); }
+  .B .tag{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  .B .tag.obra{ color:var(--obra); } .B .tag.recurso{ color:var(--recurso); }
+  .B .t{ font-family:Inter,sans-serif; font-size:15px; font-weight:500; }
+  .B .d{ font-size:11px; color:var(--dim); }
+  .B .mini{ width:56px; height:40px; background:#16202f; border:1px solid var(--hair); }
+
+  /* ───────────────────────── VARIANTE C · CONSOLA VJ ───────────────────────── */
+  .C .header{ display:flex; align-items:center; gap:14px; padding:10px 20px; background:rgba(6,7,11,.8); border-bottom:1px solid var(--hair); }
+  .C .nav{ display:flex; gap:6px; }
+  .C .nav span{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); border:1px solid transparent; padding:5px 9px; border-radius:6px; }
+  .C .nav span.on{ color:var(--accent); border-color:rgba(55,224,232,.35); background:rgba(55,224,232,.08); }
+  .C main{ max-width:1240px; margin:0 auto; padding:22px 20px 70px; }
+  .C .hero{ display:grid; grid-template-columns:1.4fr auto; gap:20px; align-items:center; padding:22px; border:1px solid var(--hair);
+    border-radius:6px; background:rgba(8,9,13,.55); }
+  .C h1{ font-family:Inter,sans-serif; font-size:26px; font-weight:600; letter-spacing:-.02em; }
+  .C h1 em{ display:block; font-family:'JetBrains Mono',monospace; font-style:normal; font-size:11px; color:var(--dim); margin-top:8px; }
+  .C .hud{ display:grid; gap:6px; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--dim); }
+  .C .hud b{ color:var(--ink); font-weight:500; }
+  .C .barra{ display:flex; gap:6px; flex-wrap:wrap; margin:20px 0 14px; align-items:center; }
+  .C .chip{ font:inherit; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim);
+    background:rgba(255,255,255,.03); border:1px solid var(--hair); border-radius:6px; padding:7px 11px; cursor:pointer; display:flex; gap:7px; align-items:center; }
+  .C .chip i{ width:5px; height:5px; background:currentColor; border-radius:1px; opacity:.45; }
+  .C .chip.on{ color:var(--ink); border-color:rgba(255,255,255,.24); background:rgba(255,255,255,.07); }
+  .C .chip.on i{ opacity:1; background:var(--accent); }
+  .C .grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .C .cardC{ border:1px solid var(--hair); border-radius:6px; background:rgba(8,9,13,.6); overflow:hidden; }
+  .C .cardC .img{ height:120px; background:#141c2a; position:relative; }
+  .C .cardC .img span{ position:absolute; top:8px; left:8px; font-family:'JetBrains Mono',monospace; font-size:9.5px;
+    letter-spacing:.12em; color:var(--accent); background:rgba(5,6,10,.7); border:1px solid rgba(55,224,232,.3); padding:3px 6px; border-radius:4px; }
+  .C .cardC .cuerpo{ padding:12px; }
+  .C .cardC h3{ font-family:Inter,sans-serif; font-size:14.5px; font-weight:600; margin-bottom:6px; }
+  .C .cardC p{ font-size:11.5px; color:var(--dim); line-height:1.5; font-family:'JetBrains Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="fondo"><i></i><i></i><i></i></div><div class="grano"></div>
+
+<div class="switcher">
+  <b>Dirección</b>
+  <button class="on" data-v="A">A · Vidrio disciplinado</button>
+  <button data-v="B">B · Ficha técnica</button>
+  <button data-v="C">C · Consola VJ</button>
+</div>
+
+<!-- ══════════════════ A ══════════════════ -->
+<section class="v A on">
+  <header class="header">
+    <div class="marca"><s></s> Arte Digital Data</div>
+    <nav class="nav"><span class="on">Inicio</span><span>Obras</span><span>Recursos</span><span>Chances</span><span>Calendario</span><span>Artistas</span></nav>
+    <div class="acciones"><button class="btn">Entrar</button><button class="btn acento">Registrarse</button></div>
+  </header>
+  <main>
+    <div class="hero">
+      <h1>Comunidad de arte digital<em>Obras, recursos, convocatorias y eventos del ecosistema. Publicá lo que estás haciendo.</em></h1>
+      <button class="btn acento">Publicar obra</button>
+    </div>
+    <div class="sec"><h2>Contenido destacado</h2><u>02</u></div>
+    <div class="cards">
+      <article class="cardA">
+        <div class="img"></div>
+        <div class="cuerpo">
+          <div class="meta"><i></i> Exposición · 14 sept</div>
+          <h3>Exposición Arte Digital 3er piso de DunePark</h3>
+          <p>Invitamos a artistas digitales a participar de la curaduría de la expo de festivalwow.xyz.</p>
+          <div class="pie"><span class="avatar"></span> @Solisiete <a href="#">Ver más</a></div>
+        </div>
+      </article>
+      <article class="cardA">
+        <div class="img" style="background:linear-gradient(120deg,#2b1b3d,#0e3b3d 55%,#3a2a12)"></div>
+        <div class="cuerpo">
+          <div class="meta" style="--x:1"><i style="background:var(--recurso)"></i> Recurso · TouchDesigner</div>
+          <h3>Raven VJ — set de shaders para TouchDesigner</h3>
+          <p>Set de shaders y componentes para VJ, listo para usar en vivo.</p>
+          <div class="pie"><span class="avatar"></span> @jpupper <a href="#">Ver más</a></div>
+        </div>
+      </article>
+    </div>
+    <div class="sec"><h2>Filtrar</h2></div>
+    <div class="fila">
+      <span class="ico on">◉</span>
+      <button class="btn">Data externa</button>
+      <div class="seg">
+        <button class="on" data-c="obra"><i></i>Obras</button>
+        <button class="on" data-c="recurso"><i></i>Recursos</button>
+        <button class="on" data-c="chance"><i></i>Chances</button>
+        <button class="on" data-c="evento"><i></i>Eventos</button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ══════════════════ B ══════════════════ -->
+<section class="v B">
+  <header class="header">
+    <nav class="nav"><span class="on">Inicio</span><span>Obras</span><span>Recursos</span><span>Chances</span><span>Calendario</span></nav>
+    <span style="margin-left:auto; display:flex; gap:8px">
+      <button class="btn" style="font-family:Inter,sans-serif">Entrar</button>
+      <button class="btn acento" style="font-family:Inter,sans-serif">Registrarse</button>
+    </span>
+  </header>
+  <main>
+    <div class="hero">
+      <h1>Comunidad de arte digital<em>obras · recursos · convocatorias · eventos</em></h1>
+    </div>
+    <div class="sec"><b>CONTENIDO DESTACADO</b> <span>— 02 registros</span></div>
+    <div class="tabs"><button class="on">Todas</button><button>Obras</button><button>Recursos</button><button>Chances</button><button>Eventos</button></div>
+    <div class="row"><span class="mini"></span><span class="t">Exposición Arte Digital 3er piso de DunePark</span><span class="tag obra">obra</span><span class="d">14.09</span></div>
+    <div class="row"><span class="mini"></span><span class="t">Raven VJ — set de shaders TouchDesigner</span><span class="tag recurso">recurso</span><span class="d">21.09</span></div>
+    <div class="row"><span class="mini"></span><span class="t">Ciclo Fricciones / Audiovisual + AI</span><span class="tag">evento</span><span class="d">02.10</span></div>
+    <div class="row"><span class="mini"></span><span class="t">Convocatoria abierta: sala inmersiva</span><span class="tag">chance</span><span class="d">18.10</span></div>
+  </main>
+</section>
+
+<!-- ══════════════════ C ══════════════════ -->
+<section class="v C">
+  <header class="header">
+    <nav class="nav"><span class="on">Inicio</span><span>Obras</span><span>Recursos</span><span>Chances</span><span>Eventos</span></nav>
+    <span style="margin-left:auto; display:flex; gap:8px">
+      <button class="btn" style="font-family:Inter,sans-serif">Entrar</button>
+      <button class="btn acento" style="font-family:Inter,sans-serif">Registrarse</button>
+    </span>
+  </header>
+  <main>
+    <div class="hero">
+      <div><h1>Comunidad de arte digital<em>artedigitaldata.com · feed global</em></h1></div>
+      <div class="hud"><span>feed <b>activo</b></span><span>items <b>32.418</b></span><span>fondo <b>sancarlopoliroso3</b></span></div>
+    </div>
+    <div class="barra">
+      <button class="chip on"><i></i>humano</button>
+      <button class="chip"><i></i>data externa</button>
+      <button class="chip on"><i></i>obras</button>
+      <button class="chip on"><i></i>recursos</button>
+      <button class="chip on"><i></i>chances</button>
+      <button class="chip on"><i></i>eventos</button>
+    </div>
+    <div class="grid">
+      <article class="cardC"><div class="img"><span>OBRA</span></div><div class="cuerpo"><h3>Exposición Arte Digital Data</h3><p>3er piso DunePark · curaduría abierta</p></div></article>
+      <article class="cardC"><div class="img" style="background:#1a1424"><span>RECURSO</span></div><div class="cuerpo"><h3>Raven VJ</h3><p>shaders + componentes TD</p></div></article>
+      <article class="cardC"><div class="img" style="background:#101f22"><span>EVENTO</span></div><div class="cuerpo"><h3>Ciclo Fricciones</h3><p>audiovisual + AI · 02.10</p></div></article>
+    </div>
+  </main>
+</section>
+
+<script>
+  const vs = document.querySelectorAll('.v');
+  document.querySelectorAll('.switcher button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.switcher button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    vs.forEach(v => v.classList.toggle('on', v.classList.contains(b.dataset.v)));
+  });
+  // interactividad mínima: los grupos de botones togglean
+  document.querySelectorAll('.seg button, .C .chip, .B .tabs button, .A .nav span').forEach(b => {
+    b.onclick = () => {
+      const grupo = b.parentElement;
+      [...grupo.children].forEach(x => x.classList.toggle('on', x === b || x.classList.contains('on') && b.dataset.c === undefined));
+    };
+  });
+</script>
+</body>
+</html>

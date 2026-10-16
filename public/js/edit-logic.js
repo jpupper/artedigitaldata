@@ -62,6 +62,7 @@ async function loadItemToEdit(type, id, onComplete) {
       <h3 class="text-xl font-bold text-white mb-6 uppercase tracking-tighter sticky top-0 bg-[#0d0d12] py-2 z-10">Editar <span class="text-${c}-400">${titleMap[normalizedType]}</span></h3>
       <div class="space-y-6 overflow-y-auto max-h-[70vh] pr-1">
         ${renderFields(normalizedType, 'edit', item)}
+        ${(normalizedType === 'post' && typeof window.fondoObraWidgetHtml === 'function') ? window.fondoObraWidgetHtml('edit', item) : ''}
 
         <!-- Image Adjuster Section -->
         <div class="border-t border-white/10 pt-6 mt-6">
@@ -237,6 +238,10 @@ async function saveEdit() {
 
   if (type === 'post') {
     body.tags = document.getElementById('edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    // Fondo animado de la obra: lo elige el botón "Fondo animado" del form
+    // (input hidden edit-fondo-shader; '' = fondo del sitio).
+    const fondoEl = document.getElementById('edit-fondo-shader');
+    if (fondoEl) body.fondoShader = fondoEl.value || '';
   } else if (type === 'recurso') {
     body.type = document.getElementById('edit-type').value;
     body.url = document.getElementById('edit-url').value.trim();

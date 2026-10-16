@@ -1,0 +1,7 @@
+/* Estilos propios de formularioingreso.html — extraídos del HTML (regla de separación HTML/CSS/JS) */
+
+.dp-1 { border-color: rgba(0, 245, 255, 0.2); }
+
+.dp-2 { display:inline-flex; width:auto; }
+
+.dp-3 { word-break: break-all; }

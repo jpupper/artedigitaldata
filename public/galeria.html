@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="suave">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Galería de obras — Arte Digital Data</title>
+  <meta name="description" content="Todas las obras de la convocatoria, con su artista, en una galería animada.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
+  <link rel="stylesheet" href="css/paginas/galeria.css">
+</head>
+<body class="ui-con-header min-h-screen">
+  <div id="p5-canvas"></div>
+  <div id="app-header"></div>
+
+  <main class="gk-main">
+    <section class="fk-head gk-hero">
+      <p class="gk-kicker" id="gk-kicker">Convocatoria</p>
+      <h1 class="gk-titulo" id="gk-titulo">Cargando…</h1>
+      <p class="gk-bajada" id="gk-bajada"></p>
+      <button type="button" class="gk-vermas ui-hidden" id="gk-bajada-toggle">Leer más</button>
+      <div class="gk-chips" id="gk-chips"></div>
+      <div class="gk-acciones">
+        <button type="button" class="ui-btn" id="gk-compartir">
+          <i class="fas fa-link"></i> Copiar link de la galería
+        </button>
+        <a class="ui-btn" href="oportunidades.html">
+          <i class="fas fa-arrow-left"></i> Ver más convocatorias
+        </a>
+      </div>
+    </section>
+
+    <section id="gk-obras" class="gk-grid"></section>
+
+    <section id="gk-cargando" class="gk-estado">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <p>Cargando las obras…</p>
+    </section>
+
+    <section id="gk-vacio" class="gk-estado ui-hidden">
+      <i class="fas fa-images"></i>
+      <p>Todavía no hay obras cargadas en esta convocatoria.</p>
+    </section>
+
+    <section id="gk-error" class="gk-estado ui-hidden">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p id="gk-error-txt">No pudimos cargar la galería.</p>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/generative-avatar.js"></script>
+  <script src="js/header.js?v=5"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/p5-effect.js?v=12"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"></script>
+  <script src="js/paginas/galeria-1.js"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+</body>
+</html>

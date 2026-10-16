@@ -296,7 +296,9 @@ body { background: var(--ui-bg); color: var(--ui-text); }
 .ui-rise { animation: ui-rise var(--ui-t-slow) var(--ui-ease) both; }
 @keyframes ui-rise { from { opacity: 0; transform: translateY(12px); } }
 
-.ui-hidden { display: none !important; }
+/* OJO: no aplica al <body> — la página de SOLO OUTPUT usa <body class="ui-hidden">
+   para esconder su interfaz, y con la regla genérica quedaba la pantalla en negro. */
+.ui-hidden:not(body) { display: none !important; }
 
 /* ──────────────────────────────────────────── LAYOUT Y UTILIDADES ─────── */
 .ui-row { display: flex; flex-wrap: wrap; gap: var(--ui-gap); align-items: center; }

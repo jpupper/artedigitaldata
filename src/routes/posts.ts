@@ -9,6 +9,16 @@ import { normalizeCocreadores } from '../utils/cocreadores';
 
 const router = Router();
 
+// Fondo animado por obra: nombre de la composición del JP Shader Editor que el
+// autor elige como fondo de la página de su obra. '' = fondo del sitio.
+// El valor viaja tal cual al atributo data-comp del include, así que sólo se
+// acepta un nombre de composición válido ([A-Za-z0-9._-], hasta 120 chars):
+// cualquier otra cosa (incluido un intento de inyectar atributos) queda ''.
+function normalizarFondoShader(value: unknown): string {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  return /^[A-Za-z0-9._-]{1,120}$/.test(raw) ? raw : '';
+}
+
 router.get('/', async (req: Request, res: Response) => {
   try {
     const filter: any = { isContest: { $ne: true }, visibility: 'public' };
@@ -75,7 +85,7 @@ router.get('/:id/likes', async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth, visibility } = req.body;
+    const { title, description, imageUrl, youtube_video, tags, isContest, contestMonth, visibility, fondoShader } = req.body;
     const post = await Post.create({
       author: req.user!.id,
       cocreadores: normalizeCocreadores(req.body.cocreadores, req.user!.id),
@@ -87,6 +97,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       isContest: isContest || false,
       contestMonth: contestMonth || '',
       visibility: visibility || 'public',
+      fondoShader: normalizarFondoShader(fondoShader),
     });
     const [populated] = await hydrate([post]);
     return res.status(201).json(populated);
@@ -207,7 +218,7 @@ router.post('/:id/comment', authMiddleware, async (req: AuthRequest, res: Respon
 
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, tags, imageUrl, youtube_video, visibility } = req.body;
+    const { title, description, tags, imageUrl, youtube_video, visibility, fondoShader } = req.body;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post no encontrado' });
 
@@ -221,6 +232,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (imageUrl !== undefined) post.imageUrl = imageUrl;
     if (youtube_video !== undefined) post.youtube_video = youtube_video;
     if (visibility !== undefined) post.visibility = visibility;
+    if (fondoShader !== undefined) post.fondoShader = normalizarFondoShader(fondoShader);
     if (req.body.cocreadores !== undefined) post.cocreadores = normalizeCocreadores(req.body.cocreadores, post.author) as any;
 
     await post.save();

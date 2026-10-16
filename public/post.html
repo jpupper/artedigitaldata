@@ -7,10 +7,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
+  <link rel="stylesheet" href="css/paginas/post.css">
+  <link rel="stylesheet" href="css/paginas/fondo-obra.css">
 </head>
 <body class="ui-con-header min-h-screen scrollbar-hide">
-  <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
+  <div id="p5-canvas" class="dp-1"></div>
   <div id="app-header"></div>
 
   <main class="relative z-10 pt-24 pb-12 max-w-4xl mx-auto px-4">
@@ -23,294 +26,20 @@
   </main>
 
   <script src="js/config.js"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=4"></script>
+  <script src="js/header.js?v=5"></script>
   <script src="js/tagging.js"></script>
   <script src="js/forms.js?v=2"></script>
   <script src="js/edit-logic.js?v=2"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const postId = urlParams.get('id');
-      if (!postId) {
-        window.location.href = CONFIG.BASE + '/index.html';
-        return;
-      }
-      await loadPost(postId);
-    });
-
-    let currentPostLikesUsers = [];
-
-    function renderLikesUsersList(users) {
-      if (!users || users.length === 0) {
-        return `<div class="text-xs text-gray-400 py-3 text-center italic">Aún no hay likes</div>`;
-      }
-      return users.map(u => `
-        <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(u.username)}" class="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white/5 transition-colors group">
-          <div class="w-7 h-7 rounded-full overflow-hidden bg-cyan-500 text-black flex items-center justify-center text-xs font-bold shrink-0">
-            ${u.avatar ? `<img src="${sanitizeUrl(u.avatar)}" alt="${escapeHTML(u.username)}" class="w-full h-full object-cover">` : (u.username || '?')[0].toUpperCase()}
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
-              ${escapeHTML(u.displayName || u.username)}
-            </p>
-            <p class="text-[10px] text-gray-400 truncate">@${escapeHTML(u.username)}</p>
-          </div>
-        </a>
-      `).join('');
-    }
-
-    function showLikesPopup() {
-      const popup = document.getElementById('likes-popup');
-      if (popup) popup.classList.remove('hidden');
-    }
-
-    function hideLikesPopup() {
-      const popup = document.getElementById('likes-popup');
-      if (popup) popup.classList.add('hidden');
-    }
-
-    async function loadPost(postId) {
-      const isYouTubeURL = (url) => {
-        if (!url) return false;
-        return /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url);
-      };
-
-      const container = document.getElementById('post-detail-container');
-      try {
-        const res = await fetch(`${CONFIG.API_URL}/posts/${postId}`);
-        if (!res.ok) throw new Error('Post no encontrado');
-        const post = await res.json();
-        currentPostLikesUsers = post.likesUsers || [];
-        const isAuthor = isLoggedIn() && getUserId() === post.author?._id;
-
-        document.title = `${post.title} - Arte Digital Data`;
-
-        container.innerHTML = `
-          <div class="rounded-3xl overflow-hidden border border-cyan-500/20 card-cyber">
-            <div class="p-6 border-b border-white/5 flex items-center justify-between">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-lg font-bold bg-cyan-500 text-black shrink-0">
-                  ${post.author?.avatar ? `
-                    <img src="${sanitizeUrl(post.author.avatar)}" alt="${escapeHTML(post.author.username)}" class="w-full h-full object-cover">
-                  ` : (post.author?.username || '?')[0].toUpperCase()}
-                </div>
-                <div>
-                  <a href="${CONFIG.BASE}/profile.html?user=${encodeURIComponent(post.author?.username || '')}" class="text-lg font-bold text-cyan-400 group-hover:text-magenta-400 transition-colors">
-                    ${escapeHTML(post.author?.username || 'Anónimo')}
-                  </a>
-                  ${(typeof cocreadoresInlineHtml === 'function') ? cocreadoresInlineHtml(post) : ''}
-                  <p class="text-base md:text-lg font-semibold text-slate-200 mt-1 flex items-center gap-2 tracking-wide">
-                    <i class="far fa-calendar-alt text-xs text-cyan-400"></i>
-                    <span>${new Date(post.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} hs</span>
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                ${isAuthor ? `
-                  <button onclick="loadItemToEdit('posts', '${post._id}', true)" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all font-bold text-sm">
-                    <i class="fas fa-edit"></i>
-                    <span>Editar</span>
-                  </button>
-                ` : ''}
-                <div class="relative inline-block" id="like-container" onmouseenter="showLikesPopup()" onmouseleave="hideLikesPopup()">
-                  <button onclick="toggleLike('${post._id}')" id="like-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${post.likes?.includes(getUserId()) ? 'text-red-500' : 'text-gray-400'}">
-                    <i class="${post.likes?.includes(getUserId()) ? 'fas' : 'far'} fa-heart text-xl"></i>
-                    <span id="like-count" class="font-bold">${post.likes?.length || 0}</span>
-                  </button>
-                  <div id="likes-popup" class="hidden absolute right-0 top-full mt-2 w-64 p-3 rounded-2xl bg-[#0d0d14]/95 border border-cyan-500/30 backdrop-blur-xl shadow-[0_10px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(0,245,255,0.15)] z-50 text-left transition-all">
-                    <div class="text-[11px] font-black uppercase tracking-wider text-cyan-400 border-b border-white/10 pb-1.5 mb-2 flex items-center justify-between">
-                      <span><i class="fas fa-heart text-red-500 mr-1"></i> Les gusta esto</span>
-                      <span id="popup-like-count" class="text-gray-400 font-normal text-[10px]">${post.likes?.length || 0}</span>
-                    </div>
-                    <div id="likes-users-list" class="max-h-48 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-white/10 pr-1">
-                      ${renderLikesUsersList(currentPostLikesUsers)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="p-0">
-              ${post.imageUrl ? `
-                <div class="w-full bg-black flex justify-center border-b border-white/5 relative aspect-video overflow-hidden" 
-                     ${extractYouTubeId(post) ? `onmouseenter="playVideo(this, '${extractYouTubeId(post)}')" onmouseleave="stopVideo(this)"` : ''}>
-                  <img src="${sanitizeUrl(post.imageUrl)}" alt="${escapeHTML(post.title)}" class="max-w-full max-h-[70vh] object-contain transition-transform duration-700">
-                  ${extractYouTubeId(post) ? `
-                    <div class="video-overlay absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none bg-black">
-                      <iframe class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                  ` : ''}
-                </div>
-              ` : ''}
-              <div class="p-8">
-                <div class="flex items-center justify-between gap-4 mb-4">
-                  <h1 class="text-3xl font-black text-white">
-                    ${escapeHTML(post.title)}
-                  </h1>
-                  ${post.youtube_video ? `
-                    <a href="${sanitizeUrl(post.youtube_video)}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/10 text-red-500 rounded-xl border border-red-500/20 text-xs font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
-                      <i class="fab fa-youtube text-lg"></i> Ver Video
-                    </a>
-                  ` : ''}
-                </div>
-                <p class="text-gray-300 text-lg leading-relaxed mb-6 whitespace-pre-wrap">${formatMentions(post.description)}</p>
-                ${post.tags?.length ? `
-                  <div class="flex flex-wrap gap-2 mb-8">
-                    ${post.tags.map(t => `<span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs">#${escapeHTML(t)}</span>`).join('')}
-                  </div>
-                ` : ''}
-
-                <!-- Comments Section -->
-                <div class="border-t border-white/10 pt-8 mt-8">
-                  <h3 class="text-xl font-bold text-white mb-6">
-                    <i class="fas fa-comments text-magenta-500 mr-2"></i>Comentarios (${post.comments?.length || 0})
-                  </h3>
-                  
-                  ${isLoggedIn() ? `
-                    <form id="comment-form" class="mb-8 group">
-                      <div class="flex gap-4">
-                        <div class="w-10 h-10 rounded-full bg-magenta-500/20 flex items-center justify-center text-magenta-400 shrink-0">
-                          <i class="fas fa-comment-dots"></i>
-                        </div>
-                        <div class="flex-1">
-                          <textarea id="comment-text" required placeholder="Escribe un comentario..." 
-                            class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-gray-500 focus:border-magenta-500 focus:outline-none transition-all resize-none h-24"></textarea>
-                          <div class="flex justify-end mt-2">
-                            <button type="submit" class="btn-primary px-6 py-2 rounded-xl text-sm transition-all hover:scale-105">
-                              Publicar Comentario
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </form>
-                  ` : `
-                    <div class="bg-white/5 border border-white/5 rounded-2xl p-6 text-center mb-8">
-                      <p class="text-gray-500 text-sm">Debes <button onclick="showLogin()" class="text-cyan-400 hover:underline">iniciar sesión</button> para comentar.</p>
-                    </div>
-                  `}
-
-                  <div id="comments-list" class="space-y-6">
-                    ${post.comments?.length ? post.comments.map(c => {
-                      const isCommentOwner = isLoggedIn() && (getUserId() === c.user?._id || isAdmin());
-                      return `
-                      <div class="flex gap-4">
-                        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10">
-                          ${c.user?.avatar ? `<img src="${sanitizeUrl(c.user.avatar)}" class="w-full h-full object-cover">` : `
-                            <div class="w-full h-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
-                              <i class="fas fa-user text-xs"></i>
-                            </div>
-                          `}
-                        </div>
-                        <div class="flex-1">
-                          <div class="bg-white/5 rounded-2xl px-4 py-3">
-                            <div class="flex justify-between items-center mb-1">
-                              <a href="profile.html?user=${encodeURIComponent(c.user?.username || '')}" class="font-bold text-cyan-400 text-sm hover:underline">@${escapeHTML(c.user?.username || 'Anónimo')}</a>
-                              <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</span>
-                                ${isCommentOwner ? `
-                                  <button onclick="deleteComment('${c._id}', '${post._id}')" class="text-gray-600 hover:text-red-500 transition-colors text-xs" title="Borrar comentario">
-                                    <i class="fas fa-trash"></i>
-                                  </button>
-                                ` : ''}
-                              </div>
-                            </div>
-                            <p class="text-gray-300 text-sm">${formatMentions(c.text)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    `;}).reverse().join('') : `
-                      <div class="text-center py-10 text-gray-600 italic">
-                        No hay comentarios aún. ¡Sé el primero!
-                      </div>
-                    `}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-
-        if (isLoggedIn()) {
-          const form = document.getElementById('comment-form');
-          if (form) form.addEventListener('submit', (e) => addComment(e, postId));
-        }
-
-      } catch (err) {
-        container.innerHTML = `<div class="text-center py-20">Obra no encontrada</div>`;
-      }
-    }
-
-    async function deleteComment(commentId, postId) {
-      if (!confirm('¿Eliminar este comentario?')) return;
-      try {
-        const res = await apiRequest(`/posts/${postId}/comment/${commentId}`, {
-          method: 'DELETE'
-        });
-        if (res.ok) {
-          await loadPost(postId);
-        }
-      } catch (err) {
-        alert('Error al eliminar comentario');
-      }
-    }
-
-    async function addComment(e, postId) {
-      e.preventDefault();
-      const textInput = document.getElementById('comment-text');
-      const text = textInput.value.trim();
-      if (!text) return;
-
-      try {
-        const res = await apiRequest(`/posts/${postId}/comment`, {
-          method: 'POST',
-          body: JSON.stringify({ text })
-        });
-
-        if (res.ok) {
-          textInput.value = '';
-          await loadPost(postId); // Refresh to show new comment
-        }
-      } catch (err) {
-        alert('Error al publicar comentario');
-      }
-    }
-
-    async function toggleLike(postId) {
-      if (!isLoggedIn()) {
-        alert('Debes iniciar sesión para dar like');
-        return;
-      }
-      
-      try {
-        const res = await apiRequest(`/posts/${postId}/like`, { method: 'POST' });
-        if (res.ok) {
-          const post = await res.json();
-          const btn = document.getElementById('like-btn');
-          const count = document.getElementById('like-count');
-          const isLiked = post.likes.includes(getUserId());
-          
-          btn.className = `flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${isLiked ? 'text-red-500' : 'text-gray-400'}`;
-          btn.querySelector('i').className = `${isLiked ? 'fas' : 'far'} fa-heart text-xl`;
-          count.innerText = post.likes.length;
-
-          currentPostLikesUsers = post.likesUsers || [];
-          const popupCount = document.getElementById('popup-like-count');
-          if (popupCount) popupCount.innerText = post.likes.length;
-          const usersList = document.getElementById('likes-users-list');
-          if (usersList) usersList.innerHTML = renderLikesUsersList(currentPostLikesUsers);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  </script>
+  <script src="js/paginas/post-1.js"></script>
+  <script src="js/paginas/fondo-obra-1.js"></script>
   <!-- Global Edit Modal -->
   <div id="global-edit-modal" class="hidden fixed inset-0 z-[100] flex items-start justify-center bg-black/80 px-4 py-8 backdrop-blur-md overflow-y-auto">
     <div class="w-full max-w-3xl rounded-3xl border border-white/10 card-cyber bg-[#0d0d12] p-8 relative my-auto">
-      <button onclick="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10 bg-black/50 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">
+      <button data-on-click="closeGlobalEdit()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10 bg-black/50 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">
         <i class="fas fa-times"></i>
       </button>
       <div id="edit-modal-content" class="max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide"></div>
@@ -318,9 +47,12 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script src="js/p5-effect.js?v=12"></script>
+  <!-- El fondo animado de esta obra (JP Shader Editor) NO va fijo acá: lo carga
+       js/paginas/post-1.js con la composición elegida por el dueño (campo
+       fondoShader) o con la del sitio si la obra no tiene fondo propio. -->
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

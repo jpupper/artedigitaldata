@@ -84,11 +84,15 @@ window.renderRecursos = function(recursos) {
           <p class="text-gray-400 text-sm mb-5 line-clamp-2 leading-relaxed">${formatMentions(r.description)}</p>
           
           <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                ${(r.author?.username || '?')[0].toUpperCase()}
-              </div>
-              <span class="text-xs text-gray-500 font-medium">@${r.author?.username || 'anónimo'}</span>
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-7 h-7 shrink-0 overflow-hidden bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">
+                ${(window.GenerativeAvatar && r.author) ? window.GenerativeAvatar.markup(r.author, { className: 'w-7 h-7 object-cover' })
+                  : (r.author?.avatar ? `<img src="${sanitizeUrl(r.author.avatar)}" class="w-full h-full object-cover">` : (r.author?.username || '?')[0].toUpperCase())}
+              </span>
+              <span class="min-w-0 flex flex-col leading-tight">
+                <span class="text-xs text-gray-200 font-bold truncate">${r.author?.displayName || r.author?.username || 'anónimo'}</span>
+                <span class="text-[10px] text-gray-500 truncate">@${r.author?.username || 'anónimo'}${r.createdAt ? ' · ' + new Date(r.createdAt).toLocaleDateString('es-AR') : ''}</span>
+              </span>
             </div>
             <div class="flex items-center gap-3 text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
               <span><i class="fas fa-heart mr-1"></i>${r.likes?.length || 0}</span>

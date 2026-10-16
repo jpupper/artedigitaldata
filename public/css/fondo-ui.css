@@ -1,0 +1,643 @@
+/* ============================================================================
+   CAPA FONDO — UI minimalista que convive con el fondo animado
+   (JP Shader Editor: canvas fixed z-index:-1 detrás de todo el sitio)
+
+   POR QUÉ EXISTE
+   El sitio tiene un sistema de diseño (fsc-ui.css + tokens --ui-*) y ahora tiene
+   un fondo animado a color que ocupa toda la pantalla. Con la UI anterior
+   (botones rellenos de neón, bordes de color, 4 acentos distintos por fila y
+   todo en font-black/uppercase) la interfaz competía con el fondo: nada tenía
+   jerarquía y el ojo no sabía dónde mirar.
+
+   LA IDEA (una sola regla): el fondo es el protagonista, la UI es una capa de
+   vidrio fina encima. Entonces:
+     · superficies translúcidas + blur (dejan pasar el fondo, pero legibles)
+     · UN solo acento (--ui-accent) para estado activo; el color de categoría se
+       usa en un punto/etiqueta de 5px, nunca en el relleno del botón
+     · líneas hairline de 1px en vez de bordes de color y glows
+     · tipografía: 12–15px, peso 500–600 (se va el font-black), labels en 10px
+       con tracking .12em
+     · sin gradientes neón, sin sombras de color, sin transformaciones exageradas
+
+   Se carga DESPUÉS de tailwind.css y de fsc-ui.css (gana en el cascade) y no
+   toca la lógica: sólo piel.
+   ========================================================================== */
+
+:root {
+  --fk-glass:     rgba(9, 10, 15, 0.50);   /* superficie estándar */
+  --fk-glass-2:   rgba(9, 10, 15, 0.24);   /* superficie suave (header, chips) */
+  --fk-blur:      blur(20px) saturate(125%);
+  --fk-line:      rgba(255, 255, 255, 0.09);
+  --fk-line-2:    rgba(255, 255, 255, 0.20);
+  --fk-ink:       #eef1f6;
+  --fk-dim:       #9aa3b2;
+  --fk-accent:    var(--ui-accent, #22d3ee);
+  --fk-r:         0;      /* controles: SIN radio (a pedido) */
+  --fk-r-card:    0;      /* tarjetas / contenedores: SIN radio */
+  --fk-fondo-op:  0.85;   /* opacidad del fondo animado: bajalo si molesta al leer */
+
+  /* El sistema (fsc-ui.css) también se queda sin radios en toda la página */
+  --ui-r-sm: 0; --ui-r-md: 0; --ui-r-lg: 0; --ui-r-pill: 0;
+}
+
+/* ── SIN BORDES REDONDEADOS EN NINGÚN CONTENEDOR NI BOTÓN (pedido explícito).
+   Cubre las utilidades de Tailwind que genera el markup (rounded-xl, rounded-2xl,
+   rounded-full, rounded-[2rem]…) y los radios inline de los badges del header. */
+[class*="rounded"] { border-radius: 0 !important; }
+#header-notif-badge { border-radius: 0 !important; }
+
+/* Velo del fondo: el shader a color a full contrasta demasiado con el texto.
+   Con 0.85 sigue siendo protagonista pero el contenido lee cómodo. */
+#jpsi-canvas { opacity: var(--fk-fondo-op); }
+
+/* ── BASE: el color de fondo vive en <html> (se pinta detrás de todo, incluso
+   del canvas del shader que tiene z-index:-1). El <body> NO puede ser opaco:
+   taparía el fondo. (Esto es lo que hacía que "no se viera" el shader.) ── */
+html { background-color: #0d0d12 !important; }
+body { background-color: transparent !important; }
+
+/* ─────────────────────────────────────────────────────────────── HEADER ── */
+.ui-header {
+  background: rgba(7, 8, 12, 0.42) !important;
+  backdrop-filter: var(--fk-blur);
+  -webkit-backdrop-filter: var(--fk-blur);
+  border-bottom: 1px solid var(--fk-line);
+}
+.ui-logo span { font-weight: 600; font-size: 14px; letter-spacing: 0; }
+.ui-navlink {
+  font-size: 12.5px; font-weight: 500; letter-spacing: 0.01em; color: var(--fk-dim);
+  padding: 7px 10px; border-radius: 0; border-color: transparent;
+}
+.ui-navlink:hover {
+  background: rgba(255, 255, 255, 0.06); color: var(--fk-ink);
+  border-color: transparent; transform: none;
+}
+.ui-navlink.is-active {
+  color: var(--fk-ink); background: rgba(255, 255, 255, 0.07); border-color: transparent;
+}
+/* los colores por sección (chances lima / chat magenta) se apagan: un solo acento */
+.ui-navlink.is-chances, .ui-navlink.is-chat { color: var(--fk-dim); }
+
+/* ────────────────────────────────────────────────────────────── BOTONES ── */
+.ui-btn {
+  font-size: 12.5px; font-weight: 500; border-radius: var(--fk-r);
+  padding: 9px 14px; background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--fk-line); color: var(--fk-ink);
+}
+.ui-btn:hover {
+  transform: none; background: rgba(255, 255, 255, 0.1);
+  border-color: var(--fk-line-2); color: var(--fk-ink); box-shadow: none;
+}
+/* "Registrarse": acento pero en vidrio, no relleno pleno */
+.ui-btn--solid {
+  background: color-mix(in srgb, var(--fk-accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--fk-accent) 45%, transparent);
+  color: #d9fbff;
+}
+.ui-btn--solid:hover { filter: none; background: color-mix(in srgb, var(--fk-accent) 26%, transparent); }
+.ui-btn--primary {
+  background: rgba(255, 255, 255, 0.06); border-color: var(--fk-line); color: var(--fk-ink);
+}
+.ui-btn--primary:hover { background: rgba(255, 255, 255, 0.11); color: var(--fk-ink); }
+
+/* CTA del hero (.btn-primary de style.css: era un gradiente neón) */
+.btn-primary {
+  background: color-mix(in srgb, var(--fk-accent) 14%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--fk-accent) 45%, transparent) !important;
+  color: #d9fbff !important;
+  font-weight: 600 !important; font-size: 14px !important; letter-spacing: 0.01em;
+  padding: 12px 20px !important; border-radius: var(--fk-r) !important;
+  box-shadow: none !important;
+}
+.btn-primary:hover {
+  filter: none !important; box-shadow: none !important;
+  background: color-mix(in srgb, var(--fk-accent) 24%, transparent) !important;
+}
+
+/* ─────────────────────────────────────────────── TÍTULOS DE SECCIÓN ── */
+.fk-sec { display: flex; align-items: baseline; gap: 10px; margin: 0 0 16px; }
+.fk-sec h2 { font-size: 14px; font-weight: 600; letter-spacing: 0.01em; color: var(--fk-ink); }
+.fk-sec .fk-num { font-size: 11px; color: var(--fk-dim); font-variant-numeric: tabular-nums; }
+.fk-sec::after { content: ""; flex: 1; height: 1px; background: var(--fk-line); align-self: center; }
+
+/* ────────────────────────────────────────────── CONTENEDORES / TARJETAS ── */
+/* .card-cyber lo generan index.js y las demás páginas: acá se le quita el borde
+   de neón, el glow y el radio gigante, y se lo vuelve vidrio legible. */
+.card-cyber {
+  border-radius: var(--fk-r-card) !important;
+  border: 1px solid var(--fk-line) !important;
+  background: var(--fk-glass) !important;
+  backdrop-filter: var(--fk-blur);
+  -webkit-backdrop-filter: var(--fk-blur);
+  box-shadow: none !important;
+}
+.card-cyber:hover { border-color: var(--fk-line-2) !important; box-shadow: none !important; }
+.card-cyber h1, .card-cyber h2, .card-cyber h3, .card-cyber h4 { font-weight: 600 !important; letter-spacing: -0.01em; }
+/* chips/etiquetas dentro de las tarjetas: vidrio neutro + texto, sin relleno neón */
+.card-cyber [class*="font-black"] { font-weight: 600 !important; letter-spacing: 0.1em; }
+.card-cyber span[class*="bg-cyan-500"], .card-cyber span[class*="bg-purple-500"],
+.card-cyber span[class*="bg-red-500"], .card-cyber span[class*="bg-black/"],
+.card-cyber span[class*="bg-white/"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--fk-line) !important;
+  color: var(--fk-ink) !important;
+}
+.card-cyber button[class*="bg-"] { background: rgba(255, 255, 255, 0.05) !important; color: var(--fk-dim) !important; }
+.card-cyber a[class*="bg-red-600"], .card-cyber a[class*="text-red-500"] {
+  background: rgba(255, 255, 255, 0.05) !important; color: var(--fk-dim) !important; border-color: var(--fk-line) !important;
+}
+
+/* ────────────────────────────────────── BARRA DE FILTROS (control segmentado) ── */
+.fk-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 22px; }
+/* la cápsula con los 4 segmentos */
+.fk-seg {
+  display: inline-flex; align-items: center; gap: 2px; padding: 3px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--fk-line);
+  border-radius: 0; backdrop-filter: var(--fk-blur); -webkit-backdrop-filter: var(--fk-blur);
+}
+.fk-seg .filter-switch {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 500;
+  letter-spacing: 0.02em; color: var(--fk-dim); background: transparent !important;
+  border: 0 !important; border-radius: 0; padding: 8px 14px; cursor: pointer;
+  text-transform: none; box-shadow: none !important; backdrop-filter: none;
+}
+.fk-seg .filter-switch::before {
+  content: ""; width: 5px; height: 5px; border-radius: 0;
+  background: currentColor; opacity: 0.45; flex: 0 0 auto;
+}
+.fk-seg .filter-switch:hover { color: var(--fk-ink); background: rgba(255, 255, 255, 0.05) !important; }
+/* activo: el único lugar donde aparece el color de la categoría */
+.fk-seg .filter-switch.active { background: rgba(255, 255, 255, 0.08) !important; color: var(--fk-ink) !important; box-shadow: none !important; border-color: transparent !important; }
+.fk-seg .filter-switch.active::before { opacity: 1; }
+.fk-seg .filter-post.active::before        { background: #22d3ee; }
+.fk-seg .filter-recurso.active::before     { background: #a3e635; }
+.fk-seg .filter-oportunidad.active::before { background: #facc15; }
+.fk-seg .filter-evento.active::before      { background: #e879f9; }
+.fk-seg .filter-post.active, .fk-seg .filter-recurso.active,
+.fk-seg .filter-oportunidad.active, .fk-seg .filter-evento.active { background: rgba(255, 255, 255, 0.08) !important; }
+
+/* switch humano/IA y Data Externa: mismo lenguaje que el resto de los controles */
+#filter-human-ai {
+  width: 38px !important; height: 38px !important; border-radius: var(--fk-r) !important;
+  border: 1px solid var(--fk-line) !important; background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--fk-dim) !important; box-shadow: none !important; transform: none !important;
+}
+#filter-human-ai:hover { background: rgba(255, 255, 255, 0.1) !important; border-color: var(--fk-line-2) !important; }
+#filter-external {
+  height: 38px !important; border-radius: var(--fk-r) !important;
+  border: 1px solid var(--fk-line) !important; background: rgba(255, 255, 255, 0.04) !important;
+  color: var(--fk-dim) !important; box-shadow: none !important;
+}
+#filter-external:hover { border-color: var(--fk-line-2) !important; background: rgba(255, 255, 255, 0.08) !important; }
+
+/* separador vertical entre los switches y las categorías */
+.fk-toolbar .fk-div { width: 1px; height: 22px; background: var(--fk-line); }
+
+/* ──────────────────────────────────────────────────────── RITMO / MAIN ── */
+main { padding-top: 92px; }
+main > section { margin-bottom: 34px; }
+
+/* ──────────────────────────────────────────────────────────────── HERO ── */
+.fk-hero {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 28px;
+  padding: 24px 0 28px; margin-bottom: 30px; border-bottom: 1px solid var(--fk-line);
+}
+.fk-hero h1 {
+  font-size: 34px; font-weight: 600; letter-spacing: -0.022em; line-height: 1.12;
+  color: var(--fk-ink); max-width: 18ch; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.55);
+}
+.fk-hero p {
+  margin-top: 12px; font-size: 14.5px; line-height: 1.55; color: var(--fk-dim);
+  max-width: 52ch; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+@media (max-width: 720px) {
+  .fk-hero { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .fk-hero h1 { font-size: 27px; }
+}
+
+/* sobre el fondo a color, el texto suelto necesita un pelo más de peso */
+.fk-sec h2, main h1, main h2 { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5); }
+
+/* El pin del badge "DESTACADO" venía con color violeta animado: sobre el vidrio
+   neutro se veía como un acento de más. Ahora hereda el texto del chip. */
+.card-cyber .animated-violet-pin { color: inherit !important; animation: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTES PEDIDOS (11-Oct): header parejo, logo sin reborde, chats y paneles
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── LOGO: sin reborde (tenía un borde de 1px que no va) ── */
+.ui-logo img { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
+
+/* ── NAV: que CHANCES y el resto entren siempre.
+   El header es un grid de 3 columnas (logo | nav | acciones): con la sesión
+   iniciada las acciones crecen y el nav (overflow:hidden) recortaba el último
+   ítem. Se hace elástica la columna del medio y el nav más compacto. ── */
+.ui-header-bar { grid-template-columns: auto minmax(0, 1fr) auto !important; }
+.ui-nav { gap: 2px !important; min-width: 0; }
+.ui-nav::-webkit-scrollbar { display: none; }
+@media (max-width: 1240px) { .ui-navlink { font-size: 10.5px !important; padding: 5px 6px !important; } }
+.ui-navlink { padding: 7px 9px !important; font-size: 12px !important; letter-spacing: 0 !important; white-space: nowrap; }
+@media (max-width: 1560px) {
+  .ui-navlink { font-size: 11.5px !important; padding: 6px 7px !important; }
+  .ui-logo-texto { font-size: 13px !important; }
+}
+@media (max-width: 1180px) {
+  .ui-navlink { font-size: 11px !important; padding: 6px 6px !important; }
+}
+
+/* ── ACCIONES del header: MISMO color y MISMA altura.
+   (Colaborar / Crear / Notificaciones / usuario / salir tenían estilos y alturas
+   distintas: el de notificaciones quedaba 4px más bajo y el corazón dorado.) ── */
+.ui-actions { display: flex !important; align-items: center !important; gap: 8px !important; }
+.ui-actions > * {
+  height: 38px !important; min-height: 38px !important; box-sizing: border-box !important;
+  align-items: center !important; justify-content: center !important; gap: 7px;
+}
+/* OJO: no forzar `display` en los que el sistema oculta según el ancho
+   (.ui-solo-mobile / .ui-solo-desktop): si no, aparecía el menú hamburguesa
+   en pantallas grandes. */
+.ui-actions > .ui-btn:not(.ui-solo-mobile),
+.ui-actions > .ui-user:not(.ui-solo-mobile) { display: inline-flex !important; }
+.ui-actions .ui-btn, .ui-actions .ui-user {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--fk-line) !important;
+  color: var(--fk-ink) !important;
+  font-size: 12.5px !important; font-weight: 500 !important;
+  padding: 0 13px !important; margin: 0 !important;
+}
+.ui-actions .ui-btn--icon { width: 38px !important; padding: 0 !important; }
+.ui-actions .ui-btn:hover, .ui-actions .ui-user:hover {
+  background: rgba(255, 255, 255, 0.1) !important; border-color: var(--fk-line-2) !important; transform: none !important;
+}
+/* el corazón de "Colaborar" venía en dorado por style inline */
+.ui-actions .ui-colab i, .ui-actions .ui-btn i { color: inherit !important; }
+/* el badge de notificaciones, en el acento del sitio (era rojo suelto) */
+#header-notif-badge { background: var(--fk-accent) !important; color: #05141a !important; }
+
+/* ── HERO en un mini contenedor de vidrio ── */
+.fk-hero {
+  background: var(--fk-glass);
+  border: 1px solid var(--fk-line);
+  backdrop-filter: var(--fk-blur); -webkit-backdrop-filter: var(--fk-blur);
+  padding: 24px 26px !important; align-items: center !important;
+}
+
+/* ── CHAT: burbujas de vidrio (mías con el acento) ── */
+.msg-bubble > div {
+  background: var(--fk-glass) !important;
+  border: 1px solid var(--fk-line) !important;
+  box-shadow: none !important; transform: none !important;
+}
+.msg-bubble.justify-end > div {
+  background: color-mix(in srgb, var(--fk-accent) 9%, var(--fk-glass)) !important;
+  border-color: color-mix(in srgb, var(--fk-accent) 45%, transparent) !important;
+}
+.chat-messages { background: transparent !important; }
+
+/* ── INPUTS / SELECTS: mismo vidrio que todo lo demás (en todas las secciones) ── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+textarea, select {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--fk-line) !important;
+  color: var(--fk-ink) !important;
+  border-radius: 0 !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: color-mix(in srgb, var(--fk-accent) 55%, transparent) !important;
+  outline: none !important;
+}
+::placeholder { color: var(--fk-dim) !important; opacity: 1; }
+
+/* El widget de chat flotante (floating-chat.js) pone sus radios por style inline:
+   se anulan acá para que quede igual que el resto (todo cuadrado). */
+[id^="floating-chat"], [id^="float-"], .float-live-pulse { border-radius: 0 !important; }
+#floating-chat-window a, #floating-chat-window div, #floating-chat-window button,
+#floating-chat-window span, #floating-chat-dock a, #floating-chat-dock div,
+#floating-chat-dock button, #floating-chat-dock span { border-radius: 0 !important; }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   UNIFICACIÓN TOTAL DEL DISEÑO
+   ---------------------------------------------------------------------------
+   Este archivo es el ÚNICO lugar donde vive el diseño nuevo. Está linkeado
+   ÚLTIMO en todas las páginas (`css/fondo-ui.css?v=8`), así que cualquier
+   cambio que se haga ACÁ se replica en TODO el sitio sin tocar las páginas.
+   Para una sección nueva: darle la clase `fk-head` al contenedor del título
+   y la bajada (así hereda el mismo vidrio y la misma tipografía).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. CABECERA DE CADA SECCIÓN: el mismo contenedor de la home ─────────── */
+.fk-head {
+  background: var(--fk-glass);
+  border: 1px solid var(--fk-line);
+  backdrop-filter: var(--fk-blur); -webkit-backdrop-filter: var(--fk-blur);
+  padding: 22px 26px;
+  margin-bottom: 22px;
+}
+
+/* Títulos: misma tipografía en todas las secciones (se apagan los `font-black`
+   de Tailwind y los degradados de texto). */
+main h1, .fk-head h1 {
+  font-size: 30px !important; font-weight: 600 !important; letter-spacing: -0.022em !important;
+  line-height: 1.14 !important; color: var(--fk-ink) !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55) !important;
+}
+main h2 { font-weight: 600 !important; letter-spacing: -0.012em !important; color: var(--fk-ink) !important; }
+main h3 { font-weight: 600 !important; letter-spacing: -0.01em !important; color: var(--fk-ink) !important; }
+.gradient-text { background: none !important; -webkit-text-fill-color: currentColor !important; color: var(--fk-ink) !important; }
+.fk-head h1 i, main h1 i.fas {
+  color: var(--fk-accent) !important; font-size: 0.6em !important;
+  margin-right: 10px !important; vertical-align: 0.08em;
+}
+.fk-head p, .fk-head p[class*="text-gray-"], .fk-head .text-gray-400 {
+  color: var(--fk-dim) !important; font-size: 14.5px !important; margin-top: 8px !important;
+}
+/* el icono grande de algunas cabeceras (artistas) y sus botones */
+.fk-head div[class*="w-16"], .fk-head div[class*="h-16"] {
+  background: rgba(255, 255, 255, 0.04) !important; border: 1px solid var(--fk-line) !important;
+  border-radius: 0 !important;
+}
+.fk-head a[class*="bg-"], .fk-head .btn-primary {
+  background: rgba(255, 255, 255, 0.06) !important; border: 1px solid var(--fk-line) !important;
+  color: var(--fk-ink) !important; border-radius: 0 !important; box-shadow: none !important;
+  font-weight: 500 !important; letter-spacing: 0 !important;
+}
+.fk-head a[class*="bg-"]:hover, .fk-head .btn-primary:hover { background: rgba(255, 255, 255, 0.11) !important; }
+
+/* ── 2. FILTROS / PESTAÑAS: un solo lenguaje (control segmentado) ──────────── */
+.filter-btn, .filter-switch, .search-filter-chip, .tab-btn, .search-filters-clear {
+  background: transparent !important; border: 0 !important; color: var(--fk-dim) !important;
+  font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0 !important;
+  text-transform: none !important; padding: 8px 13px !important; border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.filter-btn:hover, .filter-switch:hover, .search-filter-chip:hover, .tab-btn:hover, .search-filters-clear:hover {
+  background: rgba(255, 255, 255, 0.06) !important; color: var(--fk-ink) !important; border: 0 !important;
+}
+.filter-btn.active, .filter-switch.active, .search-filter-chip.is-active,
+.tab-btn.active, .tab-btn[class*="bg-cyan-500"] {
+  background: rgba(255, 255, 255, 0.09) !important; color: var(--fk-ink) !important;
+  border: 0 !important; box-shadow: none !important;
+}
+/* la cápsula que agrupa los filtros (antes eran pills sueltos de colores) */
+main > div:has(> .filter-btn) {
+  display: inline-flex !important; flex-wrap: wrap; gap: 2px !important;
+  background: var(--fk-glass-2) !important; border: 1px solid var(--fk-line) !important;
+  padding: 5px !important; margin-bottom: 22px !important;
+}
+.search-filter-label, .search-filters-toggle {
+  color: var(--fk-dim) !important; font-weight: 500 !important; letter-spacing: 0.06em !important;
+}
+.search-filter-input {
+  background: rgba(255, 255, 255, 0.05) !important; border: 1px solid var(--fk-line) !important;
+  color: var(--fk-ink) !important; border-radius: 0 !important;
+}
+
+/* ── 3. CHIPS / BADGES DE COLOR DENTRO DE LAS TARJETAS: vidrio neutro ─────── */
+.card-cyber [class*="bg-"][class*="-500"],
+.card-cyber [class*="bg-"][class*="-400"],
+.card-cyber [class*="bg-black/"], .card-cyber [class*="bg-white/"] {
+  background: rgba(255, 255, 255, 0.06) !important; color: var(--fk-dim) !important;
+  border-color: var(--fk-line) !important; border-radius: 0 !important;
+}
+.card-cyber [class*="text-cyan-"], .card-cyber [class*="text-purple-"], .card-cyber [class*="text-violet-"],
+.card-cyber [class*="text-lime-"], .card-cyber [class*="text-yellow-"], .card-cyber [class*="text-amber-"],
+.card-cyber [class*="text-fuchsia-"], .card-cyber [class*="text-pink-"], .card-cyber [class*="text-emerald-"],
+.card-cyber [class*="text-green-"], .card-cyber [class*="text-blue-"], .card-cyber [class*="text-indigo-"],
+.card-cyber [class*="text-orange-"], .card-cyber [class*="text-[var(--color-"] {
+  color: var(--fk-dim) !important;
+}
+.card-cyber [class*="border-"][class*="-500"] { border-color: var(--fk-line) !important; }
+/* los botones dentro de las tarjetas (contadores, acciones) */
+.card-cyber button[class*="bg-"], .card-cyber a[class*="bg-"] {
+  background: rgba(255, 255, 255, 0.05) !important; color: var(--fk-dim) !important;
+  border-color: var(--fk-line) !important;
+}
+/* avatares: cuadrados y sin relleno de color */
+.card-cyber img, .ui-user img, .ui-actions img, .card-cyber canvas { border-radius: 0 !important; }
+
+/* ── 4. DESPLEGABLE "MÁS": que se vea (estaba recortado por el overflow) ──── */
+.ui-header { z-index: 200 !important; }
+.ui-nav { overflow: visible !important; }
+.ui-menu-panel {
+  z-index: 500 !important; border-radius: 0 !important;
+  background: rgba(9, 10, 15, 0.94) !important; border: 1px solid var(--fk-line) !important;
+  backdrop-filter: var(--fk-blur); -webkit-backdrop-filter: var(--fk-blur);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6) !important;
+}
+.ui-menu-panel a {
+  border-radius: 0 !important; color: var(--fk-dim) !important;
+  font-size: 13px !important; font-weight: 500 !important; letter-spacing: 0 !important;
+}
+.ui-menu-panel a:hover { background: rgba(255, 255, 255, 0.06) !important; color: var(--fk-ink) !important; }
+.ui-menu-panel a i { color: inherit !important; }
+
+/* ── 5. PERFIL: la foto y el nombre van sueltos sobre el fondo ───────────── */
+#profile-header {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  padding: 6px 0 14px !important;
+}
+#profile-avatar {
+  background: rgba(255, 255, 255, 0.06) !important; border: 1px solid var(--fk-line) !important;
+  color: var(--fk-ink) !important; border-radius: 0 !important;
+}
+#profile-header h1 { font-size: 28px !important; }
+#profile-header p { color: var(--fk-dim) !important; }
+#profile-socials a, #profile-socials span {
+  background: rgba(255, 255, 255, 0.05) !important; border: 1px solid var(--fk-line) !important;
+  color: var(--fk-dim) !important; border-radius: 0 !important;
+}
+
+/* ── 6. BARRIDO FINAL: todo cuadrado (contenedores, botones, chips, inputs) ─ */
+.card-cyber, .fk-head, .fk-hero, .fk-seg, .fk-toolbar,
+button, input, select, textarea, img, canvas, table, td, th,
+.ui-btn, .ui-modal, .ui-modal-box, .ui-menu-panel, .ui-menu-panel a,
+.ui-badge, .ui-input, .ui-select, .ui-card, .ui-panel, .ui-tab,
+[id^="floating-chat"], [id^="float-"] { border-radius: 0 !important; }
+
+/* ── 7. CANVAS DE PARTÍCULAS p5 (vive entre el fondo del shader y el contenido
+   — antes esto estaba en un <style> suelto dentro de index.html) ─────────── */
+#p5-canvas {
+  position: fixed !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important;
+  z-index: 0 !important; pointer-events: none !important;
+}
+
+/* ── 8. SWEEP DEFINITIVO: ningún radio en ninguna parte, ni por style inline ──
+   (los `a.social-link` de artistas y varios widgets traían border-radius en el
+   atributo style; una regla con !important gana sobre el estilo inline) */
+[style*="border-radius"] { border-radius: 0 !important; }
+iframe, video, .video-wrapper, .slideshow-container, .slide-dot,
+.social-link, .avatar, .badge, .chip { border-radius: 0 !important; }
+
+/* jerarquía: el título de la home queda un punto más grande que el resto */
+.fk-hero h1 { font-size: 34px !important; }
+
+/* ── 9. CHIPS / ICONOS DE COLOR EN TODO EL CONTENIDO (no sólo dentro de las
+   tarjetas): los contadores de artistas, los iconos sociales de colores, etc.
+   Se salvan las barras de progreso (tienen style="width:") y la barra de XP. ── */
+main [class*="bg-"][class*="-500"]:not([class*="progress"]):not([id*="bar"]),
+main [class*="bg-"][class*="-400"]:not([class*="progress"]):not([id*="bar"]) {
+  background: rgba(255, 255, 255, 0.06) !important; color: var(--fk-dim) !important;
+  border-color: var(--fk-line) !important;
+}
+main [class*="text-cyan-"]:not([id*="bar"]), main [class*="text-purple-"], main [class*="text-violet-"],
+main [class*="text-lime-"], main [class*="text-yellow-"], main [class*="text-amber-"],
+main [class*="text-fuchsia-"], main [class*="text-pink-"], main [class*="text-emerald-"],
+main [class*="text-green-"], main [class*="text-blue-"], main [class*="text-indigo-"],
+main [class*="text-orange-"], main [class*="text-[var(--color-"]:not(#xp-level-label) {
+  color: var(--fk-dim) !important;
+}
+main [class*="border-"][class*="-500"], main [class*="border-"][class*="-400"] { border-color: var(--fk-line) !important; }
+/* y que esos chips sean cuadrados como todo el resto */
+main [class*="bg-"][class*="-500"], main [class*="border-"][class*="-500"] { border-radius: 0 !important; }
+
+/* ── 10. UN SOLO ACENTO EN TODO EL SITIO + LOS CHIPS DECORATIVOS EN VIDRIO ───
+   Cada sección traía su propio color (cyan #00f5ff, magenta, lima) con reglas
+   propias (!important) en style.css / artistas.css. Acá queda UN acento —el del
+   sitio— y los chips/contadores pasan a vidrio neutro. ────────────────────── */
+:root { --fk-accent: var(--color-cyan, #00f5ff); }
+
+/* enlaces dentro del contenido (descripciones de posteos, oportunidades, etc.):
+   siguen existiendo como acento, pero tomados de UN solo token */
+main a.text-cyan-400, main #opo-descripcion a, main #opo-basesCondiciones a,
+main #opo-colaboracionPedida a, main #post-detail-container a.text-cyan-400,
+main .post-content a, main #event-content a, main #resource-content a,
+main #oportunidad-content a, main #feed-container a.text-cyan-400 {
+  color: var(--fk-accent) !important;
+}
+
+/* chips/contadores/etiquetas decorativas de cada sección → vidrio neutro */
+.count-badge, .stat-badge, .stat-chip, .artist-tag, .social-link, .bio-badge {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--fk-line) !important;
+  color: var(--fk-dim) !important;
+}
+.count-badge i, .stat-badge i, .stat-chip i, .social-link i, .artist-tag i { color: inherit !important; }
+.artist-card, .artist-avatar, .artist-photo, .avatar-frame { border-color: var(--fk-line) !important; }
+
+/* los colores de los tokens viejos por página (magenta/lima/amarillo/cyan) */
+main [class*="bg-[var(--color-magenta"], main [class*="bg-[var(--color-lime"],
+main [class*="bg-[var(--color-yellow"], main [class*="bg-[var(--color-cyan"]:not(#xp-bar-fill),
+main [class*="border-[var(--color-magenta"], main [class*="border-[var(--color-cyan"],
+main [class*="border-[var(--color-lime"], main [class*="text-[var(--color-magenta"],
+main [class*="text-[var(--color-lime"], main [class*="text-[var(--color-yellow"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--fk-line) !important;
+  color: var(--fk-dim) !important;
+}
+/* el día de hoy en el calendario: acento, pero sin relleno de color */
+.calendar-day.today {
+  border-color: var(--fk-accent) !important; background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--fk-ink) !important;
+}
+/* títulos con degradado: texto plano (un solo lenguaje tipográfico) */
+.gradient-text { background: none !important; -webkit-text-fill-color: currentColor !important; color: var(--fk-ink) !important; }
+
+
+/* ── 11. BOTONES DEL HEADER: TODOS exactamente iguales ───────────────────────
+   Colaborar (.ui-btn--ghost + .ui-sheen con su velo degradado), Crear
+   (.ui-btn--primary, que venía teñido con el acento) y Notificaciones tenían
+   relleno, borde y brillo propios. Acá se fijan todos al mismo vidrio. */
+.ui-header .ui-actions > *,
+.ui-header .ui-actions > * > .ui-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  background-image: none !important;
+  border: 1px solid var(--fk-line) !important;
+  box-shadow: none !important;
+  color: var(--fk-ink) !important;
+}
+.ui-header .ui-actions .ui-sheen::before,
+.ui-header .ui-actions .ui-sheen::after { display: none !important; }
+.ui-header .ui-actions > *:hover,
+.ui-header .ui-actions > * > .ui-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: var(--fk-line-2) !important;
+  filter: none !important;
+}
+.ui-header .ui-actions i { color: inherit !important; }
+
+/* ── 12. TAGS DEL FEED (OBRA / RECURSO / EVENTO / OPORTUNIDAD): en negro ───── */
+.fk-tag {
+  background: #000 !important; color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+.fk-subtag {
+  background: #000 !important; color: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ── 13. TODOS LOS CONTENEDORES: el MISMO vidrio del index ───────────────────
+   Transparencia + blur (efecto vidrio esmerilado), igual que las tarjetas del
+   feed. Vale para las tarjetas de categoría de Chances, las grillas de obras,
+   recursos, eventos, resultados y los formularios. */
+.fk-chances .fk-head,
+.fk-chances .card-cyber,
+.fk-chances #oportunidades-container > *,
+.fk-chances a[class*="rounded"],
+.fk-chances main > div:has(> .filter-btn),
+.artist-card, .event-card, .resource-card, .post-card, .tipo-btn, .parametro-row,
+#oportunidades-container > *, #obras-container > *, #recursos-container > *,
+#events-container > *, #results-container > *, #feed-container > * > .card-cyber,
+#profile-completion-widget, #mobile-menu .ui-menu-panel,
+main > form, main > section > div[class*="bg-white/"],
+main > div[class*="bg-white/"][class*="border"] {
+  background: var(--fk-glass) !important;
+  backdrop-filter: var(--fk-blur) !important;
+  -webkit-backdrop-filter: var(--fk-blur) !important;
+  border-color: var(--fk-line) !important;
+}
+main div[class*="card"]:not(#profile-header) {
+  background: var(--fk-glass) !important;
+  backdrop-filter: var(--fk-blur) !important;
+  -webkit-backdrop-filter: var(--fk-blur) !important;
+}
+
+/* ── 14. PALABRA FINAL: el vidrio del index manda sobre cualquier regla previa.
+   (Las reglas de neutralización de chips tenían más especificidad y pisaban
+   tanto el tag negro del feed como el fondo de vidrio de las tarjetas.) ─────── */
+/* (.ui-con-header repetido a propósito: le da el peso necesario para ganarle
+   a las reglas de neutralización de chips, que usan varios [class*=]) */
+body.ui-con-header.ui-con-header .card-cyber,
+body.ui-con-header.ui-con-header .fk-head,
+body.ui-con-header.ui-con-header .fk-hero,
+body.ui-con-header.ui-con-header .fk-chances a[class*="rounded"] {
+  background: var(--fk-glass) !important;
+  backdrop-filter: var(--fk-blur) !important;
+  -webkit-backdrop-filter: var(--fk-blur) !important;
+  border-color: var(--fk-line) !important;
+}
+body.ui-con-header.ui-con-header .fk-tag {
+  background: #000 !important; color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body.ui-con-header.ui-con-header .fk-subtag {
+  background: #000 !important; color: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ── 15. PESO DEFINITIVO para los casos que las reglas de chips pisaban.
+   Se explica: las reglas de neutralización usan varios [class*=] (peso alto),
+   así que acá se empareja el peso y se gana por orden (esta es la última). ─── */
+html body.ui-con-header.ui-con-header.ui-con-header .fk-tag {
+  background: #000 !important; color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html body.ui-con-header.ui-con-header.ui-con-header .fk-subtag {
+  background: #000 !important; color: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+html body.ui-con-header.ui-con-header.fk-chances .fk-head,
+html body.ui-con-header.ui-con-header.fk-chances .card-cyber,
+html body.ui-con-header.ui-con-header.fk-chances a[class*="rounded"],
+html body.ui-con-header.ui-con-header.fk-chances #oportunidades-container > * {
+  background: var(--fk-glass) !important;
+  backdrop-filter: var(--fk-blur) !important;
+  -webkit-backdrop-filter: var(--fk-blur) !important;
+  border-color: var(--fk-line) !important;
+}

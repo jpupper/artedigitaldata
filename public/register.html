@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 </head>
 <body class="ui-con-header min-h-screen flex flex-col">
-  <script>showRegister();</script>
+  <script src="js/paginas/register-1.js"></script>
   <div id="app-header"></div>
 
   <main class="flex-1 flex items-center justify-center pt-20 pb-10 px-4">
@@ -59,44 +60,13 @@
   </main>
 
   <script src="js/config.js"></script>
-  <script src="js/auth.js?v=5"></script>
-  <script src="js/header.js?v=4"></script>
-  <script>
-    if (isLoggedIn()) window.location.href = CONFIG.BASE + '/';
-
-    document.getElementById('register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errorEl = document.getElementById('reg-error');
-      errorEl.classList.add('hidden');
-
-      const username = document.getElementById('reg-username').value.trim();
-      const email = document.getElementById('reg-email').value.trim();
-      const password = document.getElementById('reg-pass').value;
-
-      try {
-        const res = await fetch(CONFIG.API_URL + '/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password })
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          errorEl.textContent = data.error || 'Error al registrarse';
-          errorEl.classList.remove('hidden');
-          return;
-        }
-
-        setToken(data.token);
-        setUser(data.user);
-        window.location.href = CONFIG.BASE + '/';
-      } catch {
-        errorEl.textContent = 'Error de conexión con el servidor';
-        errorEl.classList.remove('hidden');
-      }
-    });
-  </script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/header.js?v=5"></script>
+  <script src="js/paginas/register-2.js"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
 </body>
 </html>

@@ -8,23 +8,25 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/calendario.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
+  <link rel="stylesheet" href="css/paginas/calendario.css">
 </head>
 <body class="ui-con-header min-h-screen">
-  <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
-  <div id="app-header" style="position: relative; z-index: 100;"></div>
+  <div id="p5-canvas" class="dp-1"></div>
+  <div id="app-header" class="dp-2"></div>
 
   <main class="relative z-10 pt-24 pb-12 max-w-7xl mx-auto px-4">
-    <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+    <div class="fk-head flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
       <div>
         <h1 class="text-3xl font-black text-white flex items-center gap-3">
           <i class="fas fa-calendar-alt text-cyan-400"></i> Calendario Comunidad
         </h1>
       </div>
       <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl border border-white/10">
-        <button onclick="prevMonth()" class="w-10 h-10 rounded-xl hover:bg-white/10 text-white transition-all"><i class="fas fa-chevron-left"></i></button>
+        <button data-on-click="prevMonth()" class="w-10 h-10 rounded-xl hover:bg-white/10 text-white transition-all"><i class="fas fa-chevron-left"></i></button>
         <span id="current-month-year" class="text-lg font-bold text-[var(--color-cyan)] min-w-[150px] text-center">Marzo 2026</span>
-        <button onclick="nextMonth()" class="w-10 h-10 rounded-xl hover:bg-white/10 text-white transition-all"><i class="fas fa-chevron-right"></i></button>
+        <button data-on-click="nextMonth()" class="w-10 h-10 rounded-xl hover:bg-white/10 text-white transition-all"><i class="fas fa-chevron-right"></i></button>
       </div>
       <a href="create.html" class="btn-primary px-6 py-2 rounded-xl text-sm"><i class="fas fa-plus mr-2"></i>Nuevo Evento</a>
     </div>
@@ -47,107 +49,19 @@
   </main>
 
   <script src="js/config.js"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=4"></script>
+  <script src="js/header.js?v=5"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="js/notifications.js"></script>
-  <script>
-    let currentDate = new Date();
-    let events = [];
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadEvents();
-      renderCalendar();
-    });
-
-    async function loadEvents() {
-      try {
-        const res = await fetch(CONFIG.API_URL + '/eventos');
-        events = await res.json();
-      } catch (err) {
-        console.error('Error loading events:', err);
-      }
-    }
-
-    function renderCalendar() {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-
-      document.getElementById('current-month-year').innerText = new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(currentDate).toUpperCase();
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const prevMonthLastDay = new Date(year, month, 0).getDate();
-
-      const body = document.getElementById('calendar-body');
-      body.innerHTML = '';
-
-      // Previous month days
-      for (let i = firstDay; i > 0; i--) {
-        body.innerHTML += `<div class="calendar-day not-current"><span class="text-xs text-gray-700">${prevMonthLastDay - i + 1}</span></div>`;
-      }
-
-      // Current month days
-      const today = new Date();
-      for (let i = 1; i <= daysInMonth; i++) {
-        const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        
-        const dayEvents = events.filter(e => {
-          if (!e.date) return false;
-          const eventDate = new Date(e.date);
-          const eventDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
-          return eventDateStr === dateStr;
-        });
-
-        body.innerHTML += `
-          <div class="calendar-day ${isToday ? 'today' : ''}">
-            <span class="text-xs font-bold ${isToday ? 'text-cyan-400' : 'text-gray-500'}">${i}</span>
-            <div class="mt-2 space-y-1">
-              ${dayEvents.map(e => `
-                <div class="event-pill flex items-center gap-1.5 p-1 rounded-lg bg-fuchsia-600/80 hover:bg-fuchsia-500 text-white cursor-pointer transition-all border border-white/10" onclick="showEvent('${e._id}')" title="${escapeHTML(e.title || '')}">
-                  ${e.imageUrl ? `<img src="${sanitizeUrl(e.imageUrl)}" class="w-6 h-6 rounded-md object-cover shrink-0 border border-white/20">` : `<div class="w-6 h-6 rounded-md bg-black/40 flex items-center justify-center shrink-0 text-[10px] text-fuchsia-300"><i class="fas fa-calendar-alt"></i></div>`}
-                  <span class="truncate text-[11px] font-bold leading-tight flex-1">${escapeHTML(e.title || 'Evento')}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }
-
-      // Next month days (fill the grid)
-      const currentGridCells = firstDay + daysInMonth;
-      const totalCells = Math.ceil(currentGridCells / 7) * 7;
-      for (let i = 1; i <= (totalCells - currentGridCells); i++) {
-        body.innerHTML += `<div class="calendar-day not-current"><span class="text-xs text-gray-700">${i}</span></div>`;
-      }
-    }
-
-    function prevMonth() {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      renderCalendar();
-    }
-
-    function nextMonth() {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      renderCalendar();
-    }
-
-    function showEvent(id) {
-      window.open(`evento.html?id=${id}`, '_blank');
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('event-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-  </script>
+  <script src="js/paginas/calendario-1.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script src="js/p5-effect.js?v=12"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

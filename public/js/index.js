@@ -399,10 +399,10 @@ function renderFeed() {
             ` : ''}
           </a>
           <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
-            <span class="px-3 py-1 rounded-full text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
+            <span class="fk-tag px-3 py-1 text-[10px] font-black border border-${accentColor}-500/30 bg-black/60 text-${accentColor}-400 backdrop-blur-md uppercase tracking-widest">
               ${badgeText}
             </span>
-            ${isOportunidad ? `<span class="px-2 py-0.5 rounded text-[8px] font-bold bg-${accentColor}-500/20 text-${accentColor}-400 uppercase tracking-wider">${subcategoria}</span>` : ''}
+            ${isOportunidad ? `<span class="fk-subtag px-2 py-0.5 text-[8px] font-bold bg-${accentColor}-500/20 text-${accentColor}-400 uppercase tracking-wider">${subcategoria}</span>` : ''}
             ${isAdmin() && !item.pinned ? `
             <button onclick="event.stopPropagation(); pinItemFromFeed('${item._id}', '${item.feedType}')" class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all flex items-center justify-center" title="Pinnar posteo destacado">
               <i class="fas fa-thumbtack text-[10px] transform rotate-45"></i>

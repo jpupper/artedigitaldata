@@ -11,7 +11,8 @@
   <!-- Tipografías extra para Letrasp5: terminal/consola, pixel-art retro y consola pixel-art -->
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;700&family=Fira+Code:wght@400;700&family=Anonymous+Pro:wght@400;700&family=Inconsolata:wght@400;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;700&family=Jersey+10&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/particulas.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/paginas/visualeffects.css?v=2">
 </head>
 <body>
   <!-- Canvas p5 -->
@@ -23,21 +24,21 @@
   <!-- Top Bar -->
   <header class="top-bar">
     <div class="top-actions">
-      <a href="./index.html" class="btn-toggle-ui" style="text-decoration: none;" title="Volver al Inicio">
+      <a href="./index.html" class="btn-toggle-ui visualeffects-e1" title="Volver al Inicio">
         <i class="fas fa-arrow-left"></i>
         <span>Inicio</span>
       </a>
 
       <button id="toggle-left-panel-btn" class="btn-toggle-ui" title="Panel de Parámetros de Sistema (Atajo: P)">
-        <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i>
+        <i class="fas fa-sliders-h visualeffects-e2"></i>
         <span>Parámetros</span>
       </button>
       <button id="toggle-right-panel-btn" class="btn-toggle-ui" title="Panel de Modos Flyer/Collab (Atajo: M)">
-        <i class="fas fa-layer-group" style="color: var(--accent-magenta);"></i>
+        <i class="fas fa-layer-group visualeffects-e3"></i>
         <span>Modos</span>
       </button>
       <button id="btn-save-fx" class="btn-toggle-ui" title="Guardar Proyecto de Efecto Visual">
-        <i class="fas fa-save" style="color: #d0d0d0;"></i>
+        <i class="fas fa-save visualeffects-e4"></i>
         <span>Guardar</span>
       </button>
       <button id="toggle-fullscreen-btn" class="btn-toggle-ui" title="Pantalla Completa (Atajo: F)">
@@ -74,13 +75,13 @@
       <!-- Sub-Pestaña 1: Letrasp5 (Parámetros del sistema de partículas) -->
       <div id="tab-pane-params-p5" class="tab-pane active">
         <!-- Modo de Formación (Card superior de control) -->
-        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 10px 12px; background: rgba(232, 232, 232, 0.04); border: 1px solid rgba(232, 232, 232, 0.2); border-radius: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="formation-mode-card visualeffects-e5">
+          <div class="visualeffects-e6">
             <div>
-              <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+              <span class="visualeffects-e7">
                 <i class="fas fa-cubes text-[var(--accent-cyan)]"></i> Formación de Palabra
               </span>
-              <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
+              <div class="visualeffects-e8">
                 FISICS (atracción y viaje) o CODE (decodificación estática)
               </div>
             </div>
@@ -113,7 +114,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Tamaño Máximo de Letra (px)</span>
               </div>
@@ -123,7 +124,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Separación entre Letras (0px - 100px)</span>
               </div>
@@ -133,7 +134,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Posición Centrado X (px)</span>
               </div>
@@ -143,7 +144,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Posición Centrado Y (px)</span>
               </div>
@@ -153,11 +154,11 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Tipografía (Letrasp5)</span>
               </div>
-              <select id="param-P5_FONT" class="text-input" style="padding: 5px 8px; font-size: 11px;">
+              <select id="param-P5_FONT" class="text-input visualeffects-e10">
                 <optgroup label="Básicas">
                   <option value="sans-serif">Por defecto (Sans-Serif)</option>
                   <option value="monospace">Monospace / Consolas</option>
@@ -192,7 +193,7 @@
               </select>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Caracteres ambientales</span>
               </div>
@@ -210,24 +211,24 @@
           </div>
           <div class="group-content">
             <!-- Selector de Letras de la Palabra Activa -->
-            <div id="word-letters-selector-container" class="letter-selector-wrapper" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 700; color: #d3d3d3; display: flex; align-items: center; gap: 5px;">
+            <div id="word-letters-selector-container" class="letter-selector-wrapper visualeffects-e11">
+              <div class="visualeffects-e12">
+                <span class="visualeffects-e13">
                   <i class="fas fa-font text-white"></i> Letra Seleccionada:
                 </span>
-                <span id="selected-letter-badge" style="font-size: 10px; color: var(--accent-cyan); font-weight: 700; background: rgba(232, 232, 232, 0.1); border: 1px solid rgba(232, 232, 232, 0.3); padding: 2px 8px; border-radius: 6px;">Toda la palabra</span>
+                <span id="selected-letter-badge" class="visualeffects-e14">Toda la palabra</span>
               </div>
-              <div id="word-letters-chips" style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <div id="word-letters-chips" class="visualeffects-e15">
                 <!-- Se llena dinámicamente según la palabra activa -->
               </div>
             </div>
 
             <!-- Color de la Letra o Palabra Seleccionada -->
-            <div id="selected-letter-color-box" class="control-row" style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="selected-letter-color-box" class="control-row visualeffects-e16">
+              <div class="visualeffects-e6">
                 <div>
-                  <span id="letter-color-label" style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Letra Seleccionada</span>
-                  <div id="letter-color-subtext" style="font-size: 10px; color: #a1a1a1; margin-top: 1px;">Elegí el color para la letra activa</div>
+                  <span id="letter-color-label" class="visualeffects-e17">Color de Letra Seleccionada</span>
+                  <div id="letter-color-subtext" class="visualeffects-e18">Elegí el color para la letra activa</div>
                 </div>
                 <div class="color-input-wrap">
                   <input type="color" id="param-SELECTED_LETTER_COLOR" value="#e0e0e0">
@@ -235,7 +236,7 @@
               </div>
             </div>
 
-            <div style="font-size: 11px; color: #d3d3d3; font-weight: 600; margin-bottom: 8px;">
+            <div class="visualeffects-e19">
               <span>Paleta Cromática (Degradado):</span>
             </div>
             <div class="palette-grid">
@@ -266,29 +267,29 @@
             </div>
 
             <!-- Fondo Cuadrado (Bounding Box) movido a Paleta Cromática -->
-            <div class="control-row" style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="control-row visualeffects-e20">
+              <div class="visualeffects-e6">
                 <div>
-                  <span style="font-size: 11px; color: #d3d3d3;">Fondo Cuadrado (Bounding Box)</span>
-                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
+                  <span class="visualeffects-e21">Fondo Cuadrado (Bounding Box)</span>
+                  <div class="visualeffects-e8">
                     Dibuja un marco/cuadrado detrás de cada letra.
                   </div>
                 </div>
-                <label class="switch-ui" style="transform: scale(0.85);" title="Activar fondo cuadrado en letras">
+                <label class="switch-ui visualeffects-e22" title="Activar fondo cuadrado en letras">
                   <input type="checkbox" id="param-CHAR_BG_ENABLED">
                   <span class="slider-toggle"></span>
                 </label>
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
-              <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #a1a1a1;">Color de Fondo</label>
+            <div class="control-row visualeffects-e23">
+              <div class="color-picker-box visualeffects-e24">
+                <label class="visualeffects-e25">Color de Fondo</label>
                 <div class="color-input-wrap">
                   <input type="color" id="param-CHAR_BG_COLOR" value="#000000">
                 </div>
               </div>
-              <div style="flex: 2;">
+              <div class="visualeffects-e26">
                 <div class="control-label-wrap">
                   <span>Opacidad del Cuadrado</span>
                 </div>
@@ -303,20 +304,20 @@
           </div>
 
         <!-- Efecto Bounding Box por Palabra (Grupo Independiente Principal) -->
-        <div class="param-group collapsed" style="margin-top: 10px; border: 1px solid rgba(232, 232, 232, 0.3); background: rgba(232, 232, 232, 0.04);">
+        <div class="param-group collapsed visualeffects-e27">
           <div class="group-title">
-            <i class="fas fa-vector-square" style="color: var(--accent-cyan);"></i>
-            <span style="color: var(--accent-cyan);">Efecto Bounding Box por Palabra</span>
+            <i class="fas fa-vector-square visualeffects-e2"></i>
+            <span class="visualeffects-e2">Efecto Bounding Box por Palabra</span>
             <i class="fas fa-chevron-down group-chevron"></i>
           </div>
           <div class="group-content">
             <div class="control-row">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="visualeffects-e6">
                 <div>
-                  <span style="font-size: 11px; font-weight: 700; color: #fff;">Activar Bounding Box</span>
-                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">Dibuja un fondo/borde a nivel de la palabra seleccionada</div>
+                  <span class="visualeffects-e28">Activar Bounding Box</span>
+                  <div class="visualeffects-e8">Dibuja un fondo/borde a nivel de la palabra seleccionada</div>
                 </div>
-                <label class="switch-ui" style="transform: scale(0.85);" title="Activar/Desactivar Bounding Box por palabra">
+                <label class="switch-ui visualeffects-e22" title="Activar/Desactivar Bounding Box por palabra">
                   <input type="checkbox" id="param-WORD_BOX_ENABLED">
                   <span class="slider-toggle"></span>
                 </label>
@@ -324,14 +325,14 @@
             </div>
 
             <!-- Fill Color & Opacity -->
-            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
-              <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #a1a1a1;">Color Relleno (Fill)</label>
+            <div class="control-row visualeffects-e23">
+              <div class="color-picker-box visualeffects-e24">
+                <label class="visualeffects-e25">Color Relleno (Fill)</label>
                 <div class="color-input-wrap">
                   <input type="color" id="param-GLOBAL_WORD_BOX_FILL_COLOR" value="#171717">
                 </div>
               </div>
-              <div style="flex: 2;">
+              <div class="visualeffects-e26">
                 <div class="control-label-wrap"><span>Opacidad Relleno</span></div>
                 <div class="slider-text-combo">
                   <input type="range" id="param-GLOBAL_WORD_BOX_FILL_OPACITY" min="0" max="1.0" step="0.05" value="0.7">
@@ -341,14 +342,14 @@
             </div>
 
             <!-- Stroke Color & Width -->
-            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
-              <div class="color-picker-box" style="flex: 1;">
-                <label style="font-size: 10px; color: #a1a1a1;">Color Borde (Stroke)</label>
+            <div class="control-row visualeffects-e23">
+              <div class="color-picker-box visualeffects-e24">
+                <label class="visualeffects-e25">Color Borde (Stroke)</label>
                 <div class="color-input-wrap">
                   <input type="color" id="param-GLOBAL_WORD_BOX_STROKE_COLOR" value="#e8e8e8">
                 </div>
               </div>
-              <div style="flex: 2;">
+              <div class="visualeffects-e26">
                 <div class="control-label-wrap"><span>Grosor Borde (px)</span></div>
                 <div class="slider-text-combo">
                   <input type="range" id="param-GLOBAL_WORD_BOX_STROKE_WIDTH" min="0" max="20" step="1" value="2">
@@ -358,7 +359,7 @@
             </div>
 
             <!-- Rounding & Padding X/Y -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap"><span>Redondeado (px)</span></div>
               <div class="slider-text-combo">
                 <input type="range" id="param-GLOBAL_WORD_BOX_ROUNDING" min="0" max="50" step="1" value="8">
@@ -366,15 +367,15 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px; display: flex; gap: 10px;">
-              <div style="flex: 1;">
+            <div class="control-row visualeffects-e29">
+              <div class="visualeffects-e24">
                 <div class="control-label-wrap"><span>Margen Ancho X (px)</span></div>
                 <div class="slider-text-combo">
                   <input type="range" id="param-GLOBAL_WORD_BOX_PADDING_X" min="0" max="80" step="1" value="16">
                   <input type="number" id="num-GLOBAL_WORD_BOX_PADDING_X" class="val-input" min="0" max="80" step="1" value="16">
                 </div>
               </div>
-              <div style="flex: 1;">
+              <div class="visualeffects-e24">
                 <div class="control-label-wrap"><span>Margen Alto Y (px)</span></div>
                 <div class="slider-text-combo">
                   <input type="range" id="param-GLOBAL_WORD_BOX_PADDING_Y" min="0" max="80" step="1" value="16">
@@ -384,9 +385,9 @@
             </div>
 
             <!-- Line Pattern & Speed -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap"><span>Patrón de Línea Experimental</span></div>
-              <select id="param-GLOBAL_WORD_BOX_LINE_PATTERN" class="select-ui" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 11px;">
+              <select id="param-GLOBAL_WORD_BOX_LINE_PATTERN" class="select-ui visualeffects-e30">
                 <option value="solid">Línea Sólida (Continua)</option>
                 <option value="marching-ants">Marcha de Hormigas (Animated Ants)</option>
                 <option value="neon-pulse">Pulso Neón (Animated Neon Glow)</option>
@@ -397,7 +398,7 @@
               </select>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap"><span>Velocidad de Animación de Trazo</span></div>
               <div class="slider-text-combo">
                 <input type="range" id="param-WORD_BOX_SPEED" min="0" max="10" step="0.5" value="3">
@@ -408,9 +409,9 @@
         </div>
 
         <!-- Parámetros Modo CODE (Solo visible cuando el modo CODE está activo) -->
-        <div id="group-mode-code" class="param-group group-mode-code collapsed" style="display: none;">
+        <div id="group-mode-code" class="param-group group-mode-code collapsed visualeffects-e31">
           <div class="group-title">
-            <i class="fas fa-terminal" style="color: var(--accent-cyan);"></i>
+            <i class="fas fa-terminal visualeffects-e2"></i>
             <span>Parámetros Modo CODE</span>
             <i class="fas fa-chevron-down group-chevron"></i>
           </div>
@@ -427,7 +428,7 @@
             </div>
 
             <!-- b) Duración entrada -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Duración entrada (Frames)</span>
               </div>
@@ -438,7 +439,7 @@
             </div>
 
             <!-- c) Finish Displace -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Finish Displace</span>
               </div>
@@ -449,22 +450,22 @@
             </div>
 
             <!-- Caracteres de mutación / Glitch -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Caracteres de Glitch / Scramble</span>
               </div>
-              <input type="text" id="param-CODE_GLITCH_CHARS" class="text-input-field" value="01<>{}#*+%$&?XZ7@!" placeholder="Símbolos de mutación" style="width: 100%; margin-top: 4px; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-family: monospace; font-size: 11px;">
+              <input type="text" id="param-CODE_GLITCH_CHARS" class="text-input-field visualeffects-e154" value="01<>{}#*+%$&?XZ7@!" placeholder="Símbolos de mutación">
             </div>
 
             <!-- Re-scramble con Mouse -->
-            <div class="control-row" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="control-row visualeffects-e32">
               <div>
-                <span style="font-size: 11px; color: #d3d3d3;">Re-scramble con Mouse</span>
-                <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
+                <span class="visualeffects-e21">Re-scramble con Mouse</span>
+                <div class="visualeffects-e8">
                   Vuelve a mutar al pasar el cursor sobre las letras.
                 </div>
               </div>
-              <label class="switch-ui" style="transform: scale(0.85);" title="Activar re-scramble reactivo con el cursor">
+              <label class="switch-ui visualeffects-e22" title="Activar re-scramble reactivo con el cursor">
                 <input type="checkbox" id="param-CODE_MOUSE_RETRIGGER" checked>
                 <span class="slider-toggle"></span>
               </label>
@@ -530,11 +531,11 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="control-row visualeffects-e33">
               <div class="control-label-wrap">
                 <span>Mostrar Puntero Repulsión Mouse</span>
               </div>
-              <label class="switch-ui" style="transform: scale(0.85);" title="Mostrar círculo de repulsión sin relleno en el puntero del mouse">
+              <label class="switch-ui visualeffects-e22" title="Mostrar círculo de repulsión sin relleno en el puntero del mouse">
                 <input type="checkbox" id="param-SHOW_MOUSE_RADIUS">
                 <span class="slider-toggle"></span>
               </label>
@@ -631,9 +632,9 @@
           </div>
           <div class="group-content">
             <div class="control-row">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="visualeffects-e6">
                 <div>
-                  <span style="font-size: 12px; font-weight: 700; color: #fff;">Formar Palabras Automáticamente</span>
+                  <span class="visualeffects-e34">Formar Palabras Automáticamente</span>
                 </div>
                 <label class="switch-ui" title="Activar / Desactivar Modo Automático">
                   <input type="checkbox" id="param-AUTO_MODE">
@@ -642,7 +643,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Intervalo entre palabras (seg)</span>
               </div>
@@ -663,8 +664,8 @@
           </div>
           <div class="group-content">
             <div class="control-row">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Flowfield</span>
+              <div class="visualeffects-e6">
+                <span class="visualeffects-e34">Activar Flowfield</span>
                 <label class="switch-ui" title="Activar / Desactivar Flowfield">
                   <input type="checkbox" id="param-FLOWFIELD_ENABLED">
                   <span class="slider-toggle"></span>
@@ -672,7 +673,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Tamaño Celda Grilla X (px)</span>
               </div>
@@ -682,7 +683,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Fuerza del Campo (Empuje)</span>
               </div>
@@ -696,7 +697,7 @@
       </div> <!-- fin tab-pane-params-p5 -->
 
       <!-- Sub-Pestaña 2: Shaderfondo (Todos los parámetros del Shader ASCII GLSL) -->
-      <div id="tab-pane-params-shader" class="tab-pane" style="display: none;">
+      <div id="tab-pane-params-shader" class="tab-pane visualeffects-e31">
         <div class="param-group collapsed">
           <div class="group-title">
             <i class="fas fa-terminal"></i>
@@ -705,10 +706,10 @@
           </div>
           <div class="group-content">
             <div class="control-row">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="visualeffects-e6">
                 <div>
-                  <span style="font-size: 12px; font-weight: 700; color: #fff;">Activar Shader ASCII</span>
-                  <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
+                  <span class="visualeffects-e34">Activar Shader ASCII</span>
+                  <div class="visualeffects-e8">
                     Matriz de caracteres ASCII animados con ruido GLSL detrás del texto.
                   </div>
                 </div>
@@ -719,51 +720,51 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="control-row visualeffects-e9">
+              <div class="visualeffects-e6">
                 <div>
-                  <span style="font-size: 11px; color: #d3d3d3;">Solo buffer de fondo</span>
+                  <span class="visualeffects-e21">Solo buffer de fondo</span>
                 </div>
-                <label class="switch-ui" style="transform: scale(0.85);" title="Ver solo el buffer generativo de fondo">
+                <label class="switch-ui visualeffects-e22" title="Ver solo el buffer generativo de fondo">
                   <input type="checkbox" id="param-ASCII_NOISE_ONLY">
                   <span class="slider-toggle"></span>
                 </label>
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Buffer Generativo de Fondo</span>
               </div>
-              <select id="param-GENERATIVE_SHADER" class="text-input" style="padding: 5px 8px; font-size: 11px;">
+              <select id="param-GENERATIVE_SHADER" class="text-input visualeffects-e10">
                 <option value="noise.frag" selected>Noise / Simplex FBM (noise.frag)</option>
                 <option value="radial.frag">Radial / Tunnel (radial.frag)</option>
                 <option value="flower.frag">Flower / Mandala (flower.frag)</option>
                 <option value="starnest.frag">Star Nest (starnest.frag)</option>
               </select>
-              <div style="margin-top: 6px; display: flex; gap: 6px;">
-                <input type="file" id="input-upload-shader" accept=".frag,.glsl,.txt" style="display: none;">
-                <button id="btn-upload-shader" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(232, 232, 232, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px;" title="Subir tu propio shader (.frag)">
+              <div class="visualeffects-e35">
+                <input type="file" id="input-upload-shader" accept=".frag,.glsl,.txt" class="visualeffects-e31">
+                <button id="btn-upload-shader" class="btn-toggle-ui visualeffects-e36" title="Subir tu propio shader (.frag)">
                   <i class="fas fa-file-upload"></i> Subir Shader (.frag)
                 </button>
               </div>
             </div>
 
             <!-- Contenedor dinámico de Parámetros/Uniforms del Shader activo -->
-            <div class="control-row" style="margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 10px;">
-              <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <div class="control-row visualeffects-e37">
+              <div class="visualeffects-e38">
                 <i class="fas fa-sliders-h"></i> Parámetros Específicos del Shader
               </div>
-              <div id="generative-uniforms-container" style="display: flex; flex-direction: column; gap: 10px;">
+              <div id="generative-uniforms-container" class="visualeffects-e39">
                 <!-- Se inyecta dinámicamente según los uniforms del shader activo -->
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px;">
+            <div class="control-row visualeffects-e40">
               <div class="control-label-wrap">
                 <span>Tipografía Shader ASCII</span>
               </div>
-              <select id="param-ASCII_FONT_MODE" class="text-input" style="padding: 5px 8px; font-size: 11px;">
+              <select id="param-ASCII_FONT_MODE" class="text-input visualeffects-e10">
                 <option value="0">Estándar Bitmask 5x5 (A-Z, 0-9)</option>
                 <option value="1">Binario Cyber (0 / 1)</option>
                 <option value="2">Matrix Hexadecimal (0-9, A-F)</option>
@@ -771,7 +772,7 @@
               </select>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Opacidad del Shader (0.0 - 1.0)</span>
               </div>
@@ -781,7 +782,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Tileo / Grilla ASCII (px)</span>
               </div>
@@ -791,7 +792,7 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Tamaño de la Letra GLYPH (0.0 - 1.5)</span>
               </div>
@@ -801,8 +802,8 @@
               </div>
             </div>
 
-            <div class="control-row" style="margin-top: 14px;">
-              <button id="btn-reload-ascii-shaders" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(200, 200, 200, 0.15); border: 1px solid rgba(200, 200, 200, 0.4); color: #c8c8c8; padding: 8px 12px; font-weight: 600; gap: 8px; cursor: pointer;" title="Atajo de teclado: R">
+            <div class="control-row visualeffects-e41">
+              <button id="btn-reload-ascii-shaders" class="btn-toggle-ui visualeffects-e42" title="Atajo de teclado: R">
                 <i class="fas fa-sync-alt"></i> Recargar Shaders en Vivo ⚡ (R)
               </button>
             </div>
@@ -811,29 +812,29 @@
       </div> <!-- fin tab-pane-params-shader -->
 
       <!-- Sub-Pestaña 3: Imagen (Gestión y manipulación de imágenes/logo en la composición) -->
-      <div id="tab-pane-params-image" class="tab-pane" style="display: none;">
+      <div id="tab-pane-params-image" class="tab-pane visualeffects-e31">
         <!-- Card de Carga & Presets -->
-        <div class="formation-mode-card" style="margin-bottom: 14px; padding: 12px; background: rgba(156, 156, 156, 0.05); border: 1px solid rgba(156, 156, 156, 0.25); border-radius: 12px;">
-          <div style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+        <div class="formation-mode-card visualeffects-e43">
+          <div class="visualeffects-e44">
             <i class="fas fa-image text-[var(--accent-magenta)]"></i> Añadir Imagen a la Composición
           </div>
-          <div style="font-size: 10px; color: #a1a1a1; margin-bottom: 10px;">
+          <div class="visualeffects-e45">
             Subí tu propia imagen, arrastrala hacia la pantalla o usá el LOGO oficial con su aura neón.
           </div>
 
           <!-- DropZone para arrastrar y soltar imágenes -->
-          <div id="fx-image-dropzone" onclick="document.getElementById('fx-image-file-input').click()" style="border: 2px dashed rgba(232, 232, 232, 0.4); border-radius: 10px; padding: 14px 10px; text-align: center; background: rgba(232, 232, 232, 0.05); cursor: pointer; transition: all 0.25s ease; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+          <div id="fx-image-dropzone" data-on-click="document.getElementById('fx-image-file-input').click()" class="visualeffects-e46">
             <i class="fas fa-cloud-upload-alt text-xl text-white"></i>
-            <div style="font-size: 11px; font-weight: 800; color: #fff;">Arrastrá tu imagen acá</div>
-            <div style="font-size: 9px; color: #a1a1a1;">o hacé click para explorar tus archivos</div>
+            <div class="visualeffects-e47">Arrastrá tu imagen acá</div>
+            <div class="visualeffects-e48">o hacé click para explorar tus archivos</div>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <input type="file" id="fx-image-file-input" accept="image/*" style="display: none;" onchange="if(window.handleImageUploadFile) window.handleImageUploadFile(this);">
-            <button type="button" id="btn-fx-upload-image" onclick="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: rgba(232, 232, 232, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;">
+          <div class="visualeffects-e49">
+            <input type="file" id="fx-image-file-input" accept="image/*" data-on-change="if(window.handleImageUploadFile) window.handleImageUploadFile(this);" class="visualeffects-e31">
+            <button type="button" id="btn-fx-upload-image" data-on-click="document.getElementById('fx-image-file-input').click()" class="btn-toggle-ui visualeffects-e50">
               <i class="fas fa-upload mr-1"></i> Cargar Imagen Personalizada
             </button>
-            <button type="button" id="btn-fx-add-logo-preset" onclick="if(window.addImageLayer) window.addImageLayer('img/artedigital.png', 'LOGO con Energía', true);" class="btn-toggle-ui" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(232, 232, 232, 0.25), rgba(156, 156, 156, 0.25)); border: 1px solid #9c9c9c; color: #fff; padding: 8px; font-size: 11px; font-weight: 800; border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(156, 156, 156, 0.3);">
+            <button type="button" id="btn-fx-add-logo-preset" data-on-click="if(window.addImageLayer) window.addImageLayer('img/artedigital.png', 'LOGO con Energía', true);" class="btn-toggle-ui visualeffects-e51">
               <i class="fas fa-sun mr-1 text-white"></i> Cargar LOGO con Energía Aura
             </button>
           </div>
@@ -847,13 +848,13 @@
             <i class="fas fa-chevron-down group-chevron"></i>
           </div>
           <div class="group-content">
-            <div id="fx-images-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #727272; text-align: center; padding: 12px;">No hay imágenes cargadas aún</div>
+            <div id="fx-images-list" class="visualeffects-e52">
+              <div class="visualeffects-e53">No hay imágenes cargadas aún</div>
             </div>
 
             <!-- Controles de Transformación de la Capa de Imagen Seleccionada -->
-            <div id="fx-image-controls" style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 10px; display: none;">
-              <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); margin-bottom: 8px;">
+            <div id="fx-image-controls" class="visualeffects-e54">
+              <div class="visualeffects-e55">
                 <i class="fas fa-sliders-h mr-1"></i> Controles de Imagen Seleccionada
               </div>
 
@@ -869,7 +870,7 @@
               </div>
 
               <!-- Posición Y -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Posición Y (px)</span>
                 </div>
@@ -880,7 +881,7 @@
               </div>
 
               <!-- Escala / Zoom -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Escala (Zoom)</span>
                 </div>
@@ -891,7 +892,7 @@
               </div>
 
               <!-- Rotación -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Rotación (0° - 360°)</span>
                 </div>
@@ -902,7 +903,7 @@
               </div>
 
               <!-- Opacidad / Alpha -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Opacidad (0.0 - 1.0)</span>
                 </div>
@@ -913,10 +914,10 @@
               </div>
 
               <!-- Conmutador Efecto Aura Energía (para Logo u otras imágenes) -->
-              <div class="control-row" style="margin-top: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; font-weight: 700; color: #fff;">Efecto Aura Energía Neón</span>
-                  <label class="switch-ui" style="transform: scale(0.85);" title="Activar aura de energía WebGL para esta imagen">
+              <div class="control-row visualeffects-e56">
+                <div class="visualeffects-e6">
+                  <span class="visualeffects-e28">Efecto Aura Energía Neón</span>
+                  <label class="switch-ui visualeffects-e22" title="Activar aura de energía WebGL para esta imagen">
                     <input type="checkbox" id="param-IMG_HAS_AURA">
                     <span class="slider-toggle"></span>
                   </label>
@@ -924,11 +925,11 @@
               </div>
 
               <!-- Botones de Acción para la Imagen -->
-              <div style="display: flex; gap: 6px; margin-top: 12px;">
-                <button type="button" id="btn-img-center" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(255, 255, 255, 0.08); border-color: rgba(255,255,255,0.2); color: #fff; font-size: 11px;">
+              <div class="visualeffects-e57">
+                <button type="button" id="btn-img-center" class="btn-toggle-ui visualeffects-e58">
                   <i class="fas fa-crosshairs mr-1"></i> Centrar
                 </button>
-                <button type="button" id="btn-img-delete" class="btn-toggle-ui" style="flex: 1; justify-content: center; background: rgba(160, 160, 160, 0.2); border-color: #a0a0a0; color: #a0a0a0; font-size: 11px;">
+                <button type="button" id="btn-img-delete" class="btn-toggle-ui visualeffects-e59">
                   <i class="fas fa-trash mr-1"></i> Eliminar
                 </button>
               </div>
@@ -938,12 +939,12 @@
       </div> <!-- fin tab-pane-params-image -->
 
       <!-- Sub-Pestaña 4: PUNTERO (Configuración del Puntero y Radios de Influencia) -->
-      <div id="tab-pane-params-pointer" class="tab-pane" style="display: none;">
-        <div style="padding: 10px 12px; background: rgba(232, 232, 232, 0.04); border: 1px solid rgba(232, 232, 232, 0.2); border-radius: 12px; margin-bottom: 12px;">
-          <span style="font-size: 11px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+      <div id="tab-pane-params-pointer" class="tab-pane visualeffects-e31">
+        <div class="visualeffects-e60">
+          <span class="visualeffects-e61">
             <i class="fas fa-mouse-pointer text-[var(--accent-cyan)]"></i> Radio e Interacción del Puntero
           </span>
-          <div style="font-size: 10px; color: #a1a1a1; line-height: 1.3;">
+          <div class="visualeffects-e62">
             Ajustá el radio de repulsión e interacción que afecta a las palabras al pasar el mouse por encima en modo FISICS y CODE.
           </div>
         </div>
@@ -967,7 +968,7 @@
             </div>
 
             <!-- Radio de Repulsión FISICS -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Radio Repulsión (Fisics)</span>
               </div>
@@ -978,7 +979,7 @@
             </div>
 
             <!-- Multiplicador de Fuerza Fisics -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Fuerza Puntero (Fisics)</span>
               </div>
@@ -989,7 +990,7 @@
             </div>
 
             <!-- Radio de Influencia en Modo CODE -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Radio Puntero (Code)</span>
               </div>
@@ -1000,7 +1001,7 @@
             </div>
 
             <!-- Radio de Repulsión entre Palabras -->
-            <div class="control-row" style="margin-top: 8px;">
+            <div class="control-row visualeffects-e9">
               <div class="control-label-wrap">
                 <span>Repulsión entre Palabras</span>
               </div>
@@ -1050,7 +1051,7 @@
       <!-- Pestaña Modo Colaborativo (COLLABMODE) -->
       <div id="tab-pane-collab" class="tab-pane active">
         <!-- Duración de palabras colaborativas -->
-        <div class="param-group" style="margin-bottom: 14px;">
+        <div class="param-group visualeffects-e63">
           <div class="group-title">
             <i class="fas fa-clock"></i> Duración de Palabras (s)
           </div>
@@ -1062,7 +1063,7 @@
               <input type="range" id="param-COLLAB_WORD_LIFESPAN" min="1" max="60" step="1" value="8">
               <input type="number" id="num-COLLAB_WORD_LIFESPAN" class="val-input" min="1" max="60" step="1" value="8">
             </div>
-            <div style="font-size: 10px; color: #a1a1a1; margin-top: 3px;">
+            <div class="visualeffects-e64">
               Tiempo que permanece cada palabra antes de desvanecerse (en segundos).
             </div>
           </div>
@@ -1070,39 +1071,39 @@
 
         <!-- Input Agregar Palabras -->
         <div class="add-word-row">
-          <input type="text" id="new-word-input" class="text-input" placeholder="Escribí palabras o frases (ej: HOLA, MUNDO)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
+          <input type="text" id="new-word-input" class="text-input visualeffects-e65" placeholder="Escribí palabras o frases (ej: HOLA, MUNDO)..." spellcheck="false">
           <button id="add-word-btn" class="btn-add-word">
             <i class="fas fa-plus"></i> Agregar
           </button>
         </div>
 
         <!-- Modo de Selección e Índice de Palabras (CollabMode) -->
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 8px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 10px; color: #a1a1a1; font-weight: 700; text-transform: uppercase;">Modo:</span>
+        <div class="visualeffects-e66">
+          <div class="visualeffects-e67">
+            <span class="visualeffects-e68">Modo:</span>
             <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
               <input type="checkbox" id="param-WORD_SPAWN_MODE_COLLAB">
               <span class="slider-ui"></span>
             </label>
-            <span id="label-word-spawn-mode-collab" style="font-size: 10px; color: #e8e8e8; font-weight: 700;">Random</span>
+            <span id="label-word-spawn-mode-collab" class="visualeffects-e69">Random</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="font-size: 10px; color: #d3d3d3; font-weight: 700;">Índice:</span>
-            <input type="text" id="num-WORD_SPAWN_INDEX_COLLAB" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+          <div class="visualeffects-e70">
+            <span class="visualeffects-e71">Índice:</span>
+            <input type="text" id="num-WORD_SPAWN_INDEX_COLLAB" value="000" maxlength="3" title="Índice de 3 dígitos de la palabra en la lista" class="visualeffects-e72">
           </div>
         </div>
 
-        <div class="words-filter-row" style="margin-top: 8px;">
-          <input type="text" id="filter-word-input" class="text-input" placeholder="Buscar palabra..." spellcheck="false" style="padding: 5px 8px; font-size: 11px; background: rgba(0,0,0,0.3);">
+        <div class="words-filter-row visualeffects-e9">
+          <input type="text" id="filter-word-input" class="text-input visualeffects-e73" placeholder="Buscar palabra..." spellcheck="false">
         </div>
 
         <!-- Unificación de Palabras Colaborativas -->
-        <div id="words-list" class="words-container" style="margin-top: 8px; max-height: 240px; overflow-y: auto;">
+        <div id="words-list" class="words-container visualeffects-e74">
           <!-- Inyectado dinámicamente -->
         </div>
 
         <!-- Stats colaborativas -->
-        <div class="contributors-stats-bar" style="margin-top: 14px;">
+        <div class="contributors-stats-bar visualeffects-e41">
           <div class="stat-card">
             <span id="stat-total-words" class="stat-card-val">0</span>
             <span class="stat-card-lbl">Palabras Totales</span>
@@ -1114,11 +1115,11 @@
         </div>
 
         <!-- Lista de Usuarios y Colaboraciones -->
-        <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+        <div class="visualeffects-e75">
           <div class="group-title"><i class="fas fa-user-friends"></i> Usuarios y Palabras de la Comunidad</div>
-          <input type="text" id="filter-contributors-input" class="text-input" placeholder="Buscar por usuario o palabra..." spellcheck="false" style="padding: 6px 10px; font-size: 11px; margin-bottom: 8px;">
-          <div id="contributors-list" class="contributors-list" style="max-height: 200px; overflow-y: auto;">
-            <div style="text-align: center; color: #727272; font-size: 11px; padding: 15px;">
+          <input type="text" id="filter-contributors-input" class="text-input visualeffects-e76" placeholder="Buscar por usuario o palabra..." spellcheck="false">
+          <div id="contributors-list" class="contributors-list visualeffects-e77">
+            <div class="visualeffects-e78">
               <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
             </div>
           </div>
@@ -1126,45 +1127,45 @@
       </div> <!-- fin tab-pane-collab -->
 
       <!-- Botón Guardar Collab -->
-      <div style="margin-top: 16px;">
-        <button id="btn-save-collab" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #e8e8e8, #b0b0b0); border: none; color: #000; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(232, 232, 232, 0.3);">
+      <div class="visualeffects-e79">
+        <button id="btn-save-collab" class="btn-save visualeffects-e80">
           <i class="fas fa-save"></i> Guardar Palabras Collab
         </button>
       </div>
 
       <!-- Pestaña Modo Flyer (FLYERMODE) -->
-      <div id="tab-pane-flyer" class="tab-pane" style="display: none;">
+      <div id="tab-pane-flyer" class="tab-pane visualeffects-e31">
         <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
-            <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-file-image"></i> Módulo Flyer Mode</div>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <button id="btn-toggle-hastimeline" class="btn-toggle-ui" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #d3d3d3; font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Activar/Desactivar animación por Timeline (Si está OFF, todas las palabras quedan fijas siempre)">
+          <div class="visualeffects-e81">
+            <div class="group-title visualeffects-e82"><i class="fas fa-file-image"></i> Módulo Flyer Mode</div>
+            <div class="visualeffects-e83">
+              <button id="btn-toggle-hastimeline" class="btn-toggle-ui visualeffects-e84" title="Activar/Desactivar animación por Timeline (Si está OFF, todas las palabras quedan fijas siempre)">
                 <i class="fas fa-toggle-off"></i> Timeline OFF
               </button>
-              <button id="btn-toggle-timeline-panel" class="btn-toggle-ui" style="background: linear-gradient(135deg, rgba(232, 232, 232, 0.2), rgba(156, 156, 156, 0.2)); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 11px; padding: 4px 8px; font-weight: 700;" title="Mostrar u ocultar la interfaz gráfica de la línea de tiempo">
+              <button id="btn-toggle-timeline-panel" class="btn-toggle-ui visualeffects-e85" title="Mostrar u ocultar la interfaz gráfica de la línea de tiempo">
                 <i class="fas fa-film"></i> Ver Timeline
               </button>
             </div>
           </div>
-          <p style="font-size: 11px; color: #a1a1a1; margin-bottom: 12px;">
+          <p class="visualeffects-e86">
             Diseñá composiciones tipográficas animadas con la línea de tiempo.
           </p>
 
           <!-- Subtabs de Flyer Mode: WORDLIST, SECUENCIAS, SELECCION, EXPORT, IMPORT -->
-          <div class="flyer-subtabs" style="display: flex; background: rgba(0, 0, 0, 0.4); padding: 3px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1); gap: 2px;">
-            <button id="btn-flyer-subtab-wordlist" class="flyer-subtab-btn active" style="flex: 1; padding: 6px 3px; border: none; background: linear-gradient(135deg, rgba(232, 232, 232, 0.2), rgba(156, 156, 156, 0.2)); color: #fff; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Gestión de palabras del flyer">
+          <div class="flyer-subtabs visualeffects-e87">
+            <button id="btn-flyer-subtab-wordlist" class="flyer-subtab-btn active visualeffects-e88" title="Gestión de palabras del flyer">
               <i class="fas fa-font"></i> WORDLIST
             </button>
-            <button id="btn-flyer-subtab-secuencias" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Secuencias y proyectos guardados">
+            <button id="btn-flyer-subtab-secuencias" class="flyer-subtab-btn visualeffects-e89" title="Secuencias y proyectos guardados">
               <i class="fas fa-bookmark"></i> SECUENCIAS
             </button>
-            <button id="btn-flyer-subtab-seleccion" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Configuración visual del recuadro de selección">
+            <button id="btn-flyer-subtab-seleccion" class="flyer-subtab-btn visualeffects-e89" title="Configuración visual del recuadro de selección">
               <i class="fas fa-vector-square"></i> SELECCIÓN
             </button>
-            <button id="btn-flyer-subtab-export" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Formatos y exportación PNG/ZIP">
+            <button id="btn-flyer-subtab-export" class="flyer-subtab-btn visualeffects-e89" title="Formatos y exportación PNG/ZIP">
               <i class="fas fa-file-export"></i> EXPORT
             </button>
-            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn" style="flex: 1; padding: 6px 3px; border: none; background: transparent; color: #a1a1a1; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px;" title="Importar publicación por ID">
+            <button id="btn-flyer-subtab-import" class="flyer-subtab-btn visualeffects-e89" title="Importar publicación por ID">
               <i class="fas fa-file-import"></i> IMPORT
             </button>
           </div>
@@ -1172,93 +1173,93 @@
           <!-- SUBTAB CONTENT 1: WORDLIST -->
           <div id="flyer-subtab-content-wordlist">
             <!-- Input de texto para Flyer -->
-            <div style="margin-bottom: 14px;">
-              <label style="font-size: 11px; color: #d3d3d3; font-weight: 600; display: block; margin-bottom: 4px;">
+            <div class="visualeffects-e63">
+              <label class="visualeffects-e90">
                 Texto / Frase para el Flyer
               </label>
               <div class="add-word-row">
-                <input type="text" id="flyer-word-input" class="text-input" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false" style="padding: 7px 10px; font-size: 12px;">
-                <button id="add-flyer-word-btn" class="btn-add-word" style="background: linear-gradient(135deg, #c8c8c8, #c6c6c6); color: #000; font-weight: 700;">
+                <input type="text" id="flyer-word-input" class="text-input visualeffects-e65" placeholder="Escribí texto (ej: FESTIVAL ARTE DIGITAL)..." spellcheck="false">
+                <button id="add-flyer-word-btn" class="btn-add-word visualeffects-e91">
                   <i class="fas fa-plus"></i> Agregar
                 </button>
               </div>
             </div>
 
             <!-- Modo de Selección e Índice de Palabras -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 6px 10px; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 10px; color: #a1a1a1; font-weight: 700; text-transform: uppercase;">Modo:</span>
+            <div class="visualeffects-e92">
+              <div class="visualeffects-e67">
+                <span class="visualeffects-e68">Modo:</span>
                 <label class="switch-ui" title="Modo de adición de palabras: Secuencial (Lineal) vs Aleatorio (Random)">
                   <input type="checkbox" id="param-WORD_SPAWN_MODE">
                   <span class="slider-ui"></span>
                 </label>
-                <span id="label-word-spawn-mode" style="font-size: 10px; color: #e8e8e8; font-weight: 700;">Random</span>
+                <span id="label-word-spawn-mode" class="visualeffects-e69">Random</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <span style="font-size: 10px; color: #d3d3d3; font-weight: 700;">Índice:</span>
-                <input type="text" id="num-WORD_SPAWN_INDEX" value="000" maxlength="3" style="width: 44px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.6); border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 4px; padding: 2px 4px;" title="Índice de 3 dígitos de la palabra en la lista">
+              <div class="visualeffects-e70">
+                <span class="visualeffects-e71">Índice:</span>
+                <input type="text" id="num-WORD_SPAWN_INDEX" value="000" maxlength="3" title="Índice de 3 dígitos de la palabra en la lista" class="visualeffects-e72">
               </div>
             </div>
 
             <!-- Lista de Palabras del Flyer -->
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="group-title" style="margin-bottom: 0;"><i class="fas fa-list"></i> Word List (Flyer)</div>
-                <div style="display: flex; gap: 4px;">
-                  <button type="button" id="btn-select-prev-flyer-word" onclick="if(window.selectPrevFlyerWord) window.selectPrevFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #d3d3d3;" title="Palabra anterior (Ctrl + Flecha Izquierda)">
+              <div class="visualeffects-e93">
+                <div class="group-title visualeffects-e82"><i class="fas fa-list"></i> Word List (Flyer)</div>
+                <div class="visualeffects-e94">
+                  <button type="button" id="btn-select-prev-flyer-word" data-on-click="if(window.selectPrevFlyerWord) window.selectPrevFlyerWord()" class="btn-reset visualeffects-e95" title="Palabra anterior (Ctrl + Flecha Izquierda)">
                     <i class="fas fa-chevron-left"></i>
                   </button>
-                  <button type="button" id="btn-select-next-flyer-word" onclick="if(window.selectNextFlyerWord) window.selectNextFlyerWord()" class="btn-reset" style="padding: 3px 6px; font-size: 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); color: #d3d3d3;" title="Palabra siguiente (Ctrl + Flecha Derecha)">
+                  <button type="button" id="btn-select-next-flyer-word" data-on-click="if(window.selectNextFlyerWord) window.selectNextFlyerWord()" class="btn-reset visualeffects-e95" title="Palabra siguiente (Ctrl + Flecha Derecha)">
                     <i class="fas fa-chevron-right"></i>
                   </button>
-                  <button type="button" id="btn-select-all-flyer-words" onclick="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset" style="padding: 3px 8px; font-size: 10px; background: rgba(232, 232, 232, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Seleccionar todas las palabras (Ctrl + E)">
+                  <button type="button" id="btn-select-all-flyer-words" data-on-click="if(window.selectAllFlyerWords) window.selectAllFlyerWords()" class="btn-reset visualeffects-e96" title="Seleccionar todas las palabras (Ctrl + E)">
                     <i class="fas fa-check-double"></i> Todas
                   </button>
-                  <button id="clear-flyer-words-btn" class="btn-reset" style="padding: 3px 8px; font-size: 10px;" title="Limpiar todas las palabras del flyer">
+                  <button id="clear-flyer-words-btn" class="btn-reset visualeffects-e97" title="Limpiar todas las palabras del flyer">
                     <i class="fas fa-trash-alt"></i> Limpiar
                   </button>
                 </div>
               </div>
-              <div id="flyer-words-list" class="words-container" style="max-height: 280px; overflow-y: auto;">
+              <div id="flyer-words-list" class="words-container visualeffects-e98">
                 <!-- Inyectado dinámicamente -->
               </div>
             </div>
           </div> <!-- fin flyer-subtab-content-wordlist -->
 
           <!-- SUBTAB CONTENT 2: SECUENCIAS -->
-          <div id="flyer-subtab-content-secuencias" style="display: none;">
+          <div id="flyer-subtab-content-secuencias" class="visualeffects-e31">
             <!-- Banner Indicador de Secuencia / Proyecto Activo -->
-            <div id="active-sequence-banner" style="margin-bottom: 12px; padding: 10px 12px; background: rgba(232, 232, 232, 0.08); border: 1px solid rgba(232, 232, 232, 0.3); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease;">
-              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; max-width: 70%;">
-                <div id="active-seq-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #e8e8e8; box-shadow: 0 0 8px #e8e8e8; flex-shrink: 0;"></div>
-                <div style="overflow: hidden;">
-                  <div style="font-size: 9px; color: #a1a1a1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Secuencia en Editor</div>
-                  <div id="active-sequence-name" style="font-size: 12px; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sin Guardar (Nuevo Proyecto)</div>
+            <div id="active-sequence-banner" class="visualeffects-e99">
+              <div class="visualeffects-e100">
+                <div id="active-seq-status-dot" class="visualeffects-e101"></div>
+                <div class="visualeffects-e102">
+                  <div class="visualeffects-e103">Secuencia en Editor</div>
+                  <div id="active-sequence-name" class="visualeffects-e104">Sin Guardar (Nuevo Proyecto)</div>
                 </div>
               </div>
-              <span id="active-sequence-badge" style="font-size: 9px; padding: 3px 8px; background: rgba(232, 232, 232, 0.2); color: var(--accent-cyan); border-radius: 6px; font-weight: 800; border: 1px solid rgba(232, 232, 232, 0.4); text-transform: uppercase;">NUEVO</span>
+              <span id="active-sequence-badge" class="visualeffects-e105">NUEVO</span>
             </div>
 
             <!-- Botones Guardar Flyer -->
-            <div style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <button id="btn-save-flyer" class="btn-save" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #9c9c9c, #a4a4a4); border: none; color: #fff; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(156, 156, 156, 0.3);">
+            <div class="visualeffects-e106">
+              <button id="btn-save-flyer" class="btn-save visualeffects-e107">
                 <i class="fas fa-save"></i> Guardar / Actualizar Secuencia
               </button>
-              <div style="display: flex; gap: 8px;">
-                <button id="btn-save-flyer-new" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(232, 232, 232, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 10px; cursor: pointer;">
+              <div class="visualeffects-e108">
+                <button id="btn-save-flyer-new" class="btn-save visualeffects-e109">
                   <i class="fas fa-copy"></i> Guardar como Nuevo
                 </button>
-                <button id="btn-new-flyer" class="btn-save" style="flex: 1; justify-content: center; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 10px; cursor: pointer;">
+                <button id="btn-new-flyer" class="btn-save visualeffects-e110">
                   <i class="fas fa-file"></i> + Nuevo Proyecto
                 </button>
               </div>
             </div>
 
             <!-- Secuencias / Proyectos Guardados del Usuario -->
-            <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
-              <div class="group-title" style="margin-bottom: 8px;"><i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Mis Secuencias Guardadas</div>
-              <div id="flyer-saved-sequences-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto;">
-                <div style="text-align: center; color: #727272; font-size: 11px; padding: 10px;">
+            <div class="visualeffects-e111">
+              <div class="group-title visualeffects-e112"><i class="fas fa-bookmark visualeffects-e3"></i> Mis Secuencias Guardadas</div>
+              <div id="flyer-saved-sequences-list" class="visualeffects-e113">
+                <div class="visualeffects-e114">
                   Cargando secuencias guardadas...
                 </div>
               </div>
@@ -1266,10 +1267,10 @@
           </div> <!-- fin flyer-subtab-content-secuencias -->
 
           <!-- SUBTAB CONTENT 3: SELECCIÓN -->
-          <div id="flyer-subtab-content-seleccion" style="display: none;">
-            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
-              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e7e7e7; display: flex; justify-content: space-between; align-items: center;">
-                <span><i class="fas fa-vector-square" style="color: var(--accent-magenta);"></i> Estilo Bounding Box / Selección</span>
+          <div id="flyer-subtab-content-seleccion" class="visualeffects-e31">
+            <div class="visualeffects-e115">
+              <div class="group-title visualeffects-e116">
+                <span><i class="fas fa-vector-square visualeffects-e3"></i> Estilo Bounding Box / Selección</span>
                 <label class="switch-ui" title="Activar/Desactivar efecto de Bounding Box">
                   <input type="checkbox" id="param-WORD_BOX_EFFECT_ENABLED">
                   <span class="slider-ui"></span>
@@ -1277,9 +1278,9 @@
               </div>
 
               <!-- Color de Relleno -->
-              <div class="control-row" style="margin-top: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Relleno (Fill)</span>
+              <div class="control-row visualeffects-e9">
+                <div class="visualeffects-e6">
+                  <span class="visualeffects-e17">Color de Relleno (Fill)</span>
                   <div class="color-input-wrap">
                     <input type="color" id="param-WORD_BOX_FILL_COLOR" value="#171717">
                   </div>
@@ -1287,7 +1288,7 @@
               </div>
 
               <!-- Opacidad de Relleno -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Opacidad de Relleno</span>
                 </div>
@@ -1298,9 +1299,9 @@
               </div>
 
               <!-- Color de Borde -->
-              <div class="control-row" style="margin-top: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 11px; color: #d3d3d3; font-weight: 600;">Color de Borde (Stroke)</span>
+              <div class="control-row visualeffects-e9">
+                <div class="visualeffects-e6">
+                  <span class="visualeffects-e17">Color de Borde (Stroke)</span>
                   <div class="color-input-wrap">
                     <input type="color" id="param-WORD_BOX_STROKE_COLOR" value="#e8e8e8">
                   </div>
@@ -1308,7 +1309,7 @@
               </div>
 
               <!-- Grosor de Borde -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Grosor de Borde (px)</span>
                 </div>
@@ -1319,11 +1320,11 @@
               </div>
 
               <!-- Patrón de Línea Animado -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Patrón de Línea</span>
                 </div>
-                <select id="param-WORD_BOX_LINE_PATTERN" class="text-input" style="padding: 4px 8px; font-size: 11px; background: #171717; border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px;">
+                <select id="param-WORD_BOX_LINE_PATTERN" class="text-input visualeffects-e117">
                   <option value="solid">Línea Sólida</option>
                   <option value="dashed">Punteado Discontinuo</option>
                   <option value="marching-ants">Hormigas Marchantes</option>
@@ -1336,7 +1337,7 @@
               </div>
 
               <!-- Redondeado de Esquinas -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Redondeado (Border Radius)</span>
                 </div>
@@ -1347,7 +1348,7 @@
               </div>
 
               <!-- Margen Interno (Padding X) -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Margen Ancho X (Padding)</span>
                 </div>
@@ -1358,7 +1359,7 @@
               </div>
 
               <!-- Margen Interno (Padding Y) -->
-              <div class="control-row" style="margin-top: 8px;">
+              <div class="control-row visualeffects-e9">
                 <div class="control-label-wrap">
                   <span>Margen Alto Y (Padding)</span>
                 </div>
@@ -1371,42 +1372,42 @@
           </div> <!-- fin flyer-subtab-content-seleccion -->
 
           <!-- SUBTAB CONTENT 3: EXPORT -->
-          <div id="flyer-subtab-content-export" style="display: none;">
+          <div id="flyer-subtab-content-export" class="visualeffects-e31">
             <!-- Módulo Proporción de Aspecto (Aspect Ratio Layout) -->
-            <div style="margin-bottom: 14px; padding: 12px; background: rgba(232, 232, 232, 0.05); border: 1px solid rgba(232, 232, 232, 0.25); border-radius: 12px;">
-              <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div class="visualeffects-e118">
+              <div class="visualeffects-e119">
                 <span><i class="fas fa-shapes mr-1"></i> Formato y Proporción</span>
-                <span id="current-aspect-badge" style="font-size: 9px; padding: 2px 6px; background: rgba(232, 232, 232, 0.2); color: #e8e8e8; border-radius: 4px; font-weight: 800;">16:9 (1920x1080)</span>
+                <span id="current-aspect-badge" class="visualeffects-e120">16:9 (1920x1080)</span>
               </div>
-              <div style="font-size: 10px; color: #a1a1a1; margin-bottom: 10px;">
+              <div class="visualeffects-e45">
                 Elegí la proporción para reacomodar automáticamente la secuencia de texto, imágenes y logo.
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <button type="button" id="btn-aspect-169" class="aspect-btn active" onclick="setFlyerAspectRatio('16:9')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(232, 232, 232, 0.25); border: 1px solid var(--accent-cyan); color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <div class="visualeffects-e121">
+                <button type="button" id="btn-aspect-169" class="aspect-btn active visualeffects-e122" data-on-click="setFlyerAspectRatio('16:9')">
                   <i class="fas fa-desktop text-white"></i> 16:9 (Horizontal)
                 </button>
-                <button type="button" id="btn-aspect-916" class="aspect-btn" onclick="setFlyerAspectRatio('9:16')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="btn-aspect-916" class="aspect-btn visualeffects-e123" data-on-click="setFlyerAspectRatio('9:16')">
                   <i class="fas fa-mobile-alt text-white"></i> 9:16 (Celu/Story)
                 </button>
-                <button type="button" id="btn-aspect-11" class="aspect-btn" onclick="setFlyerAspectRatio('1:1')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="btn-aspect-11" class="aspect-btn visualeffects-e123" data-on-click="setFlyerAspectRatio('1:1')">
                   <i class="fas fa-square text-white"></i> 1:1 (Cuadrado)
                 </button>
-                <button type="button" id="btn-aspect-45" class="aspect-btn" onclick="setFlyerAspectRatio('4:5')" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #d3d3d3; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="btn-aspect-45" class="aspect-btn visualeffects-e123" data-on-click="setFlyerAspectRatio('4:5')">
                   <i class="fas fa-portrait text-white"></i> 4:5 (Feed)
                 </button>
               </div>
             </div>
 
             <!-- Módulo de Descarga (Exportación PNG) -->
-            <div style="margin-top: 10px; margin-bottom: 14px; padding: 12px; background: rgba(192, 192, 192, 0.06); border: 1px solid rgba(192, 192, 192, 0.25); border-radius: 12px;">
-              <div style="font-size: 11px; font-weight: 800; color: #c0c0c0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <div class="visualeffects-e124">
+              <div class="visualeffects-e125">
                 <i class="fas fa-download"></i> Descargar Composición PNG
               </div>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button type="button" id="btn-download-flyer-png" onclick="downloadFlyerPNG()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #c0c0c0, #9e9e9e); border: none; color: #fff; padding: 10px; font-size: 12px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3); display: flex; align-items: center; gap: 8px;">
+              <div class="visualeffects-e49">
+                <button type="button" id="btn-download-flyer-png" data-on-click="downloadFlyerPNG()" class="visualeffects-e126">
                   <i class="fas fa-download"></i> DOWNLOAD (Formato Actual)
                 </button>
-                <button type="button" id="btn-download-flyer-all-png" onclick="downloadFlyerAllFormats()" style="width: 100%; justify-content: center; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); color: #d3d3d3; padding: 8px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <button type="button" id="btn-download-flyer-all-png" data-on-click="downloadFlyerAllFormats()" class="visualeffects-e127">
                   <i class="fas fa-layer-group text-white"></i> Descargar Todos los Formatos (ZIP Pack)
                 </button>
               </div>
@@ -1414,90 +1415,142 @@
           </div> <!-- fin flyer-subtab-content-export -->
 
           <!-- SUBTAB CONTENT 2: IMPORT -->
-          <div id="flyer-subtab-content-import" style="display: none;">
-            <!-- Importar Publicación por ID -->
-            <div style="margin-bottom: 14px; background: rgba(232, 232, 232, 0.05); padding: 12px; border-radius: 12px; border: 1px solid rgba(232, 232, 232, 0.2);">
-              <label style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                <i class="fas fa-file-import"></i> Importar Publicación por ID
+          <div id="flyer-subtab-content-import" class="visualeffects-e31">
+            <!-- Formato / base de diseño del flyer -->
+            <div class="vim-card">
+              <div class="vim-card-title">
+                <i class="fas fa-crop-simple"></i> Formato del flyer
+              </div>
+              <div class="vim-hint">
+                Define la base de diseño (viewportBase) del proyecto generado: el reproductor escala posiciones, tamaños y tipografías a la pantalla real.
+              </div>
+              <div class="vim-formatos" id="vim-formatos">
+                <button type="button" class="vim-formato active" data-vim-formato="vertical" title="Vertical 9:16 — 1080 x 1920">
+                  <i class="fas fa-mobile-screen"></i>
+                  <span class="vim-formato-nombre">Vertical 9:16</span>
+                  <span class="vim-formato-dim">1080 x 1920</span>
+                </button>
+                <button type="button" class="vim-formato" data-vim-formato="pantalla" title="Pantalla completa 16:9 — 1920 x 1080">
+                  <i class="fas fa-desktop"></i>
+                  <span class="vim-formato-nombre">Pantalla completa</span>
+                  <span class="vim-formato-dim">1920 x 1080</span>
+                </button>
+                <button type="button" class="vim-formato" data-vim-formato="cuadrado" title="Cuadrado 1:1 — 1080 x 1080">
+                  <i class="fas fa-square"></i>
+                  <span class="vim-formato-nombre">Cuadrado 1:1</span>
+                  <span class="vim-formato-dim">1080 x 1080</span>
+                </button>
+                <button type="button" class="vim-formato" data-vim-formato="retrato" title="Retrato 4:5 — 1080 x 1350">
+                  <i class="fas fa-portrait"></i>
+                  <span class="vim-formato-nombre">Retrato 4:5</span>
+                  <span class="vim-formato-dim">1080 x 1350</span>
+                </button>
+              </div>
+              <div class="vim-base" id="vim-base-actual">Base de diseño actual: 1080 x 1920</div>
+            </div>
+
+            <!-- Buscador de publicaciones y convocatorias -->
+            <div class="vim-card">
+              <div class="vim-card-title">
+                <i class="fas fa-magnifying-glass"></i> Buscar publicación o convocatoria
+              </div>
+              <div class="vim-buscar">
+                <input type="text" id="vim-buscador" class="text-input vim-input" placeholder="Nombre, título o ID (24 caracteres)…" spellcheck="false" autocomplete="off">
+                <button type="button" id="vim-buscador-limpiar" class="vim-btn-ghost" title="Limpiar la búsqueda">
+                  <i class="fas fa-xmark"></i>
+                </button>
+              </div>
+              <div class="vim-tabs" id="vim-tabs">
+                <button type="button" id="vim-tab-publicaciones" class="vim-tab active" data-vim-tab="publicaciones">Publicaciones</button>
+                <button type="button" id="vim-tab-convocatorias" class="vim-tab" data-vim-tab="convocatorias">Convocatorias</button>
+              </div>
+              <div class="vim-alcance" id="vim-alcance">Cargando…</div>
+              <div class="vim-lista" id="vim-lista"></div>
+            </div>
+
+            <!-- Importar Publicación / Convocatoria por ID -->
+            <div class="visualeffects-e128">
+              <label class="visualeffects-e129">
+                <i class="fas fa-file-import"></i> Importar por ID
               </label>
-              <div class="add-word-row" style="margin-bottom: 8px;">
-                <input type="text" id="import-post-id-input" class="text-input" placeholder="ID de publicación (ej: 6a9eeb98...)..." spellcheck="false" style="padding: 7px 10px; font-size: 11px;">
-                <button id="import-post-id-btn" class="btn-add-word" style="background: linear-gradient(135deg, #e8e8e8, #b0b0b0); color: #000; font-weight: 800; font-size: 11px; padding: 7px 12px; white-space: nowrap;">
+              <div class="add-word-row visualeffects-e112">
+                <input type="text" id="import-post-id-input" class="text-input visualeffects-e130" placeholder="ID de publicación o convocatoria (ej: 6a9eeb98…)" spellcheck="false">
+                <button id="import-post-id-btn" class="btn-add-word visualeffects-e131">
                   <i class="fas fa-magic"></i> Importar
                 </button>
               </div>
-              <div style="font-size: 10px; color: #a1a1a1; margin-top: 2px;">
-                Mapea el contenido a líneas y hojas paginadas automáticamente en la línea de tiempo.
+              <div class="visualeffects-e8">
+                Si el ID es una convocatoria se genera el flyer completo (exposición + obras + artistas) en la línea de tiempo; si es una publicación, se mapea su texto a hojas paginadas.
               </div>
             </div>
 
             <!-- Parámetros de Maquetación y Distribución -->
-            <div style="background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 14px;">
-              <div class="group-title" style="margin-bottom: 10px; font-size: 11px; color: #e7e7e7;">
-                <i class="fas fa-sliders-h" style="color: var(--accent-cyan);"></i> Configuración de Importación
+            <div class="visualeffects-e132">
+              <div class="group-title visualeffects-e133">
+                <i class="fas fa-sliders-h visualeffects-e2"></i> Configuración de Importación
               </div>
 
               <!-- Posición Central X -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Posición X Central (px)</span>
-                  <input type="number" id="import-num-center-x" value="960" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-center-x" value="960" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-center-x" min="0" max="1920" value="960" style="width: 100%;">
+                <input type="range" id="import-center-x" min="0" max="1920" value="960" class="visualeffects-e137">
               </div>
 
               <!-- Posición Central Y -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Posición Y Central (px)</span>
-                  <input type="number" id="import-num-center-y" value="540" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-center-y" value="540" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-center-y" min="0" max="1080" value="540" style="width: 100%;">
+                <input type="range" id="import-center-y" min="0" max="1080" value="540" class="visualeffects-e137">
               </div>
 
               <!-- Separación entre Frases -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Separación entre frases (px)</span>
-                  <input type="number" id="import-num-line-spacing" value="60" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-line-spacing" value="60" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-line-spacing" min="0" max="150" value="60" style="width: 100%;">
+                <input type="range" id="import-line-spacing" min="0" max="150" value="60" class="visualeffects-e137">
               </div>
 
               <!-- Ancho Máximo de Frase -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Ancho máximo de frase (px)</span>
-                  <input type="number" id="import-num-max-width" value="750" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-max-width" value="750" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-max-width" min="0" max="1800" value="750" style="width: 100%;">
+                <input type="range" id="import-max-width" min="0" max="1800" value="750" class="visualeffects-e137">
               </div>
 
               <!-- Alto Máximo por Hoja -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Alto máximo por hoja (px)</span>
-                  <input type="number" id="import-num-max-height" value="450" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-max-height" value="450" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-max-height" min="0" max="1000" value="450" style="width: 100%;">
+                <input type="range" id="import-max-height" min="0" max="1000" value="450" class="visualeffects-e137">
               </div>
 
               <!-- Duración por Hoja -->
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e134">
+                <div class="visualeffects-e135">
                   <span>Duración de cada hoja (seg)</span>
-                  <input type="number" id="import-num-page-duration" value="2.0" step="0.1" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-page-duration" value="2.0" step="0.1" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-page-duration" min="0" max="30" step="0.1" value="2.0" style="width: 100%;">
+                <input type="range" id="import-page-duration" min="0" max="30" step="0.1" value="2.0" class="visualeffects-e137">
               </div>
 
               <!-- Tamaño de Fuente -->
-              <div style="margin-bottom: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #d3d3d3; margin-bottom: 4px;">
+              <div class="visualeffects-e138">
+                <div class="visualeffects-e135">
                   <span>Tamaño de fuente (px)</span>
-                  <input type="number" id="import-num-font-size" value="32" style="width: 65px; padding: 2px 4px; font-size: 11px; font-weight: 700; background: #171717; border: 1px solid var(--accent-cyan); color: #e8e8e8; border-radius: 6px; text-align: center;">
+                  <input type="number" id="import-num-font-size" value="32" class="visualeffects-e136">
                 </div>
-                <input type="range" id="import-font-size" min="0" max="100" value="32" style="width: 100%;">
+                <input type="range" id="import-font-size" min="0" max="100" value="32" class="visualeffects-e137">
               </div>
             </div>
           </div> <!-- fin flyer-subtab-content-import -->
@@ -1519,25 +1572,25 @@
         <button id="tl-btn-rewind" class="tl-btn" title="Ir al inicio (0s)"><i class="fas fa-step-backward"></i></button>
         <button id="tl-btn-play" class="tl-btn tl-btn-play" title="Play / Pausa (Espacio)"><i class="fas fa-play"></i></button>
         <button id="tl-btn-loop" class="tl-btn active" title="Activar / Desactivar Loop (Por defecto activado)"><i class="fas fa-redo"></i></button>
-        <span id="tl-time-readout" class="tl-time-readout" title="Doble click para cambiar la duración total del timeline (en segundos)" style="cursor: pointer;">00:00.00 / 00:02.00</span>
+        <span id="tl-time-readout" class="tl-time-readout visualeffects-e139" title="Doble click para cambiar la duración total del timeline (en segundos)">00:00.00 / 00:02.00</span>
       </div>
 
       <div class="timeline-actions">
-        <div style="display: flex; align-items: center; gap: 6px; background: rgba(23, 23, 23, 0.6); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(232, 232, 232, 0.2);" title="Acomodar palabras en Capa 1 con solapamiento y ajustar duración (Atajo: Shift + T)">
-          <span style="font-size: 10px; color: var(--accent-cyan); font-weight: 700;"><i class="fas fa-layer-group"></i> Solapamiento:</span>
-          <input type="range" id="tl-slider-overlap" min="0" max="100" value="20" style="width: 60px; cursor: pointer;">
-          <span id="tl-val-overlap" style="font-size: 10px; color: #fff; font-weight: 700; min-width: 26px;">20%</span>
-          <button id="btn-stagger-clips" class="tl-btn" style="padding: 2px 6px; font-size: 10px; background: rgba(232, 232, 232, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Shift + T)">
+        <div title="Acomodar palabras en Capa 1 con solapamiento y ajustar duración (Atajo: Shift + T)" class="visualeffects-e140">
+          <span class="visualeffects-e141"><i class="fas fa-layer-group"></i> Solapamiento:</span>
+          <input type="range" id="tl-slider-overlap" min="0" max="100" value="20" class="visualeffects-e142">
+          <span id="tl-val-overlap" class="visualeffects-e143">20%</span>
+          <button id="btn-stagger-clips" class="tl-btn visualeffects-e144" title="Acomodar palabras de Capa 1 secuencialmente (Atajo: Shift + T)">
             <i class="fas fa-magic"></i> Shift + T
           </button>
         </div>
-        <button id="tl-btn-open-sources" class="tl-btn" style="background: rgba(180, 180, 180, 0.2); border-color: var(--accent-magenta); color: var(--accent-magenta);" title="Biblioteca de Fuentes / Capas Guardadas">
+        <button id="tl-btn-open-sources" class="tl-btn visualeffects-e145" title="Biblioteca de Fuentes / Capas Guardadas">
           <i class="fas fa-bookmark"></i> Fuentes
         </button>
         <button id="tl-btn-add-layer" class="tl-btn tl-btn-accent" title="Agregar una nueva capa vacía a la línea de tiempo">
           <i class="fas fa-plus"></i> + Agregar Capa
         </button>
-        <button id="tl-btn-add-kf" class="tl-btn tl-btn-accent" style="background: linear-gradient(135deg, rgba(232, 232, 232, 0.3), rgba(200, 200, 200, 0.3)); border-color: var(--accent-cyan);" title="Agregar Keyframe a la capa seleccionada en el tiempo actual">
+        <button id="tl-btn-add-kf" class="tl-btn tl-btn-accent visualeffects-e146" title="Agregar Keyframe a la capa seleccionada en el tiempo actual">
           <i class="fas fa-gem"></i> Add Keyframe
         </button>
         <button id="tl-btn-del-kf" class="tl-btn" title="Eliminar Keyframe o Capa seleccionada">
@@ -1551,7 +1604,7 @@
       <!-- Time Ruler -->
       <div id="timeline-ruler" class="timeline-ruler">
         <div class="ruler-header">
-          <span style="font-size: 10px; color: #a1a1a1; font-weight: 600;"><i class="fas fa-clock"></i> Tiempo</span>
+          <span class="visualeffects-e147"><i class="fas fa-clock"></i> Tiempo</span>
         </div>
         <div id="ruler-lane" class="ruler-lane">
           <div id="timeline-playhead" class="timeline-playhead">
@@ -1571,15 +1624,15 @@
   </div>
 
   <!-- Modal de Fuentes / Capas Guardadas -->
-  <div id="layer-sources-modal" class="layer-sources-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 99999; justify-content: center; align-items: center; padding: 20px;">
-    <div style="background: #171717; border: 1px solid rgba(232, 232, 232, 0.3); border-radius: 16px; width: 100%; max-width: 560px; box-shadow: 0 0 30px rgba(232, 232, 232, 0.25); overflow: hidden; display: flex; flex-direction: column; max-height: 80vh;">
-      <div style="padding: 14px 18px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-bookmark" style="color: var(--accent-magenta);"></i> Biblioteca de Fuentes (Capas Guardadas)
+  <div id="layer-sources-modal" class="layer-sources-modal visualeffects-e148">
+    <div class="visualeffects-e149">
+      <div class="visualeffects-e150">
+        <h3 class="visualeffects-e151">
+          <i class="fas fa-bookmark visualeffects-e3"></i> Biblioteca de Fuentes (Capas Guardadas)
         </h3>
-        <button id="close-layer-sources-modal" style="background: none; border: none; color: #a1a1a1; font-size: 16px; cursor: pointer;"><i class="fas fa-times"></i></button>
+        <button id="close-layer-sources-modal" class="visualeffects-e152"><i class="fas fa-times"></i></button>
       </div>
-      <div id="layer-sources-list" style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; flex: 1; max-height: 60vh;">
+      <div id="layer-sources-list" class="visualeffects-e153">
         <!-- Se inyectan las fuentes dinámicamente -->
       </div>
     </div>
@@ -1587,14 +1640,17 @@
 
   <!-- Scripts Base, Auth y p5 -->
   <script src="js/config.js"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script src="js/p5-effect.js?v=12"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="js/particulas.js"></script>
+  <script src="js/particulas.js?v=2"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1" data-hud="0"></script>
+<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

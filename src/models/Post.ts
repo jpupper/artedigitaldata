@@ -7,6 +7,9 @@ export interface IPost extends IPosteoBase {
   isContest: boolean;
   contestMonth: string;
   source: 'human' | 'ia';
+  // Fondo animado de la página de ESTA obra: nombre de la composición del
+  // JP Shader Editor elegida por el autor. '' = usar el fondo del sitio.
+  fondoShader: string;
 }
 
 const PostSchema: Schema = new Schema(
@@ -23,6 +26,9 @@ const PostSchema: Schema = new Schema(
     isContest: { type: Boolean, default: false },
     contestMonth: { type: String, default: '' },
     source: { type: String, enum: ['human', 'ia'], default: 'human' },
+    // Fondo animado por obra (JP Shader Editor). Nombre de la composición; el
+    // valor va tal cual a data-comp del include, por eso las rutas lo validan.
+    fondoShader: { type: String, default: '' },
     visibility: { type: String, enum: ['public', 'unlisted'], default: 'public' },
     pinned: { type: Boolean, default: false },
   },

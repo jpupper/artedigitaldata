@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import mongoose from 'mongoose';
 import Post from '../models/Post';
 import Recurso from '../models/Recurso';
 import Evento from '../models/Evento';
 import User from '../models/User';
+import Oportunidad, { Inscripcion } from '../models/Oportunidad';
 import { hydrate } from '../utils/userHydration';
 import { getBotConfig, setBotConfig } from '../models/BotConfig';
 import { authMiddleware, adminMiddleware, AuthRequest, optionalAuth } from '../middleware/auth';
@@ -614,6 +616,78 @@ router.post('/logo-interactive-config', async (req: Request, res: Response) => {
     try { fs.writeFileSync(rootConfigPath, jsonStr, 'utf-8'); } catch (e) {}
 
     return res.json({ success: true, message: 'Configuración de logo interactivo guardada en el servidor', config: newConfig });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /public/oportunidades/:id/galeria — galería PÚBLICA de TODAS las obras de
+// una convocatoria (las que están en la planilla de inscriptos). Es el link que
+// el panel de administración comparte: sólo expone obra + artista (nombre,
+// usuario, bio y foto), nunca emails ni datos de contacto.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/oportunidades/:id/galeria', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'id inválido' });
+
+    const opo: any = await Oportunidad.findById(id)
+      .select('titulo descripcion tipo imagenUrl lugarExposicion fechaDesde fechaHasta diasEvento');
+    if (!opo) return res.status(404).json({ error: 'Convocatoria no encontrada' });
+
+    // OJO: las obras RECHAZADAS por el curador no se muestran (ni en la galería
+    // pública ni en el flyer, que consume este mismo endpoint).
+    const inscripciones: any[] = await Inscripcion.find({
+      oportunidad: opo._id,
+      estado: { $ne: 'rechazada' },
+    })
+      .populate('obra')
+      .sort({ createdAt: 1 });
+
+    const usuarios = await User.find({ _id: { $in: inscripciones.map(i => i.usuario) } })
+      .select('_id username displayName avatar bio');
+    const uMap = new Map(usuarios.map((u: any) => [u._id.toString(), u]));
+
+    const obras: any[] = [];
+    for (const insc of inscripciones) {
+      const u: any = uMap.get(insc.usuario.toString()) || {};
+      const obra: any = insc.obra || {};
+      const titulo = obra.title || insc.datos?.obraTitulo || '';
+      const imagen = obra.imageUrl || insc.datos?.obraImagen || '';
+      const descripcion = obra.description || insc.datos?.obraDescripcion || '';
+      if (!titulo && !imagen) continue;
+      obras.push({
+        titulo: String(titulo || 'Sin título'),
+        obraId: obra._id ? String(obra._id) : '',
+        imagen: String(imagen || ''),
+        descripcion: String(descripcion || '').slice(0, 1500),
+        artista: {
+          nombre: u.displayName || u.username || 'Artista',
+          usuario: u.username || '',
+          avatar: u.avatar || '',
+          bio: String(u.bio || '').slice(0, 700),
+        },
+        fecha: insc.createdAt || null,
+      });
+    }
+
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.json({
+      oportunidad: {
+        id: opo._id,
+        titulo: opo.titulo || 'Convocatoria',
+        descripcion: opo.descripcion || '',
+        tipo: opo.tipo || 'convocatoria_obra',
+        imagenUrl: opo.imagenUrl || '',
+        lugar: opo.lugarExposicion || '',
+        fechaDesde: opo.fechaDesde || null,
+        fechaHasta: opo.fechaHasta || null,
+        diasEvento: opo.diasEvento || [],
+      },
+      total: obras.length,
+      obras,
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

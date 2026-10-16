@@ -211,6 +211,7 @@ const FORM_TEMPLATES = {
           <option value="unlisted" ${item.visibility === 'unlisted' ? 'selected' : ''}>No Listado</option>
         </select>
       </div>
+      ${(typeof window.fondoObraWidgetHtml === 'function') ? window.fondoObraWidgetHtml(prefix, item) : ''}
       ${cocreadoresSectionHtml(prefix, item)}
     </div>
   `,

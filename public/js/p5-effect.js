@@ -5,7 +5,7 @@
   // Auto-cargar ascii-shader-bg.js si no está cargado en la página
   // FSC_NO_ASCII_BG lo pone la pagina cuando el fondo lo sirve el JP Shader Editor
   // (jpshadereditorInclude): en ese caso NO hay que re-inyectar ascii-shader-bg.js.
-  if (!window.FSC_NO_ASCII_BG && !window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
+  if (window.FSC_ASCII_BG === true && !window.AsciiShaderBG && !document.querySelector('script[src*="ascii-shader-bg.js"]')) {
     const script = document.createElement('script');
     const basePath = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE + '/' : '';
     const currentPath = window.location.pathname;
@@ -33,6 +33,25 @@
   // Estas envolturas delegan en la función de p5 cuando ya existe y, si todavía
   // no existe, usan el equivalente de Math (mismas fórmulas que p5).
   const _shims = {};
+  /* Páginas de FLYER (flyer.html): se comportan como las de output — dibujan
+     palabras flyer y NO cargan el efecto guardado del front (que las limpiaría).
+     Se puede forzar con window.FSC_FLYER = true antes de cargar este script. */
+  function esPaginaFlyer() {
+    return /flyer/i.test(window.location.pathname) || window.FSC_FLYER === true;
+  }
+
+  /** p5 publica sus globales (createVector, width, ...) recién cuando arranca el
+      sketch. Si alguien pide partículas antes, reintentamos en vez de romper con
+      "createVector is not defined" (pasaba en la página de SOLO OUTPUT). */
+  function p5ListoParaParticulas() {
+    return typeof window.createVector === 'function';
+  }
+  function reintentarCuandoP5(fn, intento) {
+    intento = intento || 0;
+    if (intento > 30) return;
+    setTimeout(function () { fn(intento + 1); }, 200);
+  }
+
   function _p5Shim(name, fallback) {
     const fn = function(...args) {
       const p5fn = window[name];
@@ -127,10 +146,14 @@
     CHAR_BG_ENABLED: false,
     CHAR_BG_COLOR: '#000000',
     CHAR_BG_OPACITY: 0.8,
+    // Sombra de la letra (para leer sobre fotos sin recuadro de fondo)
+    CHAR_SHADOW: false,
+    CHAR_SHADOW_COLOR: '#000000',
+    CHAR_SHADOW_BLUR: 14,
     LETTER_SPACING: 1.0,
     COLLAB_WORD_LIFESPAN: 8,
     SHOW_MOUSE_RADIUS: false,
-    P5_FONT: 'sans-serif',
+    P5_FONT: 'Inter, system-ui, -apple-system, sans-serif',
     GENERATIVE_SHADER: 'noise.frag',
     ASCII_FONT_MODE: 0,
     FLYER_MODE_ENABLED: false,
@@ -145,10 +168,14 @@
     CODE_GLITCH_CHARS: '01<>{}#*+%$&?XZ7@!',
     CODE_MOUSE_RETRIGGER: true,
     CODE_MOUSE_RADIUS: 60,
-    COLOR_1: '#e0e0e0', // Cyan
-    COLOR_2: '#b0b0b0', // Naranja
-    COLOR_3: '#9c9c9c', // Magenta
-    COLOR_4: '#c8c8c8', // Verde
+    COLOR_1: '#ffffff', // Blanco (las palabras se dibujan en blanco)
+    COLOR_2: '#ffffff',
+    COLOR_3: '#ffffff',
+    COLOR_4: '#ffffff',
+    // Las palabras del efecto van SIEMPRE en blanco (sin importar configs viejas
+    // guardadas en localStorage ni la del backend). Si algún día querés volver a
+    // los colores por palabra: FORCE_WHITE_WORDS = false en la config.
+    FORCE_WHITE_WORDS: true,
     WORDS: [
       // Categories
       "ENGINES", "FRAMEWORKS", "IA", "SHADERS", "DB", "IDES", "LANGUAGES", "LLM", 
@@ -293,6 +320,19 @@
   }
 
   // Cargar configuración desde el backend asincrónicamente. Devuelve true si trajo datos.
+  /* Permite que UNA página fije valores por encima de la config del servidor:
+     window.FSC_PARTICLES_PIN = { CHAR_BG_ENABLED: false } (se declara antes de
+     cargar este script; sirve para páginas especiales como el flyer). */
+  function aplicarPinesPagina() {
+    const pin = window.FSC_PARTICLES_PIN;
+    if (!pin || typeof pin !== 'object') return;
+    CFG = { ...CFG, ...pin };
+    if (CFG.TEXT_SIZE_MAX !== undefined) {
+      CFG.TEXT_SIZE = Number(CFG.TEXT_SIZE_MAX);
+    }
+    updatePalette();
+  }
+
   async function loadRemoteConfig() {
     try {
       const res = await fetch(getApiUrl() + '/public/particles-config');
@@ -305,6 +345,7 @@
           }
           localStorage.setItem('particles_p5_config', JSON.stringify(CFG));
           updatePalette();
+          aplicarPinesPagina();
           if (typeof window.onParticlesConfigLoaded === 'function') {
             window.onParticlesConfigLoaded(CFG);
           }
@@ -469,11 +510,17 @@
 
   function updatePalette() {
     if (typeof color === 'function') {
+      // Blanco fijo para las palabras (pedido): se ignora cualquier COLOR_1..4
+      // guardado, así da igual la config vieja que haya en localStorage/backend.
+      if (CFG.FORCE_WHITE_WORDS !== false) {
+        palette = [color('#ffffff'), color('#ffffff'), color('#ffffff'), color('#ffffff')];
+        return;
+      }
       palette = [
-        color(CFG.COLOR_1 || '#e0e0e0'),
-        color(CFG.COLOR_2 || '#b0b0b0'),
-        color(CFG.COLOR_3 || '#9c9c9c'),
-        color(CFG.COLOR_4 || '#c8c8c8')
+        color(CFG.COLOR_1 || '#ffffff'),
+        color(CFG.COLOR_2 || '#ffffff'),
+        color(CFG.COLOR_3 || '#ffffff'),
+        color(CFG.COLOR_4 || '#ffffff')
       ];
     }
   }
@@ -486,6 +533,12 @@
   // Spawnea una palabra centrada en (targetCenterX, targetCenterY)
   function spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer = false, flyerId = null, wordConfig = {}) {
     if (!word || typeof word !== 'string') return;
+    if (!p5ListoParaParticulas()) {
+      reintentarCuandoP5(function () {
+        spawnWordParticles(word, targetCenterX, targetCenterY, isFlyer, flyerId, wordConfig);
+      });
+      return;
+    }
     const chars = word.trim().toUpperCase().split('');
     if (!chars.length) return;
 
@@ -562,10 +615,25 @@
 
       particles.push(new WordParticle(ch, spawnX, spawnY, targetX, targetY, isFlyer, wordId, word, wordFontSize, charColor, i, formationMode));
     }
+
+    // GIRO DE ENTRADA (opt-in con wordConfig.spin = true): cada letra entra
+    // girada sobre su propio eje y se va enderezando mientras llega a su lugar.
+    if (isFlyer && flyerId && wordConfig && wordConfig.spin) {
+      particles
+        .filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId)
+        .forEach(p => {
+          p.spinIn = true;
+          p.rotAngle = (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 1.5);
+        });
+    }
   }
 
   function updateFlyerWordParticles(flyerId, newProps = {}) {
     if (!flyerId) return;
+    if (!p5ListoParaParticulas()) {
+      reintentarCuandoP5(function () { updateFlyerWordParticles(flyerId, newProps); });
+      return;
+    }
     let flyerParticles = particles.filter(p => p instanceof WordParticle && p.isFlyer && p.flyerId === flyerId);
 
     const customColor = newProps.color || null;
@@ -774,9 +842,16 @@
     canvas.style('z-index', '1');
     canvas.style('pointer-events', 'none');
     
-    textFont('monospace');
+    // Tipografía del efecto = la MISMA del front (Inter). Se re-aplica cuando la
+    // webfont termina de cargar: si no, los primeros frames salen con el fallback.
+    textFont(CFG.P5_FONT || 'Inter, system-ui, sans-serif');
     textSize(CFG.TEXT_SIZE);
     textAlign(CENTER, CENTER);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        try { textFont(CFG.P5_FONT || 'Inter, system-ui, sans-serif'); } catch (e) { }
+      });
+    }
 
     updatePalette();
 
@@ -922,7 +997,7 @@
                          window.location.pathname.includes('outputeffect.html') ||
                          window.location.pathname.includes('particulas.html') ||
                          window.location.pathname.includes('particulas');
-    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect') || esPaginaFlyer();
     const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
 
     const boundsMap = new Map();
@@ -1125,6 +1200,92 @@
     });
   }
 
+  /** Avanza las capas de IMAGEN según la timeline: cada capa puede tener clips
+      con startTime/duration (cuándo se ve) y keyframes (x, y, scale, rotation,
+      alpha) que se interpolan. Lo usan el reproductor y la página del flyer.
+      También aplica el ajuste 'cover' (la imagen tapa la pantalla sin deformar). */
+  /** Factor de escala del proyecto: se diseña sobre FSC_VIEWPORT_BASE (ej. 1080x1920)
+      y se ve igual en cualquier pantalla. Devuelve null si no hay base declarada. */
+  window.FSC_FACTOR_VIEWPORT = function (base) {
+    const b = base || window.FSC_VIEWPORT_BASE || null;
+    if (!b || !b[0] || !b[1]) return null;
+    const w = (typeof width !== 'undefined' && width) || window.innerWidth || b[0];
+    const h = (typeof height !== 'undefined' && height) || window.innerHeight || b[1];
+    return { sx: w / b[0], sy: h / b[1], s: Math.min(w / b[0], h / b[1]) };
+  };
+
+  window.FSC_EVAL_IMAGENES = function (t, capasTimeline) {
+    if (!Array.isArray(capasTimeline) || !capasTimeline.length) return;
+    const imgs = window.activeImageLayers || [];
+    if (!imgs.length) return;
+
+    const numero = v => (v === undefined || v === null || v === '') ? undefined : Number(v);
+    const mezcla = (a, b, f, k) => {
+      const va = numero(a[k]), vb = numero(b[k]);
+      if (va === undefined && vb === undefined) return undefined;
+      if (va === undefined) return vb;
+      if (vb === undefined) return va;
+      return va + (vb - va) * f;
+    };
+
+    capasTimeline.forEach(layerObj => {
+      const clips = Array.isArray(layerObj.clips) ? layerObj.clips : [];
+      const esImagen = layerObj.type === 'image' || clips.some(c => c && c.imageId);
+      if (!esImagen) return;
+
+      const imgId = layerObj.imageId || (clips[0] && clips[0].imageId);
+      const img = imgs.find(i => i.id === imgId || i.id === layerObj.id);
+      if (!img) return;
+
+      const activo = clips.find(c => {
+        const ini = Number(c.startTime) || 0;
+        const dur = Number(c.duration) || 2;
+        return t >= ini && t <= ini + dur;
+      });
+
+      if (!activo) { img.visible = false; return; }
+      img.visible = true;
+
+      const esRel = activo.rel === true || layerObj.rel === true;
+      const ponProp = (destino, k, v) => {
+        if (v === undefined || v === null || v === '') return;
+        if (esRel && (k === 'x' || k === 'y')) {
+          destino[k] = Number(v) * (k === 'x' ? ((typeof width !== 'undefined' && width) || 1080) : ((typeof height !== 'undefined' && height) || 1920));
+        } else {
+          destino[k] = Number(v);
+        }
+      };
+      ['x', 'y', 'scale', 'rotation', 'alpha'].forEach(k => ponProp(img, k, activo[k]));
+
+      const keys = (Array.isArray(activo.keyframes) ? activo.keyframes : [])
+        .filter(k => k && k.time !== undefined)
+        .sort((a, b) => a.time - b.time);
+      if (!keys.length) return;
+
+      let props = null;
+      if (t <= keys[0].time) {
+        props = keys[0];
+      } else if (t >= keys[keys.length - 1].time) {
+        props = keys[keys.length - 1];
+      } else {
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (t >= keys[i].time && t <= keys[i + 1].time) {
+            const f = (t - keys[i].time) / ((keys[i + 1].time - keys[i].time) || 1);
+            props = {};
+            ['x', 'y', 'scale', 'rotation', 'alpha'].forEach(k => {
+              const v = mezcla(keys[i], keys[i + 1], f, k);
+              if (v !== undefined) props[k] = v;
+            });
+            break;
+          }
+        }
+      }
+      if (props) {
+        ['x', 'y', 'scale', 'rotation', 'alpha'].forEach(k => ponProp(img, k, props[k]));
+      }
+    });
+  };
+
   function drawActiveImageLayers() {
     if (!window.activeImageLayers || !window.activeImageLayers.length) return;
     window.activeImageLayers.forEach(layer => {
@@ -1132,6 +1293,10 @@
 
       if (!layer.imgElement && layer.src) {
         const img = new Image();
+        // CORS: sin esto el canvas queda "contaminado" y no se puede exportar ni grabar
+        if (/^https?:/i.test(layer.src) && layer.src.indexOf(location.origin) !== 0) {
+          img.crossOrigin = 'anonymous';
+        }
         img.onload = () => {
           layer.width = layer.width || img.naturalWidth || img.width || 280;
           layer.height = layer.height || img.naturalHeight || img.height || 280;
@@ -1149,7 +1314,19 @@
       const posY = layer.y !== undefined ? layer.y : (height ? height / 2 : 540);
       translate(posX, posY);
       rotate(radians(layer.rotation || 0));
-      scale(layer.scale !== undefined ? layer.scale : 1.0);
+
+      // ajuste 'cover': la imagen tapa toda la pantalla sin deformarse
+      if (layer.ajuste === 'cover' && rawImg.naturalWidth) {
+        if (!layer._fitCover) {
+          layer._fitCover = Math.max((width || 1920) / rawImg.naturalWidth, (height || 1080) / rawImg.naturalHeight);
+        }
+        scale(layer._fitCover * (layer.scale !== undefined ? layer.scale : 1.0));
+      } else if (layer.rel && rawImg.naturalHeight) {
+        // tamaño relativo: 'scale' = fracción de la altura de la pantalla
+        scale(((height || 1920) * (layer.scale !== undefined ? layer.scale : 1.0)) / rawImg.naturalHeight);
+      } else {
+        scale(layer.scale !== undefined ? layer.scale : 1.0);
+      }
 
       const w = layer.width || rawImg.naturalWidth || rawImg.width || 280;
       const h = layer.height || rawImg.naturalHeight || rawImg.height || 280;
@@ -1305,7 +1482,7 @@
                          window.location.pathname.includes('outputeffect.html') ||
                          window.location.pathname.includes('particulas.html') ||
                          window.location.pathname.includes('particulas');
-    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect') || esPaginaFlyer();
     const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
 
     if (isFlyerMode) {
@@ -1559,7 +1736,7 @@
                          window.location.pathname.includes('outputeffect.html') ||
                          window.location.pathname.includes('particulas.html') ||
                          window.location.pathname.includes('particulas');
-    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect');
+    const isOutputPage = window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect') || esPaginaFlyer();
     const isFlyerMode = isOutputPage || (isEditorPage && (window.appMode === 'FLYERMODE' || Boolean(CFG && CFG.FLYER_MODE_ENABLED)));
 
     if (isRescalingFlyerWord && flyerWordScaleStart.wordObj) {
@@ -1964,7 +2141,7 @@
       fill(this.baseColor); 
       textSize(size);
       if (typeof textFont === 'function') {
-        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'sans-serif';
+        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'Inter, system-ui, sans-serif';
         textFont(fontFam);
       }
       text(this.char, this.pos.x, this.pos.y);
@@ -2189,15 +2366,23 @@
 
       // Dinámica de formación según el modo seleccionado
       if (this.formationMode === 'CODE') {
-        // En modo CODE: la posición se mantiene 100% fija en el target, cero rotación
+        // En modo CODE: la posición se mantiene 100% fija en el target.
+        // Sin giro de entrada la letra va siempre derecha; con spin (flyer) se
+        // conserva el ángulo y se endereza mientras se descifra.
         this.pos.set(this.target);
         this.vel.set(0, 0);
         this.acc.set(0, 0);
-        this.rotAngle = 0;
+        if (!this.spinIn) this.rotAngle = 0;
 
         // a) Velocidad de cambio de letra: 1 (lento) a 10 (ultra rápido)
         const charSpeed = (CFG.CODE_CHAR_SPEED !== undefined) ? Number(CFG.CODE_CHAR_SPEED) : 5;
         const scrambleInterval = Math.max(1, 11 - Math.min(10, Math.max(1, Math.round(charSpeed))));
+
+        // giro de entrada: mientras se descifra va enderezándose (opt-in con spin)
+        if (this.spinIn && this.rotAngle) {
+          this.rotAngle *= this.isFormed ? 0.80 : 0.975;
+          if (Math.abs(this.rotAngle) < 0.008) this.rotAngle = 0;
+        }
 
         if (this.decodeStep < this.maxDecodeSteps) {
           this.decodeStep++;
@@ -2241,6 +2426,11 @@
             this.vel.set(0, 0);
           }
           this.lifespan = 255;
+          // giro de entrada: se frena a medida que la letra se acomoda
+          if (this.spinIn && this.rotAngle) {
+            this.rotAngle *= (d < 90 ? 0.90 : 0.985);
+            if (Math.abs(this.rotAngle) < 0.008) this.rotAngle = 0;
+          }
         } else {
           if (d < 3 && !isRepelled) {
             this.vel.mult(0.35);
@@ -2261,7 +2451,7 @@
       push();
       translate(this.pos.x, posY);
 
-      if (this.formationMode !== 'CODE' && this.rotAngle && Math.abs(this.rotAngle) > 0.001) {
+      if ((this.formationMode !== 'CODE' || this.spinIn) && this.rotAngle && Math.abs(this.rotAngle) > 0.001) {
         rotate(this.rotAngle);
       }
 
@@ -2283,7 +2473,7 @@
       fill(this.baseColor);
       textSize(size);
       if (typeof textFont === 'function') {
-        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'sans-serif';
+        const fontFam = (CFG.P5_FONT && CFG.P5_FONT.trim()) ? CFG.P5_FONT : 'Inter, system-ui, sans-serif';
         textFont(fontFam);
       }
       textAlign(CENTER, CENTER);
@@ -2292,7 +2482,16 @@
         ? this.currentGlitchChar
         : this.char;
 
+      // Sombra suave opcional: deja leer la letra sobre una foto sin recuadro negro
+      const conSombra = Boolean(CFG.CHAR_SHADOW) && typeof drawingContext !== 'undefined' && drawingContext;
+      if (conSombra) {
+        drawingContext.shadowColor = CFG.CHAR_SHADOW_COLOR || '#000000';
+        drawingContext.shadowBlur = Number(CFG.CHAR_SHADOW_BLUR) || 14;
+      }
       text(displayChar, 0, 0);
+      if (conSombra) {
+        drawingContext.shadowBlur = 0;
+      }
       pop();
     }
 
@@ -2316,7 +2515,15 @@
 
   // ========== SECUENCIA DEFAULT PINEADA PARA EL FRONT (Admin Pinned) ==========
   async function initDefaultFrontVisualEffect() {
-    if (window.location.pathname.includes('visualeffects.html') || window.location.pathname.includes('outputeffect.html') || window.location.pathname.includes('outputeffect')) return;
+    // Un proyecto puntual (flyer) se puede pedir con ?proyecto=<id> o FSC_PROYECTO_ID
+    const idProyecto = window.FSC_PROYECTO_ID ||
+      new URLSearchParams(window.location.search).get('proyecto');
+    if (window.location.pathname.includes('visualeffects.html')) return;
+    const esPaginaOutput = window.location.pathname.includes('outputeffect.html') ||
+                           window.location.pathname.includes('outputeffect');
+    // En la página de SOLO OUTPUT ahora reproduce el mismo reproductor de proyectos
+    if (esPaginaOutput && !idProyecto) return;
+    if (esPaginaFlyer() && !idProyecto) return;
 
     try {
       const candidates = [];
@@ -2334,12 +2541,12 @@
       for (const base of uniqueEndpoints) {
         try {
           const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-          const res = await fetch(`${cleanBase}/visualeffects/default-front`);
+          const res = await fetch(`${cleanBase}/visualeffects/` + (idProyecto ? encodeURIComponent(idProyecto) : 'default-front'));
           if (res.ok) {
             const cType = res.headers.get('content-type') || '';
             if (cType.includes('application/json')) {
               const data = await res.json();
-              if (data && (data.isDefaultFront || data._id)) {
+              if (data && (data.isDefaultFront || data._id || Array.isArray(data.timelineLayers))) {
                 effect = data;
                 break;
               }
@@ -2348,14 +2555,20 @@
         } catch (e) {}
       }
 
-      if (!effect || !effect.isDefaultFront) return;
+      if (!effect) return;
+      if (!idProyecto && !effect.isDefaultFront) return;
 
-      console.log('[Front VisualEffect] Cargando secuencia default:', effect.title);
+      console.log('[Front VisualEffect] Cargando secuencia:', effect.title);
 
       // 1. Aplicar la configuración guardada (colores, shader, modos, etc.)
       if (effect.config && typeof effect.config === 'object') {
         if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
           window.ParticlesConfig.set(effect.config);
+        }
+        // Capas de IMAGEN del proyecto: antes no se cargaban y por eso las fotos
+        // de un proyecto guardado no aparecían nunca en el reproductor.
+        if (Array.isArray(effect.config.IMAGE_LAYERS)) {
+          window.activeImageLayers = effect.config.IMAGE_LAYERS.map(img => ({ ...img, visible: true }));
         }
         if (effect.config.GENERATIVE_SHADER && window.AsciiShaderBG && typeof window.AsciiShaderBG.loadGenerativeShader === 'function') {
           window.AsciiShaderBG.loadGenerativeShader(effect.config.GENERATIVE_SHADER);
@@ -2419,13 +2632,19 @@
           }
 
           window.clearAllFlyerParticles();
+          const baseSpawn = effect.viewportBase
+            || (effect.config && effect.config.VIEWPORT_BASE)
+            || null;
+          const fvSpawn = (typeof window.FSC_FACTOR_VIEWPORT === 'function')
+            ? (window.FSC_FACTOR_VIEWPORT(baseSpawn) || { sx: 1, sy: 1, s: 1 })
+            : { sx: 1, sy: 1, s: 1 };
           sequenceWords.forEach(w => {
             const wordText = w.text || w.word || '';
             const posX = w.x !== undefined ? w.x : (window.innerWidth / 2);
             const posY = w.y !== undefined ? w.y : (window.innerHeight / 2);
             window.spawnWordParticles(wordText, posX, posY, true, w.id, {
-              fontSize: w.fontSize,
-              letterSpacing: w.letterSpacing,
+              fontSize: w.fontSize ? Math.round(w.fontSize * fvSpawn.s) : w.fontSize,
+              letterSpacing: w.letterSpacing ? Math.max(1, Math.round(w.letterSpacing * fvSpawn.s)) : w.letterSpacing,
               color: w.color,
               letterColors: w.letterColors,
               formationMode: w.formationMode || 'CODE'
@@ -2436,6 +2655,13 @@
           if (timelineLayers.length > 0) {
             let frontTimelineTime = 0.0;
             let lastFrontTime = performance.now();
+
+            const baseProyecto = effect.viewportBase
+              || (effect.config && effect.config.VIEWPORT_BASE)
+              || null;
+            const fvProyecto = (typeof window.FSC_FACTOR_VIEWPORT === 'function')
+              ? window.FSC_FACTOR_VIEWPORT(baseProyecto)
+              : null;
 
             function evaluateFrontTimeline(t) {
               timelineLayers.forEach(layerObj => {
@@ -2479,6 +2705,14 @@
                     }
                   }
 
+                  // Escalar el diseño del proyecto a la pantalla real
+                  if (fvProyecto) {
+                    if (props.x !== undefined) props.x = props.x * fvProyecto.sx;
+                    if (props.y !== undefined) props.y = props.y * fvProyecto.sy;
+                    if (props.fontSize !== undefined) props.fontSize = Math.round(props.fontSize * fvProyecto.s);
+                    if (props.letterSpacing !== undefined) props.letterSpacing = Math.max(1, Math.round(props.letterSpacing * fvProyecto.s));
+                  }
+
                   if (typeof window.updateFlyerWordParticles === 'function') {
                     window.updateFlyerWordParticles(clipObj.id, props);
                   }
@@ -2486,11 +2720,18 @@
               });
             }
 
+            // Para grabar: el flyer necesita saber cuánto dura y poder volver a 0
+            window.FSC_DURACION_PROYECTO = timelineDuration;
+            window.FSC_REINICIAR_PROYECTO = function () { frontTimelineTime = 0; };
+
             function loopFrontTimeline(now) {
               const delta = (now - lastFrontTime) / 1000;
               lastFrontTime = now;
               frontTimelineTime = (frontTimelineTime + delta) % timelineDuration;
               evaluateFrontTimeline(frontTimelineTime);
+              if (typeof window.FSC_EVAL_IMAGENES === 'function') {
+                window.FSC_EVAL_IMAGENES(frontTimelineTime, timelineLayers);
+              }
               requestAnimationFrame(loopFrontTimeline);
             }
 

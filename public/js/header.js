@@ -14,6 +14,7 @@
 
 // Ítems que NO entran en la fila: van al desplegable "MÁS".
 const NAV_MAS = [
+  { href: '/artistas.html', label: 'Artistas', icon: 'fa-users' },
   { href: '/search.html', label: 'Buscar', icon: 'fa-magnifying-glass' },
   { href: '/visualeffects.html', label: 'Efectos', icon: 'fa-wand-magic-sparkles' },
   { href: '/concurso.html', label: 'Concurso', icon: 'fa-trophy' },
@@ -61,7 +62,6 @@ function renderHeader() {
         <a class="ui-navlink${navActivo('/recursos.html')}" href="${CONFIG.BASE}/recursos.html">Recursos</a>
         <a class="ui-navlink is-chances${navActivo('/oportunidades.html')}" href="${CONFIG.BASE}/oportunidades.html">Chances</a>
         <a class="ui-navlink${navActivo('/calendario.html')}" href="${CONFIG.BASE}/calendario.html">Calendario</a>
-        <a class="ui-navlink${navActivo('/artistas.html')}" href="${CONFIG.BASE}/artistas.html">Artistas</a>
         ${loggedIn ? `<a class="ui-navlink is-chat${navActivo('/chat.html')}" href="${CONFIG.BASE}/chat.html">Chat</a>` : ''}
         <div class="ui-menu" id="ui-menu-mas">
           <button type="button" class="ui-navlink" data-ui-menu-btn aria-expanded="false">
@@ -101,7 +101,6 @@ function renderHeader() {
         <a href="${CONFIG.BASE}/recursos.html">Recursos</a>
         <a href="${CONFIG.BASE}/oportunidades.html">Chances</a>
         <a href="${CONFIG.BASE}/calendario.html">Calendario</a>
-        <a href="${CONFIG.BASE}/artistas.html">Artistas</a>
         ${loggedIn ? `<a href="${CONFIG.BASE}/chat.html">Chat</a><a href="${CONFIG.BASE}/create.html">Crear</a>` : ''}
         ${NAV_MAS.map(i => `<a href="${CONFIG.BASE}${i.href}"><i class="fas ${i.icon}"></i> ${i.label}</a>`).join('')}
         ${admin ? `<a href="${CONFIG.BASE}/admin.html"><i class="fas fa-shield-halved"></i> Admin</a>` : ''}

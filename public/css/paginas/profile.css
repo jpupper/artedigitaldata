@@ -1,0 +1,9 @@
+/* Estilos propios de profile.html — extraídos del HTML (regla de separación HTML/CSS/JS) */
+
+.dp-1 { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+.dp-2 { background: var(--gradient-neon); color: #0a0a0f; }
+
+.dp-3 { width:0%; }
+
+.dp-4 { width:0%; }

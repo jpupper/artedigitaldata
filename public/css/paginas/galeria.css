@@ -1,0 +1,161 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   GALERÍA PÚBLICA DE UNA CONVOCATORIA (galeria.html)
+   Las letras entran girando (rotateY) por CSS, con retardo por letra (--i).
+   La animación la dispara js/paginas/galeria-1.js cuando el bloque entra en
+   pantalla (IntersectionObserver): sin JS, el texto se ve igual (fallback).
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.gk-main { padding-top: 96px; }
+
+/* ── Cabecera ─────────────────────────────────────────────────────────────── */
+.gk-hero { padding: 26px 28px; margin-bottom: 24px; }
+.gk-kicker {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--fk-dim); margin-bottom: 12px;
+}
+.gk-titulo {
+  font-size: clamp(30px, 6vw, 58px); line-height: 1.06; font-weight: 700;
+  letter-spacing: -0.025em; color: var(--fk-ink); margin: 0 0 14px;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.6);
+}
+.gk-bajada {
+  font-size: clamp(14px, 1.5vw, 16px); line-height: 1.6; color: var(--fk-dim);
+  max-width: 70ch; white-space: pre-wrap; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.gk-bajada.gk-abierta { -webkit-line-clamp: unset; overflow: visible; }
+#gk-bajada-toggle { margin: 8px 0 0; }
+.gk-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.gk-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; font-size: 12px; font-weight: 500;
+  color: var(--fk-dim); background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--fk-line);
+}
+.gk-chip i { color: var(--fk-accent); font-size: 11px; }
+.gk-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+
+/* ── Letras que entran girando ────────────────────────────────────────────── */
+.gk-titulo .gk-l, .gk-card-titulo .gk-l, .gk-nombre .gk-l {
+  display: inline-block;
+  opacity: 0;
+  transform: perspective(700px) rotateY(-92deg) translateZ(-14px) translateY(6px);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+.gk-letras-on .gk-l {
+  animation: gk-gira-entra 0.72s cubic-bezier(0.22, 0.8, 0.24, 1) forwards;
+  animation-delay: calc(var(--i) * 34ms);
+}
+@keyframes gk-gira-entra {
+  0%   { opacity: 0; transform: perspective(700px) rotateY(-92deg) translateZ(-14px) translateY(6px); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: perspective(700px) rotateY(0deg) translateZ(0) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gk-titulo .gk-l, .gk-card-titulo .gk-l, .gk-nombre .gk-l { opacity: 1; transform: none; }
+  .gk-letras-on .gk-l { animation: none; }
+}
+
+/* ── Grilla de obras ──────────────────────────────────────────────────────── */
+.gk-grid {
+  display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  margin-bottom: 40px;
+}
+
+.gk-card {
+  display: flex; flex-direction: column;
+  background: var(--fk-glass);
+  border: 1px solid var(--fk-line);
+  backdrop-filter: var(--fk-blur); -webkit-backdrop-filter: var(--fk-blur);
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.25s ease;
+}
+.gk-card.gk-visible { opacity: 1; transform: none; }
+.gk-card:hover { border-color: var(--fk-line-2); }
+
+.gk-media {
+  position: relative; width: 100%; aspect-ratio: 4 / 3;
+  background: rgba(255, 255, 255, 0.03); overflow: hidden;
+}
+.gk-media img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.7s cubic-bezier(0.22, 0.8, 0.24, 1);
+}
+.gk-card:hover .gk-media img { transform: scale(1.04); }
+.gk-media-vacia {
+  display: flex; align-items: center; justify-content: center; height: 100%;
+  color: rgba(255, 255, 255, 0.18); font-size: 34px;
+}
+.gk-num {
+  position: absolute; top: 10px; left: 10px;
+  background: #000; border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 4px 8px;
+}
+
+.gk-card-cuerpo { padding: 18px 18px 20px; display: flex; flex-direction: column; flex: 1; }
+.gk-card-titulo {
+  font-size: clamp(18px, 2.2vw, 23px); font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.2; color: var(--fk-ink); margin: 0 0 10px;
+}
+.gk-card-desc {
+  font-size: 13.5px; line-height: 1.6; color: var(--fk-dim);
+  margin: 0 0 16px; white-space: pre-wrap;
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
+}
+.gk-card-desc.gk-abierta { -webkit-line-clamp: unset; overflow: visible; }
+.gk-vermas {
+  align-self: flex-start; background: none; border: 0; padding: 0; margin: -8px 0 14px;
+  color: var(--fk-accent); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+
+.gk-artista {
+  display: flex; gap: 12px; align-items: flex-start; margin-top: auto;
+  padding-top: 14px; border-top: 1px solid var(--fk-line);
+}
+.gk-avatar {
+  width: 44px; height: 44px; flex: 0 0 44px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--fk-line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: var(--fk-ink);
+}
+.gk-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gk-artista-txt { min-width: 0; }
+.gk-nombre {
+  font-size: 14px; font-weight: 600; color: var(--fk-ink); line-height: 1.3;
+  text-decoration: none; display: inline-block;
+}
+.gk-nombre:hover { color: var(--fk-accent); }
+.gk-usuario { font-size: 11.5px; color: var(--fk-dim); margin-top: 2px; }
+.gk-bio {
+  font-size: 12.5px; line-height: 1.55; color: var(--fk-dim); margin-top: 8px;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ── Estados ──────────────────────────────────────────────────────────────── */
+.gk-estado {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 64px 20px; text-align: center; color: var(--fk-dim); font-size: 14px;
+}
+.gk-estado i { font-size: 30px; color: rgba(255, 255, 255, 0.28); }
+.gk-estado p { margin: 0; }
+.ui-hidden { display: none !important; }
+
+/* ── Celular ──────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .gk-main { padding-top: 84px; }
+  .gk-hero { padding: 20px 18px; }
+  .gk-grid { grid-template-columns: 1fr; gap: 14px; }
+  .gk-card-cuerpo { padding: 16px 16px 18px; }
+  .gk-media { aspect-ratio: 1 / 1; }
+  .gk-acciones .ui-btn, .gk-acciones a.ui-btn { width: 100%; justify-content: center; }
+  .gk-bio { -webkit-line-clamp: 5; }
+  .gk-chip { font-size: 11px; padding: 6px 10px; }
+}
+
+/* Tablets */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .gk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

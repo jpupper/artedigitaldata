@@ -9,7 +9,9 @@
   <script src="js/config.js"></script>
   <link rel="stylesheet" href="css/formularioingreso.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
+  <link rel="stylesheet" href="css/paginas/formularioingreso.css">
 </head>
 <body class="min-h-screen scrollbar-hide">
 
@@ -42,7 +44,7 @@
     <!-- Main Form Section -->
     <div id="form-section">
       <div class="section-card">
-        <form id="entry-form" class="space-y-5" onsubmit="return handleSubmit(event)">
+        <form id="entry-form" class="space-y-5" data-on-submit="return handleSubmit(event)">
 
           <!-- Avatar / Foto -->
           <div>
@@ -51,14 +53,14 @@
             </label>
             <div class="flex items-center gap-4">
               <div id="avatar-preview" class="avatar-preview"></div>
-              <div id="avatar-placeholder" class="avatar-placeholder" onclick="document.getElementById('avatar-input').click()">
+              <div id="avatar-placeholder" class="avatar-placeholder" data-on-click="document.getElementById('avatar-input').click()">
                 <div>
                   <i class="fas fa-camera text-xl mb-1 block"></i>
                   <span>Subir foto</span>
                 </div>
               </div>
-              <input type="file" id="avatar-input" class="file-input-hidden" accept="image/*" onchange="previewAvatar(event)">
-              <button type="button" id="clear-avatar" class="hidden text-red-400 hover:text-red-300 text-sm transition-colors" onclick="clearAvatar()">
+              <input type="file" id="avatar-input" class="file-input-hidden" accept="image/*" data-on-change="previewAvatar(event)">
+              <button type="button" id="clear-avatar" class="hidden text-red-400 hover:text-red-300 text-sm transition-colors" data-on-click="clearAvatar()">
                 <i class="fas fa-times"></i> Quitar
               </button>
             </div>
@@ -170,7 +172,7 @@
     </div>
 
     <!-- Success Message (shown after submission) -->
-    <div id="success-message" class="section-card text-center" style="border-color: rgba(0, 245, 255, 0.2);">
+    <div id="success-message" class="section-card text-center dp-1">
       <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-surface mb-6 border border-cyan-500/20 mx-auto">
         <i class="fas fa-check-circle text-5xl text-cyan icon-glow"></i>
       </div>
@@ -182,7 +184,7 @@
         También podés empezar a publicar tu arte iniciando sesión en la plataforma.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN?s=cl&p=a&ilr=2" target="_blank" class="btn-glow" style="display:inline-flex; width:auto;">
+        <a href="https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN?s=cl&p=a&ilr=2" target="_blank" class="btn-glow dp-2">
           <i class="fab fa-whatsapp text-xl"></i>
           Unirse al grupo de WhatsApp
         </a>
@@ -193,7 +195,7 @@
       <p class="text-gray-600 text-sm mt-4">
         Si el enlace no funciona, copiá y pegá esta URL en tu navegador:
       </p>
-      <p class="text-cyan text-xs mt-1 break-all select-all" style="word-break: break-all;">
+      <p class="text-cyan text-xs mt-1 break-all select-all dp-3">
         https://chat.whatsapp.com/FaIpZjZFVT49gzfUKqKuHN?s=cl&p=a&ilr=2
       </p>
       <div class="mt-8 pt-4 border-t border-white/5">
@@ -210,163 +212,13 @@
 
   </div>
 
-  <script>
-    function previewAvatar(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const preview = document.getElementById('avatar-preview');
-        preview.style.backgroundImage = 'url(' + ev.target.result + ')';
-        preview.style.display = 'block';
-        preview.style.backgroundSize = 'cover';
-        preview.style.backgroundPosition = 'center';
-        document.getElementById('avatar-placeholder').style.display = 'none';
-        document.getElementById('clear-avatar').classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function clearAvatar() {
-      document.getElementById('avatar-input').value = '';
-      document.getElementById('avatar-preview').style.display = 'none';
-      document.getElementById('avatar-preview').style.backgroundImage = '';
-      document.getElementById('avatar-placeholder').style.display = 'flex';
-      document.getElementById('clear-avatar').classList.add('hidden');
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('form-error');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
-
-    function hideError() {
-      document.getElementById('form-error').classList.add('hidden');
-    }
-
-    async function handleSubmit(e) {
-      e.preventDefault();
-      hideError();
-
-      const username = document.getElementById('username').value.trim();
-      const displayName = document.getElementById('displayName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const bio = document.getElementById('bio').value.trim();
-      const socialWhatsapp = document.getElementById('social-whatsapp').value.trim();
-      const socialInstagram = document.getElementById('social-instagram').value.trim();
-      const socialFacebook = document.getElementById('social-facebook').value.trim();
-      const socialX = document.getElementById('social-x').value.trim();
-      const socialBehance = document.getElementById('social-behance').value.trim();
-      const socialGithub = document.getElementById('social-github').value.trim();
-      const avatarFile = document.getElementById('avatar-input').files[0];
-
-      if (!username || !email || !password) {
-        showError('Completá los campos obligatorios: nombre de usuario, email y contraseña.');
-        return;
-      }
-
-      if (password.length < 6) {
-        showError('La contraseña debe tener al menos 6 caracteres.');
-        return;
-      }
-
-      const btn = document.getElementById('submit-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando cuenta...';
-
-      // Show loading overlay
-      document.getElementById('loading-overlay').classList.remove('hidden');
-
-      try {
-        // 1. Register the user
-        const registerRes = await fetch(CONFIG.API_URL + '/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password })
-        });
-
-        const registerData = await registerRes.json();
-        if (!registerRes.ok) {
-          document.getElementById('loading-overlay').classList.add('hidden');
-          showError(registerData.error || 'Error al registrarse');
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-paper-plane"></i> Crear cuenta y unirme a la comunidad';
-          return;
-        }
-
-        // Save auth token globally
-        const token = registerData.token;
-
-        // 2. Upload avatar if provided
-        let avatarUrl = '';
-        if (avatarFile) {
-          try {
-            const formData = new FormData();
-            formData.append('file', avatarFile);
-            const uploadRes = await fetch(CONFIG.API_URL + '/upload', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + token },
-              body: formData
-            });
-            if (uploadRes.ok) {
-              const uploadData = await uploadRes.json();
-              avatarUrl = uploadData.url || '';
-            }
-          } catch (uploadErr) {
-            console.warn('Avatar upload failed, continuing without it', uploadErr);
-          }
-        }
-
-        // 3. Update profile with bio, displayName, socials, avatar
-        const socials = {};
-        if (socialWhatsapp) socials.whatsapp = socialWhatsapp;
-        if (socialInstagram) socials.instagram = socialInstagram;
-        if (socialFacebook) socials.facebook = socialFacebook;
-        if (socialX) socials.x = socialX;
-        if (socialBehance) socials.behance = socialBehance;
-        if (socialGithub) socials.github = socialGithub;
-
-        const profileUpdate = {};
-        if (bio) profileUpdate.bio = bio;
-        if (displayName) profileUpdate.displayName = displayName;
-        if (avatarUrl) profileUpdate.avatar = avatarUrl;
-        if (Object.keys(socials).length > 0) profileUpdate.socials = socials;
-
-        if (Object.keys(profileUpdate).length > 0) {
-          try {
-            await fetch(CONFIG.API_URL + '/profile/me', {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-              },
-              body: JSON.stringify(profileUpdate)
-            });
-          } catch (profileErr) {
-            console.warn('Profile update failed, continuing', profileErr);
-          }
-        }
-
-        // 4. Show success
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('form-section').style.display = 'none';
-        document.getElementById('success-message').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      } catch (err) {
-        document.getElementById('loading-overlay').classList.add('hidden');
-        showError('Error de conexión con el servidor. Verificá tu conexión e intentá de nuevo.');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Crear cuenta y unirme a la comunidad';
-      }
-
-      return false;
-    }
-  </script>
+  <script src="js/paginas/formularioingreso-1.js"></script>
 
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
+<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

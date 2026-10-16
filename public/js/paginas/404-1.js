@@ -1,0 +1,220 @@
+(function() {
+      // Configurar enlace de retorno dinámico según el entorno
+      const homeBtn = document.getElementById('btn-back-home');
+      if (homeBtn) {
+        const basePath = (window.CONFIG && window.CONFIG.BASE) ? window.CONFIG.BASE : '';
+        homeBtn.href = (basePath || '') + '/index.html';
+      }
+
+      const canvas = document.getElementById('cliff-canvas');
+      const wrapper = document.getElementById('cliff-wrapper');
+      if (!canvas || !wrapper) return;
+
+      const ctx = canvas.getContext('2d');
+      let animationFrameId = null;
+      let width = 0;
+      let height = 0;
+      let mouseX = 0;
+      let mouseY = 0;
+      let targetTiltX = 0;
+      let targetTiltY = 0;
+      let currentTiltX = 0;
+      let currentTiltY = 0;
+
+      // Partículas cayendo por el acantilado
+      const particles = [];
+      const MAX_PARTICLES = 30;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = wrapper.clientWidth || 500;
+        height = wrapper.clientHeight || 200;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Interacción sutil con el ratón
+      window.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left - 50 &&
+          e.clientX <= rect.right + 50 &&
+          e.clientY >= rect.top - 50 &&
+          e.clientY <= rect.bottom + 50
+        ) {
+          mouseX = (e.clientX - rect.left) / width - 0.5;
+          mouseY = (e.clientY - rect.top) / height - 0.5;
+          targetTiltX = mouseX * 18;
+          targetTiltY = mouseY * 12;
+        } else {
+          targetTiltX = 0;
+          targetTiltY = 0;
+        }
+      });
+
+      // Inicializar partículas del abismo
+      for (let i = 0; i < MAX_PARTICLES; i++) {
+        particles.push({
+          x: Math.random(),
+          y: Math.random(),
+          speed: 0.002 + Math.random() * 0.004,
+          size: 1 + Math.random() * 2,
+          alpha: 0.2 + Math.random() * 0.6,
+          hue: Math.random() > 0.5 ? '#00f5ff' : '#ff00e0'
+        });
+      }
+
+      let time = 0;
+
+      function drawCliff() {
+        time += 0.02;
+        currentTiltX += (targetTiltX - currentTiltX) * 0.08;
+        currentTiltY += (targetTiltY - currentTiltY) * 0.08;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Fondo atmosférico profundo
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+        bgGrad.addColorStop(0, '#0a0d18');
+        bgGrad.addColorStop(0.6, '#06070d');
+        bgGrad.addColorStop(1, '#030406');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Dibujar niebla / partículas cayendo en el abismo (lado derecho)
+        particles.forEach(p => {
+          p.y += p.speed;
+          if (p.y > 1) {
+            p.y = 0;
+            p.x = 0.52 + Math.random() * 0.45;
+          }
+          const px = p.x * width + Math.sin(time + p.y * 6) * 6 + currentTiltX * 0.5;
+          const py = p.y * height;
+          ctx.fillStyle = p.hue;
+          ctx.globalAlpha = p.alpha * (0.3 + Math.sin(time * 2 + p.x * 10) * 0.2);
+          ctx.fillRect(px, py, p.size, p.size * 2);
+        });
+        ctx.globalAlpha = 1.0;
+
+        // Líneas generativas del acantilado
+        const TOTAL_LINES = 22;
+        const cliffEdgePoints = [];
+
+        for (let i = 0; i < TOTAL_LINES; i++) {
+          const depth = (i + 1) / TOTAL_LINES; // 0 (lejos) a 1 (cerca)
+          const baseY = height * 0.24 + depth * (height * 0.68) + currentTiltY * (depth - 0.5);
+
+          // Coordenada X donde ocurre la ruptura del acantilado
+          // Ondula suavemente con el tiempo y la profundidad
+          const cliffBreakFactor = 0.52 + Math.sin(depth * 3.4 + time * 0.25) * 0.03 + Math.cos(depth * 7.1 - time * 0.15) * 0.015;
+          const cliffBreakX = width * cliffBreakFactor + currentTiltX * depth;
+
+          // Meseta (lado izquierdo hasta el borde)
+          ctx.beginPath();
+          let edgeY = baseY;
+
+          const steps = 36;
+          for (let s = 0; s <= steps; s++) {
+            const u = (s / steps) * cliffBreakFactor;
+            const x = u * width + currentTiltX * depth * (u / cliffBreakFactor);
+
+            // Elevación del terreno con armónicos sinusoidales generativos
+            const wave1 = Math.sin(u * 14 + time * 0.8 + depth * 4.0) * 6;
+            const wave2 = Math.cos(u * 28 - time * 0.5 + depth * 2.0) * 3;
+            const wave3 = Math.sin(u * 45 + depth * 8.0) * 1.5;
+            const elevation = (wave1 + wave2 + wave3) * (0.7 + depth * 0.6);
+
+            const y = baseY - elevation - 14 * depth;
+
+            if (s === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+
+            if (s === steps) {
+              edgeY = y;
+            }
+          }
+
+          // Guardar puntos del borde para trazar la pared vertical y resplandor
+          cliffEdgePoints.push({ x: cliffBreakX, y: edgeY, depth: depth, baseY: baseY });
+
+          // Estilo de la línea de la meseta: Cyan neón con gradiente de profundidad
+          const plateauAlpha = 0.35 + depth * 0.65;
+          ctx.strokeStyle = `rgba(0, 245, 255, ${plateauAlpha.toFixed(2)})`;
+          ctx.lineWidth = 1.0 + depth * 0.9;
+          ctx.stroke();
+
+          // Caída vertical abrupta por el acantilado (Sheer drop-off hacia el abismo)
+          ctx.beginPath();
+          ctx.moveTo(cliffBreakX, edgeY);
+
+          // Pequeña fractura jagged en la pared
+          const midFallX = cliffBreakX + (Math.sin(depth * 10 + time) * 3);
+          const fallBottomY = Math.min(height - 4, baseY + 18 + depth * 22);
+          ctx.lineTo(midFallX, (edgeY + fallBottomY) * 0.5);
+          ctx.lineTo(cliffBreakX + 4, fallBottomY);
+
+          // Estilo de la caída vertical: Magenta neón
+          const dropAlpha = 0.25 + depth * 0.65;
+          ctx.strokeStyle = `rgba(255, 0, 224, ${dropAlpha.toFixed(2)})`;
+          ctx.lineWidth = 1.2 + depth * 0.8;
+          ctx.stroke();
+
+          // Fondo abisal / vacío (a la derecha del acantilado): líneas tenues en la profundidad
+          ctx.beginPath();
+          ctx.moveTo(cliffBreakX + 10, fallBottomY);
+          const abyssSteps = 16;
+          for (let as = 1; as <= abyssSteps; as++) {
+            const au = as / abyssSteps;
+            const ax = (cliffBreakX + 10) + au * (width - cliffBreakX - 10);
+            const ay = fallBottomY + Math.sin(au * 8 + time + depth * 3) * 3;
+            ctx.lineTo(ax, ay);
+          }
+          ctx.strokeStyle = `rgba(148, 163, 184, ${ (0.05 + depth * 0.12).toFixed(2) })`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+
+        // Trazar cresta de ruptura / borde del acantilado con brillo cyan intenso
+        if (cliffEdgePoints.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(cliffEdgePoints[0].x, cliffEdgePoints[0].y);
+          for (let p = 1; p < cliffEdgePoints.length; p++) {
+            ctx.lineTo(cliffEdgePoints[p].x, cliffEdgePoints[p].y);
+          }
+          ctx.strokeStyle = 'rgba(0, 245, 255, 0.95)';
+          ctx.lineWidth = 2.2;
+          ctx.shadowColor = '#00F5FF';
+          ctx.shadowBlur = 12;
+          ctx.stroke();
+          ctx.shadowBlur = 0; // Reset
+
+          // Pulso de advertencia en el borde más cercano del precipicio
+          const frontPoint = cliffEdgePoints[cliffEdgePoints.length - 1];
+          const pulse = (Math.sin(time * 3.5) + 1) * 0.5;
+          ctx.beginPath();
+          ctx.arc(frontPoint.x, frontPoint.y, 3.5 + pulse * 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 0, 224, ${ (0.7 + pulse * 0.3).toFixed(2) })`;
+          ctx.shadowColor = '#FF00E0';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
+        animationFrameId = requestAnimationFrame(drawCliff);
+      }
+
+      drawCliff();
+
+      window.addEventListener('beforeunload', () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      });
+    })();

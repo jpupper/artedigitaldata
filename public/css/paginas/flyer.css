@@ -1,0 +1,160 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   FLYER ANIMADO (flyer.html?id=<convocatoria>)
+   Escenario a pantalla completa: fondo del shader + foto del artista + foto de
+   la obra. Las palabras (título de la obra, nombre del artista, títulos del
+   cierre) las dibuja el sistema de partículas (js/p5-effect.js) y entran y
+   salen solas. Pensado para grabar pantalla y publicar en Instagram.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; }
+
+
+html, body.fly-body {
+  margin: 0; padding: 0; height: 100%; overflow: hidden;
+  background-color: #0d0d12;
+  color: #eef1f6;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+body.fly-body { background-color: transparent; }
+#jpsi-canvas { background: transparent !important; }
+#p5-canvas, #p5-canvas canvas { background: transparent !important; }
+
+/* ── Escenario ────────────────────────────────────────────────────────────── */
+.fly-stage {
+  /* OJO: acá NO va background, porque taparía el canvas del shader (z-index -1) */
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.fly-marco { position: absolute; inset: 0; pointer-events: none; }
+.fly-stage[data-formato="vertical"] .fly-marco {
+  width: min(56.25vh, 100vw); height: min(177.78vw, 100vh);
+  margin: auto; inset: 0; border-left: 1px dashed rgba(255,255,255,.18);
+  border-right: 1px dashed rgba(255,255,255,.18);
+}
+.fly-stage[data-formato="cuadrado"] .fly-marco {
+  width: min(100vh, 100vw); height: min(100vw, 100vh);
+  margin: auto; inset: 0; border-left: 1px dashed rgba(255,255,255,.18);
+  border-right: 1px dashed rgba(255,255,255,.18);
+}
+.fly-stage[data-formato="retrato"] .fly-marco {
+  width: min(80vh, 100vw); height: min(125vw, 100vh);
+  margin: auto; inset: 0; border-left: 1px dashed rgba(255,255,255,.18);
+  border-right: 1px dashed rgba(255,255,255,.18);
+}
+.fly-stage[data-formato="vertical"] .fly-obra,
+.fly-stage[data-formato="cuadrado"] .fly-obra,
+.fly-stage[data-formato="retrato"] .fly-obra { width: 100%; height: 100%; }
+
+/* ── Fotos ────────────────────────────────────────────────────────────────── */
+.fly-foto, .fly-perfil {
+  position: absolute; opacity: 0; pointer-events: none;
+  transition: opacity .9s ease, transform 1.2s cubic-bezier(.22,.8,.24,1), filter .9s ease;
+}
+
+.fly-obra {
+  inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.14) rotate(1.2deg);
+  filter: saturate(.95) brightness(.92);
+}
+.fly-obra.is-in { opacity: 1; transform: scale(1.02) rotate(0deg); }
+
+.fly-velo {
+  position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease;
+  background:
+    radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,.10) 0%, rgba(0,0,0,.55) 65%, rgba(0,0,0,.82) 100%);
+}
+.fly-velo.is-in { opacity: 1; }
+
+.fly-perfil {
+  inset: 0; display: flex; align-items: center; justify-content: center;
+  transform: scale(.86) rotate(-3deg);
+}
+.fly-perfil.is-in { opacity: 1; transform: scale(1) rotate(0deg); }
+.fly-perfil-marco {
+  width: clamp(190px, 34vh, 420px); aspect-ratio: 1 / 1; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow: 0 30px 90px rgba(0,0,0,.6);
+  background: rgba(9,10,15,.5); backdrop-filter: blur(10px);
+}
+.fly-perfil-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* vista de obra: el retrato del artista se achica y se va a un costado */
+.fly-perfil.is-chico {
+  inset: auto auto clamp(24px, 5vh, 60px) clamp(24px, 5vw, 70px);
+  justify-content: flex-start; align-items: flex-end;
+}
+.fly-perfil.is-chico .fly-perfil-marco {
+  width: clamp(96px, 15vh, 170px); border-color: rgba(255,255,255,.3);
+}
+
+/* ── Panel de control ─────────────────────────────────────────────────────── */
+.fly-panel {
+  position: fixed; left: 50%; bottom: clamp(18px, 4vh, 48px); transform: translateX(-50%);
+  width: min(760px, calc(100vw - 32px));
+  padding: 22px 24px; z-index: 20;
+  background: rgba(9,10,15,.72); border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(20px) saturate(125%);
+  transition: opacity .5s ease, transform .5s ease;
+}
+.fly-panel.is-oculto { opacity: 0; transform: translateX(-50%) translateY(24px); pointer-events: none; }
+.fly-kicker { margin: 0 0 8px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #9aa3b2; }
+.fly-titulo { margin: 0 0 6px; font-size: clamp(20px, 3.2vw, 30px); font-weight: 700; letter-spacing: -.02em; }
+.fly-meta { margin: 0 0 18px; font-size: 13px; color: #9aa3b2; }
+.fly-grupo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.fly-etiqueta { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #9aa3b2; min-width: 62px; }
+.fly-opciones { display: flex; flex-wrap: wrap; gap: 4px; }
+.fly-op {
+  font: inherit; font-size: 12px; padding: 8px 12px; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #9aa3b2;
+}
+.fly-op:hover { background: rgba(255,255,255,.1); color: #eef1f6; }
+.fly-op.is-on { background: rgba(255,255,255,.12); color: #eef1f6; border-color: rgba(255,255,255,.24); }
+.fly-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.fly-btn {
+  font: inherit; font-size: 13px; font-weight: 500; padding: 11px 16px; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #eef1f6;
+}
+.fly-btn:hover { background: rgba(255,255,255,.11); }
+.fly-btn--principal { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.28); font-weight: 600; }
+.fly-btn.is-on { background: rgba(34,211,238,.16); border-color: rgba(34,211,238,.5); color: #d9fbff; }
+.fly-ayuda { margin: 16px 0 0; font-size: 11.5px; line-height: 1.55; color: #7d8697; }
+.fly-ayuda b { color: #9aa3b2; }
+
+/* ── Estados y barra de progreso ─────────────────────────────────────────── */
+.fly-estado {
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(6,7,11,.85); font-size: 14px; color: #9aa3b2;
+}
+.fly-barra { position: fixed; left: 0; right: 0; bottom: 0; height: 3px; z-index: 25; background: rgba(255,255,255,.07); }
+.fly-barra-fill { height: 100%; width: 0; background: #22d3ee; transition: width .12s linear; }
+body.fly-grabando { cursor: none; }
+body.fly-grabando .fly-marco { opacity: 0; }
+.ui-hidden { display: none !important; }
+
+@media (max-width: 640px) {
+  .fly-panel { padding: 16px; bottom: 12px; border-radius: 0; }
+  .fly-ayuda { display: none; }
+  .fly-perfil-marco { width: clamp(150px, 42vw, 300px); }
+}
+
+/* Link de solo-flyer generado al apretar Empezar */
+.fly-link-solo {
+  margin: 0 0 12px; padding: 9px 12px; font-size: 12px; color: #d9fbff;
+  background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.35);
+  word-break: break-all;
+}
+
+/* Escena del artista: la foto arriba y el texto abajo, así el nombre y la bio
+   NO quedan encima de la foto (sobre fotos claras el blanco no se leía). */
+.fly-perfil.is-artista {
+  inset: 0 0 auto 0; align-items: flex-start;
+  padding-top: clamp(34px, 8vh, 120px);
+}
+.fly-perfil.is-artista .fly-perfil-marco { width: clamp(150px, 26vh, 330px); }
+/* Velo más marcado arriba y abajo: ayuda a leer sobre obras claras */
+.fly-velo.is-in {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.16) 38%, rgba(0,0,0,.30) 62%, rgba(0,0,0,.68) 100%),
+    radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,.10) 0%, rgba(0,0,0,.55) 65%, rgba(0,0,0,.82) 100%);
+}

@@ -40,9 +40,9 @@ window.CONFIG = {
     },
 
     get FSCAUTH_URL() {
-        // El ingreso vive SIEMPRE en el dominio público (fullscreencode.com): así el
+        // El ingreso AHORA ES JPCONNECT (antes FSCAUTH): vive en el dominio público, así el
         // usuario nunca sale del dominio y la sesión es la misma en todas las apps.
-        return 'https://fullscreencode.com/fscauth';
+        return 'https://fullscreencode.com/jpconnect';
     },
 
     // La API de fscauth (sso-check, verify, login...) va SIEMPRE directo al VPS:
@@ -51,7 +51,7 @@ window.CONFIG = {
     // Authorization); cuando esa regla del .htaccess se cae —devuelve la pagina
     // 404— cualquier visitante sin sesion local terminaba en un 404.
     get FSCAUTH_API() {
-        return VPS_ORIGIN + '/fscauth/api';
+        return VPS_ORIGIN + '/jpconnect/api';
     },
 
     get DONATIONS() {

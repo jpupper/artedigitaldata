@@ -2488,6 +2488,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         props.text = clipObj.text || clipObj.word || 'PALABRA';
 
+        // Vista previa del importador de flyers: el proyecto se guarda en la base de diseño
+        // elegida (1080x1920, 1920x1080…), así que la vista del editor la escala a la pantalla.
+        if (window.FSC_VIM_VISTA && props.visible) {
+          const fv = vimFactorVista();
+          if (props.x !== undefined) props.x = props.x * fv.sx;
+          if (props.y !== undefined) props.y = props.y * fv.sy;
+          if (props.fontSize !== undefined) props.fontSize = Math.max(6, Math.round(props.fontSize * fv.s));
+          if (props.letterSpacing !== undefined) props.letterSpacing = Math.max(1, Math.round(props.letterSpacing * fv.s));
+        }
+
         if (hasTimeline && isTimelinePlaying && (clipObj.id === selectedClipId || clipObj.id === window.activeFlyerWordId)) {
           if (props.visible) {
             updateUIForSelectedLayerProps(props);
@@ -2510,7 +2520,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${minsStr}:${secsStr}`;
   }
 
+  // El editor también mueve las capas de IMAGEN cuando el timeline trae clips con
+  // keyframes (proyectos de flyer generados por el importador).
+  function vimHayImagenesAnimadas() {
+    return Array.isArray(timelineLayers) && timelineLayers.some(l => l && l.type === 'image' &&
+      Array.isArray(l.clips) && l.clips.some(c => c && Array.isArray(c.keyframes) && c.keyframes.length > 0));
+  }
+
   function updateTimelineReadout() {
+    // En la página de SOLO OUTPUT manda el reproductor del sistema (escala el formato)
+    if (window.FSC_OUTPUT_PLAYER) return;
     const readout = document.getElementById('tl-time-readout');
     if (readout && !readout.querySelector('input')) {
       readout.textContent = `${formatTimelineTime(currentTimelineTime)} / ${formatTimelineTime(timelineDuration)}`;
@@ -2525,6 +2544,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     evaluateTimelineAtTime(currentTimelineTime);
+
+    // Capas de imagen: mismo evaluador que usa el reproductor (ventana del clip + keyframes).
+    if (typeof window.FSC_EVAL_IMAGENES === 'function' && (window.FSC_VIM_EVAL_IMAGENES || vimHayImagenesAnimadas())) {
+      window.FSC_EVAL_IMAGENES(currentTimelineTime, timelineLayers);
+    }
   }
 
   let isTimelineLooping = true;
@@ -5216,7 +5240,15 @@ document.addEventListener('DOMContentLoaded', () => {
       scale: img.scale,
       rotation: img.rotation,
       alpha: img.alpha,
-      hasAura: Boolean(img.hasAura)
+      hasAura: Boolean(img.hasAura),
+      // Semántica del proyecto de flyer: 'ajuste' (cover) y 'rel' (fracciones 0..1)
+      // son imprescindibles para que el reproductor reponga la imagen igual.
+      // 'visible' NO se persiste: lo gobierna la timeline (se guardaba el estado
+      // del instante de guardar y eso dejaba fotos ocultas al reabrir).
+      ajuste: img.ajuste,
+      rel: img.rel === true ? true : undefined,
+      width: img.width,
+      height: img.height
     }));
 
     if (window.ParticlesConfig && typeof window.ParticlesConfig.set === 'function') {
@@ -5231,6 +5263,13 @@ document.addEventListener('DOMContentLoaded', () => {
       hasTimeline: hasTimeline,
       config: currentConfig
     };
+
+    // Proyecto generado por el importador: se guarda la base de diseño (viewportBase)
+    // en el payload y en la config, para que el reproductor sepa escalarlo.
+    if (window.FSC_VIM_BASE_DISENO) {
+      payload.viewportBase = [...window.FSC_VIM_BASE_DISENO];
+      currentConfig.VIEWPORT_BASE = [...window.FSC_VIM_BASE_DISENO];
+    }
 
     const endpoint = isUpdate ? `/visualeffects/${currentVisualEffectId}` : '/visualeffects';
     const method = isUpdate ? 'PUT' : 'POST';
@@ -6105,15 +6144,665 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.importPostToFlyer = importPostToFlyer;
 
+  // ================= IMPORTADOR DE FLYERS: PUBLICACIONES Y CONVOCATORIAS =================
+  // Genera proyectos de flyer DENTRO del editor (capas de palabras + capas de imagen con
+  // clips y keyframes), con la estructura y los tiempos exactos de tools/flyer_proyecto.js.
+  // El proyecto se diseña sobre la base del formato elegido (viewportBase) y el reproductor
+  // lo escala a la pantalla real con window.FSC_FACTOR_VIEWPORT.
+  const VIM_FORMATOS = {
+    vertical: { etiqueta: 'Vertical 9:16', w: 1080, h: 1920, ratio: '9:16', dim: '1080 x 1920' },
+    pantalla: { etiqueta: 'Pantalla completa', w: 1920, h: 1080, ratio: '16:9', dim: '1920 x 1080' },
+    cuadrado: { etiqueta: 'Cuadrado 1:1', w: 1080, h: 1080, ratio: '1:1', dim: '1080 x 1080' },
+    retrato: { etiqueta: 'Retrato 4:5', w: 1080, h: 1350, ratio: '4:5', dim: '1080 x 1350' }
+  };
+  const VIM_TIEMPOS = { intro: 5, artista: 5, obra: 7, obraCorta: 4, salida: 0.8, cierre: 6 };
+
+  let vimFormato = 'vertical';
+  let vimTab = 'publicaciones';
+  let vimBusqueda = '';
+  let vimPublicaciones = [];
+  let vimConvocatorias = [];
+  let vimListadoCargado = false;
+  let vimCargandoListado = false;
+  let vimDatosFlyer = null;       // datos del último flyer generado (se re-maqueta al cambiar de formato)
+
+  window.FSC_VIM_BASE_DISENO = null;    // base de diseño del proyecto generado (se guarda con el efecto)
+  window.FSC_VIM_VISTA = null;          // base con la que la vista previa del editor escala partículas
+  window.FSC_VIM_EVAL_IMAGENES = false; // el editor evalúa las capas de imagen de la timeline
+
+  function vimToken() {
+    try { return (typeof getToken === 'function') ? getToken() : localStorage.getItem('artedigitaldata_token'); }
+    catch (e) { return null; }
+  }
+  function vimSesion() {
+    let id = '', usuario = '', admin = false;
+    try {
+      if (typeof getUserId === 'function') id = String(getUserId() || '');
+      if (typeof getUserUsername === 'function') usuario = String(getUserUsername() || '');
+      if (typeof isAdmin === 'function') admin = !!isAdmin();
+    } catch (e) {}
+    if (usuario === 'jpupper') admin = true;
+    return { id: id, usuario: usuario, admin: admin };
+  }
+  const vimIdValido = v => /^[a-f0-9]{24}$/i.test(String(v || '').trim());
+  const vimEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const vimSrc = u => {
+    const s = String(u || '');
+    return (/^(https?:)?\/\//i.test(s) || s.charAt(0) === '/' || s.startsWith('data:image/')) ? vimEsc(s) : '';
+  };
+  const vimFecha = v => { if (!v) return ''; const d = new Date(v); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-AR'); };
+
+  async function vimGet(ruta, conToken) {
+    const headers = {};
+    if (conToken) { const t = vimToken(); if (t) headers['Authorization'] = 'Bearer ' + t; }
+    const url = getApiUrl() + ruta + (ruta.indexOf('?') === -1 ? '?' : '&') + '_vim=' + Date.now();
+    const res = await fetch(url, { headers: headers });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' en ' + ruta);
+    return await res.json();
+  }
+  async function vimGetLista(ruta, conToken) {
+    const data = await vimGet(ruta, conToken);
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.obras)) return data.obras;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+  }
+
+  function vimAutorDe(o) {
+    const a = o.author || o.creator || o.creador || null;
+    if (a && typeof a === 'object') {
+      return { id: String(a._id || a.id || ''), nombre: a.displayName || a.username || '', usuario: a.username || '', avatar: a.avatar || '' };
+    }
+    return { id: String(a || ''), nombre: '', usuario: '', avatar: '' };
+  }
+  function vimEsMia(autor, sesion) {
+    if (sesion.id && autor.id && autor.id === sesion.id) return true;
+    if (sesion.usuario && autor.usuario && autor.usuario.toLowerCase() === sesion.usuario.toLowerCase()) return true;
+    return false;
+  }
+  const vimLimpiarTexto = t => String(t || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  function vimNormPublicacion(o, tipo) {
+    const autor = vimAutorDe(o);
+    return {
+      id: String(o._id || ''), tipo: tipo, subtipo: o.type || '',
+      titulo: String(o.title || o.titulo || '(sin título)'),
+      imagen: String(o.imageUrl || o.imagenUrl || ''),
+      descripcion: vimLimpiarTexto(o.description || o.descripcion || o.content || ''),
+      autor: autor.nombre || autor.usuario || 'Anónimo', autorUsuario: autor.usuario, autorAvatar: autor.avatar,
+      fecha: o.createdAt || o.date || null,
+      mia: vimEsMia(autor, vimSesion())
+    };
+  }
+  function vimNormConvocatoria(o) {
+    const autor = vimAutorDe(o);
+    return {
+      id: String(o._id || ''), tipo: 'Convocatoria', subtipo: o.tipo || '',
+      titulo: String(o.titulo || o.title || '(sin título)'),
+      imagen: String(o.imagenUrl || o.imageUrl || ''),
+      descripcion: vimLimpiarTexto(o.descripcion || o.description || ''),
+      autor: autor.nombre || autor.usuario || 'Anónimo', autorUsuario: autor.usuario, autorAvatar: autor.avatar,
+      fecha: o.createdAt || o.fechaDesde || null,
+      activa: o.activa !== false,
+      mia: vimEsMia(autor, vimSesion())
+    };
+  }
+
+  function vimAlcanceTexto(filtrados) {
+    const sesion = vimSesion();
+    const base = vimTab === 'publicaciones' ? vimPublicaciones : vimConvocatorias;
+    const sustantivo = vimTab === 'publicaciones' ? 'publicaciones' : 'convocatorias';
+    const quien = sesion.admin ? '(todo el sitio, sos admin)' : (sesion.usuario ? '(tuyas, @' + sesion.usuario + ')' : '(tuyas)');
+    const n = filtrados === undefined ? base.length : filtrados;
+    const busca = (vimBusqueda.trim() && filtrados !== undefined && filtrados !== base.length) ? ' de ' + base.length : '';
+    return n + busca + ' ' + sustantivo + ' ' + quien + (vimCargandoListado ? ' · cargando…' : '');
+  }
+
+  function vimRenderLista() {
+    const cont = document.getElementById('vim-lista');
+    const alcanceEl = document.getElementById('vim-alcance');
+    if (!cont) return;
+    const base = vimTab === 'publicaciones' ? vimPublicaciones : vimConvocatorias;
+    const q = vimBusqueda.trim().toLowerCase();
+    const filtrados = !q ? base.slice() : base.filter(x =>
+      x.titulo.toLowerCase().indexOf(q) !== -1 ||
+      String(x.autor || '').toLowerCase().indexOf(q) !== -1 ||
+      String(x.autorUsuario || '').toLowerCase().indexOf(q) !== -1 ||
+      x.id.toLowerCase().indexOf(q) !== -1);
+
+    if (alcanceEl) alcanceEl.textContent = vimAlcanceTexto(q ? filtrados.length : undefined);
+
+    let html = '';
+    if (vimIdValido(q)) {
+      html += '<div class="vim-directo">' +
+        '<div class="vim-directo-texto">ID detectado: <code>' + vimEsc(q) + '</code><br>Importar directo (si es convocatoria genera el flyer completo).</div>' +
+        '<button type="button" class="vim-accion" data-vim-accion="id" data-vim-id="' + vimEsc(q) + '">Importar</button>' +
+        '</div>';
+    }
+    if (!filtrados.length) {
+      const msg = vimCargandoListado ? 'Cargando…'
+        : (q ? 'Nada coincide con “' + vimEsc(vimBusqueda.trim()) + '”.'
+          : 'No hay ' + (vimTab === 'publicaciones' ? 'publicaciones' : 'convocatorias') + ' para mostrar.');
+      html += '<div class="vim-vacio">' + msg + '</div>';
+    } else {
+      html += filtrados.map(x => {
+        const img = vimSrc(x.imagen);
+        const thumb = img
+          ? '<img class="vim-thumb" src="' + img + '" alt="" loading="lazy">'
+          : '<div class="vim-thumb-vacia"><i class="fas fa-image"></i></div>';
+        const esConv = x.tipo === 'Convocatoria';
+        const acciones = esConv
+          ? '<button type="button" class="vim-accion" data-vim-accion="convocatoria" data-vim-id="' + vimEsc(x.id) + '"><i class="fas fa-wand-magic-sparkles"></i> Flyer completo</button>'
+          : '<button type="button" class="vim-accion" data-vim-accion="flyer" data-vim-id="' + vimEsc(x.id) + '"><i class="fas fa-image"></i> Flyer</button>' +
+            '<button type="button" class="vim-accion vim-accion-suave" data-vim-accion="texto" data-vim-id="' + vimEsc(x.id) + '"><i class="fas fa-font"></i> Texto</button>';
+        const meta = [vimEsc(x.tipo + (x.subtipo ? ' · ' + x.subtipo : '')), vimEsc(x.autor), vimEsc(vimFecha(x.fecha))].filter(Boolean).join(' · ');
+        return '<div class="vim-item">' + thumb +
+          '<div class="vim-item-datos">' +
+            '<div class="vim-item-titulo" title="' + vimEsc(x.titulo) + '">' + vimEsc(x.titulo) + '</div>' +
+            '<div class="vim-item-meta">' + (x.mia ? '<span class="vim-tag">TUYA</span> · ' : '') + meta + '</div>' +
+          '</div>' +
+          '<div class="vim-item-acciones">' + acciones + '</div>' +
+        '</div>';
+      }).join('');
+    }
+    cont.innerHTML = html;
+    Array.prototype.forEach.call(cont.querySelectorAll('[data-vim-accion]'), btn => {
+      btn.addEventListener('click', () => vimAccion(btn.getAttribute('data-vim-accion'), btn.getAttribute('data-vim-id')));
+    });
+  }
+
+  async function vimCargarListado(forzar) {
+    if (vimCargandoListado) return;
+    if (vimListadoCargado && !forzar) return;
+    vimCargandoListado = true;
+    const alcanceEl = document.getElementById('vim-alcance');
+    if (alcanceEl) alcanceEl.textContent = 'Cargando publicaciones y convocatorias…';
+    const sesion = vimSesion();
+    const pubs = [], convs = [];
+    const fallaron = [];
+
+    const fuentes = [
+      { ruta: '/posts', tipo: 'Obra' },
+      { ruta: '/eventos', tipo: 'Evento' },
+      { ruta: '/recursos', tipo: 'Recurso' }
+    ];
+    for (const f of fuentes) {
+      try { (await vimGetLista(f.ruta, false)).forEach(o => pubs.push(vimNormPublicacion(o, f.tipo))); }
+      catch (e) { fallaron.push(f.tipo); console.warn('[Importador] no pude listar ' + f.ruta, e.message); }
+    }
+    // Las propias incluyen las que no son públicas (visibility 'unlisted'/privadas).
+    try { (await vimGetLista('/posts/mis-obras', true)).forEach(o => pubs.push(vimNormPublicacion(o, 'Obra'))); }
+    catch (e) { console.warn('[Importador] /posts/mis-obras', e.message); }
+
+    try {
+      const rutaConv = sesion.admin ? '/oportunidades?all=true' : '/oportunidades';
+      (await vimGetLista(rutaConv, true)).forEach(o => convs.push(vimNormConvocatoria(o)));
+    } catch (e) { fallaron.push('Convocatorias'); console.warn('[Importador] no pude listar convocatorias', e.message); }
+    try {
+      (await vimGetLista('/oportunidades/mis-oportunidades/listar', true)).forEach(o => {
+        const c = vimNormConvocatoria(o);
+        if (!convs.some(x => x.id === c.id)) convs.push(c);
+      });
+    } catch (e) { console.warn('[Importador] mis-oportunidades', e.message); }
+
+    const unicas = lista => lista.filter((x, i) => x.id && lista.findIndex(y => y.id === x.id && y.tipo === x.tipo) === i);
+    vimPublicaciones = unicas(pubs).filter(p => sesion.admin || p.mia).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+    vimConvocatorias = unicas(convs).filter(c => sesion.admin || c.mia).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+    vimListadoCargado = true;
+    vimCargandoListado = false;
+    if (fallaron.length) console.warn('[Importador] fuentes que fallaron:', fallaron.join(', '));
+    vimRenderLista();
+  }
+
+  // ── Formato / base de diseño ────────────────────────────────────────────────
+  function vimBaseActual() { return VIM_FORMATOS[vimFormato] || VIM_FORMATOS.vertical; }
+  function vimFactorVista() {
+    const base = (window.FSC_VIM_VISTA && window.FSC_VIM_VISTA.base) || null;
+    if (!base) return { sx: 1, sy: 1, s: 1 };
+    const f = (typeof window.FSC_FACTOR_VIEWPORT === 'function') ? window.FSC_FACTOR_VIEWPORT(base) : null;
+    return f || { sx: 1, sy: 1, s: 1 };
+  }
+  function vimSincronizarAspecto(ratio) {
+    // El export PNG y el badge del subtab se manejan con su propio selector: los dejamos en fase.
+    window.currentFlyerAspectRatio = ratio;
+    const res = { '9:16': '1080x1920', '16:9': '1920x1080', '1:1': '1080x1080', '4:5': '1080x1350' };
+    const badge = document.getElementById('current-aspect-badge');
+    if (badge) badge.textContent = ratio + ' (' + (res[ratio] || '') + ')';
+    const mapa = { '169': '16:9', '916': '9:16', '11': '1:1', '45': '4:5' };
+    Object.keys(mapa).forEach(id => {
+      const btn = document.getElementById('btn-aspect-' + id);
+      if (btn) btn.classList.toggle('active', mapa[id] === ratio);
+    });
+  }
+  function vimSetFormato(clave, silencioso) {
+    if (!VIM_FORMATOS[clave]) clave = 'vertical';
+    vimFormato = clave;
+    const b = VIM_FORMATOS[clave];
+    window.FSC_VIEWPORT_BASE = [b.w, b.h];
+    Array.prototype.forEach.call(document.querySelectorAll('[data-vim-formato]'), btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-vim-formato') === clave);
+    });
+    const baseEl = document.getElementById('vim-base-actual');
+    if (baseEl) baseEl.textContent = 'Base de diseño actual: ' + b.dim + ' (' + b.etiqueta + ')';
+    vimSincronizarAspecto(b.ratio);
+    if (vimDatosFlyer) {
+      // hay un flyer generado: se re-maqueta con la nueva base (mismas obras, nuevas medidas)
+      vimConstruirProyecto(vimDatosFlyer);
+      if (!silencioso) showToast('Flyer re-maquetado en ' + b.etiqueta + ' (' + b.dim + ')', 'info');
+    } else if (!silencioso) {
+      showToast('Formato ' + b.etiqueta + ': base de diseño ' + b.dim, 'info');
+    }
+  }
+
+  // ── Generador del proyecto (porte de tools/flyer_proyecto.js) ────────────────
+  function vimTrocear(texto, max) {
+    const out = []; let act = '';
+    String(texto || '').split(/\s+/).forEach(p => {
+      if (!p) return;
+      if (!act) act = p;
+      else if ((act + ' ' + p).length <= max) act += ' ' + p;
+      else { out.push(act); act = p; }
+    });
+    if (act) out.push(act);
+    return out.slice(0, 3);
+  }
+  function vimModoFormacion() {
+    try {
+      if (window.ParticlesConfig && typeof window.ParticlesConfig.get === 'function') {
+        const m = window.ParticlesConfig.get().FORMATION_MODE;
+        if (m) return m;
+      }
+    } catch (e) {}
+    return 'FISICS';
+  }
+  function vimClipPalabra(capa, palabras, texto, yFrac, pxFuente, espFuente, start, dur, base) {
+    // La tipografía de referencia está pensada para 1920 de alto: se escala por la base elegida.
+    const k = base.h / 1920;
+    const txt = String(texto == null ? '' : texto);
+    const clip = {
+      id: 'w_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      text: txt, word: txt,
+      x: Math.round(base.w / 2), y: Math.round(base.h * yFrac),
+      fontSize: Math.max(6, Math.round(pxFuente * k)),
+      letterSpacing: Math.max(1, Math.round(espFuente * k)),
+      formationMode: vimModoFormacion(),   // la animación configurada en el editor (CODE o FISICS)
+      startTime: Number(start.toFixed(2)),
+      duration: Number(dur.toFixed(2)),
+      keyframes: []                         // sin giro ni keyframes de más: manda la animación del editor
+    };
+    capa.clips.push(clip);
+    palabras.push({
+      id: clip.id, name: clip.text, text: clip.text, word: clip.word,
+      x: clip.x, y: clip.y, fontSize: clip.fontSize, letterSpacing: clip.letterSpacing,
+      formationMode: clip.formationMode, startTime: clip.startTime, duration: clip.duration,
+      keyframes: []
+    });
+    return clip;
+  }
+
+  function vimConstruirProyecto(datos) {
+    if (!datos || !Array.isArray(datos.items) || !datos.items.length) {
+      showToast('No hay obras para armar el flyer', 'error');
+      return;
+    }
+    const base = vimBaseActual();
+    const D = VIM_TIEMPOS;
+    const capaPalabras = { id: 'layer_palabras', name: 'Palabras (títulos y datos)', type: 'text', clips: [] };
+    const capas = [capaPalabras];
+    const imagenes = [];
+    const palabras = [];
+    let t = 0;
+
+    const palabra = (texto, y, fs, ls, start, dur) =>
+      vimClipPalabra(capaPalabras, palabras, texto, y, fs, ls, start, dur, base);
+
+    // portada
+    palabra(String(datos.portada || 'GALERÍA').toUpperCase(), 0.44, 62, 8, t, D.intro);
+    if (datos.mostrarCantidad) {
+      palabra(datos.items.length + (datos.items.length === 1 ? ' OBRA' : ' OBRAS'), 0.60, 38, 14, t, D.intro);
+    } else if (datos.lineaPortada) {
+      palabra(String(datos.lineaPortada).toUpperCase(), 0.60, 30, 10, t, D.intro);
+    }
+    t += D.intro;
+
+    datos.items.forEach((obra, i) => {
+      const art = obra.artista || {};
+      const n = i + 1;
+      let clipArtista = null, idImgArt = null;
+
+      // retrato del artista: entra centrado grande y se achica a la esquina al pasar a la obra
+      if (art.avatar && !datos.saltarArtista) {
+        idImgArt = 'img_art_' + n;
+        imagenes.push({
+          id: idImgArt, name: 'Artista ' + n + ': ' + (art.nombre || ''), src: art.avatar,
+          x: 0.16, y: 0.86, rel: true, scale: 0.30, rotation: 0, alpha: 1, visible: false
+        });
+        clipArtista = {
+          id: 'c_art_' + n, imageId: idImgArt,
+          startTime: Number(t.toFixed(2)), duration: Number((D.artista + D.obra + D.salida).toFixed(2)),
+          x: 0.5, y: 0.5, rel: true, scale: 0.62, rotation: 0, alpha: 1,
+          keyframes: [
+            { time: Number(t.toFixed(2)), x: 0.5, y: 0.5, scale: 0.55, rotation: -3, alpha: 1 },
+            { time: Number((t + 1.0).toFixed(2)), x: 0.5, y: 0.5, scale: 0.62, rotation: 0, alpha: 1 },
+            { time: Number((t + D.artista).toFixed(2)), x: 0.5, y: 0.5, scale: 0.62, rotation: 0, alpha: 1 },
+            { time: Number((t + D.artista + 0.8).toFixed(2)), x: 0.16, y: 0.86, scale: 0.30, rotation: 0, alpha: 1 },
+            { time: Number((t + D.artista + D.obra + D.salida).toFixed(2)), x: 0.16, y: 0.86, scale: 0.30, rotation: 0, alpha: 0 }
+          ]
+        };
+        palabra((art.nombre || 'ARTISTA').toUpperCase(), 0.72, 52, 8, t, D.artista);
+        if (art.usuario) palabra('@' + String(art.usuario).toUpperCase(), 0.83, 28, 10, t, D.artista);
+      }
+      if (!datos.saltarArtista) t += D.artista;
+
+      // obra: tapa la pantalla (cover), entra con zoom y se funde al salir
+      const desc = String(obra.descripcion || '').replace(/\s+/g, ' ').trim();
+      const durObra = desc ? D.obra : D.obraCorta;
+      let clipObra = null, idImgObra = null;
+      if (obra.imagen) {
+        idImgObra = 'img_obra_' + n;
+        imagenes.push({
+          id: idImgObra, name: 'Obra ' + n + ': ' + (obra.titulo || ''), src: obra.imagen,
+          ajuste: 'cover', x: 0.5, y: 0.5, rel: true, scale: 1, rotation: 0, alpha: 1, visible: false
+        });
+        clipObra = {
+          id: 'c_obra_' + n, imageId: idImgObra,
+          startTime: Number(t.toFixed(2)), duration: Number((durObra + D.salida).toFixed(2)),
+          ajuste: 'cover', x: 0.5, y: 0.5, rel: true, scale: 1, rotation: 0, alpha: 1,
+          keyframes: [
+            { time: Number(t.toFixed(2)), scale: 1.12, rotation: 1.2, alpha: 0 },
+            { time: Number((t + 0.9).toFixed(2)), scale: 1.02, rotation: 0, alpha: 1 },
+            { time: Number((t + durObra).toFixed(2)), scale: 1.02, rotation: 0, alpha: 1 },
+            { time: Number((t + durObra + D.salida).toFixed(2)), scale: 1.06, rotation: 0, alpha: 0 }
+          ]
+        };
+      }
+      palabra((obra.titulo || 'SIN TÍTULO').toUpperCase(), 0.36, 54, 6, t, durObra);
+      palabra(((art.nombre || '') + (art.usuario ? ' · @' + art.usuario : '')).toUpperCase(), 0.50, 26, 8, t, durObra);
+      const lineas = desc ? vimTrocear(desc.slice(0, 92), 30) : [];
+      lineas.forEach((linea, k2) => palabra(linea.toUpperCase(), 0.66 + k2 * 0.06, 22, 4, t, durObra));
+
+      // una capa por imagen (la obra primero y el retrato encima), como las crea el editor
+      if (clipObra) capas.push({ id: 'layer_obra_' + n, name: 'Obra ' + n + ': ' + (obra.titulo || ''), type: 'image', imageId: idImgObra, clips: [clipObra] });
+      if (clipArtista) capas.push({ id: 'layer_art_' + n, name: 'Artista ' + n + ': ' + (art.nombre || ''), type: 'image', imageId: idImgArt, clips: [clipArtista] });
+
+      t += durObra + D.salida;
+    });
+
+    // cierre
+    palabra('ARTE DIGITAL DATA', 0.46, 56, 10, t, D.cierre);
+    palabra('ARTEDIGITALDATA.COM', 0.58, 30, 6, t, D.cierre);
+    if (datos.cierreGaleria) palabra(('GALERÍA: ' + datos.cierreGaleria).toUpperCase(), 0.70, 22, 6, t, D.cierre);
+    const duracion = Number((t + D.cierre).toFixed(2));
+
+    vimAplicarProyecto({
+      capas: capas, imagenes: imagenes, palabras: palabras,
+      duracion: duracion, base: base, titulo: datos.tituloProyecto || 'Flyer'
+    });
+  }
+
+  function vimAplicarProyecto(p) {
+    const base = p.base;
+    flyerWords = p.palabras.map(w => Object.assign({}, w));
+    timelineLayers = p.capas;
+    timelineDuration = p.duracion;
+    window.timelineDuration = timelineDuration;
+    hasTimeline = true;
+    window.hasTimeline = true;
+
+    // capas de imagen (una por foto, con visible=false hasta que la timeline las encienda)
+    window.activeImageLayers = p.imagenes.map(img => {
+      const el = new Image();
+      el.src = img.src;
+      return Object.assign({ width: 280, height: 280 }, img, { imgElement: el });
+    });
+    window.selectedImageId = window.activeImageLayers.length ? window.activeImageLayers[0].id : null;
+
+    // base de diseño del proyecto + vista previa del editor escalada a la pantalla
+    window.FSC_VIM_BASE_DISENO = [base.w, base.h];
+    window.FSC_VIM_VISTA = { base: [base.w, base.h] };
+    window.FSC_VIM_EVAL_IMAGENES = true;
+    window.FSC_VIEWPORT_BASE = [base.w, base.h];
+
+    // configuración con la que debe reproducirse un flyer (igual que el generador de referencia)
+    applyConfigChange('AUTO_MODE', false);
+    applyConfigChange('FORCE_WHITE_WORDS', true);
+    applyConfigChange('CHAR_BG_ENABLED', false);
+    applyConfigChange('CHAR_SHADOW', true);
+    applyConfigChange('CHAR_SHADOW_BLUR', 16);
+
+    selectedFlyerWordId = flyerWords.length ? flyerWords[0].id : null;
+    window.activeFlyerWordId = selectedFlyerWordId;
+    selectedClipId = selectedFlyerWordId;
+    selectedLayerId = timelineLayers.length ? timelineLayers[0].id : null;
+
+    if (window.clearAllFlyerParticles) window.clearAllFlyerParticles();
+
+    renderFlyerWordsList();
+    renderTimelineTracks();
+    if (typeof renderImageLayersList === 'function') renderImageLayersList();
+    applyConfigChange('FLYER_WORDS', flyerWords.slice());
+    applyConfigChange('TIMELINE_LAYERS', timelineLayers.slice());
+    applyConfigChange('IMAGE_LAYERS', window.activeImageLayers.map(i => i));
+
+    const btnToggleTimeline = document.getElementById('btn-toggle-hastimeline');
+    if (btnToggleTimeline) btnToggleTimeline.innerHTML = '<i class="fas fa-toggle-on text-white"></i> Timeline ON';
+    const durInput = document.getElementById('timeline-duration-input');
+    if (durInput) durInput.value = timelineDuration;
+
+    currentTimelineTime = 0.0;
+    updateTimelineReadout();
+
+    // abrir el modo flyer y la timeline para ver el resultado
+    switchRightTab('FLYERMODE');
+    const panelTl = document.getElementById('timeline-panel');
+    if (panelTl && !panelTl.classList.contains('active')) {
+      panelTl.classList.add('active');
+      const btnTl = document.getElementById('btn-toggle-timeline-panel');
+      if (btnTl) btnTl.innerHTML = '<i class="fas fa-film"></i> Ocultar UI';
+    }
+
+    // partículas: hay que esperar a que p5 publique sus globales (window.load)
+    let intentos = 0;
+    const trySpawn = () => {
+      intentos++;
+      if (typeof window.spawnWordParticles !== 'function' || !window.width) {
+        if (intentos < 250) setTimeout(trySpawn, 120);
+        return;
+      }
+      if (window.clearAllFlyerParticles) window.clearAllFlyerParticles();
+      const fv = vimFactorVista();
+      flyerWords.forEach(w => {
+        window.spawnWordParticles(w.text || w.word || '', (w.x || 0) * fv.sx, (w.y || 0) * fv.sy, true, w.id, {
+          fontSize: Math.max(6, Math.round((w.fontSize || 36) * fv.s)),
+          letterSpacing: Math.max(1, Math.round((w.letterSpacing || 4) * fv.s)),
+          formationMode: w.formationMode
+        });
+      });
+      if (typeof evaluateTimelineAtTime === 'function') evaluateTimelineAtTime(currentTimelineTime);
+    };
+    trySpawn();
+
+    showToast('Proyecto en la timeline: ' + p.palabras.length + ' textos · ' + p.imagenes.length + ' imágenes · ' +
+      Math.floor(p.duracion / 60) + ':' + String(Math.round(p.duracion % 60)).padStart(2, '0') +
+      ' (' + base.dim + ')', 'success');
+  }
+
+  // ── Importadores ────────────────────────────────────────────────────────────
+  async function vimFlyerConvocatoria(id) {
+    const gal = await vimGet('/public/oportunidades/' + id + '/galeria', false);
+    if (!gal || !gal.oportunidad) throw new Error('No pude leer la galería de esa convocatoria');
+    vimFlyerConvocatoriaDesdeGaleria(gal);
+  }
+  function vimFlyerConvocatoriaDesdeGaleria(gal) {
+    const obras = Array.isArray(gal.obras) ? gal.obras : [];
+    if (!obras.length) {
+      showToast('Esa convocatoria todavía no tiene obras cargadas', 'error');
+      return;
+    }
+    const titulo = (gal.oportunidad && gal.oportunidad.titulo) || 'Galería';
+    vimDatosFlyer = {
+      clase: 'convocatoria',
+      id: (gal.oportunidad && gal.oportunidad.id) || '',
+      titulo: titulo,
+      portada: titulo,
+      mostrarCantidad: true,
+      cierreGaleria: titulo,
+      items: obras.map(o => ({
+        titulo: o.titulo || 'Sin título',
+        imagen: o.imagen || '',
+        descripcion: o.descripcion || '',
+        artista: o.artista || {}
+      })),
+      tituloProyecto: 'Flyer · ' + titulo
+    };
+    vimConstruirProyecto(vimDatosFlyer);
+    showToast('Convocatoria “' + titulo + '”: ' + obras.length + ' obras con sus artistas importadas', 'success');
+  }
+  function vimFlyerPublicacion(item) {
+    vimDatosFlyer = {
+      clase: 'publicacion',
+      id: item.id,
+      titulo: item.titulo,
+      portada: item.titulo,
+      mostrarCantidad: false,
+      saltarArtista: true,
+      lineaPortada: item.autorUsuario ? '@' + item.autorUsuario : (item.autor || ''),
+      cierreGaleria: item.titulo,
+      items: [{
+        titulo: item.titulo,
+        imagen: item.imagen,
+        descripcion: item.descripcion,
+        artista: { nombre: item.autor, usuario: item.autorUsuario, avatar: item.autorAvatar }
+      }],
+      tituloProyecto: 'Flyer · ' + item.titulo
+    };
+    vimConstruirProyecto(vimDatosFlyer);
+    showToast('Flyer de “' + item.titulo + '” generado en la timeline', 'success');
+  }
+
+  async function vimImportarPorId(valor) {
+    const id = String(valor || '').trim();
+    if (!vimIdValido(id)) {
+      showToast('Pegá un ID válido (24 caracteres) o buscá por nombre', 'error');
+      return;
+    }
+    const btn = document.getElementById('import-post-id-btn');
+    const orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Buscando…'; }
+    try {
+      let gal = null;
+      try { gal = await vimGet('/public/oportunidades/' + id + '/galeria', false); } catch (e) { gal = null; }
+      if (gal && gal.oportunidad) {
+        vimFlyerConvocatoriaDesdeGaleria(gal);
+        return;
+      }
+      // publicación común: comportamiento de siempre (texto -> hojas paginadas)
+      importPostToFlyer(id);
+    } catch (e) {
+      console.error('[Importador por ID]', e);
+      showToast(e.message || 'No se pudo importar ese ID', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+    }
+  }
+
+  async function vimAccion(accion, id) {
+    try {
+      if (accion === 'texto') { importPostToFlyer(id); return; }
+      if (accion === 'id') { await vimImportarPorId(id); return; }
+      if (accion === 'convocatoria') { await vimFlyerConvocatoria(id); return; }
+      if (accion === 'flyer') {
+        const item = vimPublicaciones.filter(p => p.id === id)[0];
+        if (!item) { showToast('No encontré esa publicación en el listado', 'error'); return; }
+        vimFlyerPublicacion(item);
+      }
+    } catch (e) {
+      console.error('[Importador flyer]', e);
+      showToast(e.message || 'No se pudo importar', 'error');
+    }
+  }
+
+  function vimInit() {
+    // Este importador vive en el panel del editor: si la página no trae el panel
+    // (outputeffect.html también carga este JS) no toca nada.
+    if (!document.getElementById('vim-formatos') && !document.getElementById('vim-lista')) return;
+    const contFmt = document.getElementById('vim-formatos');
+    if (contFmt) {
+      Array.prototype.forEach.call(contFmt.querySelectorAll('[data-vim-formato]'), btn => {
+        btn.addEventListener('click', () => vimSetFormato(btn.getAttribute('data-vim-formato')));
+      });
+    }
+    const contTabs = document.getElementById('vim-tabs');
+    if (contTabs) {
+      Array.prototype.forEach.call(contTabs.querySelectorAll('[data-vim-tab]'), btn => {
+        btn.addEventListener('click', () => {
+          vimTab = btn.getAttribute('data-vim-tab');
+          Array.prototype.forEach.call(contTabs.querySelectorAll('[data-vim-tab]'), b => b.classList.toggle('active', b === btn));
+          vimRenderLista();
+        });
+      });
+    }
+    const buscador = document.getElementById('vim-buscador');
+    if (buscador) {
+      buscador.addEventListener('input', () => { vimBusqueda = buscador.value; vimRenderLista(); });
+      buscador.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (vimIdValido(buscador.value)) vimImportarPorId(buscador.value);
+        }
+      });
+    }
+    const limpiar = document.getElementById('vim-buscador-limpiar');
+    if (limpiar) {
+      limpiar.addEventListener('click', () => {
+        if (buscador) buscador.value = '';
+        vimBusqueda = '';
+        vimRenderLista();
+      });
+    }
+    const btnSubtabImport = document.getElementById('btn-flyer-subtab-import');
+    if (btnSubtabImport) btnSubtabImport.addEventListener('click', () => vimCargarListado(false));
+
+    vimSetFormato(vimFormato, true);
+    vimRenderLista();
+    vimCargarListado(false);
+  }
+  vimInit();
+
+  // API pública del importador (para pruebas y para reusar desde otros scripts)
+  window.VEImportador = {
+    formato: () => vimFormato,
+    setFormato: (f, silencioso) => vimSetFormato(f, silencioso),
+    base: () => (window.FSC_VIM_BASE_DISENO ? window.FSC_VIM_BASE_DISENO.slice() : null),
+    datos: () => vimDatosFlyer,
+    capas: () => timelineLayers,
+    palabras: () => flyerWords,
+    imagenes: () => (window.activeImageLayers || []),
+    listado: () => ({ publicaciones: vimPublicaciones, convocatorias: vimConvocatorias }),
+    cargarListado: forzar => vimCargarListado(forzar),
+    importarPorId: vimImportarPorId,
+    importarConvocatoria: vimFlyerConvocatoria,
+    flyerPublicacion: vimFlyerPublicacion,
+    medir: () => ({
+      capas: timelineLayers.length,
+      clips: timelineLayers.reduce((a, l) => a + (Array.isArray(l.clips) ? l.clips.length : 0), 0),
+      palabras: flyerWords.length,
+      imagenes: (window.activeImageLayers || []).length,
+      duracion: timelineDuration,
+      base: window.FSC_VIM_BASE_DISENO ? window.FSC_VIM_BASE_DISENO.slice() : null
+    })
+  };
+
   const btnImportPost = document.getElementById('import-post-id-btn');
   const inputImportPost = document.getElementById('import-post-id-input');
   if (btnImportPost && inputImportPost) {
     btnImportPost.addEventListener('click', () => {
-      importPostToFlyer(inputImportPost.value);
+      // Un ID puede ser una publicación o una convocatoria: el router decide.
+      vimImportarPorId(inputImportPost.value);
     });
     inputImportPost.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        importPostToFlyer(inputImportPost.value);
+        vimImportarPorId(inputImportPost.value);
       }
     });
   }
@@ -6587,7 +7276,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.ParticlesConfig.set({ FLYER_MODE_ENABLED: true });
     }
     const paramId = new URLSearchParams(window.location.search).get('outputeffect') || new URLSearchParams(window.location.search).get('id');
-    if (paramId) {
+    if (paramId && !window.FSC_OUTPUT_PLAYER) {
       loadUserVisualEffect(paramId);
     }
     window.addEventListener('click', () => {

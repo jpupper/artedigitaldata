@@ -160,7 +160,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
 
     const updatableFields = [
       'tipo', 'titulo', 'descripcion', 'basesCondiciones', 'lugarExposicion',
-      'fechaDesde', 'fechaHasta', 'imagenUrl', 'parametrosPresentacion',
+      'fechaDesde', 'fechaHasta', 'diasEvento', 'imagenUrl', 'parametrosPresentacion',
       'nombrePuesto', 'productoraEmpresa', 'nombreProyecto',
       'colaboracionPedida', 'activa', 'sistemaInterno', 'linkExterno', 'tags', 'visibility'
     ];
@@ -315,6 +315,40 @@ router.post('/:id/inscripcion', authMiddleware, async (req: AuthRequest, res: Re
 // =============================================
 // OBTENER INSCRIPCIONES DE UNA OPORTUNIDAD (creador o admin)
 // =============================================
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /:id/inscripciones/:inscripcionId — borra la inscripción de una obra
+// de la convocatoria (solo el creador o un admin).
+// ─────────────────────────────────────────────────────────────────────────────
+router.delete('/:id/inscripciones/:inscripcionId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const oportunidad = await Oportunidad.findById(req.params.id);
+    if (!oportunidad) {
+      return res.status(404).json({ error: 'Oportunidad no encontrada' });
+    }
+
+    if (
+      oportunidad.creador.toString() !== req.user!.id &&
+      req.user!.role !== 'ADMINISTRADOR' &&
+      req.user!.role !== 'ADMIN'
+    ) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const inscripcion = await Inscripcion.findById(req.params.inscripcionId);
+    if (!inscripcion) {
+      return res.status(404).json({ error: 'Inscripción no encontrada' });
+    }
+    if (inscripcion.oportunidad && inscripcion.oportunidad.toString() !== oportunidad._id.toString()) {
+      return res.status(400).json({ error: 'Esa inscripción no es de esta convocatoria' });
+    }
+
+    await inscripcion.deleteOne();
+    return res.json({ message: 'Inscripción eliminada', ok: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id/inscripciones', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const oportunidad = await Oportunidad.findById(req.params.id);
@@ -566,15 +600,28 @@ function obraIdEnDatos(datos: any): string {
   return '';
 }
 
+const SITIO_PUBLICO = process.env.PUBLIC_SITE_URL || 'https://artedigitaldata.com';
+
+/** Las URLs de las imágenes pueden venir relativas (/artedigitaldata/img/...):
+    sin host, fetch() falla en el servidor. */
+function urlAbsoluta(u: string): string {
+  const t = String(u || '').trim();
+  if (!t) return '';
+  if (/^https?:\/\//i.test(t)) return t;
+  if (t.startsWith('//')) return 'https:' + t;
+  return SITIO_PUBLICO + (t.startsWith('/') ? '' : '/') + t;
+}
+
 async function bajarImagen(url: string): Promise<{ data: Buffer; ext: string } | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
   try {
     const resp = await fetch(url, { signal: controller.signal });
     if (!resp.ok) return null;
+    const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!ct.startsWith('image/')) return null;   // hay links que devuelven HTML: no se guardan
     const data = Buffer.from(await resp.arrayBuffer());
     if (!data.length || data.length > 30 * 1024 * 1024) return null;
-    const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
     let ext = MIME_A_EXT[ct] || '';
     if (!ext) {
       const m = url.match(IMG_EXT_RE);
@@ -613,7 +660,7 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
       .sort({ createdAt: -1 });
 
     const usuarios = await User.find({ _id: { $in: inscripciones.map(i => i.usuario) } })
-      .select('_id username displayName email');
+      .select('_id username displayName email avatar');
     const usuarioMap = new Map(usuarios.map(u => [u._id.toString(), u]));
 
     // Columnas dinámicas: los mismos campos que definió el creador en el formulario
@@ -631,7 +678,7 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
     });
 
     const filas: string[] = [
-      ['#', 'Nombre de la obra', 'Artista', 'Usuario', 'Email', 'Descripción de la obra',
+      ['#', 'Nombre de la obra', 'Artista', 'Usuario', 'Foto del artista', 'Email', 'Descripción de la obra',
         'Imagen (URL)', 'Video (URL)', 'Subido el', ...etiquetas, 'Mensaje',
         'Aceptada por el curador', 'Archivo de imagen'].map(csvEscapar).join(';'),
     ];
@@ -640,10 +687,37 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
     const vistos = new Set<string>();
     const usados = new Set<string>();
     const avisos: string[] = [];
-    const MAX_IMAGENES = 120;
+    const MAX_IMAGENES = 200;
     const MAX_BYTES = 150 * 1024 * 1024;
     let imagenesOk = 0;
     let bytesTotales = 0;
+
+    // ── Fotos de los artistas: el avatar de cada postulante (una vez por usuario) ──
+    const fotosArtistas: Record<string, string> = {};
+    for (const u of usuarios as any[]) {
+      const av = u.avatar ? urlAbsoluta(String(u.avatar)) : '';
+      if (!av) continue;
+      if (imagenesOk >= MAX_IMAGENES || bytesTotales >= MAX_BYTES) {
+        avisos.push('Foto del artista omitida por límite: ' + av);
+        continue;
+      }
+      const img = await bajarImagen(av);
+      if (!img) {
+        avisos.push('No se pudo descargar la foto de ' + (u.username || u._id) + ': ' + av);
+        continue;
+      }
+      bytesTotales += img.data.length;
+      const nombreArtista = nombreArchivoSeguro(u.displayName || u.username || 'artista', 45);
+      const usuarioArtista = nombreArchivoSeguro(u.username || 'usuario', 25);
+      const base = 'fotos-artistas/' + nombreArtista + ' - @' + usuarioArtista;
+      let nombre = base + '.' + img.ext;
+      let n = 2;
+      while (usados.has(nombre.toLowerCase())) { nombre = base + ' (' + n + ').' + img.ext; n++; }
+      usados.add(nombre.toLowerCase());
+      imagenesZip.push({ name: nombre, data: img.data });
+      fotosArtistas[u._id.toString()] = nombre;
+      imagenesOk++;
+    }
 
     for (let idx = 0; idx < inscripciones.length; idx++) {
       const insc = inscripciones[idx];
@@ -668,9 +742,17 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
       const tituloObra = obra.title || insc.datos?.obraTitulo || obraLink?.title || '';
 
       const candidatas: string[] = [];
-      const principal = obra.imageUrl || insc.datos?.obraImagen || obraLink?.imageUrl || '';
+      const principal = urlAbsoluta(obra.imageUrl || insc.datos?.obraImagen || obraLink?.imageUrl || '');
       if (principal) candidatas.push(principal);
-      imagenUrlsDeDatos(insc.datos).forEach(u => { if (!candidatas.includes(u)) candidatas.push(u); });
+      imagenUrlsDeDatos(insc.datos).forEach(u => {
+        const abs = urlAbsoluta(u);
+        if (abs && !candidatas.includes(abs)) candidatas.push(abs);
+      });
+      // imágenes subidas dentro de la descripción de la obra (galerías en HTML)
+      const textoObra = String(obra.description || insc.datos?.obraDescripcion || obraLink?.description || '');
+      (textoObra.match(/https?:\/\/[^\s"'<>)]+/gi) || []).forEach(uu => {
+        if (IMG_EXT_RE.test(uu) && !candidatas.includes(uu)) candidatas.push(uu);
+      });
 
       const archivos: string[] = [];
       for (const url of candidatas) {
@@ -705,6 +787,7 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
         tituloObra,
         artista,
         usuario.username || '',
+        fotosArtistas[insc.usuario.toString()] || '',
         usuario.email || '',
         obra.description || insc.datos?.obraDescripcion || obraLink?.description || '',
         principal,
@@ -717,6 +800,25 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
       ].map(csvEscapar).join(';'));
     }
 
+    // ── Imagen de portada de la convocatoria (flyer) ──
+    if (oportunidad.imagenUrl) {
+      const flyer = urlAbsoluta(String(oportunidad.imagenUrl));
+      if (flyer && !vistos.has(flyer)) {
+        const img = await bajarImagen(flyer);
+        if (img) {
+          const nombre = 'flyer - ' + nombreArchivoSeguro(oportunidad.titulo, 45) + '.' + img.ext;
+          if (!usados.has(nombre.toLowerCase())) {
+            usados.add(nombre.toLowerCase());
+            vistos.add(flyer);
+            imagenesZip.push({ name: nombre, data: img.data });
+            imagenesOk++;
+          }
+        } else {
+          avisos.push('No se pudo descargar el flyer: ' + flyer);
+        }
+      }
+    }
+
     const slug = nombreArchivoSeguro(oportunidad.titulo, 60).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'inscriptos';
     const CRLF = String.fromCharCode(13, 10);
     const csv = Buffer.from(String.fromCharCode(0xFEFF) + filas.join(CRLF), 'utf8');
@@ -726,7 +828,9 @@ router.get('/:id/descargar', authMiddleware, async (req: AuthRequest, res: Respo
       `Generado: ${new Date().toLocaleString('es-AR')}`,
       '',
       `Archivo planilla-${slug}.csv : todas las postulaciones con sus datos (abre en Excel/Google Sheets).`,
-      `Imágenes incluidas: ${imagenesOk}. Cada imagen se llama "<Nombre de la obra> - <Nombre del artista>".`,
+      'Imágenes incluidas: ' + imagenesOk + '.',
+      '  · fotos-artistas/  -> la foto de perfil de cada artista que se postuló.',
+      '  · En la raíz: cada obra con todas sus imágenes, como "<Nombre de la obra> - <Nombre del artista>".',
       'Si una misma obra tiene varias imágenes, se agrega " (2)", " (3)"...',
       '',
       'La columna "Archivo de imagen" del CSV dice qué archivo corresponde a cada postulación.',

@@ -1,0 +1,5 @@
+/* Estilos propios de artistas.html — extraídos del HTML (regla de separación HTML/CSS/JS) */
+
+.dp-1 { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+.dp-2 { position: relative; z-index: 100; }

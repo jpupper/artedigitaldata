@@ -52,8 +52,24 @@ function getUserUsername() {
 }
 
 function logout() {
+  // ⚠️ La sesión del ecosistema (JPCONNECT/fscauth) vive con OTRAS claves en el mismo
+  // localStorage: si no se borran, la app vuelve a adoptarla al recargar y el usuario
+  // queda logueado después de apretar Salir (síntoma reportado).
+  var tk = '';
+  try { tk = localStorage.getItem('token') || getToken() || ''; } catch (e) {}
+  ['token', 'username', 'userId', 'role', 'ssoset'].forEach(function (k) {
+    try { localStorage.removeItem(k); } catch (e) {}
+  });
   removeToken();
   removeUser();
+  // Y se avisa al centralizador para que cierre la sesión de verdad (token + cookie).
+  try {
+    fetch(fscAuthApi() + '/auth/logout', {
+      method: 'POST',
+      headers: tk ? { 'Authorization': 'Bearer ' + tk } : {},
+      keepalive: true
+    }).catch(function () {});
+  } catch (e) {}
   window.location.href = CONFIG.BASE + '/';
 }
 
@@ -63,14 +79,14 @@ function logout() {
 // navegador terminaba en https://fullscreencode.com/undefined/auth/sso-check (404)
 // y el usuario quedaba varado ahí. Ahora se resuelve en cascada:
 //   1) CONFIG.FSCAUTH_API  (artedigitaldata apunta directo al VPS)
-//   2) CONFIG.FSCAUTH_URL + '/api'  (fullscreencode.com sirve /fscauth y proxya al VPS)
+//   2) CONFIG.FSCAUTH_URL + '/api'  (el .htaccess proxya /jpconnect/api al VPS)
 //   3) el VPS directo
 // Nunca puede salir "undefined".
 function fscAuthApi() {
   var cfg = window.CONFIG || {};
   var base = cfg.FSCAUTH_API;
   if (!base && cfg.FSCAUTH_URL) base = String(cfg.FSCAUTH_URL).replace(/\/+$/, '') + '/api';
-  if (!base) base = 'https://vps-4455523-x.dattaweb.com/fscauth/api';
+  if (!base) base = 'https://vps-4455523-x.dattaweb.com/jpconnect/api';
   return String(base).replace(/\/+$/, '');
 }
 window.fscAuthApi = fscAuthApi;
@@ -276,6 +292,26 @@ async function syncSession() {
     const urlToken = urlParams.get('token');
     const urlUsername = urlParams.get('username');
     const urlUserId = urlParams.get('userId');
+
+    // ── Adopción de la sesión del ecosistema ───────────────────────────────────
+    // El include del fondo (y otros scripts compartidos del ecosistema) pueden consumir
+    // el ?token= ANTES que este script: guardan token/username/userId con las claves del
+    // ecosistema y limpian la URL. Cuando eso pasaba, esta app se quedaba SIN sesión y el
+    // retorno del login terminaba rebotando a ?nosession=true (síntoma: el cartel
+    // "Iniciá sesión para indexar tus creaciones del resto del ecosistema" con el login
+    // recién hecho). Si el token no llegó por la URL pero SÍ está guardado con las claves
+    // del ecosistema, se adopta: es la misma sesión, emitida por el centralizador.
+    if (!urlToken && !isLoggedIn()) {
+        try {
+            var tkEco = localStorage.getItem('token');
+            var usEco = localStorage.getItem('username');
+            if (tokenPlausible(tkEco) && usEco) {
+                var idEco = localStorage.getItem('userId');
+                setToken(tkEco);
+                setUser({ username: usEco, id: idEco || null, _id: idEco || null });
+            }
+        } catch (e) { /* sin localStorage (modo privado): se sigue sin sesión */ }
+    }
 
     if (urlToken && urlUsername) {
         setToken(urlToken);

@@ -7,6 +7,8 @@ export interface IVisualEffect extends Document {
   timelineLayers?: any[];
   timelineDuration?: number;
   hasTimeline?: boolean;
+  /** Formato de diseño del flyer: [ancho, alto] de la pantalla de referencia. */
+  viewportBase?: number[];
   config?: any;
   isDefaultFront?: boolean;
   createdAt: Date;
@@ -21,6 +23,7 @@ const VisualEffectSchema: Schema = new Schema(
     timelineLayers: { type: Array, default: [] },
     timelineDuration: { type: Number, default: 10.0 },
     hasTimeline: { type: Boolean, default: false },
+    viewportBase: { type: [Number], default: undefined },
     config: { type: Object, default: {} },
     isDefaultFront: { type: Boolean, default: false },
   },

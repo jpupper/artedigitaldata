@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="suave">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Flyer animado — Arte Digital Data</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/paginas/flyer.css?v=3">
+</head>
+<body class="fly-body">
+
+  <!-- Escenario: fondo del shader + fotos + palabras (todo animado) -->
+  <div id="fly-stage" class="fly-stage" data-formato="pantalla">
+    <div class="fly-marco" aria-hidden="true"></div>
+    <img id="fly-obra" class="fly-foto fly-obra" alt="" >
+    <div id="fly-velo" class="fly-velo" aria-hidden="true"></div>
+    <div id="fly-perfil" class="fly-perfil">
+      <div id="fly-perfil-marco" class="fly-perfil-marco">
+        <img id="fly-perfil-img" class="fly-perfil-img" alt="">
+      </div>
+    </div>
+  </div>
+
+  <!-- UI (se oculta sola al reproducir) -->
+  <div id="fly-panel" class="fly-panel">
+    <p class="fly-kicker">Flyer animado · galería de la convocatoria</p>
+    <h1 id="fly-titulo" class="fly-titulo">Cargando…</h1>
+    <p id="fly-meta" class="fly-meta"></p>
+
+    <div class="fly-grupo">
+      <span class="fly-etiqueta">Formato</span>
+      <div class="fly-opciones" id="fly-formatos">
+        <button type="button" class="fly-op is-on" data-formato="pantalla">Pantalla completa</button>
+        <button type="button" class="fly-op" data-formato="vertical">Vertical 9:16</button>
+        <button type="button" class="fly-op" data-formato="cuadrado">Cuadrado 1:1</button>
+        <button type="button" class="fly-op" data-formato="retrato">Retrato 4:5</button>
+      </div>
+    </div>
+
+    <div class="fly-grupo">
+      <span class="fly-etiqueta">Ritmo</span>
+      <div class="fly-opciones" id="fly-ritmos">
+        <button type="button" class="fly-op is-on" data-ritmo="1">Normal</button>
+        <button type="button" class="fly-op" data-ritmo="1.35">Lento</button>
+        <button type="button" class="fly-op" data-ritmo="0.7">Rápido</button>
+      </div>
+    </div>
+
+    <div class="fly-acciones">
+      <button type="button" id="fly-play" class="fly-btn fly-btn--principal"><i class="fas fa-play"></i> Empezar</button>
+      <button type="button" id="fly-fullscreen" class="fly-btn"><i class="fas fa-expand"></i> Pantalla completa</button>
+      <button type="button" id="fly-loop" class="fly-btn is-on"><i class="fas fa-repeat"></i> Repetir</button>
+      <button type="button" id="fly-copiar-solo" class="fly-btn"><i class="fas fa-link"></i> Copiar link de solo-flyer</button>
+      <button type="button" id="fly-grabar" class="fly-btn fly-btn--principal"><i class="fas fa-video"></i> Grabar video (1 vuelta completa)</button>
+
+      <button type="button" id="fly-exportar" class="fly-btn"><i class="fas fa-download"></i> Exportar PNG</button>
+    </div>
+
+    <p id="fly-link-solo" class="fly-link-solo ui-hidden"></p>
+    <p class="fly-ayuda">
+      Al empezar se esconden los controles y el cursor. Al grabar elegí ESTA PESTAÑA: vuelve a empezar, se reproduce una vuelta y se corta sola
+      (fondo + palabras que entran y salen + foto del artista y de cada obra).
+      <b>Espacio</b> = pausa · <b>F</b> = pantalla completa · <b>R</b> = reiniciar.
+    </p>
+  </div>
+
+  <div id="fly-estado" class="fly-estado ui-hidden">
+    <i class="fas fa-circle-notch fa-spin"></i> <span id="fly-estado-txt">Cargando las obras…</span>
+  </div>
+
+  <div id="fly-barra" class="fly-barra ui-hidden"><div id="fly-barra-fill" class="fly-barra-fill"></div></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/generative-avatar.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="js/paginas/flyer-config.js?v=3"></script>
+  <script src="js/p5-effect.js?v=12"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"></script>
+  <script src="js/paginas/flyer-1.js?v=5"></script>
+</body>
+</html>

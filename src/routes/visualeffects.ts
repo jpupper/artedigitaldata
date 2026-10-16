@@ -78,7 +78,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/visualeffects - Guardar un nuevo efecto visual
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, flyerWords, timelineLayers, timelineDuration, hasTimeline, config } = req.body;
+    const { title, flyerWords, timelineLayers, timelineDuration, hasTimeline, config, viewportBase } = req.body;
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ error: 'El título es requerido' });
     }
@@ -88,6 +88,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       author: req.user!.id,
       flyerWords: flyerWords || [],
       timelineLayers: timelineLayers || [],
+      viewportBase: Array.isArray(viewportBase) && viewportBase.length === 2 ? viewportBase.map(Number) : undefined,
       timelineDuration: timelineDuration !== undefined ? Number(timelineDuration) : 10.0,
       hasTimeline: hasTimeline !== undefined ? Boolean(hasTimeline) : false,
       config: config || {},
@@ -102,7 +103,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 // PUT /api/visualeffects/:id - Actualizar un efecto visual existente
 router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { title, flyerWords, timelineLayers, timelineDuration, hasTimeline, config } = req.body;
+    const { title, flyerWords, timelineLayers, timelineDuration, hasTimeline, config, viewportBase } = req.body;
     const effect = await VisualEffect.findById(req.params.id);
     if (!effect) {
       return res.status(404).json({ error: 'Efecto visual no encontrado' });
@@ -116,6 +117,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (title && typeof title === 'string') updateFields.title = title.trim();
     if (flyerWords !== undefined) updateFields.flyerWords = flyerWords;
     if (timelineLayers !== undefined) updateFields.timelineLayers = timelineLayers;
+    if (Array.isArray(viewportBase) && viewportBase.length === 2) updateFields.viewportBase = viewportBase.map(Number);
     if (timelineDuration !== undefined) updateFields.timelineDuration = Number(timelineDuration);
     if (hasTimeline !== undefined) updateFields.hasTimeline = Boolean(hasTimeline);
     if (config !== undefined) updateFields.config = config;
