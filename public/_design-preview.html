@@ -6,6 +6,9 @@
 <title>Diseño nuevo — Arte Digital Data</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <!-- CAPA FONDO: cajas cuadradas + UI de vidrio fina sobre el fondo animado del
+       JP Shader Editor (misma receta que index.html/galeria.html/404.html) -->
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 <style>
   /* Sólo lo de la demo (barra de cambio de dirección). Nada de estilo del sitio acá. */
   body { padding-bottom: 90px; }
@@ -202,5 +205,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.que
 document.addEventListener('click', e => { const m = document.getElementById('mas');
   if (m && !m.contains(e.target)) m.dataset.open = '0'; });
 </script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
 </body>
 </html>

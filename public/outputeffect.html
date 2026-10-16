@@ -55,6 +55,9 @@
     }
   </style>
   <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <!-- CAPA FONDO: cajas cuadradas + UI de vidrio fina sobre el fondo animado del
+       JP Shader Editor (misma receta que index.html/galeria.html/404.html) -->
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 </head>
 <body class="ui-hidden">
   <div id="p5-canvas"></div>
@@ -65,8 +68,11 @@
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script>window.FSC_NO_ASCII_BG = true; /* que p5-effect.js no vuelva a inyectar el fondo viejo */</script>
+<script src="js/p5-effect.js"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/particulas.js"></script>
 </body>

@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <!-- CAPA FONDO: cajas cuadradas + UI de vidrio fina sobre el fondo animado del
+       JP Shader Editor (misma receta que index.html/galeria.html/404.html) -->
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 </head>
 <body class="ui-con-header min-h-screen scrollbar-hide">
   <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
@@ -325,9 +328,12 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script>window.FSC_NO_ASCII_BG = true; /* que p5-effect.js no vuelva a inyectar el fondo viejo */</script>
+<script src="js/p5-effect.js"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
-  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpconnect/js/fsc-button.js?v=10"></script>
 </body>
 </html>

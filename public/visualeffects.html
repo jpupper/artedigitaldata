@@ -12,6 +12,9 @@
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;700&family=Fira+Code:wght@400;700&family=Anonymous+Pro:wght@400;700&family=Inconsolata:wght@400;700&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;700&family=Jersey+10&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/particulas.css">
   <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <!-- CAPA FONDO: cajas cuadradas + UI de vidrio fina sobre el fondo animado del
+       JP Shader Editor (misma receta que index.html/galeria.html/404.html) -->
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 </head>
 <body>
   <!-- Canvas p5 -->
@@ -1590,11 +1593,14 @@
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
+  <script>window.FSC_NO_ASCII_BG = true; /* que p5-effect.js no vuelva a inyectar el fondo viejo */</script>
+<script src="js/p5-effect.js"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="js/particulas.js"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
-  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpconnect/js/fsc-button.js?v=10"></script>
 </body>
 </html>

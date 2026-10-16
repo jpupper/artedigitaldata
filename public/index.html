@@ -29,8 +29,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <!-- CAPA FONDO (rebranding): cajas cuadradas + UI de vidrio fina sobre el fondo
+       animado del JP Shader Editor. Mismo enganche que galeria.html/404.html/terminos.html -->
+  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
+  <link rel="stylesheet" href="css/paginas/index.css">
   <style>
+    /* La composicion del JP Shader Editor sale con ALPHA (el pase ASCII escribe
+       vec4(col*a, a)): lo que se ve detras del shader es la BASE de la pagina. La base
+       tiene que ser el #0d0d12 del sitio (como el negro del visor del nodeeditor) y NO
+       el blanco del navegador. El color vive en <html> (se pinta DETRAS del canvas del
+       shader, que tiene z-index:-1); el <body> NO puede ser opaco porque taparia el
+       canvas. Es la misma regla que ya trae css/fondo-ui.css. */
+    html { background-color: #0d0d12 !important; }
+    body { background-color: transparent !important; }
+    #jpsi-canvas { background: #0d0d12 !important; }
     /* Canvas de p5 - por encima del fondo, debajo del contenido */
     #p5-canvas {
       position: fixed !important;
@@ -86,168 +99,30 @@
       box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
     }
 
-    /* === SOLAR SYSTEM HERO === */
-    .sun-stage {
-      position: relative;
-      width: 320px;
-      height: 320px;
-      margin: 0.5rem auto 0.5rem auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    @media (min-width: 640px) {
-      .sun-stage {
-        width: 360px;
-        height: 360px;
-        margin: 0.5rem auto 1rem auto;
-      }
-    }
-    @media (min-width: 768px) {
-      .sun-stage {
-        width: 390px;
-        height: 390px;
-        margin: 0.5rem auto 1rem auto;
-      }
-    }
 
-    /* Logo Central con Aura Noise Outline */
-    .sun-core-wrap {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 20;
-      width: 210px;
-      height: 210px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    @media (min-width: 640px) {
-      .sun-core-wrap {
-        width: 235px;
-        height: 235px;
-      }
-    }
-    @media (min-width: 768px) {
-      .sun-core-wrap {
-        width: 255px;
-        height: 255px;
-      }
-    }
-
-    .logo-aura-canvas {
-      position: absolute;
-      inset: -50px;
-      width: calc(100% + 100px);
-      height: calc(100% + 100px);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .logo-pure-img {
-      position: relative;
-      z-index: 10;
-      width: 78%;
-      height: 78%;
-      object-fit: contain;
-      filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85));
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-      user-select: none;
-    }
-    .logo-pure-img:hover {
-      transform: scale(1.06);
-    }
-
-    /* Anillo Orbital */
-    .orbit-ring {
-      position: absolute;
-      inset: 8px;
-      border-radius: 50%;
-      border: 1.5px dashed rgba(0, 242, 254, 0.22);
-      box-shadow: 0 0 30px rgba(0, 242, 254, 0.08), inset 0 0 30px rgba(224, 64, 251, 0.08);
-      pointer-events: none;
-    }
-
-    /* Moons Orbit Rotator */
-    .orbit-rotator {
-      position: absolute;
-      inset: 8px;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: moonsOrbit 80s linear infinite;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    /* Moons Counter-Rotation (para mantener los textos siempre nivelados) */
-    .moon-unit {
-      position: absolute;
-      pointer-events: auto;
-      transform-origin: center center;
-    }
-    .moon-counter {
-      animation: moonsCounter 80s linear infinite;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    /* Ubicaciones de las 4 Lunas (Norte, Este, Sur, Oeste) */
-    .moon-north {
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    .moon-east {
-      top: 50%;
-      right: 0;
-      transform: translate(50%, -50%);
-    }
-    .moon-south {
-      bottom: 0;
-      left: 50%;
-      transform: translate(-50%, 50%);
-    }
-    .moon-west {
-      top: 50%;
-      left: 0;
-      transform: translate(-50%, -50%);
-    }
-
-    @keyframes moonsOrbit {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes moonsCounter {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
-    }
-
-    /* Moon Buttons */
-    .moon-pill {
+    /* Pills de categoría del feed (Obras / Recursos / Chances / Eventos).
+       Antes orbitaban como "lunas" alrededor del logo del hero; ahora viven en
+       la barra de filtros del feed, junto al switch humano/IA y Data Externa.
+       El color y el fondo de cada una los sigue dando .filter-switch + .filter-<tipo>.active */
+    .feed-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 8px 16px;
-      border-radius: 9999px;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 0;
       font-size: 11px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
       cursor: pointer;
       user-select: none;
       transition: all 0.25s ease;
     }
-    .moon-pill:hover {
-      transform: scale(1.12);
+    .feed-pill:hover {
+      transform: translateY(-1px) scale(1.04);
     }
   </style>
 </head>
@@ -257,63 +132,9 @@
   <div id="app-header" style="position: relative; z-index: 100;"></div>
 
   <main class="pt-24 pb-6 max-w-7xl mx-auto px-4" style="position: relative; z-index: 10;">
-    <!-- Hero / Solar System Section -->
+    <!-- Hero Section -->
     <section class="text-center pt-1 pb-1 flex flex-col items-center justify-center relative select-none">
       
-      <!-- Solar Orbit Container -->
-      <div id="solar-system" class="sun-stage">
-        
-        <!-- Logo con Aura Noise Outline (Detrás del Logo) -->
-        <div class="sun-core-wrap">
-          <canvas id="logo-aura-canvas" class="logo-aura-canvas"></canvas>
-          <img src="img/artedigital.png" alt="Arte Digital Data" class="logo-pure-img" />
-        </div>
-
-        <!-- Anillo Orbital -->
-        <div class="orbit-ring"></div>
-
-        <!-- Orbiting Moons Carrier (4 categorías que orbitan muy lentamente alrededor del sol) -->
-        <div id="orbit-rotator" class="orbit-rotator">
-          
-          <!-- Luna 1: Obras (Norte) -->
-          <div class="moon-unit moon-north">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active moon-pill">
-                <span>Obras</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 2: Chances (Este) -->
-          <div class="moon-unit moon-east">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active moon-pill">
-                <span>Chances</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 3: Eventos (Sur) -->
-          <div class="moon-unit moon-south">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active moon-pill">
-                <span>Eventos</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Luna 4: Recursos (Oeste) -->
-          <div class="moon-unit moon-west">
-            <div class="moon-counter">
-              <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active moon-pill">
-                <span>Recursos</span>
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
 
       <div id="hero-cta"></div>
     </section>
@@ -328,13 +149,29 @@
 
     <!-- Feed -->
     <section>
-      <div class="flex items-center gap-3 mb-6">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
         <button onclick="toggleHumanAI()" id="filter-human-ai" class="w-9 h-9 rounded-xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 flex items-center justify-center transition-all hover:scale-105 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0" title="Mostrando contenido Humano (Click para cambiar a IA)">
           <i class="fas fa-user text-sm"></i>
         </button>
         <button onclick="toggleExternalData()" id="filter-external" class="h-9 px-3.5 rounded-xl border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2 transition-all hover:border-cyan-500/50 hover:bg-white/10 shrink-0" title="Data Externa: sumar al feed las creaciones del resto de las apps del ecosistema (apagado por defecto)">
           <span id="filter-external-knob" class="w-3.5 h-3.5 rounded-full bg-gray-600 transition-all"></span>
           <span class="text-[10px] font-black uppercase tracking-widest">Data Externa</span>
+        </button>
+
+        <span class="hidden sm:block w-px h-6 bg-white/10 shrink-0" aria-hidden="true"></span>
+
+        <!-- Categorías del feed (antes orbitaban como lunas en el hero) -->
+        <button onclick="toggleFilter('post')" id="filter-post" class="filter-switch filter-post active feed-pill" title="Obras: mostrar/ocultar las obras publicadas">
+          <span>Obras</span>
+        </button>
+        <button onclick="toggleFilter('recurso')" id="filter-recurso" class="filter-switch filter-recurso active feed-pill" title="Recursos: mostrar/ocultar los recursos del ecosistema">
+          <span>Recursos</span>
+        </button>
+        <button onclick="toggleFilter('oportunidad')" id="filter-oportunidad" class="filter-switch filter-oportunidad active feed-pill" title="Chances: mostrar/ocultar las convocatorias y oportunidades">
+          <span>Chances</span>
+        </button>
+        <button onclick="toggleFilter('evento')" id="filter-evento" class="filter-switch filter-evento active feed-pill" title="Eventos: mostrar/ocultar los eventos">
+          <span>Eventos</span>
         </button>
       </div>
       <p id="external-status" class="hidden text-[11px] font-bold text-cyan-400 mb-4"></p>
@@ -351,192 +188,30 @@
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/ascii-shader-bg.js"></script>
-  <script src="js/p5-effect.js"></script>
-  <script src="js/config.js?v=6"></script>
-  <script src="js/auth.js?v=7"></script>
+  <!-- FONDO: lo sirve el JP Shader Editor (jpshadereditorInclude), igual que en
+       vuelapelucas3000 y jpshadereditor. Es una COMPOSICION del NodeEditor:
+         composicion: artedigital-ascii ("Arte Digital Data - ASCII (patron + tipografia)", autor jpupper)
+         caja de fondo: ascii1 (su OUTPUT)
+       Se edita en https://fullscreencode.com/jpshadereditor/nodeeditor.html?comp=artedigital-ascii
+       y la pagina pide el plan al backend y lo aplica sola (panel en vivo: tecla S).
+       Antes: js/ascii-shader-bg.js (shader fijo, se saco). -->
+  <script>window.FSC_NO_ASCII_BG = true; /* que p5-effect.js no vuelva a inyectar el fondo viejo */</script>
+  <script src="js/p5-effect.js?v=4"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
+          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
+          data-keep-bg="1"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js?v=5"></script>
   <script src="js/external-data.js?v=5"></script>
   <script src="js/generative-avatar.js"></script>
   <script src="js/notifications.js"></script>
-  <script>
-    function initLogoAuraShader() {
-      const canvas = document.getElementById('logo-aura-canvas');
-      if (!canvas) return;
-      const gl = canvas.getContext('webgl', { alpha: true, antialias: true }) || canvas.getContext('experimental-webgl', { alpha: true });
-      if (!gl) return;
-
-      const vertShaderSrc = `
-        attribute vec2 position;
-        void main() {
-          gl_Position = vec4(position, 0.0, 1.0);
-        }
-      `;
-
-      const fragShaderSrc = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-
-        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-
-        float snoise(vec2 v) {
-          const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-          vec2 i  = floor(v + dot(v, C.yy) );
-          vec2 x0 = v -   i + dot(i, C.xx);
-          vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-          vec4 x12 = x0.xyxy + C.xxzz;
-          x12.xy -= i1;
-          i = mod289(i);
-          vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
-          vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-          m = m*m ;
-          m = m*m ;
-          vec3 x = 2.0 * fract(p * C.www) - 1.0;
-          vec3 h = abs(x) - 0.5;
-          vec3 ox = floor(x + 0.5);
-          vec3 a0 = x - ox;
-          m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-          vec3 g;
-          g.x  = a0.x  * x0.x  + h.x  * x0.y;
-          g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-          return 130.0 * dot(m, g);
-        }
-
-        void main() {
-          vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-          float r = length(uv);
-          float angle = atan(uv.y, uv.x);
-
-          // Radio base del círculo alrededor del logo
-          float baseRadius = 0.355;
-
-          // Displace por noise en el perímetro del círculo
-          float t = u_time * 0.85;
-          vec2 noiseCoord1 = vec2(cos(angle) * 2.2 + t * 0.35, sin(angle) * 2.2 - t * 0.3);
-          vec2 noiseCoord2 = vec2(cos(angle) * 4.4 - t * 0.5, sin(angle) * 4.4 + t * 0.45);
-          float n1 = snoise(noiseCoord1);
-          float n2 = snoise(noiseCoord2) * 0.5;
-          float totalNoise = (n1 + n2) * 0.045;
-
-          float displacedRadius = baseRadius + totalNoise;
-
-          // Outline sin relleno
-          float dist = abs(r - displacedRadius);
-          float line = smoothstep(0.011, 0.001, dist);
-          float glow = smoothstep(0.065, 0.005, dist) * 0.55;
-          float aura = line + glow;
-
-          // Cortar el interior para que el aura esté puramente en el contorno y detrás
-          float innerMask = smoothstep(baseRadius - 0.06, baseRadius - 0.02, r);
-          aura *= innerMask;
-
-          // Colores de Arte Digital Data (Cyan #00f2fe, Magenta #e040fb, Violeta eléctrico)
-          vec3 cyan = vec3(0.0, 0.95, 1.0);
-          vec3 magenta = vec3(0.92, 0.22, 0.98);
-          vec3 violet = vec3(0.45, 0.15, 0.95);
-
-          float colorShift = sin(angle * 2.0 + u_time * 1.3) * 0.5 + 0.5;
-          vec3 color = mix(cyan, magenta, colorShift);
-          color = mix(color, violet, 0.28 * cos(angle * 3.0 - u_time * 0.7));
-
-          vec3 finalColor = color * (line * 1.6 + glow * 0.9);
-          float alpha = clamp(aura, 0.0, 1.0) * 0.95;
-
-          gl_FragColor = vec4(finalColor * alpha, alpha);
-        }
-      `;
-
-      function createShader(gl, type, source) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          console.warn('Aura shader error:', gl.getShaderInfoLog(shader));
-          gl.deleteShader(shader);
-          return null;
-        }
-        return shader;
-      }
-
-      const vert = createShader(gl, gl.VERTEX_SHADER, vertShaderSrc);
-      const frag = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSrc);
-      if (!vert || !frag) return;
-
-      const program = gl.createProgram();
-      gl.attachShader(program, vert);
-      gl.attachShader(program, frag);
-      gl.linkProgram(program);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
-
-      gl.useProgram(program);
-
-      const buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        -1, -1,  1, -1, -1,  1,
-        -1,  1,  1, -1,  1,  1
-      ]), gl.STATIC_DRAW);
-
-      const posLoc = gl.getAttribLocation(program, 'position');
-      gl.enableVertexAttribArray(posLoc);
-      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-      const timeLoc = gl.getUniformLocation(program, 'u_time');
-      const resLoc = gl.getUniformLocation(program, 'u_resolution');
-
-      function resize() {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.round((rect.width || 340) * dpr);
-        canvas.height = Math.round((rect.height || 340) * dpr);
-        gl.viewport(0, 0, canvas.width, canvas.height);
-      }
-      window.addEventListener('resize', resize);
-      resize();
-
-      function render(t) {
-        gl.uniform1f(timeLoc, t * 0.001);
-        gl.uniform2f(resLoc, canvas.width, canvas.height);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-        requestAnimationFrame(render);
-      }
-      requestAnimationFrame(render);
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      initLogoAuraShader();
-
-      // Cargar configuración global del logo desde logoconfig.json / Servidor
-      (async function applySavedLogoConfig() {
-        const logoWrap = document.querySelector('.sun-core-wrap');
-        if (!logoWrap) return;
-        try {
-          const t = Date.now();
-          const res = await fetch('logoconfig.json?t=' + t).catch(() => null);
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data && typeof data === 'object') {
-              const scale = typeof data.scale === 'number' ? data.scale : 1.0;
-              const x = typeof data.x === 'number' ? data.x : 0;
-              const y = typeof data.y === 'number' ? data.y : 0;
-              const rot = typeof data.rotation === 'number' ? data.rotation : 0;
-              if (scale !== 1.0 || x !== 0 || y !== 0 || rot !== 0) {
-                logoWrap.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0px) scale(${scale}) rotate(${rot}deg)`;
-              }
-            }
-          }
-        } catch (e) {}
-      })();
-    });
-  </script>
   <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
   <script src="js/forms.js?v=2"></script>
   <script src="js/image-cropper.js"></script>
   <script src="js/index.js?v=5"></script>
   <!-- 🔘 Botón universal FSC: lleva al pasaporte de usuario (fscauth) -->
-  <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
+  <script src="https://vps-4455523-x.dattaweb.com/jpconnect/js/fsc-button.js?v=10"></script>
 </body>
 
 </html>
