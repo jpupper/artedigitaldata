@@ -8,23 +8,20 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/create.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
-  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
-  <link rel="stylesheet" href="css/paginas/create.css">
-  <link rel="stylesheet" href="css/paginas/fondo-obra.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
 </head>
 <body class="ui-con-header min-h-screen">
   <div id="app-header"></div>
 
   <main class="pt-24 pb-12 max-w-4xl mx-auto px-4">
-    <div class="fk-head text-center mb-12">
+    <div class="text-center mb-12">
       <h1 class="text-4xl font-black text-white mb-2">¿Qué querés <span class="gradient-text">Crear</span>?</h1>
       <p class="text-gray-400">Compartí tu talento, recursos o invita a la comunidad a tus fechas.</p>
     </div>
 
     <!-- Type Selection -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-      <button data-on-click="switchType('post')" id="btn-post" class="type-card active p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+      <button onclick="switchType('post')" id="btn-post" class="type-card active p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
         <div class="w-16 h-16 mx-auto bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
           <i class="fas fa-palette text-2xl text-gray-400"></i>
         </div>
@@ -32,7 +29,7 @@
         <p class="text-xs text-gray-500">Publicá tus creaciones y diseños</p>
       </button>
 
-      <button data-on-click="switchType('recurso')" id="btn-recurso" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+      <button onclick="switchType('recurso')" id="btn-recurso" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
         <div class="w-16 h-16 mx-auto bg-orange-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
           <i class="fas fa-box-open text-2xl text-gray-400"></i>
         </div>
@@ -40,7 +37,7 @@
         <p class="text-xs text-gray-500">Links, software o tutoriales</p>
       </button>
 
-      <button data-on-click="switchType('evento')" id="btn-evento" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
+      <button onclick="switchType('evento')" id="btn-evento" class="type-card p-6 rounded-3xl border border-white/5 bg-black/40 text-center group">
         <div class="w-16 h-16 mx-auto bg-fuchsia-500/10 rounded-2xl flex items-center justify-center mb-4 transition-colors">
           <i class="fas fa-calendar-alt text-2xl text-gray-400"></i>
         </div>
@@ -101,7 +98,7 @@
             </select>
           </div>
         </div>
-        <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/10 hover:scale-[1.01] transition-transform dp-1">
+        <button type="submit" class="w-full btn-primary py-4 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/10 hover:scale-[1.01] transition-transform" style="background: linear-gradient(135deg, #ff8c00, #ff4500); color: white !important;">
           <i class="fas fa-upload mr-2"></i>SUBIR RECURSO
         </button>
       </form>
@@ -146,20 +143,227 @@
     </div>
   </div>
 
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=5"></script>
+  <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
   <script src="js/forms.js?v=2"></script>
   <script src="js/image-cropper.js"></script>
-  <script src="js/paginas/create-1.js"></script>
-  <script src="js/paginas/fondo-obra-1.js"></script>
+  <script>
+    if (!isLoggedIn()) { 
+      showLogin(); 
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!isLoggedIn()) return;
+
+      // Initialize Forms
+      document.getElementById('post-fields-root').innerHTML = renderFields('post', 'post');
+      document.getElementById('recurso-fields-root').innerHTML = renderFields('recurso', 'rec');
+      document.getElementById('evento-fields-root').innerHTML = renderFields('evento', 'event');
+
+      // Initialize Tagging and Previews
+      ['post', 'rec', 'event'].forEach(prefix => {
+        const desc = document.getElementById(`${prefix}-desc`);
+        const preview = document.getElementById(`${prefix}-desc-preview`);
+        
+        if (desc && preview) {
+          enableTagging(desc.id);
+          desc.addEventListener('input', () => {
+            preview.innerHTML = formatMentions(desc.value) || 'Vista previa de menciones...';
+            if (prefix === 'event') {
+              syncParticipantsFromDescription('event', desc.value);
+            }
+          });
+        }
+      });
+
+      // File preview logic (attach to future elements)
+      document.addEventListener('change', (e) => {
+        if (e.target.id === 'post-file') {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const preview = document.getElementById('post-file-preview');
+              if (preview) preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+            }
+            reader.readAsDataURL(file);
+          }
+        }
+        if (e.target.id === 'rec-file') {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const preview = document.getElementById('rec-file-preview');
+              if (preview) preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+            }
+            reader.readAsDataURL(file);
+          }
+        }
+      });
+
+      // Form handlers
+      document.getElementById('post-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('post-title').value.trim();
+        const description = document.getElementById('post-desc').value.trim();
+        const youtube_video = document.getElementById('post-youtube').value.trim();
+        const tags = document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        const visibility = document.getElementById('post-visibility').value;
+        const file = document.getElementById('post-file').files[0];
+
+        showStatus('Subiendo Obra', 'Optimizando imagen y procesando datos...');
+
+        let imageUrl = '';
+        if (file) {
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
+          }
+        }
+
+        const res = await apiRequest('/posts', {
+          method: 'POST',
+          body: JSON.stringify({ title, description, imageUrl, youtube_video, tags, visibility, cocreadores: getCocreadoresIds('post') })
+        });
+
+        if (res?.ok) {
+          const post = await res.json();
+          showStatus('¡LISTO!', 'Gracias por contribuir a la comunidad', true);
+          setTimeout(() => {
+            window.location.href = `post.html?id=${post._id}`;
+          }, 2000);
+        } else {
+          document.getElementById('status-overlay').classList.add('hidden');
+          alert('Error al publicar. Reintenta por favor.');
+        }
+      });
+
+      document.getElementById('recurso-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('rec-title').value.trim();
+        const type = document.getElementById('rec-type').value;
+        const url = document.getElementById('rec-url').value.trim();
+        const youtube_video = document.getElementById('rec-youtube').value.trim();
+        const description = document.getElementById('rec-desc').value.trim();
+        const tags = document.getElementById('rec-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+        const visibility = document.getElementById('rec-visibility').value;
+        const file = document.getElementById('rec-file').files[0];
+
+        showStatus('Guardando Recurso', 'Vinculando enlace y herramientas...');
+
+        let imageUrl = '';
+        if (file) {
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
+          }
+        }
+
+        const res = await apiRequest('/recursos', {
+          method: 'POST',
+          body: JSON.stringify({ title, type, url, description, youtube_video, tags, imageUrl, visibility, cocreadores: getCocreadoresIds('rec') })
+        });
+
+        if (res?.ok) {
+          showStatus('¡RECURSO SUBIDO!', 'Gracias por compartir tus herramientas', true);
+          setTimeout(() => {
+            window.location.href = 'recursos.html';
+          }, 2000);
+        } else {
+          document.getElementById('status-overlay').classList.add('hidden');
+          alert('Error al subir recurso.');
+        }
+      });
+
+      document.getElementById('evento-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('event-title').value.trim();
+        const description = document.getElementById('event-desc').value.trim();
+        const youtube_video = document.getElementById('event-youtube').value.trim();
+        const dateVal = document.getElementById('event-date').value;
+        const timeVal = document.getElementById('event-time').value || '20:00';
+        const date = dateVal && timeVal ? `${dateVal}T${timeVal}` : dateVal;
+        const location = document.getElementById('event-location').value.trim();
+        const visibility = document.getElementById('event-visibility').value;
+        const file = document.getElementById('event-file').files[0];
+        let imageUrl = document.getElementById('event-img-url').value.trim();
+        
+        // Get ticket configuration
+        const ticketConfig = window.getTicketConfig('event');
+
+        showStatus('Publicando Evento', 'Notificando a los artistas etiquedados...');
+
+        if (file) {
+          const up = await apiUpload(file);
+          if (up.ok) {
+            imageUrl = up.url;
+          } else if (up.status !== 401) {
+            console.error('Upload error:', up);
+          }
+        }
+
+        const manualParticipants = getParticipantIds('event');
+
+        const res = await apiRequest('/eventos', {
+          method: 'POST',
+          body: JSON.stringify({ title, description, date, location, imageUrl, youtube_video, ticketConfig, manualParticipants, visibility, cocreadores: getCocreadoresIds('event') })
+        });
+
+        if (res?.ok) {
+          showStatus('¡FECHA PUBLICADA!', '¡Nos vemos en el evento!', true);
+          setTimeout(() => {
+            window.location.href = 'calendario.html';
+          }, 2000);
+        } else {
+          document.getElementById('status-overlay').classList.add('hidden');
+          alert('Error al publicar fecha.');
+        }
+      });
+    });
+
+    function switchType(type) {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+      const btn = document.getElementById(`btn-${type}`);
+      if (btn) btn.classList.add('active');
+
+      document.getElementById('post-form').classList.add('hidden');
+      document.getElementById('recurso-form').classList.add('hidden');
+      document.getElementById('evento-form').classList.add('hidden');
+      document.getElementById(`${type}-form`).classList.remove('hidden');
+    }
+
+    function showStatus(title, msg, isSuccess = false) {
+      const overlay = document.getElementById('status-overlay');
+      const titleEl = document.getElementById('status-title');
+      const msgEl = document.getElementById('status-msg');
+      const spinner = document.getElementById('status-spinner');
+      const iconContainer = document.getElementById('status-icon');
+
+      if (!overlay || !titleEl || !msgEl || !spinner || !iconContainer) return;
+
+      titleEl.innerText = title;
+      msgEl.innerText = msg;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      if (isSuccess) {
+        spinner.classList.add('hidden');
+        iconContainer.innerHTML = `<div class="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-5xl animate-bounce"><i class="fas fa-check"></i></div>`;
+      } else {
+        spinner.classList.remove('hidden');
+        iconContainer.innerHTML = `<div class="relative w-24 h-24"><div class="absolute inset-0 border-4 border-white/5 rounded-full"></div><div id="status-spinner" class="absolute inset-0 border-4 border-t-cyan-500 rounded-full animate-spin"></div></div>`;
+      }
+    }
+  </script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
-  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
-          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
-          data-keep-bg="1"></script>
-<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

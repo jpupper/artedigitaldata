@@ -7,17 +7,16 @@
   <title>Manifiesto - Arte Digital Data</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/manifiesto.css">
-  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
 </head>
 
 <body class="ui-con-header min-h-screen">
   <div id="app-header"></div>
 
   <!-- Back to top -->
-  <button class="back-to-top" id="back-to-top" data-on-click="window.scrollTo({top:0,behavior:'smooth'})">
+  <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
     <i class="fas fa-arrow-up"></i>
   </button>
 
@@ -46,7 +45,7 @@
             <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest">
               <i class="fas fa-list mr-2 text-cyan-400"></i>Índice
             </h3>
-            <button data-on-click="closeToc()" class="lg:hidden text-gray-500 hover:text-white transition-colors">
+            <button onclick="closeToc()" class="lg:hidden text-gray-500 hover:text-white transition-colors">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -107,7 +106,7 @@
       <div class="flex-1 min-w-0 manifesto-section max-w-3xl">
 
         <!-- Mobile TOC toggle -->
-        <button id="toc-toggle" data-on-click="openToc()" class="items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm font-bold mb-8 hover:bg-white/10 transition-all lg:hidden">
+        <button id="toc-toggle" onclick="openToc()" class="items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm font-bold mb-8 hover:bg-white/10 transition-all lg:hidden">
           <i class="fas fa-list mr-1"></i> Ver Índice
         </button>
 
@@ -327,18 +326,61 @@
   </main>
 
   <!-- Scripts -->
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=5"></script>
+  <script src="js/header.js?v=4"></script>
 
-  <script src="js/paginas/manifiesto-1.js"></script>
+  <script>
+    // TOC mobile toggle
+    function openToc() {
+      document.getElementById('toc-sidebar').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeToc() {
+      document.getElementById('toc-sidebar').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Back to top button
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('back-to-top');
+      if (window.scrollY > 400) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+    });
+
+    // Active TOC link highlight on scroll
+    const sections = document.querySelectorAll('.manifesto-section[id], #individuo-sociedad, #caso-concreto, #postura-ideologica, #nfts-blockchain, #relacion-comunidades, #introduccion, #politica-personas, #reglas-whatsapp, #politica-instituciones, #politica-universidades, #politica-partidos, #politica-marcas, #politica-trabajo-corpo');
+    // Actually just use the section elements and the sub-divs that have IDs
+    const allAnchorTargets = document.querySelectorAll('[id]');
+    const tocLinks = document.querySelectorAll('.toc-link');
+
+    function updateActiveToc() {
+      let current = '';
+      allAnchorTargets.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 200) {
+          current = el.getAttribute('id');
+        }
+      });
+
+      tocLinks.forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        if (href === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateActiveToc);
+    updateActiveToc();
+  </script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
-  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
-          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
-          data-keep-bg="1"></script>
-<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 
 </html>

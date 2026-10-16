@@ -52,9 +52,9 @@ function getUserUsername() {
 }
 
 function logout() {
-  // ⚠️ La sesión del ecosistema (JPCONNECT/fscauth) vive con OTRAS claves en el mismo
-  // localStorage: si no se borran, la app vuelve a adoptarla al recargar y el usuario
-  // queda logueado después de apretar Salir (síntoma reportado).
+  // La sesión del ecosistema (JPCONNECT/fscauth) vive con OTRAS claves en el mismo
+  // localStorage: si no se borran, la app la vuelve a adoptar al recargar y el usuario
+  // sigue logueado después de apretar Salir.
   var tk = '';
   try { tk = localStorage.getItem('token') || getToken() || ''; } catch (e) {}
   ['token', 'username', 'userId', 'role', 'ssoset'].forEach(function (k) {
@@ -62,7 +62,7 @@ function logout() {
   });
   removeToken();
   removeUser();
-  // Y se avisa al centralizador para que cierre la sesión de verdad (token + cookie).
+  // Se avisa al centralizador para que revoque la sesión de verdad (y no la renueve).
   try {
     fetch(fscAuthApi() + '/auth/logout', {
       method: 'POST',
@@ -72,24 +72,6 @@ function logout() {
   } catch (e) {}
   window.location.href = CONFIG.BASE + '/';
 }
-
-// ── Base de la API de FSCAUTH ───────────────────────────────────────────────
-// Antes cada llamada usaba CONFIG.FSCAUTH_API a secas. En las páginas del dominio
-// público (fullscreencode.com) ese campo NO existe en config.js, así que el
-// navegador terminaba en https://fullscreencode.com/undefined/auth/sso-check (404)
-// y el usuario quedaba varado ahí. Ahora se resuelve en cascada:
-//   1) CONFIG.FSCAUTH_API  (artedigitaldata apunta directo al VPS)
-//   2) CONFIG.FSCAUTH_URL + '/api'  (el .htaccess proxya /jpconnect/api al VPS)
-//   3) el VPS directo
-// Nunca puede salir "undefined".
-function fscAuthApi() {
-  var cfg = window.CONFIG || {};
-  var base = cfg.FSCAUTH_API;
-  if (!base && cfg.FSCAUTH_URL) base = String(cfg.FSCAUTH_URL).replace(/\/+$/, '') + '/api';
-  if (!base) base = 'https://vps-4455523-x.dattaweb.com/jpconnect/api';
-  return String(base).replace(/\/+$/, '');
-}
-window.fscAuthApi = fscAuthApi;
 
 // ── Sesión de FSCAUTH vencida ───────────────────────────────────────────────
 // El login del ecosistema lo emite fscauth y dura 7 días; si el token venció (o
@@ -142,71 +124,22 @@ function refrescarSesionSilenciosa() {
     sessionStorage.setItem('add_reauth_intentos', String(intentos + 1));
     sessionStorage.removeItem('fsc_sso_checked');   // destrabar el checkSSO de arranque
   } catch (e) { /* modo privado: seguimos */ }
-  var base = fscAuthApi();
+  var base = (window.CONFIG && CONFIG.FSCAUTH_API) || 'https://vps-4455523-x.dattaweb.com/fscauth/api';
   var back = window.location.href.replace(/[?&](token|username|userId|ssoset)=[^&]*/g, '');
   window.location.href = `${base}/auth/sso-check?redirect=${encodeURIComponent(back)}`;
   return true;
 }
 
 /**
- * ¿El token local venció DE VERDAD? Se mira su propio `exp` (no se valida firma:
- * la firma la valida el servidor). Un 401 o un 404 puntual NO es una sesión muerta:
- * es ESE request el que falló.
- */
-function localTokenExpired(t) {
-  const payload = parseJwt(t || getToken());
-  if (!payload || typeof payload.exp !== 'number') return true;
-  return payload.exp * 1000 <= Date.now();
-}
-
-/**
- * Cierra la sesión local SÓLO cuando corresponde (token vencido o ilegible). Con el
- * token todavía vigente se revalida y se renueva en silencio: antes cualquier 401
- * —o un 404 de /auth/me— borraba la sesión, y como la cookie fsc_token es de
- * TERCEROS en los dominios de las apps (el navegador la bloquea), el usuario
- * terminaba en el formulario de login con la sesión todavía viva (deslogueo fantasma).
+ * Borra la copia local que ya no sirve y trata de rehacer la sesión sola.
+ * Lo llaman las rutas que NO pasan por apiRequest (el fetch del índice externo)
+ * y la validación de arranque, para que un token muerto no quede enquistado.
  */
 function sesionLocalMuerta() {
-  const t = getToken();
-  if (tokenPlausible(t) && !localTokenExpired(t)) {
-    console.warn('[AUTH] 401/404 con el token local vigente: se revalida la sesión, NO se cierra.');
-    syncSession();
-    return;
-  }
   removeToken();
   removeUser();
   if (refrescarSesionSilenciosa()) return;
   irALoginPorSesionVencida();
-}
-
-// ── Perfil completo: la FOTO del header ────────────────────────────────────
-// La copia local se guarda con lo mínimo (username/id). El avatar, el rol y el
-// displayName viven en /auth/me, que antes se pedía SOLO en la carga normal de la
-// página: al volver del login —o de un re-login silencioso, que también vuelve
-// con ?token=...— el header quedaba con el avatar generativo en lugar de la foto.
-// Ahora se pide también en ese camino.
-function refrescarPerfil() {
-    if (!isLoggedIn()) return;
-    const token = getToken();
-    fetch(CONFIG.API_URL + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(res => {
-            if (res.status === 401 || res.status === 404) { sesionLocalMuerta(); return null; }
-            return res.ok ? res.json() : null;
-        })
-        .then(data => {
-            if (data && !data.error) {
-                const currentUser = getUser();
-                const hasChanges = !currentUser || currentUser.role !== data.role ||
-                    currentUser.avatar !== data.avatar || currentUser.username !== data.username;
-                setUser({ ...data, id: data._id || data.id });
-                if (!hasChanges) return;
-                if (typeof window.renderHeader === 'function') window.renderHeader();
-                else document.addEventListener('DOMContentLoaded', () => {
-                    if (typeof window.renderHeader === 'function') window.renderHeader();
-                });
-            }
-        })
-        .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
 }
 
 // Centralized Redirection logic
@@ -248,40 +181,43 @@ async function checkSSO() {
 
     const currentUrl = window.location.href;
     // Redirigir al endpoint de sso-check del centralizador
-    window.location.href = `${fscAuthApi()}/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
+    window.location.href = `${CONFIG.FSCAUTH_API}/auth/sso-check?redirect=${encodeURIComponent(currentUrl)}`;
 }
 
 /**
- * Silent Session Sync: renueva la ventana de la sesión contra fscauth y detecta
- * logouts hechos en otra pestaña. Se apoya en el token local (Bearer), NO en la
- * cookie fsc_token: la cookie es de TERCEROS en los dominios de las apps y el
- * navegador la bloquea, así que no se puede depender de ella.
+ * Silent Session Sync: Checks if the central session matches the local state
+ * without redirecting. Used on window focus to catch logout from other tabs.
+ * NOTE: Only works when on same origin as auth server due to CORS/cookie restrictions.
  */
 async function syncSession() {
-    // RENOVACIÓN DESLIZANTE (esto es lo que hace que la sesión dure los 10 días y no
-    // se caiga antes): se manda el token local como Bearer y el servidor devuelve un
-    // token con la ventana completa otra vez. NO se usa la cookie fsc_token: en
-    // fullscreencode.com / artedigitaldata.com vive en OTRO host (vps-...) y el
-    // navegador la bloquea por ser de terceros. Antes esta función se saltaba todo
-    // cuando el origen no era el del VPS (return temprano), así que el token nunca se
-    // renovaba: vencía a los SESSION_DAYS y el usuario aparecía deslogueado sin motivo.
-    const token = getToken();
-    if (!tokenPlausible(token)) return;
+    // Only attempt sync when on same origin as auth server
+    // Cross-origin fetch will fail CORS and cookies won't be sent anyway
+    const isSameOrigin = new URL(CONFIG.FSCAUTH_URL).origin === window.location.origin;
+    if (!isSameOrigin) {
+        return; // Skip sync for cross-origin scenarios
+    }
 
     try {
-        const res = await fetch(`${fscAuthApi()}/auth/verify`, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (!res.ok) return;                                  // 401/5xx/proxy: no se toca la sesión
-        const data = await res.json().catch(() => null);
-        if (!data) return;
-        if (data.token && data.token !== token) {
-            setToken(data.token);                             // ventana renovada
+        const res = await fetch(`${CONFIG.FSCAUTH_API}/auth/verify`, { credentials: 'include' });
+        const data = await res.json();
+
+        const localLoggedIn = isLoggedIn();
+
+        if (data.loggedIn) {
+            // Un-authenticated locally but logged in centrally -> Trigger SSO Flow (redirect for token)
+            if (!localLoggedIn) {
+                console.log("[AUTH] Nueva sesión detectada en FSC. Sincronizando...");
+                checkSSO();
+            }
+        } else {
+            // Authenticated locally but NOT centrally -> Logout
+            if (localLoggedIn) {
+                console.warn("[AUTH] Sesión central cerrada. Cerrando local...");
+                logout();
+            }
         }
-        // Si el servidor no pudo resolver la sesión pero el token local sigue vigente
-        // (no venció por `exp`), NO se cierra nada: puede ser un 401 puntual.
     } catch (err) {
-        // Sin red: tampoco se cierra la sesión (antes este catch deslogueaba).
+        console.error("[AUTH] Error syncSession:", err);
     }
 }
 
@@ -292,26 +228,6 @@ async function syncSession() {
     const urlToken = urlParams.get('token');
     const urlUsername = urlParams.get('username');
     const urlUserId = urlParams.get('userId');
-
-    // ── Adopción de la sesión del ecosistema ───────────────────────────────────
-    // El include del fondo (y otros scripts compartidos del ecosistema) pueden consumir
-    // el ?token= ANTES que este script: guardan token/username/userId con las claves del
-    // ecosistema y limpian la URL. Cuando eso pasaba, esta app se quedaba SIN sesión y el
-    // retorno del login terminaba rebotando a ?nosession=true (síntoma: el cartel
-    // "Iniciá sesión para indexar tus creaciones del resto del ecosistema" con el login
-    // recién hecho). Si el token no llegó por la URL pero SÍ está guardado con las claves
-    // del ecosistema, se adopta: es la misma sesión, emitida por el centralizador.
-    if (!urlToken && !isLoggedIn()) {
-        try {
-            var tkEco = localStorage.getItem('token');
-            var usEco = localStorage.getItem('username');
-            if (tokenPlausible(tkEco) && usEco) {
-                var idEco = localStorage.getItem('userId');
-                setToken(tkEco);
-                setUser({ username: usEco, id: idEco || null, _id: idEco || null });
-            }
-        } catch (e) { /* sin localStorage (modo privado): se sigue sin sesión */ }
-    }
 
     if (urlToken && urlUsername) {
         setToken(urlToken);
@@ -336,18 +252,33 @@ async function syncSession() {
         if (window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html')) {
             window.location.href = CONFIG.BASE + '/';
         }
-
-        // Recién logueado: traer el perfil completo para que el header muestre la
-        // FOTO de perfil (no el avatar generativo) sin esperar a otra navegación.
-        refrescarPerfil();
     } else {
         // Solo chequear SSO en el evento DOMContentLoaded para no bloquear el renderizado inicial
         document.addEventListener('DOMContentLoaded', () => {
             if (isLoggedIn()) {
-                // Renovar la ventana de la sesión (deslizante) y después validar el
-                // perfil: /auth/me contesta 401 si el token venció y trae el avatar.
-                syncSession();
-                refrescarPerfil();
+                // Validación REAL de la sesión al arrancar. /auth/me contesta 401
+                // si el token venció y 404 si su usuario ya no existe (migración de
+                // identidades): en los dos casos la copia local está muerta y hay
+                // que rehacerla. Antes solo se limpiaba con 401 (apiRequest), así
+                // que un token huérfano quedaba enquistado y todo lo que sí usa
+                // sesión —el índice externo— fallaba para siempre.
+                const token = getToken();
+                fetch(CONFIG.API_URL + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(res => {
+                        if (res.status === 401 || res.status === 404) { sesionLocalMuerta(); return null; }
+                        return res.ok ? res.json() : null;
+                    })
+                    .then(data => {
+                        if (data && !data.error) {
+                            const currentUser = getUser();
+                            const hasChanges = !currentUser || currentUser.role !== data.role || currentUser.avatar !== data.avatar;
+                            setUser({ ...data, id: data._id || data.id });
+                            if (hasChanges && typeof window.renderHeader === 'function') {
+                                window.renderHeader();
+                            }
+                        }
+                    })
+                    .catch(err => console.error("[AUTH] Error fetching profile updates:", err));
             } else if (!urlParams.has('nosession')) {
                 checkSSO();
             }
@@ -393,13 +324,6 @@ async function apiRequest(endpoint, options = {}) {
     // hace falta pedir la contraseña de nuevo); recién si eso no es posible se
     // vuelve al login con retorno.
     if (token) {
-      // Con el token todavía vigente, el 401 es de ESE endpoint: se revalida en
-      // silencio (y se renueva) y NO se desloguea. Solo con el token vencido se
-      // rehace la sesión con la cookie o se vuelve al login con retorno.
-      if (tokenPlausible(token) && !localTokenExpired(token)) {
-        syncSession();
-        return null;
-      }
       if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
     }
     return null;
@@ -433,14 +357,8 @@ async function apiUpload(file, fields = {}) {
     });
 
     if (res.status === 401) {
-      // Igual que apiRequest: si el token local sigue vigente NO se desloguea (se
-      // revalida y renueva en silencio); con el token vencido se rehace la sesión
-      // y, si no hay forma, se vuelve al login con retorno.
+      // Igual que apiRequest: primero rehacer la sesión en silencio, después el login.
       if (token) {
-        if (tokenPlausible(token) && !localTokenExpired(token)) {
-          syncSession();
-          return { ok: false, status: 401, url: '' };
-        }
         if (!refrescarSesionSilenciosa()) irALoginPorSesionVencida();
       }
       return { ok: false, status: 401, url: '' };

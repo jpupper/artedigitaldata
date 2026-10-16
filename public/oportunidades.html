@@ -7,17 +7,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
-  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
-  <link rel="stylesheet" href="css/paginas/oportunidades.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
 </head>
-<body class="ui-con-header min-h-screen fk-chances">
-  <div id="p5-canvas" class="dp-1"></div>
-  <div id="app-header" class="dp-2"></div>
+<body class="ui-con-header min-h-screen">
+  <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
+  <div id="app-header" style="position: relative; z-index: 100;"></div>
 
   <main class="relative z-10 pt-20 pb-10 max-w-7xl mx-auto px-4">
     <!-- Hero Section -->
-    <section class="fk-head mb-10 text-center pt-8 pb-4">
+    <section class="mb-10 text-center pt-8 pb-4">
       <h1 class="text-4xl md:text-5xl font-black gradient-text mb-2">Chances</h1>
       <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
         Convocatorias de obra, oportunidades laborales y colaboraciones para artistas digitales.
@@ -88,16 +86,16 @@
     <!-- Filtros por tipo -->
     <section class="mb-8">
       <div class="flex flex-wrap items-center justify-center gap-3">
-        <button data-on-click="filterOportunidades('all')" id="filter-all" class="filter-btn px-5 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60">
+        <button onclick="filterOportunidades('all')" id="filter-all" class="filter-btn px-5 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-xs uppercase tracking-widest transition-all hover:border-emerald-500/60">
           <i class="fas fa-th mr-2"></i>Todas
         </button>
-        <button data-on-click="filterOportunidades('convocatoria_obra')" id="filter-convocatoria_obra" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
+        <button onclick="filterOportunidades('convocatoria_obra')" id="filter-convocatoria_obra" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-cyan-500/50">
           <i class="fas fa-palette mr-2"></i>Convocatoria de Obra
         </button>
-        <button data-on-click="filterOportunidades('oportunidad_laboral')" id="filter-oportunidad_laboral" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-orange-500/50">
+        <button onclick="filterOportunidades('oportunidad_laboral')" id="filter-oportunidad_laboral" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-orange-500/50">
           <i class="fas fa-briefcase mr-2"></i>Oportunidades Laborales
         </button>
-        <button data-on-click="filterOportunidades('colaboracion')" id="filter-colaboracion" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
+        <button onclick="filterOportunidades('colaboracion')" id="filter-colaboracion" class="filter-btn px-5 py-2 rounded-full border border-white/10 bg-white/5 text-gray-500 font-black text-xs uppercase tracking-widest transition-all hover:border-magenta-500/50">
           <i class="fas fa-handshake mr-2"></i>Colaboración
         </button>
       </div>
@@ -117,19 +115,159 @@
     </section>
   </main>
 
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=5"></script>
+  <script src="js/header.js?v=4"></script>
   <script src="js/tagging.js"></script>
-  <script src="js/paginas/oportunidades-1.js"></script>
+  <script>
+    let allOportunidades = [];
+    let currentFilter = 'all';
+
+    const tipoLabels = {
+      convocatoria_obra: 'Convocatoria de Obra',
+      oportunidad_laboral: 'Oportunidad Laboral',
+      colaboracion: 'Colaboración'
+    };
+
+    const tipoIcons = {
+      convocatoria_obra: 'fas fa-palette',
+      oportunidad_laboral: 'fas fa-briefcase',
+      colaboracion: 'fas fa-handshake'
+    };
+
+    const tipoColors = {
+      convocatoria_obra: 'cyan',
+      oportunidad_laboral: 'orange',
+      colaboracion: 'magenta'
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadOportunidades();
+    });
+
+    async function loadOportunidades() {
+      const container = document.getElementById('oportunidades-container');
+      try {
+        const res = await fetch(CONFIG.API_URL + '/oportunidades');
+        allOportunidades = await res.json();
+        renderOportunidades(allOportunidades);
+      } catch {
+        container.innerHTML = `<div class="col-span-full text-center text-red-400 py-10"><i class="fas fa-exclamation-triangle mr-2"></i>Error cargando oportunidades</div>`;
+      }
+    }
+
+    function filterOportunidades(tipo) {
+      currentFilter = tipo;
+      
+      // Update button styles
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-400');
+        btn.classList.add('border-white/10', 'bg-white/5', 'text-gray-500');
+      });
+      
+      const activeBtn = document.getElementById('filter-' + tipo);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-white/10', 'bg-white/5', 'text-gray-500');
+        activeBtn.classList.add('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-400');
+      }
+
+      const filtered = tipo === 'all' ? allOportunidades : allOportunidades.filter(o => o.tipo === tipo);
+      renderOportunidades(filtered);
+    }
+
+    function renderOportunidades(oportunidades) {
+      const container = document.getElementById('oportunidades-container');
+      if (!oportunidades.length) {
+        container.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-20">
+            <i class="fas fa-briefcase text-5xl text-emerald-400/30 mb-4"></i>
+            <p class="text-xl">Aún no hay oportunidades publicadas</p>
+            <p class="text-sm mt-2">¡Sé el primero en crear una!</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = oportunidades.map(opo => {
+        const color = tipoColors[opo.tipo] || 'emerald';
+        const icon = tipoIcons[opo.tipo] || 'fas fa-briefcase';
+        const label = tipoLabels[opo.tipo] || 'Oportunidad';
+        
+        let extraInfo = '';
+        if (opo.tipo === 'convocatoria_obra') {
+          if (opo.lugarExposicion) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${opo.lugarExposicion}</span>`;
+          if (opo.fechaHasta) extraInfo += `<span class="text-xs text-gray-500 ml-3"><i class="fas fa-clock mr-1"></i>${new Date(opo.fechaHasta).toLocaleDateString('es-AR')}</span>`;
+        } else if (opo.tipo === 'oportunidad_laboral') {
+          if (opo.nombrePuesto) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-user-tie mr-1"></i>${opo.nombrePuesto}</span>`;
+          if (opo.productoraEmpresa) extraInfo += `<span class="text-xs text-gray-500 ml-3"><i class="fas fa-building mr-1"></i>${opo.productoraEmpresa}</span>`;
+        } else if (opo.tipo === 'colaboracion') {
+          if (opo.nombreProyecto) extraInfo = `<span class="text-xs text-gray-500"><i class="fas fa-project-diagram mr-1"></i>${opo.nombreProyecto}</span>`;
+        }
+
+        return `
+          <div class="rounded-2xl overflow-hidden border border-${color}-500/10 card-cyber transition-all duration-300 flex flex-col h-full group hover:border-${color}-500/30">
+            ${opo.imagenUrl ? `
+              <div class="relative aspect-video overflow-hidden">
+                <img src="${opo.imagenUrl}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${opo.titulo}">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              </div>
+            ` : `
+              <div class="relative aspect-video overflow-hidden bg-${color}-500/5 flex items-center justify-center">
+                <i class="${icon} text-5xl text-${color}-500/20"></i>
+              </div>
+            `}
+            <div class="p-5 flex-1 flex flex-col">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-${color}-500/20 text-${color}-400 border border-${color}-500/30 uppercase tracking-widest">
+                  <i class="${icon} mr-1"></i>${label}
+                </span>
+                ${opo.tipo === 'convocatoria_obra' && opo.sistemaInterno === false ? `
+                  <span class="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-wider flex items-center gap-1">
+                    <i class="fas fa-external-link-alt text-[8px]"></i> Link Externo
+                  </span>
+                ` : ''}
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2 line-clamp-1">${opo.titulo}</h3>
+              <p class="text-gray-400 text-sm mb-3 line-clamp-2">${typeof formatMentions === 'function' ? formatMentions(opo.descripcion) : (opo.descripcion || '')}</p>
+              
+              ${extraInfo ? `<div class="flex flex-wrap gap-2 mb-4">${extraInfo}</div>` : ''}
+              
+              <div class="mt-auto flex items-center justify-between pt-3 border-t border-white/5">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-bold text-cyan-400 shrink-0">
+                    ${opo.creador?.avatar 
+                      ? `<img src="${opo.creador.avatar}" alt="${opo.creador.username || ''}" class="w-full h-full object-cover">` 
+                      : (typeof GenerativeAvatar !== 'undefined' && opo.creador 
+                          ? GenerativeAvatar.markup(opo.creador, { className: 'w-full h-full object-cover' }) 
+                          : `<span>${(opo.creador?.username || '?')[0].toUpperCase()}</span>`
+                        )
+                    }
+                  </div>
+                  <span class="text-xs text-gray-400 font-medium">@${opo.creador?.username || 'anónimo'}</span>
+                </div>
+                ${opo.tipo === 'convocatoria_obra' && opo.sistemaInterno === false ? `
+                  <span class="text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
+                    <i class="fas fa-external-link-alt text-[9px]"></i> Externo
+                  </span>
+                ` : `
+                  <span class="text-xs text-gray-500">
+                    <i class="fas fa-users mr-1"></i>${opo.inscripciones?.length || 0}
+                  </span>
+                `}
+              </div>
+            </div>
+            <a href="oportunidad.html?id=${opo._id}" class="block p-3 bg-${color}-500/10 text-${color}-400 hover:bg-${color}-500 hover:text-white transition-all text-xs font-bold w-full text-center">
+              VER CONVOCATORIA <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/p5-effect.js?v=12"></script>
-  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
-          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
-          data-keep-bg="1"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
-<script src="js/lib/inline-handlers.js" defer></script>
 </body>
 </html>

@@ -8,17 +8,15 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/artistas.css">
   <link rel="stylesheet" href="css/tailwind.css">
-  <link rel="stylesheet" href="css/fsc-ui.css?v=6">
-  <link rel="stylesheet" href="css/fondo-ui.css?v=14">
-  <link rel="stylesheet" href="css/paginas/artistas.css">
+  <link rel="stylesheet" href="css/fsc-ui.css?v=5">
 </head>
 <body class="ui-con-header min-h-screen scrollbar-hide">
-  <div id="p5-canvas" class="dp-1"></div>
-  <div id="app-header" class="dp-2"></div>
+  <div id="p5-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></div>
+  <div id="app-header" style="position: relative; z-index: 100;"></div>
 
   <main class="relative z-10 pt-24 pb-10 max-w-7xl mx-auto px-4">
     <!-- Hero -->
-    <section class="fk-head mb-10 text-center">
+    <section class="mb-10 text-center">
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mb-4">
         <i class="fas fa-users text-2xl text-[var(--color-cyan)]"></i>
       </div>
@@ -62,16 +60,182 @@
     </section>
   </main>
 
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/generative-avatar.js"></script>
-  <script src="js/header.js?v=5"></script>
-  <script src="js/paginas/artistas-1.js"></script>
+  <script src="js/header.js?v=4"></script>
+  <script>
+    let allArtists = [];
+
+    async function loadArtists() {
+      try {
+        const url = CONFIG.API_URL + '/public/artistas';
+        const res = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        allArtists = json.data || [];
+        renderStats();
+        renderArtists(allArtists);
+      } catch (err) {
+        console.error('[Artistas] Error:', err);
+        document.getElementById('artists-container').innerHTML = `
+          <div class="col-span-full text-center py-20">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 mb-4">
+              <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">Error al cargar artistas</h3>
+            <p class="text-gray-600">No se pudo conectar con el servidor. Intenta de nuevo mas tarde.</p>
+            <button onclick="loadArtists()" class="mt-6 px-6 py-3 rounded-xl border border-cyan-500/30 text-[var(--color-cyan)] hover:bg-cyan-500/10 font-bold transition-all">
+              <i class="fas fa-sync-alt mr-2"></i>Reintentar
+            </button>
+          </div>`;
+      }
+    }
+
+    function renderStats() {
+      const container = document.getElementById('stats-summary');
+      if (!allArtists.length) { container.innerHTML = ''; return; }
+      const totalArtists = allArtists.length;
+      const totalContributions = allArtists.reduce((sum, a) => sum + (a.totalContributions || 0), 0);
+      container.innerHTML = `
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-sm text-[var(--color-cyan)] font-bold">
+          <i class="fas fa-user-astronaut"></i> ${totalArtists} ${totalArtists === 1 ? 'Artista' : 'Artistas'}
+        </div>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full border border-magenta-500/20 text-sm text-[var(--color-magenta)] font-bold"
+             style="background: rgba(255,0,224,0.1)">
+          <i class="fas fa-rocket"></i> ${totalContributions} Contribuciones
+        </div>`;
+    }
+
+    function goToProfile(username) {
+      window.location.href = CONFIG.BASE + '/profile.html?user=' + encodeURIComponent(username);
+    }
+
+    function getSocialIcon(type) {
+      return { instagram: 'fab fa-instagram', whatsapp: 'fab fa-whatsapp', facebook: 'fab fa-facebook' }[type] || 'fas fa-link';
+    }
+
+    function getSocialColor(type) {
+      return { instagram: '#E4405F', whatsapp: '#25D366', facebook: '#1877F2' }[type] || '#94A3B8';
+    }
+
+    function getSocialUrl(type, value) {
+      if (!value) return '#';
+      if (value.startsWith('http')) return value;
+      const prefixes = { instagram: 'https://instagram.com/', whatsapp: 'https://wa.me/', facebook: 'https://facebook.com/' };
+      return (prefixes[type] || '') + value;
+    }
+
+    function renderArtistCard(artist) {
+      const displayName = escapeHTML(artist.displayName || artist.username);
+      const username = escapeHTML(artist.username);
+      const bio = escapeHTML(artist.bio || '');
+      const avatarUrl = CONFIG.resolveImage(artist.avatar);
+      const profileUrl = CONFIG.BASE + '/profile.html?user=' + encodeURIComponent(artist.username);
+
+      // Build social links (STANDALONE <a> tags — NOT nested inside any other <a>)
+      let socialsHTML = '';
+      if (artist.socials) {
+        const entries = Object.entries(artist.socials).filter(([_, v]) => v);
+        if (entries.length) {
+          socialsHTML = '<div class="flex flex-wrap justify-center gap-2">';
+          for (const [platform, value] of entries) {
+            socialsHTML += `
+              <a href="${escapeHTML(getSocialUrl(platform, value))}" target="_blank" rel="noopener"
+                 class="social-link"
+                 style="color:${getSocialColor(platform)}; background:${getSocialColor(platform)}15; border:1px solid ${getSocialColor(platform)}30;"
+                 title="${platform}"
+                 onclick="event.stopPropagation()">
+                <i class="${getSocialIcon(platform)}"></i>
+              </a>`;
+          }
+          socialsHTML += '</div>';
+        }
+      }
+
+      // Contribution badges
+      let badgesHTML = '';
+      const { posts, recursos, eventos } = artist.counts || {};
+      if (posts) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-palette text-[9px]"></i> ${posts} ${posts === 1 ? 'OBRA' : 'OBRAS'}</span>`;
+      if (recursos) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-box-open text-[9px]"></i> ${recursos} ${recursos === 1 ? 'RECURSO' : 'RECURSOS'}</span>`;
+      if (eventos) badgesHTML += `<span class="count-badge px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"><i class="fas fa-calendar-alt text-[9px]"></i> ${eventos} ${eventos === 1 ? 'EVENTO' : 'EVENTOS'}</span>`;
+
+      // Avatar
+      // Avatar: foto del usuario o su espiral generativa única
+      const spiralAvatar = (window.GenerativeAvatar && window.GenerativeAvatar.dataUri)
+        ? window.GenerativeAvatar.dataUri(artist.username || displayName)
+        : '';
+      let avatarHTML;
+      if (artist.avatar) {
+        avatarHTML = `<img src="${sanitizeUrl(avatarUrl)}" alt="${displayName}" class="artist-avatar" loading="lazy"
+          onerror="this.onerror=null;this.src='${spiralAvatar}'">`;
+      } else if (spiralAvatar) {
+        avatarHTML = `<img src="${spiralAvatar}" alt="${displayName}" class="artist-avatar" loading="lazy" title="Avatar generativo de @${username}">`;
+      } else {
+        avatarHTML = `<div class="avatar-placeholder"><i class="fas fa-user-astronaut"></i></div>`;
+      }
+
+      const dateStr = new Date(artist.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long' });
+
+      // NOTE: Card is a <div> (NOT an <a>) to avoid nested anchor violations.
+      // Click on card navigates via onclick. Social <a> tags inside are valid HTML.
+      return `
+        <div class="artist-card rounded-2xl p-6 flex flex-col items-center text-center" onclick="goToProfile('${encodeURIComponent(artist.username)}')">
+          <div class="relative mb-4">
+            ${avatarHTML}
+          </div>
+          <h3 class="text-lg font-black text-white hover:text-[var(--color-cyan)] transition-colors">${displayName}</h3>
+          <p class="text-sm text-gray-500 mt-0.5">@${username}</p>
+          ${bio ? `<p class="text-sm text-gray-400 mt-3 bio-text leading-relaxed">${bio}</p>` : ''}
+          ${badgesHTML ? `<div class="flex flex-wrap justify-center gap-1.5 mt-4">${badgesHTML}</div>` : ''}
+          ${socialsHTML ? `<div class="mt-4">${socialsHTML}</div>` : ''}
+          <div class="mt-auto pt-4 text-[11px] text-gray-600">
+            <i class="fas fa-calendar-plus mr-1"></i> ${dateStr}
+          </div>
+        </div>`;
+    }
+
+    function renderArtists(artists) {
+      const container = document.getElementById('artists-container');
+      const emptyState = document.getElementById('empty-state');
+      if (!artists.length) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      container.innerHTML = artists.map(renderArtistCard).join('');
+    }
+
+    function filterAndSort() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const sort = document.getElementById('sort-select').value;
+      let filtered = allArtists;
+      if (query) {
+        filtered = allArtists.filter(a => {
+          const name = (a.displayName || a.username).toLowerCase();
+          return name.includes(query) || (a.bio || '').toLowerCase().includes(query) || a.username.toLowerCase().includes(query);
+        });
+      }
+      if (sort === 'alpha') {
+        filtered.sort((a, b) => (a.displayName || a.username).localeCompare(b.displayName || b.username));
+      } else if (sort === 'recent') {
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      } else {
+        filtered.sort((a, b) => (b.totalContributions || 0) - (a.totalContributions || 0));
+      }
+      renderArtists(filtered);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadArtists();
+      document.getElementById('search-input').addEventListener('input', filterAndSort);
+      document.getElementById('sort-select').addEventListener('change', filterAndSort);
+    });
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="js/p5-effect.js?v=12"></script>
-  <script src="https://vps-4455523-x.dattaweb.com/jpshadereditor/include.js"
-          data-page="artedigitaldata" data-comp="artedigital-ascii" data-pass="ascii1"
-          data-keep-bg="1"></script>
+  <script src="js/ascii-shader-bg.js"></script>
+  <script src="js/p5-effect.js"></script>
   <!-- botón FSC: solo el isotipo, abajo a la izquierda -->
   <script src="https://vps-4455523-x.dattaweb.com/fscauth/js/fsc-button.js?v=10"></script>
 </body>
